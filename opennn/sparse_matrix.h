@@ -4865,8 +4865,8 @@ Vector<T> SparseMatrix<T>::calculate_means_binary_columns_missing_values(const V
 template <class T>
 Vector< Vector<T> > SparseMatrix<T>::calculate_minimum_maximum() const
 {
-    Vector<T> minimum(columns_number,(T)numeric_limits<double>::max());
-    Vector<T> maximum(columns_number,(T)-numeric_limits<double>::max());
+    Vector<T> minimum(columns_number,(T)((numeric_limits<double>::max))());
+    Vector<T> maximum(columns_number,(T)-((numeric_limits<double>::max))());
 
     for(size_t j = 0; j < columns_number; j++)
     {
@@ -4909,8 +4909,8 @@ Vector< Vector<T> > SparseMatrix<T>::calculate_minimum_maximum(const Vector<size
 
     Vector< Vector<T> > minimum_maximum(2);
 
-    Vector<T> minimum(column_indices_size,(T)numeric_limits<double>::max());
-    Vector<T> maximum(column_indices_size,(T)-numeric_limits<double>::max());
+    Vector<T> minimum(column_indices_size,(T)((numeric_limits<double>::max))());
+    Vector<T> maximum(column_indices_size,(T)-((numeric_limits<double>::max))());
 
     for(size_t j = 0; j < column_indices_size; j++)
     {
@@ -4936,8 +4936,8 @@ Vector< Vector<T> > SparseMatrix<T>::calculate_minimum_maximum(const Vector<size
     const size_t row_indices_size = calculate_row_indices.size();
     const size_t column_indices_size = calculate_column_indices.size();
 
-    Vector<T> minimum(column_indices_size,(T) numeric_limits<double>::max());
-    Vector<T> maximum(column_indices_size,(T)-numeric_limits<double>::max());
+    Vector<T> minimum(column_indices_size,(T) ((numeric_limits<double>::max))());
+    Vector<T> maximum(column_indices_size,(T)-((numeric_limits<double>::max))());
 
     size_t row_index;
     size_t column_index;
@@ -5435,7 +5435,7 @@ void SparseMatrix<T>::scale_mean_standard_deviation(const Vector< Statistics<T> 
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5493,7 +5493,7 @@ void SparseMatrix<T>::scale_rows_mean_standard_deviation(const Vector< Statistic
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5543,7 +5543,7 @@ void SparseMatrix<T>::scale_columns_mean_standard_deviation(const Vector< Statis
 
     for(size_t j = 0; j < columns_indices_size; j++)
     {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5589,7 +5589,7 @@ void SparseMatrix<T>::scale_minimum_maximum(const Vector< Statistics<T> >& stati
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5647,7 +5647,7 @@ void SparseMatrix<T>::scale_rows_minimum_maximum(const Vector< Statistics<T> >& 
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5697,7 +5697,7 @@ void SparseMatrix<T>::scale_columns_minimum_maximum(const Vector< Statistics<T> 
 
     for(size_t j = 0; j < columns_indices_size; j++)
     {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5743,7 +5743,7 @@ void SparseMatrix<T>::scale_logarithmic(const Vector< Statistics<T> >& statistic
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5801,7 +5801,7 @@ void SparseMatrix<T>::scale_rows_logarithmic(const Vector< Statistics<T> >& stat
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5853,7 +5853,7 @@ void SparseMatrix<T>::scale_columns_logarithmic(const Vector< Statistics<T> >& s
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5895,7 +5895,7 @@ void SparseMatrix<T>::unscale_mean_standard_deviation(const Vector< Statistics<T
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5943,7 +5943,7 @@ void SparseMatrix<T>::unscale_rows_mean_standard_deviation(const Vector< Statist
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -5995,7 +5995,7 @@ void SparseMatrix<T>::unscale_columns_mean_standard_deviation(const Vector< Stat
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].standard_deviation < numeric_limits<double>::min())
+        if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -6037,7 +6037,7 @@ void SparseMatrix<T>::unscale_minimum_maximum(const Vector< Statistics<T> >& sta
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -6085,7 +6085,7 @@ void SparseMatrix<T>::unscale_rows_minimum_maximum(const Vector< Statistics<T> >
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -6137,7 +6137,7 @@ void SparseMatrix<T>::unscale_columns_minimum_maximum(const Vector< Statistics<T
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -6179,7 +6179,7 @@ void SparseMatrix<T>::unscale_logarithmic(const Vector< Statistics<T> >& statist
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -6227,7 +6227,7 @@ void SparseMatrix<T>::unscale_rows_logarithmic(const Vector< Statistics<T> >& st
 
     for(size_t j = 0; j < columns_number; j++)
     {
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }
@@ -6279,7 +6279,7 @@ void SparseMatrix<T>::unscale_columns_logarithmic(const Vector< Statistics<T> >&
     {
         column_index = scale_column_indices[j];
 
-        if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+        if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
         {
             // Do nothing
         }

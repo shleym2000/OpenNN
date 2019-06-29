@@ -6206,7 +6206,7 @@ void Matrix<T>::update_DFP_inverse_Hessian(const Vector<double>& old_parameters,
 
    // Control sentence(if debug)
 
-   if(parameters_difference.calculate_absolute_value() < numeric_limits<double>::min())
+   if(parameters_difference.calculate_absolute_value() < (numeric_limits<double>::min)())
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Matrix<double> calculate_DFP_inverse_Hessian(const Vector<double>&, const Vector<double>&, const Vector<double>&, const Vector<double>&, const Matrix<double>&) method.\n"
@@ -6384,7 +6384,7 @@ const Vector<double>& old_gradient, const Vector<double>& gradient)
 
    const Vector<double> gradient_difference = gradient - old_gradient;
 
-//   if(gradient_difference.calculate_absolute_value() < numeric_limits<double>::min())
+//   if(gradient_difference.calculate_absolute_value() < (numeric_limits<double>::min)())
 //   {
 //       ostringstream buffer;
 
@@ -7555,7 +7555,7 @@ Vector< Vector<double> > Matrix<T>::calculate_mean_standard_deviation(const Vect
 template <class T>
 T Matrix<T>::calculate_minimum() const
 {
-   T minimum = static_cast<T>(numeric_limits<double>::max());
+   T minimum = static_cast<T>((numeric_limits<double>::max)());
 
    for(size_t i = 0; i < this->size(); i++)
    {
@@ -8062,7 +8062,7 @@ Matrix< double > Matrix<T>::calculate_LP_norm_gradient(const double& p) const
 template <class T>
 T Matrix<T>::calculate_maximum() const
 {
-    T maximum = static_cast<T>(-numeric_limits<double>::max());
+    T maximum = static_cast<T>(-(numeric_limits<double>::max)());
 
     for(size_t i = 0; i < this->size(); i++)
     {
@@ -8083,8 +8083,8 @@ T Matrix<T>::calculate_maximum() const
 template <class T>
 Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum() const
 {
-   Vector<T> minimum(columns_number,static_cast<T>(numeric_limits<double>::max()));
-   Vector<T> maximum(columns_number,static_cast<T>(-numeric_limits<double>::max()));
+   Vector<T> minimum(columns_number,static_cast<T>((numeric_limits<double>::max)()));
+   Vector<T> maximum(columns_number,static_cast<T>(-(numeric_limits<double>::max)()));
 
    for(size_t j = 0; j < columns_number; j++)
    {
@@ -8136,8 +8136,8 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& c
 
    size_t column_index;
 
-   Vector<T> minimum(column_indices_size, static_cast<T>(numeric_limits<double>::max()));
-   Vector<T> maximum(column_indices_size,static_cast<T>(-numeric_limits<double>::max()));
+   Vector<T> minimum(column_indices_size, static_cast<T>((numeric_limits<double>::max)()));
+   Vector<T> maximum(column_indices_size,static_cast<T>(-(numeric_limits<double>::max)()));
 
    for(size_t j = 0; j < column_indices_size; j++)
    {
@@ -8173,8 +8173,8 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& r
    const size_t row_indices_size = row_indices.size();
    const size_t column_indices_size = column_indices.size();
 
-   Vector<T> minimum(column_indices_size,static_cast<T>(numeric_limits<double>::max()));
-   Vector<T> maximum(column_indices_size,static_cast<T>(-numeric_limits<double>::max()));
+   Vector<T> minimum(column_indices_size,static_cast<T>((numeric_limits<double>::max)()));
+   Vector<T> maximum(column_indices_size,static_cast<T>(-(numeric_limits<double>::max)()));
 
    size_t row_index;
    size_t column_index;
@@ -8208,7 +8208,7 @@ Vector< Vector<T> > Matrix<T>::calculate_minimum_maximum(const Vector<size_t>& r
 template <class T>
 T Matrix<T>::calculate_column_minimum(const size_t& column_index) const
 {
-   T minimum = static_cast<T>(numeric_limits<double>::max());
+   T minimum = static_cast<T>((numeric_limits<double>::max)());
 
    for(size_t i = 0; i < rows_number; i++)
    {
@@ -8227,7 +8227,7 @@ T Matrix<T>::calculate_column_minimum(const size_t& column_index) const
 template <class T>
 T Matrix<T>::calculate_column_maximum(const size_t& column_index) const
 {
-    T maximum = static_cast<T>(-numeric_limits<double>::max());
+    T maximum = static_cast<T>(-(numeric_limits<double>::max)());
 
     for(size_t i = 0; i < rows_number; i++)
     {
@@ -8841,12 +8841,12 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics(const Vector<size_t>& ro
 
     size_t row_index, column_index;
 
-    Vector<T> minimums(column_indices_size, numeric_limits<T>::max());
+    Vector<T> minimums(column_indices_size, (numeric_limits<T>::max)());
     Vector<T> maximums;
 
     if(numeric_limits<T>::is_signed)
     {
-      maximums.set(column_indices_size, -numeric_limits<T>::max());
+      maximums.set(column_indices_size, -(numeric_limits<T>::max)());
     }
     else
     {
@@ -8917,12 +8917,12 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics(const Vector< Vector<siz
 
     Vector< Statistics<T> > statistics(column_indices_size);
 
-    Vector<T> minimums(column_indices_size, numeric_limits<T>::max());
+    Vector<T> minimums(column_indices_size, (numeric_limits<T>::max)());
     Vector<T> maximums;
 
     if(numeric_limits<T>::is_signed)
     {
-      maximums.set(column_indices_size, -numeric_limits<T>::max());
+      maximums.set(column_indices_size, -(numeric_limits<T>::max)());
     }
     else
     {
@@ -8998,12 +8998,12 @@ Vector< Vector<T> > Matrix<T>::calculate_columns_minimums_maximums(const Vector<
 
     const size_t column_indices_size = column_indices.size();
 
-    Vector<T> minimums(column_indices_size, numeric_limits<T>::max());
+    Vector<T> minimums(column_indices_size, (numeric_limits<T>::max)());
     Vector<T> maximums;
 
     if(numeric_limits<T>::is_signed)
     {
-       maximums.set(column_indices_size, -numeric_limits<T>::max());
+       maximums.set(column_indices_size, -(numeric_limits<T>::max)());
     }
     else
     {
@@ -9889,7 +9889,7 @@ void Matrix<T>::scale_mean_standard_deviation(const Vector< Statistics<T> >& sta
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].standard_deviation < numeric_limits<double>::min())
+      if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
       {
          // Do nothing
       }
@@ -10084,7 +10084,7 @@ void Matrix<T>::scale_rows_mean_standard_deviation(const Vector< Statistics<T> >
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].standard_deviation < numeric_limits<double>::min())
+       if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10137,7 +10137,7 @@ void Matrix<T>::scale_columns_mean_standard_deviation(const Vector< Statistics<T
 
    for(size_t j = 0; j < columns_indices_size; j++)
    {
-      if(statistics[j].standard_deviation < numeric_limits<double>::min())
+      if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
       {
          // Do nothing
       }
@@ -10185,7 +10185,7 @@ void Matrix<T>::scale_minimum_maximum(const Vector< Statistics<T> >& statistics)
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+      if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
       {
             // Do nothing
       }
@@ -10224,7 +10224,7 @@ void Matrix<T>::scale_range(const Vector< Statistics<T> >& statistics, const T& 
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+      if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
       {
           for(size_t i = 0; i < rows_number; i++)
           {
@@ -10302,7 +10302,7 @@ void Matrix<T>::scale_rows_minimum_maximum(const Vector< Statistics<T> >& statis
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+       if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10399,7 +10399,7 @@ void Matrix<T>::scale_logarithmic(const Vector< Statistics<T> >& statistics)
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+      if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
       {
             // Do nothing
       }
@@ -10463,7 +10463,7 @@ void Matrix<T>::scale_rows_logarithmic(const Vector< Statistics<T> >& statistics
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+       if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10518,7 +10518,7 @@ void Matrix<T>::scale_columns_logarithmic(const Vector< Statistics<T> >& statist
     {
        column_index = column_indices[j];
 
-       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+       if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10562,7 +10562,7 @@ void Matrix<T>::unscale_mean_standard_deviation(const Vector< Statistics<T> >& s
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].standard_deviation < numeric_limits<double>::min())
+      if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
       {
          // Do nothing
       }
@@ -10591,7 +10591,7 @@ void Matrix<T>::unscale_rows_mean_standard_deviation(const Vector< Statistics<T>
 
     for(size_t j = 0;  j < columns_number; j++)
     {
-       if(statistics[j].standard_deviation < numeric_limits<double>::min())
+       if(statistics[j].standard_deviation < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10640,7 +10640,7 @@ void Matrix<T>::unscale_columns_mean_standard_deviation(const Vector< Statistics
    {
       column_index = column_indices[j];
 
-      if(statistics[j].standard_deviation > numeric_limits<double>::min())
+      if(statistics[j].standard_deviation > (numeric_limits<double>::min)())
       {
          for(size_t i = 0; i < rows_number; i++)
          {
@@ -10677,7 +10677,7 @@ void Matrix<T>::unscale_minimum_maximum(const Vector< Statistics<T> >& statistic
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+      if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
       {
          cout << "OpenNN Warning: Matrix template.\n"
                    << "void unscale_minimum_maximum(const Vector< Statistics<T> >&) const method.\n"
@@ -10711,7 +10711,7 @@ void Matrix<T>::unscale_rows_minimum_maximum(const Vector< Statistics<T> >& stat
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+       if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10797,7 +10797,7 @@ void Matrix<T>::unscale_logarithmic(const Vector< Statistics<T> >& statistics)
 
    for(size_t j = 0; j < columns_number; j++)
    {
-      if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+      if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
       {
          cout << "OpenNN Warning: Matrix template.\n"
                    << "void unscale_minimum_maximum(const Vector< Statistics<T> >&) const method.\n"
@@ -10831,7 +10831,7 @@ void Matrix<T>::unscale_rows_logarithmic(const Vector< Statistics<T> >& statisti
 
     for(size_t j = 0; j < columns_number; j++)
     {
-       if(statistics[j].maximum - statistics[j].minimum < numeric_limits<double>::min())
+       if(statistics[j].maximum - statistics[j].minimum < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10881,7 +10881,7 @@ void Matrix<T>::unscale_columns_logarithmic(const Vector< Statistics<T> >& stati
     {
         column_index = column_indices[j];
 
-       if(statistics[column_index].maximum - statistics[column_index].minimum < numeric_limits<double>::min())
+       if(statistics[column_index].maximum - statistics[column_index].minimum < (numeric_limits<double>::min)())
        {
           // Do nothing
        }
@@ -10925,7 +10925,7 @@ Vector<size_t> Matrix<T>::calculate_minimal_indices() const
 template <class T>
 Vector<size_t> Matrix<T>::calculate_minimal_indices_omit(const T& value_to_omit) const
 {
-   T minimum = std::numeric_limits<T>::max();
+   T minimum = (std::numeric_limits<T>::max)();
 
    Vector<size_t> minimal_indices(2, 0);
 
@@ -10976,7 +10976,7 @@ Vector<size_t> Matrix<T>::calculate_maximal_indices() const
 template <class T>
 Vector<size_t> Matrix<T>::calculate_maximal_indices_omit(const T& value_to_omit) const
 {
-   T maximum = std::numeric_limits<T>::min();
+   T maximum = (std::numeric_limits<T>::min)();
 
    Vector<size_t> maximum_indices(2, 0);
 
@@ -11243,11 +11243,11 @@ double Matrix<T>::calculate_cross_entropy_error(const Matrix<double>& other_matr
             const double value = (*this)(i,j);
 
             cross_entropy_error -= (1.0 - other_value)*log(1.0-value) + other_value*log(value);
-//            if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 0.0) < std::numeric_limits<double>::min())
+//            if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 0.0) < (std::numeric_limits<double>::min)())
 //            {
 //                cross_entropy_error -= log(1.0 - (*this)(i,j));
 //            }
-//            else if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 1.0) < std::numeric_limits<double>::min())
+//            else if(fabs(other_matrix(static_cast<unsigned>(i), static_cast<unsigned>(j)) - 1.0) < (std::numeric_limits<double>::min)())
 //            {
 //                cross_entropy_error -= log((*this)(i,j));
 //            }

@@ -4012,7 +4012,7 @@ T Vector<T>::calculate_minimum_missing_values(
     const Vector<size_t> &missing_indices) const {
   const size_t this_size = this->size();
 
-  T minimum = numeric_limits<T>::max();
+  T minimum = (numeric_limits<T>::max)();
 
   for(size_t i = 0; i < this_size; i++) {
     if((*this)[i] < minimum &&
@@ -4036,7 +4036,7 @@ T Vector<T>::calculate_maximum_missing_values(
   T maximum;
 
   if(numeric_limits<T>::is_signed) {
-    maximum = -numeric_limits<T>::max();
+    maximum = -(numeric_limits<T>::max)();
   } else {
     maximum = 0;
   }
@@ -4059,12 +4059,12 @@ Vector<T> Vector<T>::calculate_minimum_maximum_missing_values(
     const Vector<size_t> &missing_indices) const {
   size_t this_size = this->size();
 
-  T minimum = numeric_limits<T>::max();
+  T minimum = (numeric_limits<T>::max)();
 
   T maximum;
 
   if(numeric_limits<T>::is_signed) {
-    maximum = -numeric_limits<T>::max();
+    maximum = -(numeric_limits<T>::max)();
   } else {
     maximum = 0;
   }
@@ -6209,7 +6209,7 @@ template <class T> Statistics<T> Vector<T>::calculate_statistics() const {
 
   Statistics<T> statistics;
 
-  T minimum = numeric_limits<T>::max();
+  T minimum = (numeric_limits<T>::max)();
   T maximum;
 
   double sum = 0;
@@ -6218,7 +6218,7 @@ template <class T> Statistics<T> Vector<T>::calculate_statistics() const {
 
   if(numeric_limits<T>::is_signed)
   {
-    maximum = -1*numeric_limits<T>::max();
+    maximum = -1*(numeric_limits<T>::max)();
   }
   else
   {
@@ -6297,7 +6297,7 @@ Statistics<T> Vector<T>::calculate_statistics_missing_values(
 
   Statistics<T> statistics;
 
-  T minimum = numeric_limits<T>::max();
+  T minimum = (numeric_limits<T>::max)();
   T maximum;
 
   double sum = 0;
@@ -6305,7 +6305,7 @@ Statistics<T> Vector<T>::calculate_statistics_missing_values(
   size_t count = 0;
 
   if(numeric_limits<T>::is_signed) {
-    maximum = -numeric_limits<T>::max();
+    maximum = -(numeric_limits<T>::max)();
   } else {
     maximum = 0;
   }
@@ -8665,7 +8665,7 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum_0_1() const
     const double minimum = calculate_minimum();
     const double maximum = calculate_maximum();
 
-    if(maximum-minimum < numeric_limits<double>::min())
+    if(maximum-minimum < (numeric_limits<double>::min)())
     {
       return (*this);
     }
@@ -8689,7 +8689,7 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum_0_1() const
 
 template <class T>
 void Vector<T>::scale_minimum_maximum(const T &minimum, const T &maximum) {
-  if(maximum - minimum < numeric_limits<double>::min()) {
+  if(maximum - minimum < (numeric_limits<double>::min)()) {
     return;
   }
 
@@ -8732,7 +8732,7 @@ template <class T> Statistics<T> Vector<T>::scale_minimum_maximum() {
 template <class T>
 void Vector<T>::scale_mean_standard_deviation(const T &mean,
                                               const T &standard_deviation) {
-  if(standard_deviation < numeric_limits<double>::min()) {
+  if(standard_deviation < (numeric_limits<double>::min)()) {
     return;
   }
 
@@ -8775,7 +8775,7 @@ Statistics<T> Vector<T>::scale_mean_standard_deviation() {
 
 template <class T>
 void Vector<T>::scale_standard_deviation(const T &standard_deviation) {
-  if(standard_deviation < numeric_limits<double>::min()) {
+  if(standard_deviation < (numeric_limits<double>::min)()) {
     return;
   }
 
@@ -8845,7 +8845,7 @@ Vector<T>::scale_standard_deviation(const Vector<T> &standard_deviation) {
 #pragma omp parallel for
 
   for(int i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < numeric_limits<double>::min()) {
+    if(standard_deviation[i] < (numeric_limits<double>::min)()) {
 //      cout << "OpenNN Warning: Vector class.\n"
 //                << "void scale_mean_standard_deviation(const Vector<T>&, const "
 //                   "Vector<T>&) method.\n"
@@ -8907,7 +8907,7 @@ Vector<T> Vector<T>::calculate_scaled_minimum_maximum(const Vector<T> &minimum,
   // Rescale data
 
   for(size_t i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < numeric_limits<double>::min()) {
+    if(maximum[i] - minimum[i] < (numeric_limits<double>::min)()) {
       cout << "OpenNN Warning: Vector class.\n"
                 << "Vector<T> calculate_scaled_minimum_maximum(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
@@ -8932,7 +8932,7 @@ Vector<T> Vector<T>::calculate_scaled_mean_standard_deviation() const
     const double mean = calculate_mean();
     const double standard_deviation = calculate_standard_deviation();
 
-    if(standard_deviation < numeric_limits<double>::min())
+    if(standard_deviation < (numeric_limits<double>::min)())
     {
       return (*this);
     }
@@ -8993,7 +8993,7 @@ Vector<T> Vector<T>::calculate_scaled_mean_standard_deviation(
   Vector<T> scaled_mean_standard_deviation(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < numeric_limits<double>::min()) {
+    if(standard_deviation[i] < (numeric_limits<double>::min)()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_scaled_mean_standard_deviation(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
@@ -9042,7 +9042,7 @@ Vector<T> Vector<T>::calculate_scaled_standard_deviation(const Vector<T> &standa
   Vector<T> scaled_standard_deviation(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < numeric_limits<double>::min()) {
+    if(standard_deviation[i] < (numeric_limits<double>::min)()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_scaled_mean_standard_deviation(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
@@ -9106,7 +9106,7 @@ Vector<T>::calculate_unscaled_minimum_maximum(const Vector<T> &minimum,
   Vector<T> unscaled_minimum_maximum(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < numeric_limits<double>::min()) {
+    if(maximum[i] - minimum[i] < (numeric_limits<double>::min)()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_unscaled_minimum_maximum(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
@@ -9170,7 +9170,7 @@ Vector<T> Vector<T>::calculate_unscaled_mean_standard_deviation(
   Vector<T> unscaled_mean_standard_deviation(this_size);
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < numeric_limits<double>::min()) {
+    if(standard_deviation[i] < (numeric_limits<double>::min)()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "Vector<T> calculate_unscaled_mean_standard_deviation(const "
                    "Vector<T>&, const Vector<T>&) const method.\n"
@@ -9231,7 +9231,7 @@ void Vector<T>::unscale_minimum_maximum(const Vector<T> &minimum,
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-    if(maximum[i] - minimum[i] < numeric_limits<double>::min()) {
+    if(maximum[i] - minimum[i] < (numeric_limits<double>::min)()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "void unscale_minimum_maximum(const Vector<T>&, const "
                    "Vector<T>&) method.\n"
@@ -9291,7 +9291,7 @@ void Vector<T>::unscale_mean_standard_deviation(
 #endif
 
   for(size_t i = 0; i < this_size; i++) {
-    if(standard_deviation[i] < numeric_limits<double>::min()) {
+    if(standard_deviation[i] < (numeric_limits<double>::min)()) {
       cout << "OpenNN Warning: Vector template.\n"
                 << "void unscale_mean_standard_deviation(const Vector<T>&, "
                    "const Vector<T>&) method.\n"
