@@ -297,8 +297,6 @@ protected:
 
    double regularization_weight = 0.0;
 
-   size_t batch_size = 1000;
-
    /// Display messages to screen. 
 
    bool display;  

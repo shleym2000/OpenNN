@@ -259,7 +259,7 @@ check();
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     // Data set
-
+	const size_t batch_size = data_set_pointer->get_instances_pointer()->get_instances_number();
     const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
 
     const size_t batches_number = training_batches.size();
@@ -297,7 +297,7 @@ check();
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     // Data set
-
+	const size_t batch_size = data_set_pointer->get_instances_pointer()->get_instances_number();
     const Vector< Vector<size_t> > selection_batches = data_set_pointer->get_instances_pointer()->get_selection_batches(batch_size);
 
     const size_t batches_number = selection_batches.size();
@@ -341,7 +341,7 @@ check();
     const MultilayerPerceptron* multilayer_perceptron_pointer = neural_network_pointer->get_multilayer_perceptron_pointer();
 
     // Data set
-
+	const size_t batch_size = data_set_pointer->get_instances_pointer()->get_instances_number();
     const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
 
     const size_t batches_number = training_batches.size();
@@ -408,7 +408,7 @@ check();
     const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
 
     // Data set
-
+	const size_t batch_size = data_set_pointer->get_instances_pointer()->get_instances_number();
     const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
 
     const size_t batches_number = training_batches.size();
@@ -605,7 +605,7 @@ check();
     const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
 
     // Data set
-
+	const size_t batch_size = data_set_pointer->get_instances_pointer()->get_instances_number();
     const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
 
     const size_t batches_number = training_batches.size();
@@ -867,7 +867,7 @@ check();
     const size_t parameters_number = multilayer_perceptron_pointer->get_parameters_number();
 
     // Data set
-
+	const size_t batch_size = data_set_pointer->get_instances_pointer()->get_instances_number();
     const Vector< Vector<size_t> > training_batches = data_set_pointer->get_instances_pointer()->get_training_batches(batch_size);
 
     const size_t batches_number = training_batches.size();
