@@ -4296,7 +4296,7 @@ Histogram<T> Vector<T>::calculate_histogram_centered(const double& center, const
 
       // Calculate bins center
 
-      for(int i = bin_center; i < bins_number; i++) // Upper centers
+      for(size_t i = bin_center; i < bins_number; i++) // Upper centers
       {
         minimums[i] = minimums[i - 1] + length;
         maximums[i] = maximums[i - 1] + length;
@@ -4304,7 +4304,7 @@ Histogram<T> Vector<T>::calculate_histogram_centered(const double& center, const
         centers[i] = (maximums[i] + minimums[i]) / 2.0;
       }
 
-      for(int i = bin_center-2; i >= 0; i--) // Lower centers
+      for(size_t i = bin_center-2; i >= 0; i--) // Lower centers
       {
         minimums[i] = minimums[i + 1] - length;
         maximums[i] = maximums[i + 1] - length;

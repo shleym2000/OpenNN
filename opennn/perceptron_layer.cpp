@@ -961,7 +961,7 @@ Matrix<double> PerceptronLayer::calculate_activations_derivatives(const Matrix<d
         }
     }
 
-//    return Matrix<double>();
+    return Matrix<double>();
 }
 
 
