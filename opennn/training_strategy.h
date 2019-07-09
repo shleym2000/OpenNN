@@ -118,8 +118,41 @@ public:
         /// Default constructor.
 
         explicit Results();
+		Results(Results&& r)
+		{
+			gradient_descent_results_pointer = r.gradient_descent_results_pointer;
+			r.gradient_descent_results_pointer = nullptr;
+			conjugate_gradient_results_pointer = r.conjugate_gradient_results_pointer;
+			r.conjugate_gradient_results_pointer = nullptr;
+			quasi_Newton_method_results_pointer = r.quasi_Newton_method_results_pointer;
+			r.quasi_Newton_method_results_pointer = nullptr;
+			Levenberg_Marquardt_algorithm_results_pointer = r.Levenberg_Marquardt_algorithm_results_pointer;
+			r.Levenberg_Marquardt_algorithm_results_pointer = nullptr;
+			stochastic_gradient_descent_results_pointer = r.stochastic_gradient_descent_results_pointer;
+			r.stochastic_gradient_descent_results_pointer = nullptr;
+			adaptive_moment_estimation_results_pointer = r.adaptive_moment_estimation_results_pointer;
+			r.adaptive_moment_estimation_results_pointer = nullptr;
+		}
 
-        /// Destructor.
+		Results &operator =(Results&& r)
+		{
+			gradient_descent_results_pointer = r.gradient_descent_results_pointer;
+			r.gradient_descent_results_pointer = nullptr;
+			conjugate_gradient_results_pointer = r.conjugate_gradient_results_pointer;
+			r.conjugate_gradient_results_pointer = nullptr;
+			quasi_Newton_method_results_pointer = r.quasi_Newton_method_results_pointer;
+			r.quasi_Newton_method_results_pointer = nullptr;
+			Levenberg_Marquardt_algorithm_results_pointer = r.Levenberg_Marquardt_algorithm_results_pointer;
+			r.Levenberg_Marquardt_algorithm_results_pointer = nullptr;
+			stochastic_gradient_descent_results_pointer = r.stochastic_gradient_descent_results_pointer;
+			r.stochastic_gradient_descent_results_pointer = nullptr;
+			adaptive_moment_estimation_results_pointer = r.adaptive_moment_estimation_results_pointer;
+			r.adaptive_moment_estimation_results_pointer = nullptr;
+			
+			return *this;
+		}
+
+		/// Destructor.
 
         virtual ~Results()
        {
