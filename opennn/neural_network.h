@@ -69,34 +69,34 @@ public:
 
    // MULTILAYER PERCEPTRON CONSTRUCTOR
 
-   explicit NeuralNetwork(const MultilayerPerceptron&);
+   explicit NeuralNetwork(const MultilayerPerceptron& new_multilayer_perceptron);
 
    // MULTILAYER PERCEPTRON ARCHITECTURE CONSTRUCTOR
 
-   explicit NeuralNetwork(const Vector<size_t>&);
+   explicit NeuralNetwork(const Vector<size_t>& new_multilayer_perceptron_architecture);
 
-   explicit NeuralNetwork(const vector<size_t>&);
+   explicit NeuralNetwork(const vector<size_t>& new_multilayer_perceptron_architecture);
 
 
     // ONE PERCEPTRON LAYER CONSTRUCTOR
 
-   explicit NeuralNetwork(const size_t&, const size_t&);
+   explicit NeuralNetwork(const size_t& new_inputs_number, const size_t& new_outputs_number);
 
    // TWO PERCEPTRON LAYERS CONSTRUCTOR
 
-   explicit NeuralNetwork(const size_t&, const size_t&, const size_t&);
+   explicit NeuralNetwork(const size_t& new_inputs_number, const size_t& new_hidden_perceptrons_number, const size_t& new_outputs_number);
 
    // FILE CONSTRUCTOR
 
-   explicit NeuralNetwork(const string&);
+   explicit NeuralNetwork(const string& file_name);
 
    // XML CONSTRUCTOR
 
-   explicit NeuralNetwork(const tinyxml2::XMLDocument&);
+   explicit NeuralNetwork(const tinyxml2::XMLDocument& document);
 
    // COPY CONSTRUCTOR
 
-   NeuralNetwork(const NeuralNetwork&);
+   NeuralNetwork(const NeuralNetwork& other_neural_network);
 
    // DESTRUCTOR
 
@@ -104,11 +104,11 @@ public:
 
    // ASSIGNMENT OPERATOR
 
-   NeuralNetwork& operator = (const NeuralNetwork&);
+   NeuralNetwork& operator = (const NeuralNetwork& other_neural_network);
 
    // EQUAL TO OPERATOR
 
-   bool operator == (const NeuralNetwork&) const;
+   bool operator == (const NeuralNetwork& other_neural_network) const;
 
 
    // GET METHODS
@@ -141,22 +141,22 @@ public:
 
    void set();
 
-   void set(const MultilayerPerceptron&);
-   void set(const Vector<size_t>&);
-   void set(const size_t&, const size_t&);
-   void set(const size_t&, const size_t&, const size_t&);
+   void set(const MultilayerPerceptron& new_multilayer_perceptron);
+   void set(const Vector<size_t>& new_multilayer_perceptron_architecture);
+   void set(const size_t& new_inputs_number, const size_t& new_outputs_number);
+   void set(const size_t& new_inputs_number, const size_t& new_hidden_neurons_number, const size_t& new_outputs_number);
 
    void set(const size_t&);
 
-   void set(const string&);
-   void set(const NeuralNetwork&);
+   void set(const string& file_name);
+   void set(const NeuralNetwork& other_neural_network);
 
-   void set_inputs(const Vector<bool>&);
+   void set_inputs(const Vector<bool>& new_uses);
 
    virtual void set_default();
 
 #ifdef __OPENNN_MPI__
-   void set_MPI(const NeuralNetwork*);
+   void set_MPI(const NeuralNetwork* neural_network);
 #endif
 
    void set_multilayer_perceptron_pointer(MultilayerPerceptron*);
@@ -178,8 +178,8 @@ public:
 
    void grow_input(const Statistics<double>& new_statistics = Statistics<double>());
 
-   void prune_input(const size_t&);
-   void prune_output(const size_t&);
+   void prune_input(const size_t& index);
+   void prune_output(const size_t& index);
 
    void resize_inputs_number(const size_t&);
    void resize_outputs_number(const size_t&);
@@ -189,12 +189,12 @@ public:
    void construct_multilayer_perceptron();
    void construct_inputs_trending_layer();
    void construct_scaling_layer();
-   void construct_scaling_layer(const Vector< Statistics<double> >&);
-   void construct_scaling_layer(const Eigen::MatrixXd&);
+   void construct_scaling_layer(const Vector< Statistics<double> >& input_statistics);
+   void construct_scaling_layer(const Eigen::MatrixXd& input_statistics);
    void construct_principal_components_layer();
    void construct_unscaling_layer();
-   void construct_unscaling_layer(const Vector< Statistics<double> >&);
-   void construct_unscaling_layer(const Eigen::MatrixXd&);
+   void construct_unscaling_layer(const Vector< Statistics<double> >& target_statistics);
+   void construct_unscaling_layer(const Eigen::MatrixXd& target_statistics);
    void construct_outputs_trending_layer();
    void construct_bounding_layer();
    void construct_probabilistic_layer();
@@ -233,71 +233,71 @@ public:
    size_t get_parameters_number() const;
    Vector<double> get_parameters() const;
 
-   void set_parameters(const Vector<double>&);
+   void set_parameters(const Vector<double>& new_parameters);
 
    // Parameters initialization methods
 
-   void initialize_parameters(const double&);
+   void initialize_parameters(const double& value);
 
    void randomize_parameters_uniform();
-   void randomize_parameters_uniform(const double&, const double&);
-   void randomize_parameters_uniform(const Vector<double>&, const Vector<double>&);
-   void randomize_parameters_uniform(const Vector< Vector<double> >&);
+   void randomize_parameters_uniform(const double& minimum, const double& maximum);
+   void randomize_parameters_uniform(const Vector<double>& minimum, const Vector<double>& maximum);
+   void randomize_parameters_uniform(const Vector< Vector<double> >& minimum_maximum);
 
    void randomize_parameters_normal();
-   void randomize_parameters_normal(const double&, const double&);
-   void randomize_parameters_normal(const Vector<double>&, const Vector<double>&);
-   void randomize_parameters_normal(const Vector< Vector<double> >&);
+   void randomize_parameters_normal(const double& mean, const double& standard_deviation);
+   void randomize_parameters_normal(const Vector<double>& mean, const Vector<double>& standard_deviation);
+   void randomize_parameters_normal(const Vector< Vector<double> >& mean_standard_deviation);
 
    // Parameters
 
    double calculate_parameters_norm() const;
    Statistics<double> calculate_parameters_statistics() const;
-   Histogram<double> calculate_parameters_histogram(const size_t& = 10) const;
+   Histogram<double> calculate_parameters_histogram(const size_t& bins_number = 10) const;
 
    void perturbate_parameters(const double&);
 
    // Feature importance
 
-   Vector<double> calculate_inputs_importance_parameters(const size_t&) const;
+   Vector<double> calculate_inputs_importance_parameters(const size_t& output_index) const;
 
    // Output 
 
-   Matrix<double> calculate_outputs(const Matrix<double>&) const;
-   Matrix<double> calculate_outputs(const Matrix<double>&, const double&) const;
-   Eigen::MatrixXd calculate_outputs_eigen(const Eigen::MatrixXd&) const;
-   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>&) const;
-   Matrix<double> calculate_Jacobian(const Vector<double>&, const double&) const;
-   Vector< Matrix<double> > calculate_Hessian(const Vector<double>&) const;
+   Matrix<double> calculate_outputs(const Matrix<double>& inputs) const;
+   Matrix<double> calculate_outputs(const Matrix<double>& inputs, const double& time) const;
+   Eigen::MatrixXd calculate_outputs_eigen(const Eigen::MatrixXd& inputs) const;
+   Vector< Matrix<double> > calculate_Jacobian(const Matrix<double>& inputs) const;
+   Matrix<double> calculate_Jacobian(const Vector<double>& inputs, const double& time) const;
+   Vector< Matrix<double> > calculate_Hessian(const Vector<double>& inputs) const;
 
-   Matrix<double> calculate_directional_inputs(const size_t&, const Vector<double>&, const double&, const double&, const size_t& = 101) const;
+   Matrix<double> calculate_directional_inputs(const size_t& direction, const Vector<double>& point, const double& minimum, const double& maximum, const size_t& points_number = 101) const;
 
-   Vector< Matrix<double> > calculate_Jacobian_data(const Matrix<double>&) const;
+   Vector< Matrix<double> > calculate_Jacobian_data(const Matrix<double>& inputs) const;
 
-   Vector< Histogram<double> > calculate_outputs_histograms(const size_t& = 1000, const size_t& = 10) const;
-   Vector< Histogram<double> > calculate_outputs_histograms(const Matrix<double>&, const size_t& = 10) const;
+   Vector< Histogram<double> > calculate_outputs_histograms(const size_t& points_number = 1000, const size_t& bins_number = 10) const;
+   Vector< Histogram<double> > calculate_outputs_histograms(const Matrix<double>& inputs, const size_t& bins_number = 10) const;
 
 
-   vector<double> calculate_outputs_std(const vector<double>&) const;
+   vector<double> calculate_outputs_std(const vector<double>& inputs) const;
 
    // Serialization methods
 
    string object_to_string() const;
  
    virtual tinyxml2::XMLDocument* to_XML() const;
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   virtual void from_XML(const tinyxml2::XMLDocument& document);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
    // virtual void read_XML(   );
 
    void print() const;
-   void save(const string&) const;
-   void save_parameters(const string&) const;
+   void save(const string& file_name) const;
+   void save_parameters(const string& file_name) const;
 
-   virtual void load(const string&);
-   void load_parameters(const string&);
+   virtual void load(const string& file_name);
+   void load_parameters(const string& file_name);
 
-   void save_data(const string&) const;
+   void save_data(const string& file_name) const;
 
    // Expression methods
 
@@ -307,16 +307,16 @@ public:
    string write_expression_php() const;
    string write_expression_R() const;
 
-   void save_expression(const string&);
-   void save_expression_python(const string&);
-   void save_expression_R(const string&);
+   void save_expression(const string& file_name);
+   void save_expression_python(const string& file_name);
+   void save_expression_R(const string& file_name);
 
    // PMML methods
 
    tinyxml2::XMLDocument* to_PMML() const;
-   void write_PMML(const string&) const;
+   void write_PMML(const string& file_name) const;
 
-   void from_PMML(const tinyxml2::XMLDocument&);
+   void from_PMML(const tinyxml2::XMLDocument& document);
 
 protected:
 
