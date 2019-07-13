@@ -1532,7 +1532,7 @@ Vector< Vector<size_t> > Instances::get_training_batches(const size_t& batch_siz
 {
     const Vector<size_t> training_indices = get_training_indices();
 
-    return training_indices.split(batch_size);
+    return training_indices.split((batch_size <= training_indices.size()) ? batch_size : training_indices.size());
 }
 
 
@@ -1540,7 +1540,7 @@ Vector< Vector<size_t> > Instances::get_selection_batches(const size_t& batch_si
 {
     const Vector<size_t> selection_indices = get_selection_indices();
 
-    return selection_indices.split(batch_size);
+    return selection_indices.split((batch_size <= selection_indices.size()) ? batch_size : selection_indices.size());
 }
 
 
@@ -1548,7 +1548,7 @@ Vector< Vector<size_t> > Instances::get_testing_batches(const size_t& batch_size
 {
     const Vector<size_t> testing_indices = get_testing_indices();
 
-    return testing_indices.split(batch_size);
+    return testing_indices.split((batch_size <= testing_indices.size()) ? batch_size : testing_indices.size());
 }
 
 
