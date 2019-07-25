@@ -6779,6 +6779,13 @@ void DataSet::read_from_data_file(const Vector< Vector<string> >& nominal_labels
         {
             getline(file, line);
 
+			// Leave comments out
+			size_t commentPos = line.find('#');
+			if (commentPos != std::string::npos)
+			{
+				line.erase(commentPos, line.length() - commentPos);
+			}
+
             if(separator != Tab)
             {
                 replace(line.begin(), line.end(), '\t', ' ');
@@ -6801,7 +6808,14 @@ void DataSet::read_from_data_file(const Vector< Vector<string> >& nominal_labels
     {
         getline(file, line);
 
-        if(separator != Tab)
+		// Leave comments out
+		size_t commentPos = line.find('#');
+		if (commentPos != std::string::npos)
+		{
+			line.erase(commentPos, line.length() - commentPos);
+		}
+		
+		if(separator != Tab)
         {
             replace(line.begin(), line.end(), '\t', ' ');
         }
