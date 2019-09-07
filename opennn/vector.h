@@ -7802,7 +7802,7 @@ inline Vector<T> Vector<T>::operator+ (const T &scalar) const {
   Vector<T> sum(this_size);
 
   transform(this->begin(), this->end(), sum.begin(),
-                 bind2nd(plus<T>(), scalar));
+                 bind(plus<T>(), placeholders::_1, scalar));
 
   return(sum);
 }
@@ -7853,7 +7853,7 @@ inline Vector<T> Vector<T>::operator-(const T &scalar) const {
   Vector<T> difference(this_size);
 
   transform(this->begin(), this->end(), difference.begin(),
-                 bind2nd(minus<T>(), scalar));
+                 bind(minus<T>(), placeholders::_1, scalar));
 
   return(difference);
 }
@@ -7903,7 +7903,7 @@ template <class T> Vector<T> Vector<T>::operator*(const T &scalar) const {
   Vector<T> product(this_size);
 
   transform(this->begin(), this->end(), product.begin(),
-                 bind2nd(multiplies<T>(), scalar));
+                 bind(multiplies<T>(), placeholders::_1, scalar));
 
   return(product);
 }
@@ -8125,7 +8125,7 @@ template <class T> Vector<T> Vector<T>::operator/(const T &scalar) const {
   Vector<T> cocient(this_size);
 
   transform(this->begin(), this->end(), cocient.begin(),
-                 bind2nd(divides<T>(), scalar));
+                 bind(divides<T>(), placeholders::_1, scalar));
 
   return(cocient);
 }

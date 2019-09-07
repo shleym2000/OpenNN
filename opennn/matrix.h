@@ -8841,12 +8841,12 @@ Vector< Statistics<T> > Matrix<T>::calculate_statistics(const Vector<size_t>& ro
 
     size_t row_index, column_index;
 
-    Vector<T> minimums(column_indices_size, (numeric_limits<T>::max)());
+    Vector<T> minimums(column_indices_size, numeric_limits<T>::max());
     Vector<T> maximums;
 
     if(numeric_limits<T>::is_signed)
     {
-      maximums.set(column_indices_size, -(numeric_limits<T>::max)());
+      maximums.set(column_indices_size, -numeric_limits<T>::max());
     }
     else
     {
@@ -12085,7 +12085,7 @@ Matrix<T> Matrix<T>::operator + (const T& scalar) const
 {
    Matrix<T> sum(rows_number, columns_number);
 
-   transform(this->begin(), this->end(), sum.begin(), bind2nd(plus<T>(), scalar));
+   transform(this->begin(), this->end(), sum.begin(), bind(plus<T>(), placeholders::_1, scalar));
 
    return(sum);
 }
@@ -12133,7 +12133,7 @@ Matrix<T> Matrix<T>::operator -(const T& scalar) const
 {
    Matrix<T> difference(rows_number, columns_number);
 
-   transform( this->begin(), this->end(), difference.begin(), bind2nd(minus<T>(), scalar));
+   transform( this->begin(), this->end(), difference.begin(), bind(minus<T>(), placeholders::_1, scalar));
 
    return(difference);
 }

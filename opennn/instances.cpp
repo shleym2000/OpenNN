@@ -14,6 +14,8 @@
 // OpenNN includes
 
 #include "instances.h"
+#include <random>
+#include <chrono>
 
 namespace OpenNN
 {
@@ -1386,7 +1388,9 @@ void Instances::split_random_indices
    const size_t instances_number = get_instances_number();
 
    Vector<size_t> indices(0, 1, instances_number-1);
-   random_shuffle(indices.begin(), indices.end());
+
+   unsigned seed = static_cast<unsigned>(chrono::system_clock::now().time_since_epoch().count());
+   shuffle(indices.begin(), indices.end(), default_random_engine(seed));
 
    size_t i = 0;
    size_t index;
