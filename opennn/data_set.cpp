@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "data_set.h"
-
+#include <random>
 
 using namespace  OpenNN;
 
@@ -826,7 +826,7 @@ Vector<Vector<size_t>> DataSet::get_training_batches(const bool& shuffle_batches
 {
     Vector<size_t> training_indices = get_training_instances_indices();
 
-    if(shuffle_batches_instances) random_shuffle(training_indices.begin(), training_indices.end());
+    if(shuffle_batches_instances) std::shuffle(training_indices.begin(), training_indices.end(), std::default_random_engine(0U));
 
     return training_indices.split(batch_instances_number);
 }
@@ -840,7 +840,7 @@ Vector<Vector<size_t>> DataSet::get_selection_batches(const bool& shuffle_batche
 {
     Vector<size_t> selection_indices = get_selection_instances_indices();
 
-    if(shuffle_batches_instances) random_shuffle(selection_indices.begin(), selection_indices.end());
+    if(shuffle_batches_instances) std::shuffle(selection_indices.begin(), selection_indices.end(), std::default_random_engine(0U));
 
     return selection_indices.split(batch_instances_number);
 }
@@ -854,7 +854,7 @@ Vector<Vector<size_t>> DataSet::get_testing_batches(const bool& shuffle_batches_
 {
     Vector<size_t> testing_indices = get_testing_instances_indices();
 
-    if(shuffle_batches_instances) random_shuffle(testing_indices.begin(), testing_indices.end());
+    if(shuffle_batches_instances) std::shuffle(testing_indices.begin(), testing_indices.end(), std::default_random_engine(0U));
 
     return testing_indices.split(batch_instances_number);
 }
@@ -1238,7 +1238,7 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
    const size_t instances_number = get_instances_number();
 
    Vector<size_t> indices(0, 1, instances_number-1);
-   random_shuffle(indices.begin(), indices.end());
+   std::shuffle(indices.begin(), indices.end(), std::default_random_engine(0U));
 
    size_t i = 0;
    size_t index;

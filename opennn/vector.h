@@ -31,6 +31,8 @@
 #include <climits>
 #include <ctime>
 #include <time.h>
+#include <random>
+
 
 using namespace std;
 
@@ -1026,7 +1028,7 @@ void Vector<T>::randomize_binary(const double& negatives_ratio, const double& po
     const size_t negatives_number = this_size - positives_number;
 
     Vector<size_t> indices(0, 1, this_size-1);
-    random_shuffle(indices.begin(), indices.end());
+    std::shuffle(indices.begin(), indices.end(), std::default_random_engine(0U));
 
     size_t i = 0;
     size_t index;
@@ -2770,7 +2772,7 @@ inline Vector<T> Vector<T>::operator+ (const T&scalar) const
   Vector<T> sum(this_size);
 
   transform(this->begin(), this->end(), sum.begin(),
-                 bind2nd(plus<T>(), scalar));
+      bind(plus<T>(), placeholders::_1, scalar));
 
   return sum;
 }
@@ -2821,7 +2823,7 @@ inline Vector<T> Vector<T>::operator-(const T&scalar) const
   Vector<T> difference(this_size);
 
   transform(this->begin(), this->end(), difference.begin(),
-                 bind2nd(minus<T>(), scalar));
+      bind(minus<T>(), placeholders::_1, scalar));
 
   return(difference);
 }
@@ -2873,7 +2875,7 @@ template <class T> Vector<T> Vector<T>::operator*(const T&scalar) const
   Vector<T> product(this_size);
 
   transform(this->begin(), this->end(), product.begin(),
-                 bind2nd(multiplies<T>(), scalar));
+                 bind(multiplies<T>(), placeholders::_1, scalar));
 
   return product;
 }
@@ -2960,7 +2962,7 @@ template <class T> Vector<T> Vector<T>::operator/(const T&scalar) const
   Vector<T> cocient(this_size);
 
   transform(this->begin(), this->end(), cocient.begin(),
-                 bind2nd(divides<T>(), scalar));
+                 bind(divides<T>(), placeholders::_1, scalar));
 
   return(cocient);
 }
@@ -3339,7 +3341,7 @@ Vector<T> Vector<T>::get_subvector_random(const size_t& new_size) const
 
     Vector<T> new_vector(*this);
 
-    random_shuffle(new_vector.begin(), new_vector.end());
+    std::shuffle(new_vector.begin(), new_vector.end(), std::default_random_engine(0U));
 
     return new_vector.get_first(new_size);
 }

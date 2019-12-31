@@ -18,6 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <algorithm>
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -6681,7 +6682,7 @@ Matrix<T> Matrix<T>::operator + (const T& scalar) const
 {
    Matrix<T> sum(rows_number, columns_number);
 
-   transform(this->begin(), this->end(), sum.begin(), bind2nd(plus<T>(), scalar));
+   transform(this->begin(), this->end(), sum.begin(), bind(plus<T>(), placeholders::_1, scalar));
 
    return sum;
 }
