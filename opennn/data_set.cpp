@@ -142,8 +142,6 @@ const bool& DataSet::get_display() const
 }
 
 
-// Columns methods
-
 /// Column default constructor
 
 DataSet::Column::Column()
@@ -173,8 +171,8 @@ DataSet::Column::~Column()
 {}
 
 
-/// Sets the column use.
-/// @param new_column_use Column use.
+/// Sets the use of the column and of the categories.
+/// @param new_column_use New use ofthe column.
 
 void DataSet::Column::set_use(const VariableUse& new_column_use)
 {
@@ -182,9 +180,6 @@ void DataSet::Column::set_use(const VariableUse& new_column_use)
     categories_uses.initialize(new_column_use);
 }
 
-
-/// Sets the column use.
-/// @param new_column_use Column use in string format.
 
 void DataSet::Column::set_use(const string& new_column_use)
 {
@@ -214,15 +209,6 @@ void DataSet::Column::set_use(const string& new_column_use)
 
         throw logic_error(buffer.str());
     }
-}
-
-
-/// Sets the column type.
-/// @param new_column_type Column type.
-
-void DataSet::Column::set_type(const ColumnType& new_column_type)
-{
-    type = new_column_type;
 }
 
 
@@ -260,50 +246,6 @@ void DataSet::Column::set_type(const string& new_column_type)
     }
 }
 
-
-/// Sets the new categories uses.
-/// @param new_categories_uses Vector which contains the categories uses of the columns of the data set.
-
-void DataSet::Column::set_categories_uses(const Vector<VariableUse>& new_categories_uses)
-{
-    const size_t new_categories_uses_number = new_categories_uses.size();
-
-    categories_uses.set(new_categories_uses_number);
-
-    for(size_t i = 0; i < new_categories_uses.size(); i++)
-    {
-        if(new_categories_uses[i] == OpenNN::DataSet::VariableUse::Input)
-        {
-            categories_uses[i] = Input;
-        }
-        else if(new_categories_uses[i] == OpenNN::DataSet::VariableUse::Target)
-        {
-            categories_uses[i] = Target;
-        }
-        else if(new_categories_uses[i] == OpenNN::DataSet::VariableUse::Time)
-        {
-            categories_uses[i] = Time;
-        }
-        else if(new_categories_uses[i] == OpenNN::DataSet::VariableUse::UnusedVariable)
-        {
-            categories_uses[i] = UnusedVariable;
-        }
-        else
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class.\n"
-                   << "void Column::set_categories_uses(const Vector<string>&) method.\n"
-                   << "Category use not valid (" << new_categories_uses[i] << ").\n";
-
-            throw logic_error(buffer.str());
-
-        }
-    }
-}
-
-/// Sets the new categories uses.
-/// @param new_categories_uses String vector which contains the categories uses of the columns of the data set.
 
 void DataSet::Column::set_categories_uses(const Vector<string>& new_categories_uses)
 {
@@ -552,15 +494,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// Returns the number of categories contained in the data set.
-
 size_t DataSet::Column::get_categories_number() const
 {
     return categories.size();
 }
 
-
-/// Returns the name of the used variables in the dataset.
 
 Vector<string> DataSet::Column::get_used_variables_names() const
 {
@@ -636,6 +574,7 @@ void DataSet::transform_columns_time_series()
 
             new_column_index++;
         }
+
 
 
         if(lag_index > 0 && column_index == columns_number - 1)
@@ -1548,6 +1487,14 @@ void DataSet::set_default_columns_names()
 }
 
 
+/// Sets the name of a single column.
+/// @param index Index of column.
+/// @param new_use Use for that column.
+
+void DataSet::set_column_name(const size_t& column_index, const string& new_name)
+{
+    columns[column_index].name = new_name;
+}
 
 
 /// Returns the use of a single variable.
@@ -1787,7 +1734,7 @@ size_t DataSet::get_used_variables_number() const
 /// Returns a indices vector with the positions of the inputs.
 
 Vector<size_t> DataSet::get_input_columns_indices() const
-{ 
+{
     const size_t input_columns_number = get_input_columns_number();
 
     Vector<size_t> input_columns_indices(input_columns_number);
@@ -2100,7 +2047,7 @@ size_t DataSet::get_input_variables_number() const
        }
        else if(columns[i].column_use == Input)
        {
-            inputs_number++;            
+            inputs_number++;
        }
    }
 
@@ -4546,7 +4493,7 @@ Vector<Descriptives> DataSet::calculate_columns_descriptives_positive_instances(
     Matrix<double> data_statistics_matrix(inputs_number, 4);
 
     for(size_t i = 0; i < inputs_number; i++)
-    {        
+    {
         const size_t variable_index = inputs_variables_indices[i];
 
         const Vector<double> variable_data = data.get_column(variable_index, positives_used_instances_indices);
@@ -6263,7 +6210,7 @@ void DataSet::unscale_inputs_minimum_maximum(const Vector<Descriptives>& data_de
 /// The size of that vector must be equal to the number of variables.
 
 void DataSet::unscale_targets_mean_standard_deviation(const Vector<Descriptives>& targets_descriptives)
-{    
+{
     const Vector<size_t> targets_indices = get_target_variables_indices();
 
     unscale_columns_mean_standard_deviation(data, targets_descriptives, targets_indices);
@@ -7112,7 +7059,6 @@ void DataSet::transform_time_series()
         OpenNN::transform_time_series(data, lags_number, steps_ahead);
     }
 
-cout << "After transform time series" << endl;
     transform_columns_time_series();
 
     Vector<InstanceUse> new_instance_uses(data.get_rows_number());
@@ -8216,7 +8162,7 @@ void DataSet::numeric_to_categorical(const size_t& variable_index)
 
     data = data.to_categorical(variable_index);
 
-    columns[variable_index].set_categories_uses(Vector<VariableUse>(categories.size(), columns[variable_index].column_use));
+    columns[variable_index].categories_uses = Vector<VariableUse>(categories.size(), columns[variable_index].column_use);
     columns[variable_index].type = Categorical;
     columns[variable_index].categories = categories.to_string_vector();
 }
@@ -8467,7 +8413,7 @@ void DataSet::read_csv_1()
         set_columns_names(data_file_preview[0]);
     }
     else
-    {        
+    {
         set_columns_names(get_default_columns_names(columns_number));
     }
 
