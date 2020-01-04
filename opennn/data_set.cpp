@@ -8352,6 +8352,13 @@ void DataSet::read_csv_1()
     {
         getline(file, line);
 
+        // Leave comments out
+        const size_t commentPos = line.find('#');
+        if (commentPos != std::string::npos)
+        {
+            line.erase(commentPos, line.length() - commentPos);
+        }
+
         trim(line);
 
         erase(line, '"');
@@ -8466,6 +8473,13 @@ void DataSet::read_csv_2_simple()
 
             getline(file, line);
 
+            // Leave comments out
+            const size_t commentPos = line.find('#');
+            if (commentPos != std::string::npos)
+            {
+                line.erase(commentPos, line.length() - commentPos);
+            }
+
             trim(line);
 
             erase(line, '"');
@@ -8485,6 +8499,13 @@ void DataSet::read_csv_2_simple()
         line_number++;
 
         getline(file, line);
+
+        // Leave comments out
+        const size_t commentPos = line.find('#');
+        if (commentPos != std::string::npos)
+        {
+            line.erase(commentPos, line.length() - commentPos);
+        }
 
         trim(line);
 
@@ -8568,6 +8589,13 @@ void DataSet::read_csv_3_simple()
     while(file.good())
     {
         getline(file, line);
+
+        // Leave comments out
+        const size_t commentPos = line.find('#');
+        if (commentPos != std::string::npos)
+        {
+            line.erase(commentPos, line.length() - commentPos);
+        }
 
         trim(line);
 
@@ -8663,6 +8691,13 @@ void DataSet::read_csv_2_complete()
     while(file.good())
     {
         getline(file, line);
+
+        // Leave comments out
+        const size_t commentPos = line.find('#');
+        if (commentPos != std::string::npos)
+        {
+            line.erase(commentPos, line.length() - commentPos);
+        }
 
         trim(line);
 
@@ -8765,6 +8800,13 @@ void DataSet::read_csv_3_complete()
         {
             getline(file, line);
 
+            // Leave comments out
+            const size_t commentPos = line.find('#');
+            if (commentPos != std::string::npos)
+            {
+                line.erase(commentPos, line.length() - commentPos);
+            }
+
             trim(line);
 
             if(line.empty()) continue;
@@ -8778,6 +8820,13 @@ void DataSet::read_csv_3_complete()
     while(file.good())
     {
           getline(file, line);
+
+          // Leave comments out
+          const size_t commentPos = line.find('#');
+          if (commentPos != std::string::npos)
+          {
+              line.erase(commentPos, line.length() - commentPos);
+          }
 
           trim(line);
 
