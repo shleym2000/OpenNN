@@ -2964,7 +2964,7 @@ template <class T> Vector<T> Vector<T>::operator/(const T&scalar) const
   transform(this->begin(), this->end(), cocient.begin(),
                  bind(divides<T>(), placeholders::_1, scalar));
 
-  return(cocient);
+  return cocient;
 }
 
 
@@ -2975,8 +2975,6 @@ template <class T>
 Vector<T> Vector<T>::operator/(const Vector<T>&other_vector) const
 {
   const size_t this_size = this->size();
-
-
 
 #ifdef __OPENNN_DEBUG__
 
@@ -4001,6 +3999,7 @@ Vector<size_t> Vector<T>::count_unique() const
     Vector<size_t> unique_count(unique_size);
 
  #pragma omp parallel for
+
     for(int i = 0; i < static_cast<int>(unique_size); i++)
     {
         unique_count[i] = count_equal_to(unique[i]);
@@ -4478,7 +4477,7 @@ Vector<time_t> Vector<T>::string_to_time_t() const
   return time_vector;
 }
 
-/// Returns a vector of vectors whit vectors size n. This method split vector
+/// Returns a vector of vectors, where each vector is of size n. This method split vector
 /// in several vectors.
 /// @param n Vectors size.
 
