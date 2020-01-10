@@ -263,6 +263,99 @@ Tensor<T>::~Tensor()
 }
 
 
+/// This method dumps values of the Tensor as string
+/// @param tensor Output matrix.
+
+template<class T>
+std::string getValues(const Tensor<T>& tensor)
+{
+    std::stringstream ss;
+    const size_t dimensions_number = tensor.get_dimensions_number();
+
+    if (dimensions_number == 1)
+    {
+        const size_t size = tensor.get_dimension(0);
+
+        for (size_t i = 0; i < size; i++)
+        {
+            ss << tensor[i] << " ";
+        }
+    }
+    else if (dimensions_number == 2)
+    {
+        const size_t rows_number = tensor.get_dimension(0);
+        const size_t columns_number = tensor.get_dimension(1);
+
+        for (size_t i = 0; i < rows_number; i++)
+        {
+            if (i != 0)
+            {
+                ss << endl;
+            }
+
+            for (size_t j = 0; j < columns_number; j++)
+            {
+                ss << tensor(i, j) << " ";
+            }
+        }
+    }
+    else if (dimensions_number == 3)
+    {
+        const size_t rank = tensor.get_dimension(2);
+        const size_t rows_number = tensor.get_dimension(0);
+        const size_t columns_number = tensor.get_dimension(1);
+
+        for (size_t k = 0; k < rank; k++)
+        {
+            ss << "submatrix_" << k << endl;
+
+            for (size_t i = 0; i < rows_number; i++)
+            {
+                if (i != 0)
+                {
+                    ss << endl;
+                }
+
+                for (size_t j = 0; j < columns_number; j++)
+                {
+                    ss << tensor(i, j, k) << "\t";
+                }
+            }
+        }
+    }
+    else if (dimensions_number > 3)
+    {
+        const size_t rank_1 = tensor.get_dimension(3);
+        const size_t rank_2 = tensor.get_dimension(2);
+        const size_t rows_number = tensor.get_dimension(0);
+        const size_t columns_number = tensor.get_dimension(1);
+
+        for (size_t l = 0; l < rank_1; l++)
+        {
+            for (size_t k = 0; k < rank_2; k++)
+            {
+                ss << "submatrix_" << l << "_" << k << endl;
+
+                for (size_t i = 0; i < rows_number; i++)
+                {
+                    if (i != 0)
+                    {
+                        ss << endl;
+                    }
+
+                    for (size_t j = 0; j < columns_number; j++)
+                    {
+                        ss << tensor(i, j, k, l) << "\t";
+                    }
+                }
+            }
+        }
+    }
+
+    return ss.str();
+}
+
+
 /// This method re-writes the output operator << for the Tensor Template.
 /// @param os Output stream.
 /// @param tensor Output matrix.
@@ -275,81 +368,9 @@ ostream& operator << (ostream& os, const Tensor<T>& tensor)
     os << "Dimensions number: " << dimensions_number << endl;
     os << "Dimensions: " << tensor.get_dimensions() << endl;
     os << "Values: " << endl;
+    os << getValues(tensor) << endl;
 
-    if(dimensions_number == 1)
-    {
-        const size_t size = tensor.get_dimension(0);
-
-        for(size_t i = 0; i < size; i ++)
-        {
-            os << tensor[i] << " ";
-        }
-
-        os << "\n";
-    }
-    else if(dimensions_number == 2)
-    {
-        const size_t rows_number = tensor.get_dimension(0);
-        const size_t columns_number = tensor.get_dimension(1);
-
-        for(size_t i = 0; i < rows_number; i ++)
-        {
-            for(size_t j = 0; j < columns_number; j++)
-            {
-                os << tensor(i,j) << " ";
-            }
-
-            os << endl;
-        }
-    }
-    else if(dimensions_number == 3)
-    {
-        const size_t rank = tensor.get_dimension(2);
-        const size_t rows_number = tensor.get_dimension(0);
-        const size_t columns_number = tensor.get_dimension(1);
-
-        for(size_t k = 0; k < rank; k ++)
-        {
-            os << "submatrix_" << k << "\n";
-
-            for(size_t i = 0; i < rows_number; i ++)
-            {
-                for(size_t j = 0; j < columns_number; j++)
-                {
-                    os << tensor(i,j,k) << "\t";
-                }
-
-                os << "\n";
-            }
-        }
-    }
-    else if(dimensions_number > 3)
-    {
-        const size_t rank_1 = tensor.get_dimension(3);
-        const size_t rank_2 = tensor.get_dimension(2);
-        const size_t rows_number = tensor.get_dimension(0);
-        const size_t columns_number = tensor.get_dimension(1);
-
-        for(size_t l = 0; l < rank_1; l++)
-        {
-            for(size_t k = 0; k < rank_2; k ++)
-            {
-                os << "submatrix_" << l << "_" << k << "\n";
-
-                for(size_t i = 0; i < rows_number; i ++)
-                {
-                    for(size_t j = 0; j < columns_number; j++)
-                    {
-                        os << tensor(i,j,k,l) << "\t";
-                    }
-
-                    os << "\n";
-                }
-            }
-        }
-    }
-
-   return os;
+    return os;
 }
 
 
