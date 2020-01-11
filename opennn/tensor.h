@@ -278,7 +278,12 @@ std::string getValues(const Tensor<T>& tensor)
 
         for (size_t i = 0; i < size; i++)
         {
-            ss << tensor[i] << " ";
+            if (i != 0)
+            {
+                ss << "\t";
+            }
+
+            ss << tensor[i];
         }
     }
     else if (dimensions_number == 2)
@@ -295,7 +300,12 @@ std::string getValues(const Tensor<T>& tensor)
 
             for (size_t j = 0; j < columns_number; j++)
             {
-                ss << tensor(i, j) << "\t";
+                if (j != 0)
+                {
+                    ss << "\t";
+                }
+
+                ss << tensor(i, j);
             }
         }
     }
@@ -318,7 +328,12 @@ std::string getValues(const Tensor<T>& tensor)
 
                 for (size_t j = 0; j < columns_number; j++)
                 {
-                    ss << tensor(i, j, k) << "\t";
+                    if (j != 0)
+                    {
+                        ss << "\t";
+                    }
+
+                    ss << tensor(i, j, k);
                 }
             }
         }
@@ -345,7 +360,12 @@ std::string getValues(const Tensor<T>& tensor)
 
                     for (size_t j = 0; j < columns_number; j++)
                     {
-                        ss << tensor(i, j, k, l) << "\t";
+                        if (j != 0)
+                        {
+                            ss << "\t";
+                        }
+
+                        ss << tensor(i, j, k, l);
                     }
                 }
             }
