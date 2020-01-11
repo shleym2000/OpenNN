@@ -640,8 +640,6 @@ void PerceptronLayer::randomize_parameters_normal()
 
 void PerceptronLayer::randomize_parameters_normal(const double& mean, const double& standard_deviation)
 {
-
-
     biases.randomize_normal(mean, standard_deviation);
 
     synaptic_weights.randomize_normal(mean, standard_deviation);
@@ -690,7 +688,7 @@ Tensor<double> PerceptronLayer::calculate_activations(const Tensor<double>& comb
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Matrix<double> calculate_activations(const Matrix<double>&) const method.\n"
+              << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -700,60 +698,27 @@ Tensor<double> PerceptronLayer::calculate_activations(const Tensor<double>& comb
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
+        case Logistic: return logistic(combinations);
 
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
 
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
+        case Threshold: return threshold(combinations);
 
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
+        case SymmetricThreshold: return symmetric_threshold(combinations);
 
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
+        case RectifiedLinear: return rectified_linear(combinations);
 
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
 
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
+        case SoftPlus: return soft_plus(combinations);
 
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
+        case SoftSign: return soft_sign(combinations);
 
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case HardSigmoid: return hard_sigmoid(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Tensor<double>();
@@ -773,7 +738,7 @@ Tensor<double> PerceptronLayer::calculate_activations_derivatives(const Tensor<d
        ostringstream buffer;
 
        buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "Matrix<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -783,60 +748,27 @@ Tensor<double> PerceptronLayer::calculate_activations_derivatives(const Tensor<d
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear_derivatives(combinations);
-        }
+        case Linear: return linear_derivatives(combinations);
 
-        case Logistic:
-        {
-             return logistic_derivatives(combinations);
-        }
+        case Logistic: return logistic_derivatives(combinations);
 
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combinations);
-        }
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
 
-        case Threshold:
-        {
-             return threshold_derivatives(combinations);
-        }
+        case Threshold: return threshold_derivatives(combinations);
 
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combinations);
-        }
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
 
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combinations);
-        }
+        case RectifiedLinear: return rectified_linear_derivatives(combinations);
 
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combinations);
-        }
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
 
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combinations);
-        }
+        case SoftPlus: return soft_plus_derivatives(combinations);
 
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combinations);
-        }
+        case SoftSign: return soft_sign_derivatives(combinations);
 
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combinations);
-        }
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combinations);
-        }
+        case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 
     return Tensor<double>();
@@ -1083,17 +1015,26 @@ Tensor<double> PerceptronLayer::calculate_outputs(const Tensor<double>& inputs, 
 }
 
 
-Layer::FirstOrderActivations PerceptronLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    FirstOrderActivations first_order_activations;
+    ForwardPropagation layers;
 
-    const Tensor<double> combinations = calculate_combinations(inputs.to_2d_tensor());
+    Tensor<double> combinations;
 
-    first_order_activations.activations = calculate_activations(combinations);
-///@todo, Linux bad_alloc
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+    if(inputs.get_dimensions_number() != 2)
+    {
+        combinations = calculate_combinations(inputs.to_2d_tensor());
+    }
+    else
+    {
+        combinations = calculate_combinations(inputs);
+    }
 
-    return first_order_activations;
+    layers.activations = calculate_activations(combinations);
+
+    layers.activations_derivatives = calculate_activations_derivatives(combinations);
+
+    return layers;
 }
 
 
@@ -1108,17 +1049,17 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
                                                        const Tensor<double>& activations_derivatives,
                                                        const Tensor<double>& next_layer_delta) const
 {
-    const Layer::LayerType layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
     Matrix<double> synaptic_weights_transpose;
 
-    if(layer_type == LayerType::Perceptron)
+    if(layer_type == Perceptron)
     {
         const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
         synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
     }
-    else if(layer_type == LayerType::Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -1137,7 +1078,7 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
 /// @param layer_inputs Tensor with layers inputs.
 
 Vector<double> PerceptronLayer::calculate_error_gradient(const Tensor<double>& layer_inputs,
-                                                         const Layer::FirstOrderActivations& ,
+                                                         const Layer::ForwardPropagation& ,
                                                          const Tensor<double>& layer_deltas)
 {
     Tensor<double> reshaped_inputs = layer_inputs.to_2d_tensor();
@@ -1262,7 +1203,7 @@ string PerceptronLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -1326,7 +1326,6 @@ Tensor<double> LongShortTermMemoryLayer::calculate_activations_states(const Tens
 }
 
 
-
 Tensor<double> LongShortTermMemoryLayer::calculate_activations(const Tensor<double>& combinations) const
 {
     #ifdef __OPENNN_DEBUG__
@@ -1350,50 +1349,27 @@ Tensor<double> LongShortTermMemoryLayer::calculate_activations(const Tensor<doub
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Linear: return linear(combinations);
+
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Tensor<double>();
@@ -1423,51 +1399,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_activations(const Vector<doub
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Vector<double>();
@@ -1497,51 +1449,27 @@ Tensor<double> LongShortTermMemoryLayer::calculate_recurrent_activations(const T
 
     switch(recurrent_activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Tensor<double>();
@@ -1571,51 +1499,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_recurrent_activations(const V
 
     switch(recurrent_activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Vector<double>();
@@ -1624,7 +1528,6 @@ Vector<double> LongShortTermMemoryLayer::calculate_recurrent_activations(const V
 
 Tensor<double> LongShortTermMemoryLayer::calculate_activations_derivatives(const Tensor<double>& combinations) const
 {
-
     #ifdef __OPENNN_DEBUG__
 
     const size_t neurons_number = get_neurons_number();
@@ -1646,54 +1549,32 @@ Tensor<double> LongShortTermMemoryLayer::calculate_activations_derivatives(const
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear_derivatives(combinations);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combinations);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combinations);
-        }
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combinations);
-        }
+        case Linear: return linear_derivatives(combinations);
+
+        case Logistic: return logistic_derivatives(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
+
+        case Threshold: return threshold_derivatives(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
+
+        case SoftPlus: return soft_plus_derivatives(combinations);
+
+        case SoftSign: return soft_sign_derivatives(combinations);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 
     return Tensor<double>();
 }
+
 
 
 
@@ -1720,51 +1601,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_activations_derivatives(const
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear_derivatives(combination);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combination);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combination);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combination);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combination);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combination);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combination);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combination);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combination);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combination);
-        }
+        case Linear: return linear_derivatives(combination);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combination);
-        }
+        case Logistic: return logistic_derivatives(combination);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combination);
+
+        case Threshold: return threshold_derivatives(combination);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combination);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combination);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combination);
+
+        case SoftPlus: return soft_plus_derivatives(combination);
+
+        case SoftSign: return soft_sign_derivatives(combination);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combination);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combination);
     }
 
     return Vector<double>();
@@ -1793,51 +1650,27 @@ Vector<double> LongShortTermMemoryLayer::calculate_recurrent_activations_derivat
 
     switch(recurrent_activation_function)
     {
-        case Linear:
-        {
-             return linear_derivatives(combination);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combination);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combination);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combination);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combination);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combination);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combination);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combination);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combination);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combination);
-        }
+        case Linear: return linear_derivatives(combination);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combination);
-        }
+        case Logistic: return logistic_derivatives(combination);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combination);
+
+        case Threshold: return threshold_derivatives(combination);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combination);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combination);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combination);
+
+        case SoftPlus: return soft_plus_derivatives(combination);
+
+        case SoftSign: return soft_sign_derivatives(combination);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combination);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combination);
     }
 
     return Vector<double>();
@@ -1992,7 +1825,7 @@ Tensor<double> LongShortTermMemoryLayer::calculate_outputs(const Tensor<double>&
        throw logic_error(buffer.str());
     }
 
-    if(parameters.size() != get_parameters_number() )
+    if(parameters.size() != get_parameters_number())
     {
         ostringstream buffer;
 
@@ -2218,7 +2051,7 @@ Tensor<double> LongShortTermMemoryLayer::calculate_outputs(const Tensor<double>&
 }
 
 
-Layer::FirstOrderActivations LongShortTermMemoryLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
     const size_t instances_number = inputs.get_dimension(0);
     const size_t neurons_number = get_neurons_number();
@@ -2299,12 +2132,12 @@ Layer::FirstOrderActivations LongShortTermMemoryLayer::calculate_first_order_act
         hidden_states_index++;
     }
 
-    Layer::FirstOrderActivations first_order_activations;
+    Layer::ForwardPropagation layers;
 
-    first_order_activations.activations = activations;
-    first_order_activations.activations_derivatives = activations_derivatives;
+    layers.activations = activations;
+    layers.activations_derivatives = activations_derivatives;
 
-    return first_order_activations;
+    return layers;
 }
 
 
@@ -2319,17 +2152,17 @@ Tensor<double> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_laye
                                                                 const Tensor<double>&,
                                                                 const Tensor<double>& next_layer_delta) const
 {
-    const Layer::LayerType layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
     Matrix<double> synaptic_weights_transpose;
 
-    if(layer_type == LayerType::Perceptron)
+    if(layer_type == Perceptron)
     {
         const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
         synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
     }
-    else if(layer_type == LayerType::Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -2341,7 +2174,7 @@ Tensor<double> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_laye
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<double> &  inputs,
-                                                                  const Layer::FirstOrderActivations& first_order_activations,
+                                                                  const Layer::ForwardPropagation& layers,
                                                                   const Tensor<double> & deltas)
 {
     const size_t parameters_number = get_parameters_number();
@@ -2364,51 +2197,51 @@ Vector<double> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<d
     {
         // Forget weights
 
-        error_gradient.embed(0, calculate_forget_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(0, calculate_forget_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // Input weights
 
-        error_gradient.embed(weights_number, calculate_input_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(weights_number, calculate_input_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // State weights
 
-        error_gradient.embed(2*weights_number, calculate_state_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(2*weights_number, calculate_state_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // Output weights
 
-        error_gradient.embed(3*weights_number, calculate_output_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(3*weights_number, calculate_output_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // Forget recurrent weights
 
-        error_gradient.embed(4*weights_number, calculate_forget_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number, calculate_forget_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // Input recurrent weights
 
-        error_gradient.embed(4*weights_number+recurrent_weights_number, calculate_input_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+recurrent_weights_number, calculate_input_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // State recurrent weights
 
-        error_gradient.embed(4*weights_number+2*recurrent_weights_number, calculate_state_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+2*recurrent_weights_number, calculate_state_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // Output recurrent weights
 
-        error_gradient.embed(4*weights_number+3*recurrent_weights_number, calculate_output_recurrent_weights_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+3*recurrent_weights_number, calculate_output_recurrent_weights_error_gradient(inputs,layers,deltas,activations_states));
 
         // Forget biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number, calculate_forget_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number, calculate_forget_biases_error_gradient(inputs,layers,deltas,activations_states));
 
         // Input biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+biases_number, calculate_input_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number+biases_number, calculate_input_biases_error_gradient(inputs,layers,deltas,activations_states));
 
         // State biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+2*biases_number, calculate_state_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number+2*biases_number, calculate_state_biases_error_gradient(inputs,layers,deltas,activations_states));
 
         // Output biases
 
-        error_gradient.embed(4*weights_number+4*recurrent_weights_number+3*biases_number, calculate_output_biases_error_gradient(inputs,first_order_activations,deltas,activations_states));
+        error_gradient.embed(4*weights_number+4*recurrent_weights_number+3*biases_number, calculate_output_biases_error_gradient(inputs,layers,deltas,activations_states));
     }
 
     return error_gradient;
@@ -2416,7 +2249,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<d
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_forget_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                 const Layer::FirstOrderActivations& first_order_activations,
+                                                                                 const Layer::ForwardPropagation& layers,
                                                                                  const Tensor<double>& deltas,
                                                                                  const Tensor<double>& activations_states)
  {
@@ -2441,11 +2274,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_weights_error_gradient
      const Matrix<double> output_activations = activations_states.get_matrix(3);
      const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-     const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-     const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-     const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-     const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-     const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+     const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+     const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+     const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+     const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+     const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
      size_t column_index = 0;
      size_t input_index = 0;
@@ -2523,7 +2356,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_weights_error_gradient
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_input_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -2548,11 +2381,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_weights_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t input_index = 0;
@@ -2629,7 +2462,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_weights_error_gradient(
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_state_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -2654,11 +2487,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_weights_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t input_index = 0;
@@ -2735,7 +2568,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_weights_error_gradient(
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_output_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                 const Layer::FirstOrderActivations& first_order_activations,
+                                                                                 const Layer::ForwardPropagation& layers,
                                                                                  const Tensor<double>& deltas,
                                                                                  const Tensor<double>& activations_states)
  {
@@ -2760,11 +2593,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_weights_error_gradient
      const Matrix<double> output_activations = activations_states.get_matrix(3);
      const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-     const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-     const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-     const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-     const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-     const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+     const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+     const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+     const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+     const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+     const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
      size_t column_index = 0;
      size_t input_index = 0;
@@ -2841,7 +2674,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_weights_error_gradient
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                           const Layer::FirstOrderActivations& first_order_activations,
+                                                                                           const Layer::ForwardPropagation& layers,
                                                                                            const Tensor<double>& deltas,
                                                                                            const Tensor<double>& activations_states)
 {
@@ -2866,11 +2699,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_erro
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
     const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t activation_index = 0;
@@ -2941,7 +2774,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_erro
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_input_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                          const Layer::FirstOrderActivations& first_order_activations,
+                                                                                          const Layer::ForwardPropagation& layers,
                                                                                           const Tensor<double>& deltas,
                                                                                           const Tensor<double>& activations_states)
 {
@@ -2966,11 +2799,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_recurrent_weights_error
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
    const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
    size_t column_index = 0;
    size_t activation_index = 0;
@@ -3040,7 +2873,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_recurrent_weights_error
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_state_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                          const Layer::FirstOrderActivations& first_order_activations,
+                                                                                          const Layer::ForwardPropagation& layers,
                                                                                           const Tensor<double>& deltas,
                                                                                           const Tensor<double>& activations_states)
 {
@@ -3065,11 +2898,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_recurrent_weights_error
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
    const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
    size_t column_index = 0;
    size_t activation_index = 0;
@@ -3139,7 +2972,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_recurrent_weights_error
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_output_recurrent_weights_error_gradient(const Tensor<double>& inputs,
-                                                                                           const Layer::FirstOrderActivations& first_order_activations,
+                                                                                           const Layer::ForwardPropagation& layers,
                                                                                            const Tensor<double>& deltas,
                                                                                            const Tensor<double>& activations_states)
  {
@@ -3164,11 +2997,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_recurrent_weights_erro
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
     const Matrix<double> hidden_state_activations = activations_states.get_matrix(5);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
     size_t column_index = 0;
     size_t activation_index = 0;
@@ -3238,7 +3071,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_recurrent_weights_erro
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -3262,11 +3095,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
     for(size_t instance = 0; instance < instances_number; instance++)
     {
@@ -3324,7 +3157,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(const Tensor<double>& inputs,
-                                                                               const Layer::FirstOrderActivations& first_order_activations,
+                                                                               const Layer::ForwardPropagation& layers,
                                                                                const Tensor<double>& deltas,
                                                                                const Tensor<double>& activations_states)
 {
@@ -3348,11 +3181,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(c
    const Matrix<double> output_activations = activations_states.get_matrix(3);
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
    for(size_t instance = 0; instance < instances_number; instance++)
    {
@@ -3411,7 +3244,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(c
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(const Tensor<double>& inputs,
-                                                                               const Layer::FirstOrderActivations& first_order_activations,
+                                                                               const Layer::ForwardPropagation& layers,
                                                                                const Tensor<double>& deltas,
                                                                                const Tensor<double>& activations_states)
 {
@@ -3435,11 +3268,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(c
    const Matrix<double> output_activations = activations_states.get_matrix(3);
    const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-   const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-   const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-   const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-   const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-   const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+   const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+   const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+   const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+   const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+   const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
    for(size_t instance = 0; instance < instances_number; instance++)
    {
@@ -3497,7 +3330,7 @@ Vector<double> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(c
 
 
 Vector<double> LongShortTermMemoryLayer::calculate_output_biases_error_gradient(const Tensor<double>& inputs,
-                                                                                const Layer::FirstOrderActivations& first_order_activations,
+                                                                                const Layer::ForwardPropagation& layers,
                                                                                 const Tensor<double>& deltas,
                                                                                 const Tensor<double>& activations_states)
 {
@@ -3521,11 +3354,11 @@ Vector<double> LongShortTermMemoryLayer::calculate_output_biases_error_gradient(
     const Matrix<double> output_activations = activations_states.get_matrix(3);
     const Matrix<double> cell_state_activations = activations_states.get_matrix(4);
 
-    const Matrix<double> forget_derivatives = first_order_activations.activations_derivatives.get_matrix(0);
-    const Matrix<double> input_derivatives = first_order_activations.activations_derivatives.get_matrix(1);
-    const Matrix<double> state_derivatives = first_order_activations.activations_derivatives.get_matrix(2);
-    const Matrix<double> output_derivatives = first_order_activations.activations_derivatives.get_matrix(3);
-    const Matrix<double> hidden_derivatives = first_order_activations.activations_derivatives.get_matrix(4);
+    const Matrix<double> forget_derivatives = layers.activations_derivatives.get_matrix(0);
+    const Matrix<double> input_derivatives = layers.activations_derivatives.get_matrix(1);
+    const Matrix<double> state_derivatives = layers.activations_derivatives.get_matrix(2);
+    const Matrix<double> output_derivatives = layers.activations_derivatives.get_matrix(3);
+    const Matrix<double> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
     for(size_t instance = 0; instance < instances_number; instance++)
     {
@@ -3787,7 +3620,7 @@ string LongShortTermMemoryLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

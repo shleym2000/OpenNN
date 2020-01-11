@@ -401,7 +401,7 @@ void LossIndex::check() const
 /// @param layers_delta Vector of tensors with layers delta.
 
 Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
-                                                   const Vector<Layer::FirstOrderActivations>& forward_propagation,
+                                                   const Vector<Layer::ForwardPropagation>& forward_propagation,
                                                    const Vector<Tensor<double>>& layers_delta) const
 {
     const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
@@ -462,7 +462,7 @@ Vector<double> LossIndex::calculate_error_gradient(const Tensor<double>& inputs,
 /// @param layers_delta Vector of tensors with layers delta.
 
 Matrix<double> LossIndex::calculate_error_terms_Jacobian(const Tensor<double>& inputs,
-                                                         const Vector<Layer::FirstOrderActivations>& forward_propagation,
+                                                         const Vector<Layer::ForwardPropagation>& forward_propagation,
                                                          const Vector<Tensor<double>>& layers_delta) const
 {  
    #ifdef __OPENNN_DEBUG__
@@ -1014,14 +1014,94 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
 
 /// Default constructor.
-/// Set of loss value and gradient vector of the peformance function.
+/// Set of loss value and gradient vector of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-LossIndex::FirstOrderLoss::FirstOrderLoss(const size_t& new_parameters_number)
+LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 {    
+    // Data set
+
+    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+    // Neural network
+
+    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+
+    const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const size_t outputs_number = neural_network_pointer->get_outputs_number();
+
+    const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+    // First order loss
+
+    output_gradient.set(Vector<size_t>({batch_instances_number, outputs_number}));
+
+    layers_delta.set(trainable_layers_number);
+
+    for(size_t i = 0; i < trainable_layers_number; i++)
+    {
+        const Layer::Type layer_type = trainable_layers_pointers[i]->get_type();
+
+        if(layer_type == Layer::Convolutional)
+        {
+            ConvolutionalLayer* layer_pointer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
+
+            const size_t output_channels_number = layer_pointer->get_filters_number();
+            const size_t output_rows_number = layer_pointer->get_outputs_rows_number();
+            const size_t output_columns_number = layer_pointer->get_outputs_columns_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+        }
+        else if(layer_type == Layer::Pooling)
+        {
+            PoolingLayer* layer_pointer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
+
+            const size_t output_channels_number = layer_pointer->get_inputs_channels_number();
+            const size_t output_rows_number = layer_pointer->get_outputs_rows_number();
+            const size_t output_columns_number = layer_pointer->get_outputs_columns_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
+        }
+        else if(layer_type == Layer::Perceptron)
+        {
+            PerceptronLayer* layer_pointer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
+
+            const size_t neurons_number = layer_pointer->get_neurons_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, neurons_number}));
+        }
+        else if(layer_type == Layer::Recurrent)
+        {
+            /// @todo add
+        }
+        else if(layer_type == Layer::LongShortTermMemory)
+        {
+            /// @todo add
+        }
+        else if(layer_type == Layer::Probabilistic)
+        {
+            ProbabilisticLayer* layer_pointer = dynamic_cast<ProbabilisticLayer*>(trainable_layers_pointers[i]);
+
+            const size_t output_columns_number = layer_pointer->get_neurons_number();
+
+            layers_delta[i].set(Vector<size_t>({batch_instances_number, output_columns_number}));
+        }
+        else
+        {
+            /// @todo add exception
+        }
+    }
+
     loss = 0.0;
 
-    gradient.set(new_parameters_number, 0.0);
+    error_gradient.set(parameters_number, 0.0);
+    regularization_gradient.set(parameters_number, 0.0);
+    gradient.set(parameters_number, 0.0);
 }
 
 
@@ -1032,18 +1112,7 @@ LossIndex::FirstOrderLoss::~FirstOrderLoss()
 }
 
 
-/// Set of loss value and gradient vector of the peformance function.
-/// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
-
-void LossIndex::FirstOrderLoss::set_parameters_number(const size_t& new_parameters_number)
-{
-    loss = 0.0;
-
-    gradient.set(new_parameters_number, 0.0);
-}
-
-
-Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::FirstOrderActivations>& forward_propagation,
+Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::ForwardPropagation>& forward_propagation,
                                                          const Tensor<double>& output_gradient) const
 {
     const size_t forward_propagation_size = forward_propagation.size();
@@ -1061,7 +1130,7 @@ Vector<Tensor<double>> LossIndex::calculate_layers_delta(const Vector<Layer::Fir
        ostringstream buffer;
 
       buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Vector<Matrix<double>> calculate_layers_delta(const Vector<Matrix<double>>&, const Matrix<double>&) method.\n"
+             << "Vector<Tensor<double>> calculate_layers_delta(const Vector<Matrix<double>>&, const Matrix<double>&) method.\n"
              << "Size of forward propagation activation derivative vector ("<< forward_propagation_size << ") must be equal to number of layers (" << trainable_layers_number << ").\n";
 
       throw logic_error(buffer.str());
@@ -1125,9 +1194,9 @@ check();
 
     #pragma omp parallel for reduction(+ : training_error)
 
-    for(int i = 0; i < static_cast<int>(batches_number); i++)
+    for(size_t i = 0; i < batches_number; i++)
     {
-        const double batch_error = calculate_batch_error(training_batches[static_cast<unsigned>(i)]);
+        const double batch_error = calculate_batch_error(training_batches[i]);
 
         training_error += batch_error;
     }
@@ -1224,7 +1293,7 @@ Vector<double> LossIndex::calculate_batch_error_gradient(const Vector<size_t>& b
     const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
     const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
 
-    const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
     const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation.get_last().activations, targets);
 
@@ -1294,7 +1363,7 @@ Vector<double> LossIndex::calculate_training_error_gradient_numerical_differenti
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

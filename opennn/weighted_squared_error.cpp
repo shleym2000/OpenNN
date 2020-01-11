@@ -228,9 +228,9 @@ void WeightedSquaredError::set_training_normalization_coefficient()
 
     
 
-    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const size_t negatives = data_set_pointer->calculate_training_negatives(targets_indices[0]);
+    const size_t negatives = data_set_pointer->calculate_training_negatives(target_variables_indices[0]);
 
     training_normalization_coefficient = negatives*negatives_weight*0.5;
 }
@@ -248,9 +248,9 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 
 #endif
 
-    const Vector<size_t> targets_indices = data_set_pointer->get_target_variables_indices();
+    const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const size_t negatives = data_set_pointer->calculate_selection_negatives(targets_indices[0]);
+    const size_t negatives = data_set_pointer->calculate_selection_negatives(target_variables_indices[0]);
 
     selection_normalization_coefficient = negatives*negatives_weight*0.5;
 }
@@ -346,7 +346,7 @@ check();
         const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<size_t>(i)]);
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<size_t>(i)]);
 
-        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Tensor<double> output_gradient
                 = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets);
@@ -392,7 +392,7 @@ check();
 
     const size_t batches_number = training_batches.size();
 
-    FirstOrderLoss first_order_loss(parameters_number);
+    FirstOrderLoss first_order_loss(this);
 
      #pragma omp parallel for
 
@@ -401,7 +401,7 @@ check();
         const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Vector<double> error_terms = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
 
@@ -442,7 +442,7 @@ check();
 /// Returns a first order terms loss structure, which contains the values and the Jacobian of the error terms function.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-LossIndex::FirstOrderLoss WeightedSquaredError::calculate_batch_first_order_loss(const Vector<size_t>& batch_indices) const
+LossIndex::FirstOrderLoss WeightedSquaredError::calculate_first_order_loss(const DataSet::Batch& batch) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -454,24 +454,19 @@ check();
 
     const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const size_t parameters_number = neural_network_pointer->get_parameters_number();
+    FirstOrderLoss first_order_loss(this);
 
-    FirstOrderLoss first_order_loss(parameters_number);
-
-    const Tensor<double> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<double> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+    const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(batch.inputs);
 
     const Tensor<double> output_gradient
-            = calculate_output_gradient(forward_propagation[layers_number-1].activations, targets)/training_normalization_coefficient;
+            = calculate_output_gradient(forward_propagation[layers_number-1].activations, batch.targets)/training_normalization_coefficient;
 
     const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
     const Vector<double> batch_gradient
-            = calculate_error_gradient(inputs, forward_propagation, layers_delta);
+            = calculate_error_gradient(batch.inputs, forward_propagation, layers_delta);
 
-    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, targets);
+    const double batch_error = sum_squared_error(forward_propagation[layers_number-1].activations, batch.targets);
 
     first_order_loss.loss = batch_error / training_normalization_coefficient;
     first_order_loss.gradient += batch_gradient;
@@ -585,7 +580,7 @@ check();
         const Tensor<double> inputs = data_set_pointer->get_input_data(training_batches[static_cast<unsigned>(i)]);
         const Tensor<double> targets = data_set_pointer->get_target_data(training_batches[static_cast<unsigned>(i)]);
 
-        const Vector<Layer::FirstOrderActivations> forward_propagation = neural_network_pointer->calculate_trainable_forward_propagation(inputs);
+        const Vector<Layer::ForwardPropagation> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
         const Vector<double> error_terms
                 = calculate_training_error_terms(forward_propagation[layers_number-1].activations, targets);
@@ -832,7 +827,7 @@ string WeightedSquaredError::object_to_string() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

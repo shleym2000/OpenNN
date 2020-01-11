@@ -986,7 +986,7 @@ void Tensor<T>::add_matrix(const Matrix<T>& a_matrix)
     {
         this->insert(this->end(), a_matrix.begin(), a_matrix.end());
 
-        dimensions = Vector<size_t>({ dimensions[0], dimensions[1], 2} );
+        dimensions = Vector<size_t>({ dimensions[0], dimensions[1], 2});
 
     }
     else if(order == 3)
@@ -1027,6 +1027,8 @@ void Tensor<T>::set(const size_t& size)
     this->resize(size);
 }
 
+
+/// @todo Empty
 
 template <class T>
 void Tensor<T>::set(const size_t&, const size_t&)
@@ -1490,7 +1492,7 @@ Tensor<T> Tensor<T>::divide(const Vector<T>&, const size_t&) const
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

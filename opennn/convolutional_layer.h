@@ -134,8 +134,65 @@ public:
 
     Matrix<double> calculate_image_convolution(const Tensor<double>&, const Tensor<double>&) const;
 
-    Tensor<double> calculate_convolutions(const Tensor<double>&) const;
-    Tensor<double> calculate_convolutions(const Tensor<double>&, const Vector<double>&) const;
+    Tensor<double> calculate_combinations(const Tensor<double>&) const;
+    Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
+
+    void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& convolutions) const
+    {
+        // Inputs
+
+        const size_t images_number = inputs.get_dimension(0);
+        const size_t channels_number = get_inputs_channels_number();
+
+        // Filters
+
+        const size_t filters_number = get_filters_number();
+        const size_t filters_rows_number = get_filters_rows_number();
+        const size_t filters_columns_number = get_filters_columns_number();
+
+        // Outputs
+
+        const size_t outputs_rows_number = get_outputs_rows_number();
+        const size_t outputs_columns_number = get_outputs_columns_number();
+
+        // Convolution loops
+
+//        #pragma omp parallel for
+
+        for(size_t image_index = 0; image_index < images_number; image_index++)
+        {
+            for(size_t filter_index = 0; filter_index < filters_number; filter_index++)
+            {
+                for(size_t output_row_index = 0; output_row_index < outputs_rows_number; output_row_index++)
+                {
+                    for(size_t output_column_index = 0; output_column_index < outputs_columns_number; output_column_index++)
+                    {
+                        double sum = 0.0;
+
+                        for(size_t channel_index = 0; channel_index < channels_number; channel_index++)
+                        {
+                            for(size_t filter_row_index = 0; filter_row_index < filters_rows_number; filter_row_index++)
+                            {
+                                const size_t row = output_row_index*row_stride + filter_row_index;
+
+                                for(size_t filter_column_index = 0; filter_column_index < filters_columns_number; filter_column_index++)
+                                {
+                                    const size_t column = output_column_index*column_stride + filter_column_index;
+
+                                    const double image_element = inputs(image_index, channel_index, row, column);
+                                    const double filter_element = synaptic_weights(filter_index, channel_index, filter_row_index, filter_column_index);
+
+                                    sum += image_element*filter_element;
+                                }
+                            }
+                        }
+
+                        convolutions(image_index, filter_index, output_row_index, output_column_index) = sum + biases[filter_index];
+                    }
+                }
+            }
+        }
+    }
 
     // Activation
 
@@ -143,12 +200,31 @@ public:
 
     Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const;
 
+    void calculate_activations(const Tensor<double>&, Tensor<double>&) const
+    {
+
+    }
+
+    void calculate_activations_derivatives(const Tensor<double>&, Tensor<double>&) const
+    {
+
+    }
+
    // Outputs
 
    Tensor<double> calculate_outputs(const Tensor<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
 
-   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
+
+   void calculate_forward_propagation(const Tensor<double>& inputs, ForwardPropagation& forward_propagation)
+   {
+       calculate_combinations(inputs, forward_propagation.combinations);
+
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+   }
 
    // Delta methods
 
@@ -163,7 +239,7 @@ public:
 
    // Gradient methods
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
    // Padding methods
 
@@ -184,7 +260,7 @@ protected:
 
    size_t column_stride = 1;
 
-   Vector<size_t> inputs_dimensions;
+   Vector<size_t> input_variables_dimensions;
 
    PaddingOption padding_option = NoPadding;
 
@@ -196,7 +272,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

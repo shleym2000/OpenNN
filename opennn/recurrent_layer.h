@@ -186,15 +186,24 @@ public:
 
    Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
-   Layer::FirstOrderActivations calculate_first_order_activations(const Tensor<double>& inputs);
+   Layer::ForwardPropagation calculate_forward_propagation(const Tensor<double>& inputs);
+
+   void calculate_forward_propagation(const Tensor<double>& inputs, Layer::ForwardPropagation& layers)
+   {
+       const Tensor<double> combinations = calculate_combinations(inputs);
+
+//       layers.activations = calculate_activations(combinations);
+
+//       layers.activations_derivatives = calculate_activations_derivatives(combinations);
+   }
 
    // Gradient
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
-   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
-   Vector<double> calculate_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
-   Vector<double> calculate_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+   Vector<double> calculate_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+   Vector<double> calculate_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
    // Expression methods
 
@@ -234,7 +243,7 @@ protected:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

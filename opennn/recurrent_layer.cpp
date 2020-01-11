@@ -38,7 +38,6 @@ RecurrentLayer::RecurrentLayer(const size_t& new_inputs_number, const size_t& ne
 }
  
 
-
 /// Copy constructor. 
 /// It creates a copy of an existing neuron layer object.
 /// @param other_neuron_layer neuron layer object to be copied.
@@ -848,51 +847,27 @@ Vector<double> RecurrentLayer::calculate_activations(const Vector<double>& combi
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Vector<double>();
@@ -903,51 +878,27 @@ Tensor<double> RecurrentLayer::calculate_activations(const Tensor<double>& combi
 {
     switch(activation_function)
     {
-        case Linear:
-        {
-             return linear(combinations);
-        }
-        case Logistic:
-        {
-             return logistic(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent(combinations);
-        }
-        case Threshold:
-        {
-             return threshold(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid(combinations);
-        }
+        case Linear: return linear(combinations);
 
-        case ExponentialLinear:
-        {
-             return exponential_linear(combinations);
-        }
+        case Logistic: return logistic(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent(combinations);
+
+        case Threshold: return threshold(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold(combinations);
+
+        case RectifiedLinear: return rectified_linear(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear(combinations);
+
+        case SoftPlus: return soft_plus(combinations);
+
+        case SoftSign: return soft_sign(combinations);
+
+        case HardSigmoid: return hard_sigmoid(combinations);
+
+        case ExponentialLinear: return exponential_linear(combinations);
     }
 
     return Tensor<double>();
@@ -956,7 +907,6 @@ Tensor<double> RecurrentLayer::calculate_activations(const Tensor<double>& combi
 
 Tensor<double> RecurrentLayer::calculate_activations_derivatives(const Tensor<double>& combinations) const
 {
-
     #ifdef __OPENNN_DEBUG__
 
     const size_t neurons_number = get_neurons_number();
@@ -978,50 +928,27 @@ Tensor<double> RecurrentLayer::calculate_activations_derivatives(const Tensor<do
 
     switch(activation_function)
     {
-        case Linear:
-        {
-             return  linear_derivatives(combinations);
-        }
-        case Logistic:
-        {
-             return logistic_derivatives(combinations);
-        }
-        case HyperbolicTangent:
-        {
-             return hyperbolic_tangent_derivatives(combinations);
-        }
-        case Threshold:
-        {
-             return threshold_derivatives(combinations);
-        }
-        case SymmetricThreshold:
-        {
-             return symmetric_threshold_derivatives(combinations);
-        }
-        case RectifiedLinear:
-        {
-             return rectified_linear_derivatives(combinations);
-        }
-        case ScaledExponentialLinear:
-        {
-             return scaled_exponential_linear_derivatives(combinations);
-        }
-        case SoftPlus:
-        {
-             return soft_plus_derivatives(combinations);
-        }
-        case SoftSign:
-        {
-             return soft_sign_derivatives(combinations);
-        }
-        case HardSigmoid:
-        {
-             return hard_sigmoid_derivatives(combinations);
-        }
-        case ExponentialLinear:
-        {
-             return exponential_linear_derivatives(combinations);
-        }
+        case Linear: return linear_derivatives(combinations);
+
+        case Logistic: return logistic_derivatives(combinations);
+
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
+
+        case Threshold: return threshold_derivatives(combinations);
+
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
+
+        case RectifiedLinear: return rectified_linear_derivatives(combinations);
+
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
+
+        case SoftPlus: return soft_plus_derivatives(combinations);
+
+        case SoftSign: return soft_sign_derivatives(combinations);
+
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
+
+        case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 
     return Tensor<double> ();
@@ -1082,7 +1009,6 @@ Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs)
 
 Tensor<double> RecurrentLayer::calculate_outputs(const Tensor<double>& inputs, const Vector<double>& parameters)
 {
-
     #ifdef __OPENNN_DEBUG__
 
     const size_t inputs_number = get_inputs_number();
@@ -1243,17 +1169,17 @@ Tensor<double> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                       const Tensor<double>& next_layer_delta) const
 {
 
-    const Layer::LayerType layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
     Matrix<double> synaptic_weights_transpose;
 
-    if(layer_type == LayerType::Perceptron)
+    if(layer_type == Perceptron)
     {
         const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
         synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
     }
-    else if(layer_type == LayerType::Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -1265,22 +1191,22 @@ Tensor<double> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
 
 
 
-Layer::FirstOrderActivations RecurrentLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation RecurrentLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    FirstOrderActivations first_order_activations;
+    ForwardPropagation layers;
 
     const Tensor<double> combinations = calculate_combinations(inputs);
 
-    first_order_activations.activations = calculate_activations(combinations);
+    layers.activations = calculate_activations(combinations);
 
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+    layers.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return first_order_activations;
+    return layers;
 }
 
 
 Vector<double> RecurrentLayer::calculate_error_gradient(const Tensor<double> & inputs,
-                                                        const Layer::FirstOrderActivations& first_order_activations,
+                                                        const Layer::ForwardPropagation& layers,
                                                         const Tensor<double> & deltas)
 {
     const size_t input_weights_number = get_input_weights_number();
@@ -1292,22 +1218,22 @@ Vector<double> RecurrentLayer::calculate_error_gradient(const Tensor<double> & i
 
     // Input weights
 
-    error_gradient.embed(0, calculate_input_weights_error_gradient(inputs,first_order_activations,deltas));
+    error_gradient.embed(0, calculate_input_weights_error_gradient(inputs,layers,deltas));
 
     // Recurent weights
 
-    error_gradient.embed(input_weights_number, calculate_recurrent_weights_error_gradient(inputs,first_order_activations,deltas));
+    error_gradient.embed(input_weights_number, calculate_recurrent_weights_error_gradient(inputs,layers,deltas));
 
     // Biases
 
-    error_gradient.embed(input_weights_number+recurrent_weights_number, calculate_biases_error_gradient(inputs,first_order_activations,deltas));
+    error_gradient.embed(input_weights_number+recurrent_weights_number, calculate_biases_error_gradient(inputs,layers,deltas));
 
     return error_gradient;
 }
 
 
 Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<double> & inputs,
-                                                                      const Layer::FirstOrderActivations& first_order_activations,
+                                                                      const Layer::ForwardPropagation& layers,
                                                                       const Tensor<double> & deltas)
 {
     const size_t instances_number = inputs.get_dimension(0);
@@ -1337,7 +1263,7 @@ Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tens
         }
         else
         {
-            const Vector<double> previous_activation_derivatives = first_order_activations.activations_derivatives.get_row(instance-1);
+            const Vector<double> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
 
             combinations_weights_derivatives = dot(combinations_weights_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
         }
@@ -1366,7 +1292,7 @@ Vector<double> RecurrentLayer::calculate_input_weights_error_gradient(const Tens
 
 
 Vector<double> RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<double> &,
-                                                                          const Layer::FirstOrderActivations& forward_propagation,
+                                                                          const Layer::ForwardPropagation& forward_propagation,
                                                                           const Tensor<double> & deltas)
 {
     const size_t instances_number = deltas.get_dimension(0);
@@ -1422,7 +1348,7 @@ Vector<double> RecurrentLayer::calculate_recurrent_weights_error_gradient(const 
 
 
 Vector<double> RecurrentLayer::calculate_biases_error_gradient(const Tensor<double> & inputs,
-                                                               const Layer::FirstOrderActivations& first_order_activations,
+                                                               const Layer::ForwardPropagation& layers,
                                                                const Tensor<double> & deltas)
 {
     const size_t instances_number = inputs.get_dimension(0);
@@ -1448,7 +1374,7 @@ Vector<double> RecurrentLayer::calculate_biases_error_gradient(const Tensor<doub
         }
         else
         {
-            const Vector<double> previous_activation_derivatives = first_order_activations.activations_derivatives.get_row(instance-1);
+            const Vector<double> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
 
             combinations_biases_derivatives = dot(combinations_biases_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
         }
@@ -1569,7 +1495,7 @@ string RecurrentLayer::write_activation_function_expression() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

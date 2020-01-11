@@ -266,9 +266,9 @@ public:
    BinaryClassifcationRates calculate_binary_classification_rates() const;
 
    Vector<size_t> calculate_true_positive_instances(const Tensor<double>&, const Tensor<double>&, const Vector<size_t>&, const double&) const;
-   Vector<size_t> calculate_false_positive_instances(const Tensor<double>&, const Tensor<double>&, const Vector<size_t>&, const double& ) const;
-   Vector<size_t> calculate_false_negative_instances(const Tensor<double>&, const Tensor<double>&, const Vector<size_t>&, const double& ) const;
-   Vector<size_t> calculate_true_negative_instances(const Tensor<double>&, const Tensor<double>&, const Vector<size_t>&, const double& ) const;
+   Vector<size_t> calculate_false_positive_instances(const Tensor<double>&, const Tensor<double>&, const Vector<size_t>&, const double&) const;
+   Vector<size_t> calculate_false_negative_instances(const Tensor<double>&, const Tensor<double>&, const Vector<size_t>&, const double&) const;
+   Vector<size_t> calculate_true_negative_instances(const Tensor<double>&, const Tensor<double>&, const Vector<size_t>&, const double&) const;
 
    // Multiple classification rates
 
@@ -317,7 +317,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

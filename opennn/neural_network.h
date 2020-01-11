@@ -75,11 +75,118 @@ public:
 
    virtual ~NeuralNetwork();
 
+   struct ForwardPropagation
+   {
+       /// Default constructor.
+
+       ForwardPropagation() {}
+
+       ForwardPropagation(const size_t& batch_instances_number, const NeuralNetwork* neural_network_pointer)
+       {
+           const size_t trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+           const Vector<Layer*> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+           layers.set(trainable_layers_number);
+
+           for(size_t i = 0; i < trainable_layers_number; i++)
+           {
+               if(trainable_layers_pointers[i]->get_type() == Layer::Convolutional)
+               {
+                   const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
+
+                   const size_t outputs_channels_number = convolutional_layer->get_filters_number();
+                   const size_t outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+                   const size_t outputs_columns_number = convolutional_layer->get_outputs_columns_number();
+
+                   layers[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+               }
+               else if(trainable_layers_pointers[i]->get_type() == Layer::Pooling)
+               {
+                   const PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
+
+                   const size_t outputs_channels_number = pooling_layer->get_inputs_channels_number();
+                   const size_t outputs_rows_number = pooling_layer->get_outputs_rows_number();
+                   const size_t outputs_columns_number = pooling_layer->get_outputs_columns_number();
+
+                   layers[i].combinations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+               }               
+               else if(trainable_layers_pointers[i]->get_type() == Layer::Recurrent)
+               {
+                   const RecurrentLayer* recurrent_layer = dynamic_cast<RecurrentLayer*>(trainable_layers_pointers[i]);
+
+                   const size_t neurons_number = recurrent_layer->get_neurons_number();
+
+                   layers[i].combinations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number}));
+               }
+               else if(trainable_layers_pointers[i]->get_type() == Layer::LongShortTermMemory)
+               {
+                   const LongShortTermMemoryLayer* long_short_term_memory_layer = dynamic_cast<LongShortTermMemoryLayer*>(trainable_layers_pointers[i]);
+
+                   const size_t neurons_number = long_short_term_memory_layer->get_neurons_number();
+
+                   layers[i].combinations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number}));
+               }
+               else if(trainable_layers_pointers[i]->get_type() == Layer::Perceptron)
+               {
+                   const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
+
+                   const size_t neurons_number = perceptron_layer->get_neurons_number();
+
+                   layers[i].combinations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number}));
+               }
+               else if(trainable_layers_pointers[i]->get_type() == Layer::Probabilistic)
+               {
+                   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(trainable_layers_pointers[i]);
+
+                   const size_t neurons_number = probabilistic_layer->get_neurons_number();
+
+                   layers[i].combinations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations.set(Vector<size_t>({batch_instances_number, neurons_number}));
+                   layers[i].activations_derivatives.set(Vector<size_t>({batch_instances_number, neurons_number, neurons_number}));
+               }
+               else
+               {
+                   /// @todo throw exception.
+               }
+           }
+       }
+
+       /// Destructor.
+
+       virtual ~ForwardPropagation() {}
+
+       void print()
+       {
+           const size_t layers_number = layers.size();
+
+           for(size_t i = 0; i < layers_number; i++)
+           {
+               cout << "Layer " << i+1 << endl;
+
+               layers[i].print();
+           }
+       }
+
+       Vector<Layer::ForwardPropagation> layers;
+   };
+
+
    // APPENDING LAYERS
 
    void add_layer(Layer*);
 
-   bool check_layer_type(const Layer::LayerType);
+   bool check_layer_type(const Layer::Type);
 
    // Get methods
 
@@ -211,7 +318,7 @@ public:
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
-   // virtual void read_XML(  );
+   // virtual void read_XML( );
 
    void print() const;
    void print_summary() const;
@@ -235,9 +342,32 @@ public:
    void save_expression_python(const string&);
    void save_expression_R(const string&);
 
-   /// Calculate de Forward Propagation in Neural Network   
+   /// Calculate de forward propagation in the neural network
 
-   Vector<Layer::FirstOrderActivations> calculate_trainable_forward_propagation(const Tensor<double>&) const;
+   Vector<Layer::ForwardPropagation> calculate_forward_propagation(const Tensor<double>&) const;
+
+   void calculate_forward_propagation(const DataSet::Batch& batch, ForwardPropagation& forward_propagation) const
+   {
+
+       const size_t trainable_layers_number = get_trainable_layers_number();
+
+       const Vector<Layer*> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       // First layer
+
+       trainable_layers_pointers[0]->calculate_forward_propagation(batch.inputs,
+                                     forward_propagation.layers[0]);
+
+       forward_propagation.layers[0].print();
+
+       // Rest of layers
+
+       for(size_t i = 1; i < trainable_layers_number; i++)
+       {
+            trainable_layers_pointers[i]->calculate_forward_propagation(forward_propagation.layers[i-1].activations,
+                                          forward_propagation.layers[i]);
+       }
+   }
 
 protected:
 
@@ -264,7 +394,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

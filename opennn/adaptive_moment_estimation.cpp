@@ -663,7 +663,7 @@ void AdaptiveMomentEstimation::set_display_period(const size_t& new_display_peri
 
 OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 {
-    Results results;
+   Results results;
 
    check();
 
@@ -675,9 +675,19 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    //
+   const Matrix<double>& data = data_set_pointer->get_data();
 
    const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+
+   const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+   const Vector<size_t>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Vector<size_t>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+
+   const Vector<size_t> input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
+
+   DataSet::Batch batch(data_set_pointer);
 
    // Neural network stuff
 
@@ -685,14 +695,16 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters(parameters_number);
+   Vector<double> parameters = neural_network_pointer->get_parameters();
    Vector<double> parameters_increment(parameters_number);
 
    double parameters_norm = 0.0;
 
+   NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
+
    // Loss index stuff
 
-   LossIndex::FirstOrderLoss first_order_loss(parameters_number);
+   LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
    double training_error = 0.0;
 
@@ -739,8 +751,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        const size_t batches_number = training_batches.size();
 
-       parameters = neural_network_pointer->get_parameters();
-
        parameters_norm = l2_norm(parameters);
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
@@ -751,11 +761,20 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        {
            iteration_count++;
 
+           // Data set
+
+           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
+           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
+
+           // Neural network
+
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+
+           // Loss index
+
+           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+
            learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
-
-           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
-
-           parameters = neural_network_pointer->get_parameters();
 
            // Loss
 
@@ -773,8 +792,9 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Update parameters
 
-           neural_network_pointer->set_parameters(parameters - gradient_exponential_decay*learning_rate/(square_root(square_gradient_exponential_decay)+ epsilon));
+           parameters -= gradient_exponential_decay*learning_rate/(square_root(square_gradient_exponential_decay)+ epsilon);
 
+           neural_network_pointer->set_parameters(parameters);
         }
 
        // Gradient
@@ -790,7 +810,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        if(epoch == 0)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
@@ -799,7 +819,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
        else if(selection_error <= minimum_selection_error)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
 
        // Elapsed time
@@ -1823,9 +1843,8 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 
 }
 
-
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

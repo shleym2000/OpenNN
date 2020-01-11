@@ -34,8 +34,6 @@ StochasticGradientDescent::StochasticGradientDescent(LossIndex* new_loss_index_p
 }
 
 
-// XML CONSTRUCTOR
-
 /// XML constructor.
 /// It creates a gradient descent optimization algorithm not associated to any loss index object.
 /// It also loads the class members from a XML document.
@@ -292,8 +290,6 @@ void StochasticGradientDescent::set_initial_learning_rate(const double& new_lear
 
 void StochasticGradientDescent::set_initial_decay(const double& new_dacay)
 {
-   
-
    #ifdef __OPENNN_DEBUG__
 
    if(new_dacay < 0.0)
@@ -436,8 +432,6 @@ void StochasticGradientDescent::set_warning_gradient_norm(const double& new_warn
 
 void StochasticGradientDescent::set_error_parameters_norm(const double& new_error_parameters_norm)
 {
-   
-
    #ifdef __OPENNN_DEBUG__
 
    if(new_error_parameters_norm < 0.0)
@@ -742,25 +736,40 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+   data_set_pointer->set_batch_instances_number(32);
+
+   const Matrix<double>& data = data_set_pointer->get_data();
+
    const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
 
    const size_t selection_instances_number = data_set_pointer->get_selection_instances_number();
+
+   const Vector<size_t> input_data_dimensions = data_set_pointer->get_input_variables_dimensions();
+   const Vector<size_t> target_data_dimensions = data_set_pointer->get_target_variables_dimensions();
+
+   const Vector<size_t> input_variables_indices = data_set_pointer->get_input_variables_indices();
+   const Vector<size_t> target_variables_indices = data_set_pointer->get_target_variables_indices();
+
+   DataSet::Batch batch(data_set_pointer);
 
    // Neural network stuff
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+   Vector<double> parameters = neural_network_pointer->get_parameters();
+
    const size_t parameters_number = neural_network_pointer->get_parameters_number();
 
-   Vector<double> parameters(parameters_number);
    Vector<double> parameters_increment(parameters_number);
    Vector<double> last_increment(parameters_number,0.0);
 
    double parameters_norm = 0.0;
 
+   NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
+
    // Loss index stuff
 
-   LossIndex::FirstOrderLoss first_order_loss(parameters_number);
+   LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
    double training_error = 0.0;
 
@@ -805,8 +814,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        const size_t batches_number = training_batches.size();
 
-       parameters = neural_network_pointer->get_parameters();
-
        parameters_norm = l2_norm(parameters);
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
@@ -815,17 +822,35 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        for(size_t iteration = 0; iteration < batches_number; iteration++)
        {
+           // Data set
+
+           data.get_tensor(training_batches[iteration], input_variables_indices, input_data_dimensions, batch.inputs);
+           data.get_tensor(training_batches[iteration], target_variables_indices, target_data_dimensions, batch.targets);
+
+//           batch.print();
+
+           // Neural network
+
+           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+
+           system("pause");
+
+/*
+//           forward_propagation.print();
+
            //Loss
 
-           first_order_loss = loss_index_pointer->calculate_batch_first_order_loss(training_batches[iteration]);
+           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+
+//           first_order_loss.print();
+
+//           system("pause");
 
            loss += first_order_loss.loss;
 
            // Gradient
 
             initial_decay > 0.0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
-
-            parameters = neural_network_pointer->get_parameters();
 
             parameters_increment = first_order_loss.gradient*(-learning_rate);
 
@@ -835,9 +860,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 last_increment = parameters_increment;
 
-                neural_network_pointer->set_parameters(parameters + parameters_increment);
+                parameters += parameters_increment;
             }
-            else if(momentum > 0.0 && nesterov )
+            else if(momentum > 0.0 && nesterov)
             {
                 parameters_increment += last_increment*momentum;
 
@@ -845,14 +870,17 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 nesterov_increment = parameters_increment*momentum - first_order_loss.gradient*(learning_rate) ;
 
-                neural_network_pointer->set_parameters(parameters + nesterov_increment);
+                parameters += nesterov_increment;
             }
             else
             {
-                neural_network_pointer->set_parameters(parameters + parameters_increment);
+                parameters += parameters_increment;
             }
 
+            neural_network_pointer->set_parameters(parameters);
+
             learning_rate_iteration++;
+*/
        }
 
        gradient_norm = l2_norm(first_order_loss.gradient);
@@ -866,7 +894,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        if(epoch == 0)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
        else if(epoch != 0 && selection_error > old_selection_error)
        {
@@ -875,7 +903,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        else if(selection_error <= minimum_selection_error)
        {
           minimum_selection_error = selection_error;
-          minimum_selection_error_parameters = neural_network_pointer->get_parameters();
+          minimum_selection_error_parameters = parameters;
        }
 
        // Elapsed time
@@ -1893,7 +1921,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

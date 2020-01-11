@@ -127,7 +127,7 @@ bool ModelSelection::has_training_strategy() const
 
 /// Returns the type of algorithm for the order selection.
 
-const ModelSelection::OrderSelectionMethod& ModelSelection::get_neurons_selection_method() const
+const ModelSelection::NeuronsSelectionMethod& ModelSelection::get_neurons_selection_method() const
 {
     return neurons_selection_method;
 }
@@ -243,7 +243,7 @@ void ModelSelection::set_display(const bool& new_display)
 /// Sets a new method for selecting the order which have more impact on the targets.
 /// @param new_neurons_selection_method Method for selecting the order(NO_NEURONS_SELECTION, INCREMENTAL_NEURONS, GOLDEN_SECTION, SIMULATED_ANNEALING).
 
-void ModelSelection::set_neurons_selection_method(const ModelSelection::OrderSelectionMethod& new_neurons_selection_method)
+void ModelSelection::set_neurons_selection_method(const ModelSelection::NeuronsSelectionMethod& new_neurons_selection_method)
 {
     destruct_neurons_selection();
 
@@ -709,7 +709,7 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* growing_inputs_element = growing_inputs_document->FirstChildElement("GrowingInputs");
 
-        for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+        for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             inputs_selection_element->InsertEndChild(copy );
         }
@@ -729,7 +729,7 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* pruning_inputs_element = pruning_inputs_document->FirstChildElement("PruningInputs");
 
-        for(const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+        for(const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             inputs_selection_element->InsertEndChild(copy );
         }
@@ -749,7 +749,7 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* genetic_algorithm_element = genetic_algorithm_document->FirstChildElement("GeneticAlgorithm");
 
-        for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+        for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             inputs_selection_element->InsertEndChild(copy );
         }
@@ -783,7 +783,7 @@ tinyxml2::XMLDocument* ModelSelection::to_XML() const
 
         const tinyxml2::XMLElement* incremental_order_element = incremental_order_document->FirstChildElement("IncrementalNeurons");
 
-        for(const tinyxml2::XMLNode* nodeFor=incremental_order_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+        for(const tinyxml2::XMLNode* nodeFor=incremental_order_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
             tinyxml2::XMLNode* copy = nodeFor->DeepClone(document );
             neurons_selection_element->InsertEndChild(copy );
         }
@@ -927,7 +927,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 tinyxml2::XMLElement* growing_element = new_document.NewElement("GrowingInputs");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     growing_element->InsertEndChild(copy );
                 }
@@ -943,7 +943,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 tinyxml2::XMLElement* pruning_element = new_document.NewElement("PruningInputs");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     pruning_element->InsertEndChild(copy );
                 }
@@ -959,7 +959,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 tinyxml2::XMLElement* genetic_element = new_document.NewElement("GeneticAlgorithm");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     genetic_element->InsertEndChild(copy );
                 }
@@ -996,7 +996,7 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
                 tinyxml2::XMLElement* incremental_element = new_document.NewElement("IncrementalNeurons");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling() ) {
+                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling()) {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
                     incremental_element->InsertEndChild(copy );
                 }
@@ -1345,7 +1345,7 @@ Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
 
     const Vector<DataSet::InstanceUse> original_uses = data_set_pointer->get_instances_uses();
 
-    const Vector<size_t> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Vector<size_t> input_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const size_t target_index = data_set_pointer->get_target_variables_indices()[0];
 
@@ -1366,7 +1366,7 @@ Vector<NeuralNetwork> ModelSelection::perform_positives_cross_validation() const
         const size_t current_selection_instance_index = positives_instances_indices[i];
         const Vector<double> current_selection_instance = data_set_pointer->get_instance_data(current_selection_instance_index);
         const double targets = current_selection_instance[target_index];
-        const Vector<double> current_inputs_selection_instance = current_selection_instance.get_subvector(inputs_indices);
+        const Vector<double> current_inputs_selection_instance = current_selection_instance.get_subvector(input_variables_indices);
 
         data_set_pointer->set_instance_use(current_selection_instance_index, DataSet::Testing);
         neural_network_pointer->randomize_parameters_normal();

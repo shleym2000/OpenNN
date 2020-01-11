@@ -40,6 +40,10 @@
 
 #include "../eigen/Eigen"
 
+#ifdef __OPENNN_CUDA__
+    #include "../../arte/opennn_cuda/opennn_cuda/kernels.h"
+#endif
+
 using namespace std;
 
 namespace OpenNN
@@ -116,7 +120,6 @@ public:
 
    // Structs
 
-
    /// This structure represents the columns of the DataSet.
 
    struct Column
@@ -173,6 +176,45 @@ public:
        void write_XML(tinyxml2::XMLPrinter&) const;
    };
 
+
+   struct Batch
+   {
+       /// Default constructor.
+
+       Batch() {}
+
+       Batch(const DataSet* data_set_pointer)
+       {
+           const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
+           const size_t input_variables_number = data_set_pointer->get_input_variables_number();
+           const size_t target_variables_number = data_set_pointer->get_target_variables_number();
+
+           const Vector<size_t> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+           const Vector<size_t> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
+
+           inputs.set(input_variables_dimensions.insert_element(0, batch_instances_number));
+           targets.set(target_variables_dimensions.insert_element(0, batch_instances_number));
+       }
+
+       /// Destructor.
+
+       virtual ~Batch() {}
+
+       void print()
+       {
+           cout << "Batch structure" << endl;
+
+           cout << "Inputs:" << endl;
+           cout << inputs << endl;
+
+           cout << "Targets:" << endl;
+           cout << targets << endl;
+       }
+
+       Tensor<double> inputs;
+       Tensor<double> targets;
+   };
+
    // Instances get methods
 
    inline size_t get_instances_number() const {return instances_uses.size();}
@@ -196,6 +238,8 @@ public:
 
    Vector<size_t> get_instances_uses_numbers() const;
    Vector<double> get_instances_uses_percentages() const;
+
+   size_t get_batch_instances_number() const {return batch_instances_number;}
 
    // Columns get methods
 
@@ -253,8 +297,8 @@ public:
    VariableUse get_variable_use(const size_t&) const;
    Vector<VariableUse> get_variables_uses() const;
 
-   Vector<size_t> get_input_variables_dimensions() const;
-   Vector<size_t> get_target_variables_dimensions() const;
+   const Vector<size_t>& get_input_variables_dimensions() const;
+   const Vector<size_t>& get_target_variables_dimensions() const;
 
    // Batches get methods
 
@@ -416,8 +460,8 @@ public:
    void set_target();
    void set_variables_unused();
 
-   void set_input_variables_dimensions(const Vector<size_t>& );
-   void set_target_variables_dimensions(const Vector<size_t>& );
+   void set_input_variables_dimensions(const Vector<size_t>&);
+   void set_target_variables_dimensions(const Vector<size_t>&);
 
    // Data set methods
 
@@ -691,6 +735,8 @@ public:
 
    void save_data() const;
 
+   void save_data_binary(const string&) const;
+
    // Data load methods
 
    void read_csv();
@@ -775,7 +821,7 @@ private:
 
    /// Number of batch instances. It is used to optimized the training strategy.
 
-   size_t batch_instances_number = 1000;
+   size_t batch_instances_number = 32;
 
    // Variables
 
@@ -795,9 +841,9 @@ private:
 
    bool has_columns_names = false;
 
-   Vector<size_t> inputs_dimensions;
+   Vector<size_t> input_variables_dimensions;
 
-   Vector<size_t> targets_dimensions;
+   Vector<size_t> target_variables_dimensions;
 
    Vector<Column> columns;
 
@@ -811,7 +857,12 @@ private:
 
    Vector<Vector<string>> data_file_preview;
 
-//   bool shuffle_batches_instances = false;
+#ifdef __OPENNN_CUDA__
+
+    #include "../../arte/opennn_cuda/opennn_cuda/data_set_cuda.h"
+
+#endif
+
 };
 
 }
@@ -819,7 +870,7 @@ private:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

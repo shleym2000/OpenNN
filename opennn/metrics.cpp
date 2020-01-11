@@ -228,7 +228,7 @@ Tensor<double> dot_2d_3d(const Tensor<double>& tensor_1, const Tensor<double>& t
   {
       const Matrix<double> i_matrix = tensor_2.get_matrix(i);
 
-      const Matrix<double> i_row = tensor_1_matrix.get_submatrix_rows({i} );
+      const Matrix<double> i_row = tensor_1_matrix.get_submatrix_rows({i});
 
       Matrix<double> dot_product = dot(i_row, i_matrix);
 
@@ -260,11 +260,11 @@ Matrix<double> dot(const Matrix<double>& matrix, const Tensor<double>& tensor)
         {
             const Matrix<double> i_matrix = tensor.get_matrix(i);
 
-            const Matrix<double> i_row = matrix.get_submatrix_rows({i} );
+            const Matrix<double> i_row = matrix.get_submatrix_rows({i});
 
             Matrix<double> dot_product = dot(i_row, i_matrix);
 
-            outputs.set_row(i, dot_product.to_vector() );
+            outputs.set_row(i, dot_product.to_vector());
         }
 
         return outputs;
@@ -958,23 +958,13 @@ Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<
     const size_t rows_number_1 = matrix_1.get_dimension(0);
     const size_t columns_number_1 = matrix_1.get_dimension(1);
 
-    const size_t rows_number_2 = matrix_2.get_rows_number();
     const size_t columns_number_2 =matrix_2.get_columns_number();
-
-//    const size_t size = vector.size();
 
    #ifdef __OPENNN_DEBUG__
 
    ostringstream buffer;
 
-   if(false)
-   {
-     buffer << "OpenNN Exception: Metrics functions.\n"
-            << "Matrix<double> calculate_p_norm_gradient(const double&) const method.\n"
-            << "p value must be greater than zero.\n";
-
-     throw logic_error(buffer.str());
-   }
+   const size_t rows_number_2 = matrix_2.get_rows_number();
 
    if(rows_number_2 != columns_number_1)
    {
@@ -1015,6 +1005,57 @@ Tensor<double> linear_combinations(const Tensor<double>& matrix_1, const Matrix<
 
    return new_matrix;
 }
+
+
+
+void linear_combinations(const Tensor<double>& matrix_1, const Matrix<double>& matrix_2, const Vector<double>& vector, Tensor<double>& new_matrix)
+{
+    const size_t rows_number_1 = matrix_1.get_dimension(0);
+    const size_t columns_number_1 = matrix_1.get_dimension(1);
+
+    const size_t columns_number_2 =matrix_2.get_columns_number();
+
+   #ifdef __OPENNN_DEBUG__
+
+   ostringstream buffer;
+
+   const size_t rows_number_2 = matrix_2.get_rows_number();
+
+   if(rows_number_2 != columns_number_1)
+   {
+      ostringstream buffer;
+
+      buffer << "OpenNN Exception: Metrics functions.\n"
+             << "void linear_combinations(const Tensor<double>&, const Matrix<double>&, const Vector<double>&, Tensor<double>&) method.\n"
+             << "The number of rows of matrix 2 (" << rows_number_2 << ") must be equal to the number of columns of matrix 1 (" << columns_number_1 << ").\n";
+
+      throw logic_error(buffer.str());
+   }
+
+   #endif
+
+   double sum;
+
+#pragma omp parallel for
+
+   for(size_t i = 0; i < rows_number_1; i++)
+   {
+     for(size_t j = 0; j < columns_number_2; j++)
+     {
+        sum = 0.0;
+
+       for(size_t k = 0; k < columns_number_1; k++)
+       {
+            sum += matrix_1(i,k)*matrix_2(k,j);
+       }
+
+       sum += vector[j];
+
+       new_matrix(i,j) = sum;
+     }
+   }
+}
+
 
 
 /// Returns the distance between the elements of this vector and the elements of
@@ -1336,11 +1377,11 @@ double sum_squared_error(const Tensor<double>& x, const Tensor<double>& y)
 
     double sum_squared_error = 0.0;
 
-    double error;
+    #pragma omp parallel for reduction(+ : sum_squared_error)
 
     for(size_t i = 0; i < size; i++)
     {
-        error = x[i]-y[i];
+        const double error = y[i] - x[i];
 
         sum_squared_error += error*error;
     }

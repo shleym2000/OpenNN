@@ -43,31 +43,36 @@ public:
 
     /// This enumeration represents the possible types of layers.
 
-    enum LayerType{Scaling, Convolutional, Perceptron, Pooling, Probabilistic, LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
+    enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic, LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
 
     /// This structure represents the first order activaions of layers.
 
-    struct FirstOrderActivations
+    struct ForwardPropagation
     {
         /// Default constructor.
 
-        explicit FirstOrderActivations()
+        explicit ForwardPropagation()
         {
         }
 
 
-        virtual ~FirstOrderActivations()
+        virtual ~ForwardPropagation()
         {
         }
 
         void print() const
         {
+            cout << "Combinations:" << endl;
+            cout << combinations << endl;
+
             cout << "Activations:" << endl;
             cout << activations << endl;
 
             cout << "Activation derivatives:" << endl;
             cout << activations_derivatives << endl;
         }
+
+        Tensor<double> combinations;
 
         Tensor<double> activations;
 
@@ -102,9 +107,11 @@ public:
     virtual Tensor<double> calculate_outputs(const Tensor<double>&);
     virtual Tensor<double> calculate_outputs(const Tensor<double>&, const Vector<double>&);
 
-    virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+    virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
-    virtual FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+    virtual ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
+
+    virtual void calculate_forward_propagation(const Tensor<double>&, ForwardPropagation&) {}
 
     // Deltas
 
@@ -129,7 +136,7 @@ public:
 
     // Layer type
 
-    LayerType get_type() const;
+    Type get_type() const;
 
     string get_type_string() const;
 
@@ -137,7 +144,7 @@ protected:
 
         /// Layer type object.
 
-        LayerType layer_type = Perceptron;
+        Type layer_type = Perceptron;
 };
 }
 

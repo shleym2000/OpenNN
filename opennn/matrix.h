@@ -158,6 +158,7 @@ public:
     Matrix<T> get_submatrix(const Vector<size_t>&, const Vector<size_t>&) const;
 
     Tensor<T> get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&) const;
+    void get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&, Tensor<T>&) const;
 
     Matrix<T> get_submatrix_rows(const Vector<size_t>&) const;
     Matrix<T> get_submatrix_columns(const Vector<size_t>&) const;
@@ -2478,6 +2479,55 @@ Tensor<T> Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
 }
 
 
+
+/// @todo Test method
+
+template <class T>
+void Matrix<T>::get_tensor(const Vector<size_t>& rows_indices,
+                           const Vector<size_t>& columns_indices,
+                           const Vector<size_t>& columns_dimensions,
+                           Tensor<T>& tensor) const
+{
+#ifdef __OPENNN_DEBUG__
+
+    if(columns_indices.size() != columns_dimensions.calculate_product())
+    {
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: Matrix Template.\n"
+              << "void get_tensor(const Vector<size_t>&, const Vector<size_t>&, const Vector<size_t>&, Tensor<T>&) const method.\n"
+              << "Size of columns indices(" << columns_indices.size() << ") must be equal to product of columns dimensions(" << columns_dimensions.calculate_product() << ").\n";
+
+       throw logic_error(buffer.str());
+    }
+
+#endif
+
+   const size_t rows_number = rows_indices.size();
+   const size_t columns_number = columns_indices.size();
+
+   const Vector<size_t> new_dimensions = Vector<size_t>(1, rows_number).assemble(columns_dimensions);
+   tensor.set(new_dimensions);
+
+   size_t row_index;
+   size_t column_index;
+
+   #pragma omp parallel for
+
+   for(size_t j = 0; j < columns_number; j++)
+   {
+       column_index = columns_indices[j];
+
+      for(size_t i = 0; i < rows_number; i++)
+      {
+         row_index = rows_indices[i];
+
+         tensor[rows_number*j+i] = (*this)(row_index, column_index);
+      }
+   }
+}
+
+
 /// Returns a submatrix with the values of given rows from this matrix.
 /// @param row_indices Indices of matrix rows.
 
@@ -3755,7 +3805,7 @@ Matrix<T> Matrix<T>::insert_matrix(const size_t& position, const Matrix<T>& othe
            ostringstream buffer;
 
            buffer << "OpenNN Exception: Matrix Template.\n"
-                  << "insert_matrix(const size_t& , const Matrix<T>& ) const.\n"
+                  << "insert_matrix(const size_t& , const Matrix<T>&) const.\n"
                   << "Position (" << position << ") must be less or equal than number of columns (" << columns_number << ").\n";
 
            throw logic_error(buffer.str());
@@ -3768,7 +3818,7 @@ Matrix<T> Matrix<T>::insert_matrix(const size_t& position, const Matrix<T>& othe
           ostringstream buffer;
 
           buffer << "OpenNN Exception: Matrix Template.\n"
-                 << "insert_matrix(const size_t& , const Matrix<T>& ) const.\n"
+                 << "insert_matrix(const size_t& , const Matrix<T>&) const.\n"
                  << "Size(" << size << ") must be equal to number of rows(" << rows_number << ").\n";
 
           throw logic_error(buffer.str());
@@ -9151,7 +9201,7 @@ Vector< Matrix<T> > Matrix<T>::to_vector_matrix(const size_t& vector_size, const
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

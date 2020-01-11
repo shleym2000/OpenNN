@@ -65,13 +65,13 @@ ScalingLayer::~ScalingLayer()
 
 Vector<size_t> ScalingLayer::get_input_variables_dimensions() const
 {
-    return inputs_dimensions;
+    return input_variables_dimensions;
 }
 
 
 Vector<size_t> ScalingLayer::get_outputs_dimensions() const
 {
-    return inputs_dimensions;
+    return input_variables_dimensions;
 }
 
 
@@ -339,7 +339,7 @@ void ScalingLayer::set(const Vector<size_t>& new_inputs_dimensions)
 
     scaling_methods.set(new_inputs_dimensions.calculate_product(), MinimumMaximum);
 
-    inputs_dimensions.set(new_inputs_dimensions);
+    input_variables_dimensions.set(new_inputs_dimensions);
 
     set_default();
 }
@@ -1628,7 +1628,7 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

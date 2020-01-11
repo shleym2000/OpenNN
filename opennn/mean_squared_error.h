@@ -22,9 +22,6 @@
 
 #include "loss_index.h"
 #include "data_set.h"
-
-
-
 #include "tinyxml2.h"
 
 namespace OpenNN
@@ -82,7 +79,46 @@ public:
 
    FirstOrderLoss calculate_first_order_loss() const;
 
-   FirstOrderLoss calculate_batch_first_order_loss(const Vector<size_t>&) const;
+   FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const;
+
+   void calculate_first_order_loss(const DataSet::Batch& batch,
+                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                         FirstOrderLoss& first_order_loss) const
+   {
+       // Data set
+
+       const size_t batch_instances_number = batch.inputs.get_dimension(0);
+
+       // Neural network
+
+       const size_t layers_number = neural_network_pointer->get_trainable_layers_number();
+
+       // Loss index
+
+       const Tensor<double> output_gradient = calculate_output_gradient(forward_propagation.layers[layers_number-1].activations,
+                                                                        batch.targets);
+
+       const Vector<Tensor<double>> layers_delta = calculate_layers_delta(forward_propagation.layers,
+                                                                          output_gradient);
+
+       const Vector<double> batch_error_gradient = calculate_error_gradient(batch.inputs,
+                                                                            forward_propagation.layers,
+                                                                            layers_delta);
+
+       const double batch_error = sum_squared_error(forward_propagation.layers[layers_number-1].activations,
+                                                    batch.targets);
+
+       first_order_loss.loss = batch_error / static_cast<double>(batch_instances_number);
+       first_order_loss.gradient = batch_error_gradient;
+
+       // Regularization
+
+       if(regularization_method != RegularizationMethod::NoRegularization)
+       {
+           first_order_loss.loss += regularization_weight*calculate_regularization();
+           first_order_loss.gradient += calculate_regularization_gradient()*regularization_weight;
+       }
+   }
 
    // Error terms methods
 
@@ -93,6 +129,19 @@ public:
    string get_error_type_text() const;
 
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+
+   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const size_t instances_number = data_set_pointer->get_training_instances_number();
+
+        output_gradient = (outputs-targets)*2.0/static_cast<double>(instances_number);
+   }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 
@@ -109,7 +158,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

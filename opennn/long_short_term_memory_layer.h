@@ -215,31 +215,31 @@ public:
    void update_hidden_states(const Vector<double>&);
 
    Tensor<double> calculate_outputs(const Tensor<double>&);
-   Tensor<double> calculate_outputs(const Tensor<double>&,const Vector<double>& );
+   Tensor<double> calculate_outputs(const Tensor<double>&,const Vector<double>&);
    Tensor<double> calculate_outputs(const Tensor<double>&, const Matrix<double>&, const Tensor<double>&, const Tensor<double>&);
 
-   FirstOrderActivations calculate_first_order_activations(const Tensor<double>&);
+   ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
    Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
 
    Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
 
-   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&);
+   Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
-   Vector<double> calculate_forget_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_forget_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_input_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_state_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_output_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
 
-   Vector<double> calculate_forget_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_forget_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_input_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_state_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_output_recurrent_weights_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
 
-   Vector<double> calculate_forget_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_input_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_state_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
-   Vector<double> calculate_output_biases_error_gradient(const Tensor<double>&, const Layer::FirstOrderActivations&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_forget_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_input_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_state_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
+   Vector<double> calculate_output_biases_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, const Tensor<double>&);
 
    // Expression methods
 
@@ -290,7 +290,7 @@ protected:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -765,16 +765,16 @@ if(inputs_columns_number != inputs_number)
 }
 
 
-Layer::FirstOrderActivations ProbabilisticLayer::calculate_first_order_activations(const Tensor<double>& inputs)
+Layer::ForwardPropagation ProbabilisticLayer::calculate_forward_propagation(const Tensor<double>& inputs)
 {
-    FirstOrderActivations first_order_activations;
+    ForwardPropagation forward_propagation;
 
     const Tensor<double> combinations = calculate_combinations(inputs);
 
-    first_order_activations.activations = calculate_activations(combinations);
-    first_order_activations.activations_derivatives = calculate_activations_derivatives(combinations);
+    forward_propagation.activations = calculate_activations(combinations);
+    forward_propagation.activations_derivatives = calculate_activations_derivatives(combinations);
 
-    return first_order_activations;
+    return forward_propagation;
 }
 
 
@@ -802,7 +802,7 @@ Tensor<double> ProbabilisticLayer::calculate_output_delta(const Tensor<double>& 
 /// @param layer_inputs Tensor with layers inputs.
 
 Vector<double> ProbabilisticLayer::calculate_error_gradient(const Tensor<double>& layer_inputs,
-                                                            const Layer::FirstOrderActivations&,
+                                                            const Layer::ForwardPropagation&,
                                                             const Tensor<double>& layer_deltas)
 {
     Tensor<double> reshaped_inputs = layer_inputs.to_2d_tensor();
@@ -854,7 +854,7 @@ Tensor<double> ProbabilisticLayer::calculate_activations(const Tensor<double>& c
        ostringstream buffer;
 
        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "Matrix<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
               << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
 
        throw logic_error(buffer.str());
@@ -879,31 +879,19 @@ Tensor<double> ProbabilisticLayer::calculate_activations(const Tensor<double>& c
 
     switch(activation_function)
     {
-        case Binary:
-        {
-            return binary(combinations);
-        }
+        case Binary: return binary(combinations);
 
-        case Logistic:
-        {
-            return logistic(combinations);
-        }
+        case Logistic: return logistic(combinations);
 
-        case Competitive:
-        {
-            return competitive(combinations);
-        }
+        case Competitive: return competitive(combinations);
 
-        case Softmax:
-        {
-            return softmax(combinations);
-        }
+        case Softmax: return softmax(combinations);
     }
 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Matrix<double> calculate_activations(const Matrix<double>&) const method.\n"
+           << "Tensor<double> calculate_activations(const Tensor<double>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());
@@ -921,7 +909,7 @@ Tensor<double> ProbabilisticLayer::calculate_activations_derivatives(const Tenso
        ostringstream buffer;
 
        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "Matrix<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
               << "Dimensions of combinations (" << dimensions_number << ") must be 2.\n";
 
        throw logic_error(buffer.str());
@@ -936,7 +924,7 @@ Tensor<double> ProbabilisticLayer::calculate_activations_derivatives(const Tenso
        ostringstream buffer;
 
        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-              << "Matrix<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
+              << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
               << "Number of combinations columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -980,7 +968,7 @@ Tensor<double> ProbabilisticLayer::calculate_activations_derivatives(const Tenso
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "Matrix<double> calculate_activations_derivatives(const Matrix<double>&) const method.\n"
+           << "Tensor<double> calculate_activations_derivatives(const Tensor<double>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());
@@ -1274,7 +1262,7 @@ string ProbabilisticLayer::write_expression(const Vector<string>& inputs_names, 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

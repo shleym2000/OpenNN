@@ -74,7 +74,30 @@ public:
    double calculate_batch_error(const Vector<size_t>&) const;
    double calculate_batch_error(const Vector<size_t>&, const Vector<double>&) const;
 
+   /// @todo Virtual method not implemented.
+
+   FirstOrderLoss calculate_first_order_loss(const DataSet::Batch&) const {return FirstOrderLoss();}
+
+   void calculate_first_order_loss(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, FirstOrderLoss&) const
+   {
+
+   }
+
    Tensor<double> calculate_output_gradient(const Tensor<double>&, const Tensor<double>&) const;
+
+   void calculate_output_gradient(const Tensor<double>& outputs, const Tensor<double>& targets, Tensor<double>& output_gradient) const
+   {
+        #ifdef __OPENNN_DEBUG__
+
+        check();
+
+        #endif
+
+        const size_t training_instances_number = data_set_pointer->get_training_instances_number();
+
+        output_gradient = lp_norm_gradient(outputs-targets, minkowski_parameter)/static_cast<double>(training_instances_number);
+   }
+
 
    string get_error_type() const;
    string get_error_type_text() const;
@@ -100,7 +123,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

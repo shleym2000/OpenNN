@@ -1353,7 +1353,7 @@ double TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<do
     if(outputs_number != 1)
     {
        buffer << "OpenNN Exception: TestingAnalysis class.\n"
-              << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>& ) const.\n"
+              << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>&) const.\n"
               << "Number of outputs must be one.\n";
 
        throw logic_error(buffer.str());
@@ -1398,7 +1398,7 @@ double TestingAnalysis::calculate_testing_weighted_squared_error(const Tensor<do
             ostringstream buffer;
 
             buffer << "OpenNN Exception: TestingAnalysis class.\n"
-                   << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>& ) const method.\n"
+                   << "double calculate_testing_weighted_squared_error(const Tensor<double>&, const Tensor<double>&, const Vector<double>&) const method.\n"
                    << "Target is neither a positive nor a negative.\n";
 
             throw logic_error(buffer.str());
@@ -2187,9 +2187,9 @@ Matrix<double> TestingAnalysis::calculate_cumulative_gain(const Tensor<double>& 
 
     const Matrix<double> sorted_targets_outputs = targets_outputs.sort_descending(0);
 
-    const Vector<size_t> targets_indices(1,1);
+    const Vector<size_t> target_variables_indices(1,1);
 
-    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(targets_indices);
+    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
 
     const size_t points_number = 21;
     const double percentage_increment = 0.05;
@@ -2255,9 +2255,9 @@ Matrix<double> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor<
 
     const Matrix<double> sorted_targets_outputs = targets_outputs.sort_descending(0);
 
-    const Vector<size_t> targets_indices(1,1);
+    const Vector<size_t> target_variables_indices(1,1);
 
-    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(targets_indices);
+    const Matrix<double> sorted_targets = sorted_targets_outputs.get_submatrix_columns(target_variables_indices);
 
     const size_t points_number = 21;
     const double percentage_increment = 0.05;
@@ -3647,7 +3647,7 @@ void TestingAnalysis::load(const string& file_name)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -13,7 +13,7 @@ TARGET = opennn
 TEMPLATE = lib
 
 CONFIG += staticlib
-#CONFIG += c++11
+CONFIG += c++11
 
 CONFIG(debug, debug|release) {
     DEFINES += __OPENNN_DEBUG__
@@ -25,19 +25,12 @@ CONFIG(debug, debug|release) {
 # OpenMP library
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS += -openmp
-QMAKE_LFLAGS   += -openmp
-
-#QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
-#QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-#LIBS += -fopenmp -pthread -lgomp
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
+QMAKE_LFLAGS += -fopenmp -pthread -lgomp
+LIBS += -fopenmp -pthread -lgomp
 }else:!macx{
-#QMAKE_CXXFLAGS+= -fopenmp -lgomp
-#QMAKE_LFLAGS += -fopenmp -lgomp
-
-QMAKE_CXXFLAGS+= -fopenmp
-QMAKE_LFLAGS +=  -fopenmp
-
+QMAKE_CXXFLAGS+= -fopenmp -lgomp
+QMAKE_LFLAGS += -fopenmp -lgomp
 }
 
 #macx{
@@ -152,3 +145,15 @@ SOURCES += \
     testing_analysis.cpp \
     response_optimization.cpp \
     unit_testing.cpp
+
+#Add-ons available under Commercial Licenses
+
+#DEFINES += __OPENNN_CUDA__
+
+contains(DEFINES, __OPENNN_CUDA__){
+
+    include(../../arte/opennn_cuda/cuda_config.pri)
+
+    include(../../arte/opennn_cuda/cuda_path.pri)
+
+}
