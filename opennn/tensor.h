@@ -295,7 +295,7 @@ std::string getValues(const Tensor<T>& tensor)
 
             for (size_t j = 0; j < columns_number; j++)
             {
-                ss << tensor(i, j) << "\t";
+                ss << tensor(i, j) << " ";
             }
         }
     }
