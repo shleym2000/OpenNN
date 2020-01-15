@@ -98,8 +98,8 @@ public:
 
    // Parameters
 
-   Vector<double> get_biases() const;
-   Matrix<double> get_synaptic_weights() const;
+   const Vector<double>& get_biases() const;
+   const Matrix<double>& get_synaptic_weights() const;
 
    Vector<double> get_biases(const Vector<double>&) const;
    Matrix<double> get_synaptic_weights(const Vector<double>&) const;
@@ -321,9 +321,9 @@ public:
 
    virtual tinyxml2::XMLDocument* to_XML() const;
 
-   virtual void from_XML(const tinyxml2::XMLDocument&);
+   void from_XML(const tinyxml2::XMLDocument&);
 
-   virtual void write_XML(tinyxml2::XMLPrinter&) const;
+   void write_XML(tinyxml2::XMLPrinter&) const;
    
 protected:
 

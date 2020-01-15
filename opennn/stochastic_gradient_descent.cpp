@@ -736,7 +736,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   data_set_pointer->set_batch_instances_number(32);
 
    const Matrix<double>& data = data_set_pointer->get_data();
 
@@ -833,18 +832,14 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
-           system("pause");
-
-/*
 //           forward_propagation.print();
+//           system("pause");
 
            //Loss
 
            loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
 //           first_order_loss.print();
-
-//           system("pause");
 
            loss += first_order_loss.loss;
 
@@ -880,7 +875,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             neural_network_pointer->set_parameters(parameters);
 
             learning_rate_iteration++;
-*/
        }
 
        gradient_norm = l2_norm(first_order_loss.gradient);

@@ -6519,6 +6519,8 @@ tinyxml2::XMLDocument* DataSet::to_XML() const
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
+    // @todo inputs_dimensions, targets_dimensions
+
     ostringstream buffer;
 
     file_stream.OpenElement("DataSet");
@@ -6810,8 +6812,6 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 
-/// @todo
-
 void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 {
     ostringstream buffer;
@@ -7093,23 +7093,128 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         instances_uses.set(new_instances_number);
     }
 
+    // Instances uses
+
+    const tinyxml2::XMLElement* instances_uses_element = instances_element->FirstChildElement("InstancesUses");
+
+    if(!instances_uses_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Instances uses element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(instances_uses_element->GetText())
+    {
+        set_instances_uses(get_tokens(instances_uses_element->GetText(), ' '));
+    }
+
+    // Missing values
+
+    const tinyxml2::XMLElement* missing_values_element = data_set_element->FirstChildElement("MissingValues");
+
+    if(!missing_values_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Missing values method
+
+    const tinyxml2::XMLElement* missing_values_method_element = missing_values_element->FirstChildElement("MissingValuesMethod");
+
+    if(!missing_values_method_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Missing values method element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(missing_values_method_element->GetText())
+    {
+        set_missing_values_method(missing_values_method_element->GetText());
+    }
+
+    // Preview data
+
+    const tinyxml2::XMLElement* preview_data_element = missing_values_element->FirstChildElement("PreviewData");
+
+    if(!preview_data_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Preview data element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Preview size
+
+    const tinyxml2::XMLElement* preview_size_element = missing_values_element->FirstChildElement("PreviewSize");
+
+    if(!preview_size_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Preview size element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    size_t new_preview_size = 0;
+
+    if(preview_size_element->GetText())
+    {
+        new_preview_size = static_cast<size_t>(atoi(preview_data_element->GetText()));
+
+        data_file_preview.set();
+    }
+
+    // Preview data
+
+    for(size_t i = 0; i < new_preview_size; i++)
+    {
+        const tinyxml2::XMLElement* row_element = columns_element->FirstChildElement("Row");
+
+        if(row_element->Attribute("Item") != std::to_string(i+1))
+        {
+            buffer << "OpenNN Exception: DataSet class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Row item number (" << i+1 << ") does not match (" << row_element->Attribute("Item") << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(row_element->GetText())
+        {
+            data_file_preview[i] = get_tokens(row_element->GetText(), ' ');
+        }
+    }
+
     // Display
 
-//    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
+    const tinyxml2::XMLElement* display_element = data_set_element->FirstChildElement("Display");
 
-//    if(display_element)
-//    {
-//        const string new_display_string = display_element->GetText();
+    if(display_element)
+    {
+        const string new_display_string = display_element->GetText();
 
-//        try
-//        {
-//            set_display(new_display_string != "0");
-//        }
-//        catch(const logic_error& e)
-//        {
-//            cerr << e.what() << endl;
-//        }
-//    }
+        try
+        {
+            set_display(new_display_string != "0");
+        }
+        catch(const logic_error& e)
+        {
+            cerr << e.what() << endl;
+        }
+    }
 }
 
 
@@ -8527,15 +8632,10 @@ void DataSet::read_csv()
 {
     read_csv_1();
 
-    cout << "1" << endl;
-
     if(!has_time_variables() && !has_categorical_variables())
     {
-        cout << "if" << endl;
         read_csv_2_simple();
-        cout << "2" << endl;
         read_csv_3_simple();
-        cout << "3" << endl;
     }
     else
     {

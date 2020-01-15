@@ -95,9 +95,9 @@ size_t PerceptronLayer::get_parameters_number() const
 /// The format is a vector of real values. 
 /// The size of this vector is the number of neurons in the layer.
 
-Vector<double> PerceptronLayer::get_biases() const
+const Vector<double>& PerceptronLayer::get_biases() const
 {   
-   return(biases);
+   return biases;
 }
 
 
@@ -106,7 +106,7 @@ Vector<double> PerceptronLayer::get_biases() const
 /// The number of rows is the number of neurons in the layer. 
 /// The number of columns is the number of inputs to the layer. 
 
-Matrix<double> PerceptronLayer::get_synaptic_weights() const
+const Matrix<double>& PerceptronLayer::get_synaptic_weights() const
 {
    return synaptic_weights;
 }
@@ -1075,15 +1075,15 @@ Tensor<double> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer
 /// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
 /// The size is thus the number of parameters.
 /// @param layer_deltas Tensor with layers delta.
-/// @param layer_inputs Tensor with layers inputs.
+/// @param inputs Tensor with layers inputs.
 
-Vector<double> PerceptronLayer::calculate_error_gradient(const Tensor<double>& layer_inputs,
+Vector<double> PerceptronLayer::calculate_error_gradient(const Tensor<double>& inputs,
                                                          const Layer::ForwardPropagation& ,
-                                                         const Tensor<double>& layer_deltas)
+                                                         const Tensor<double>& deltas)
 {
-    Tensor<double> reshaped_inputs = layer_inputs.to_2d_tensor();
+    Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
 
-    Tensor<double> reshaped_deltas = layer_deltas.to_2d_tensor();
+    Tensor<double> reshaped_deltas = deltas.to_2d_tensor();
 
     const size_t inputs_number = get_inputs_number();
     const size_t neurons_number = get_neurons_number();
@@ -1178,6 +1178,154 @@ string PerceptronLayer::object_to_string() const
     buffer << "Synaptic_weights:\n" << synaptic_weights;
 
     return buffer.str();
+}
+
+
+void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
+{
+    ostringstream buffer;
+
+    // Perceptron layer
+
+    const tinyxml2::XMLElement* perceptron_layer_element = document.FirstChildElement("PerceptronLayer");
+
+    if(!perceptron_layer_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "PerceptronLayer element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Inputs number
+
+    const tinyxml2::XMLElement* inputs_number_element = document.FirstChildElement("InputsNumber");
+
+    if(!inputs_number_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "InputsNumber element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(inputs_number_element->GetText())
+    {
+        set_inputs_number(static_cast<size_t>(stoi(inputs_number_element->GetText())));
+    }
+
+    // Neurons number
+
+    const tinyxml2::XMLElement* neurons_number_element = document.FirstChildElement("NeuronsNumber");
+
+    if(!neurons_number_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "NeuronsNumber element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(neurons_number_element->GetText())
+    {
+        set_neurons_number(static_cast<size_t>(stoi(neurons_number_element->GetText())));
+    }
+
+    // Activation function
+
+    const tinyxml2::XMLElement* activation_function_element = document.FirstChildElement("ActivationFunction");
+
+    if(!activation_function_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "ActivationFunction element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(activation_function_element->GetText())
+    {
+        set_activation_function(activation_function_element->GetText());
+    }
+
+    // Parameters
+
+    const tinyxml2::XMLElement* parameters_element = document.FirstChildElement("Parameters");
+
+    if(!parameters_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Parameters element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(parameters_element->GetText())
+    {
+        const string parameters_string = parameters_element->GetText();
+
+        set_parameters(to_double_vector(parameters_string, ' '));
+    }
+}
+
+
+void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
+{
+    ostringstream buffer;
+
+    // Perceptron layer
+
+    file_stream.OpenElement("PerceptronLayer");
+
+    // Inputs number
+
+    file_stream.OpenElement("InputsNumber");
+
+    buffer.str("");
+    buffer << get_inputs_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Outputs number
+
+    file_stream.OpenElement("NeuronsNumber");
+
+    buffer.str("");
+    buffer << get_neurons_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Activation function
+
+    file_stream.OpenElement("ActivationFunction");
+
+    file_stream.PushText(write_activation_function().c_str());
+
+    file_stream.CloseElement();
+
+    // Parameters
+
+    file_stream.OpenElement("Parameters");
+
+    buffer.str("");
+    buffer << get_parameters();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Peceptron layer (end tag)
+
+    file_stream.OpenElement("PerceptronLayer");
 }
 
 

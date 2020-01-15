@@ -41,7 +41,7 @@
 #include "../eigen/Eigen"
 
 #ifdef __OPENNN_CUDA__
-    #include "../../arte/opennn_cuda/opennn_cuda/kernels.h"
+    #include "D:/artelnics/opennn_cuda/opennn_cuda/kernels.h"
 #endif
 
 using namespace std;
@@ -186,8 +186,8 @@ public:
        Batch(const DataSet* data_set_pointer)
        {
            const size_t batch_instances_number = data_set_pointer->get_batch_instances_number();
-           const size_t input_variables_number = data_set_pointer->get_input_variables_number();
-           const size_t target_variables_number = data_set_pointer->get_target_variables_number();
+           //const size_t input_variables_number = data_set_pointer->get_input_variables_number();
+           //const size_t target_variables_number = data_set_pointer->get_target_variables_number();
 
            const Vector<size_t> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
            const Vector<size_t> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
@@ -858,9 +858,7 @@ private:
    Vector<Vector<string>> data_file_preview;
 
 #ifdef __OPENNN_CUDA__
-
-    #include "../../arte/opennn_cuda/opennn_cuda/data_set_cuda.h"
-
+    #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"
 #endif
 
 };

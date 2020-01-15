@@ -109,6 +109,8 @@ public:
 
     virtual Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
 
+    virtual void calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&, Vector<double>&) {}
+
     virtual ForwardPropagation calculate_forward_propagation(const Tensor<double>&);
 
     virtual void calculate_forward_propagation(const Tensor<double>&, ForwardPropagation&) {}
@@ -117,10 +119,18 @@ public:
 
     virtual Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
 
+    virtual void calculate_output_delta(const Tensor<double>&, const Tensor<double>&, Tensor<double>&) const {}
+
     virtual Tensor<double> calculate_hidden_delta(Layer*,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&,
                                                   const Tensor<double>&) const;
+
+    virtual void calculate_hidden_delta(Layer*,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        const Tensor<double>&,
+                                        Tensor<double>&) const {}
 
     // Get neurons number
 
@@ -140,12 +150,26 @@ public:
 
     string get_type_string() const;
 
+    // Serialization methods
+
+    virtual void from_XML(const tinyxml2::XMLDocument&) {}
+
+    virtual void write_XML(tinyxml2::XMLPrinter&) const {}
+
 protected:
 
         /// Layer type object.
 
         Type layer_type = Perceptron;
+
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
+#endif
 };
+
+
+
 }
 
 #endif // __LAYER_H

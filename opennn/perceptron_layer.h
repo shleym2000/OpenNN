@@ -28,6 +28,12 @@
 #include "metrics.h"
 #include "probabilistic_layer.h"
 
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
+    #include "cuda_runtime_api.h"
+#endif
+
 namespace OpenNN
 {
 
@@ -72,8 +78,8 @@ public:
 
    // Parameters
 
-   Vector<double> get_biases() const;
-   Matrix<double> get_synaptic_weights() const;
+   const Vector<double>& get_biases() const;
+   const Matrix<double>& get_synaptic_weights() const;
 
    Vector<double> get_biases(const Vector<double>&) const;
    Matrix<double> get_synaptic_weights(const Vector<double>&) const;
@@ -155,7 +161,9 @@ public:
 
    void calculate_combinations(const Tensor<double>& inputs, Tensor<double>& combinations) const
    {
-       linear_combinations(inputs, synaptic_weights, biases, combinations);
+       dot(inputs, synaptic_weights, combinations);
+
+       combinations += biases;
    }
 
    Tensor<double> calculate_combinations(const Tensor<double>&, const Vector<double>&) const;
@@ -283,11 +291,81 @@ public:
    // Delta methods
 
    Tensor<double> calculate_output_delta(const Tensor<double>&, const Tensor<double>&) const;
+
+   void calculate_output_delta(const Tensor<double>& activations_derivatives, const Tensor<double>& output_gradient, Tensor<double>& output_delta) const
+   {
+       output_delta = activations_derivatives;
+
+       output_delta *= output_gradient;
+   }
+
+
    Tensor<double> calculate_hidden_delta(Layer*, const Tensor<double>&, const Tensor<double>&, const Tensor<double>&) const;
+
+   void calculate_hidden_delta(Layer* next_layer_pointer,
+                               const Tensor<double>&,
+                               const Tensor<double>& activations_derivatives,
+                               const Tensor<double>& next_layer_delta,
+                               Tensor<double>& hidden_delta) const
+   {
+       const Type layer_type = next_layer_pointer->get_type();
+
+       if(layer_type == Perceptron)
+       {
+           const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+
+           //synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+
+           const Matrix<double>& synaptic_weights = perceptron_layer->get_synaptic_weights();
+
+           dot_transpose(next_layer_delta, synaptic_weights, hidden_delta);
+
+           hidden_delta *= activations_derivatives;
+       }
+       else if(layer_type == Probabilistic)
+       {
+           const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+       }
+       else
+       {
+           /// @todo Throw exception.
+       }
+
+
+   }
+
 
    // Gradient methods
 
    Vector<double> calculate_error_gradient(const Tensor<double>&, const Layer::ForwardPropagation&, const Tensor<double>&);
+
+   void calculate_error_gradient(const Tensor<double>& inputs,
+                                 const Layer::ForwardPropagation&,
+                                 const Tensor<double>& deltas,
+                                 Vector<double>& error_gradient)
+   {
+       //Tensor<double> reshaped_inputs = inputs.to_2d_tensor();
+
+       //Tensor<double> reshaped_deltas = deltas.to_2d_tensor();
+
+       const size_t inputs_number = get_inputs_number();
+       const size_t neurons_number = get_neurons_number();
+
+       const size_t parameters_number = get_parameters_number();
+
+       const size_t synaptic_weights_number = neurons_number*inputs_number;
+
+       Vector<double> layer_error_gradient(parameters_number, 0.0);
+
+       // Synaptic weights
+
+       error_gradient.embed(0, dot(inputs.to_matrix().calculate_transpose(), deltas).to_vector());
+
+       // Biases
+
+       error_gradient.embed(synaptic_weights_number, deltas.to_matrix().calculate_columns_sum());
+   }
+
 
    // Expression methods
 
@@ -295,6 +373,11 @@ public:
    string write_activation_function_expression() const;
 
    string object_to_string() const;
+
+   // Serialization methods
+
+   void from_XML(const tinyxml2::XMLDocument&);
+   void write_XML(tinyxml2::XMLPrinter&) const;
 
 protected:
 
@@ -316,6 +399,11 @@ protected:
    /// Display messages to screen. 
 
    bool display;
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
+#endif
+
 };
 
 }

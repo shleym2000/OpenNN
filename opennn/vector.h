@@ -394,8 +394,8 @@ public:
 
   Vector<string> to_string_vector() const;
 
-  Vector<double> string_to_double() const;
   Vector<int> string_to_int() const;
+  Vector<double> string_to_double() const;
   Vector<size_t> string_to_size_t() const;
   Vector<time_t> string_to_time_t() const;
 
@@ -4374,35 +4374,6 @@ Vector<string> Vector<T>::to_string_vector() const
 }
 
 
-/// Returns a new vector with the elements of this string vector casted to double.
-
-template <class T>
-Vector<double> Vector<T>::string_to_double() const
-{
-  const size_t this_size = this->size();
-
-  Vector<double> double_vector(this_size);
-
-  for(size_t i = 0; i < this_size; i++)
-  {
-      try
-      {
-          stringstream buffer;
-
-          buffer << (*this)[i];
-
-          double_vector[i] = stod(buffer.str());
-      }
-      catch(const logic_error&)
-      {
-         double_vector[i] = nan("");
-      }
-   }
-
-  return double_vector;
-}
-
-
 /// Returns a new vector with the elements of this string vector casted to int.
 
 template <class T>
@@ -4425,6 +4396,31 @@ Vector<int> Vector<T>::string_to_int() const
    }
 
   return int_vector;
+}
+
+
+/// Returns a new vector with the elements of this string vector casted to double.
+
+template <class T>
+Vector<double> Vector<T>::string_to_double() const
+{
+  const size_t this_size = this->size();
+
+  Vector<double> double_vector(this_size);
+
+  for(size_t i = 0; i < this_size; i++)
+  {
+      try
+      {
+          double_vector[i] = stod((*this)[i]);
+      }
+      catch(const logic_error&)
+      {
+         double_vector[i] = -99999999.0;
+      }
+   }
+
+  return double_vector;
 }
 
 
@@ -4786,7 +4782,6 @@ Matrix<T> Vector<T>::to_matrix(const size_t &rows_number,
                                const size_t &columns_number) const
 {
 
-
 #ifdef __OPENNN_DEBUG__
 
   const size_t this_size = this->size();
@@ -4797,7 +4792,7 @@ Matrix<T> Vector<T>::to_matrix(const size_t &rows_number,
     buffer << "OpenNN Exception: Vector Template.\n"
            << "Matrix<T> to_matrix(const size_t&, const size_t&) method.\n"
            << "The number of rows(" << rows_number
-           << ") times the number of colums(" << columns_number
+           << ") times the number of columns(" << columns_number
            << ") must be equal to the size of the vector(" << this_size
            << ").\n";
 
