@@ -452,7 +452,7 @@ Tensor<double> PoolingLayer::calculate_hidden_delta_pooling(PoolingLayer* next_l
                 hidden_delta(image_index, channel_index, row_index, column_index) = sum;
             }
 
-            return hidden_delta/(next_layers_pool_rows*next_layers_pool_columns);
+            return hidden_delta/static_cast<double>(next_layers_pool_rows*next_layers_pool_columns);
         }
 
         case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
