@@ -35,8 +35,9 @@ namespace OpenNN
      Matrix<double> dot(const Matrix<double>&, const Tensor<double>&);
 
      Tensor<double> dot(const Tensor<double>&, const Matrix<double>&);
+
      void dot(const Tensor<double>&, const Matrix<double>&, Tensor<double>&);
-     void dot_transpose(const Tensor<double>&, const Matrix<double>&, Tensor<double>&);
+     void dot(const Tensor<double>&, const Tensor<double>&, Tensor<double>&);
 
      Tensor<double> dot_2d_2d(const Tensor<double>&, const Tensor<double>&);
 
@@ -140,6 +141,15 @@ namespace OpenNN
      Vector<double> error_rows(const Tensor<double>&, const Tensor<double>&);
 
      Vector<double> weighted_error_rows(const Tensor<double>&, const Tensor<double>&, const double&, const double&);
+
+     Eigen::MatrixXd matrix_to_eigen(const Matrix<double>&);
+     Eigen::MatrixXd tensor_to_eigen(const Tensor<double>&);
+
+
+     Matrix<double> eigen_to_matrix(const Eigen::MatrixXd& eigen);
+     Tensor<double> eigen_to_tensor(const Eigen::MatrixXd& eigen);
+
+
 }
 
-#endif // __FUNCTIONS_H
+#endif // METRICS_H
