@@ -1940,6 +1940,8 @@ Eigen::MatrixXd matrix_to_eigen(const Matrix<double>& matrix)
            eigen(i,j) = matrix(i,j);
         }
     }
+
+    return eigen;
 }
 
 
@@ -1957,6 +1959,8 @@ Eigen::MatrixXd tensor_to_eigen(const Tensor<double>& matrix)
            eigen(i,j) = matrix(i,j);
         }
     }
+
+    return eigen;
 }
 
 
@@ -1974,6 +1978,8 @@ Matrix<double> eigen_to_matrix(const Eigen::MatrixXd& eigen)
            matrix(i,j) = eigen(i,j);
         }
     }
+
+    return matrix;
 }
 
 
@@ -1991,6 +1997,8 @@ Tensor<double> eigen_to_tensor(const Eigen::MatrixXd& eigen)
            matrix(i,j) = eigen(i,j);
         }
     }
+
+    return matrix;
 }
 
 
