@@ -15,7 +15,7 @@
 #include "functions.h"
 #include <math.h>
 
-#include "../eigen/Eigen/EIGEN"
+#include "../eigen/Eigen/Eigen"
 
 using namespace std;
 

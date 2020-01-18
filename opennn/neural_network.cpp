@@ -1583,10 +1583,34 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Layers
 
+    file_stream.OpenElement("Layers");
+
+    // Layers number
+
+    file_stream.OpenElement("LayersTypes");
+
+    buffer.str("");
+
+    for(size_t i = 0; i < layers_pointers.size(); i++)
+    {
+        buffer << layers_pointers[i]->get_type_string();
+        if(i != (layers_pointers.size()-1)) buffer << " ";
+    }
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Layers information
+
     for(size_t i = 0; i < layers_pointers.size(); i++)
     {
         layers_pointers[i]->write_XML(file_stream);
     }
+
+    // Layers (end tag)
+
+    file_stream.CloseElement();
 
     // Ouputs
 

@@ -38,7 +38,7 @@
 
 // Eigen includes
 
-#include "../eigen/Eigen/EIGEN"
+#include "../eigen/Eigen/Eigen"
 
 #ifdef __OPENNN_CUDA__
     #include "D:/artelnics/opennn_cuda/opennn_cuda/kernels.h"
