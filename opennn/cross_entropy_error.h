@@ -62,8 +62,8 @@ public:
 
    // Error methods
 
-   double calculate_batch_error(const vector<int>&) const;
-   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 
@@ -82,7 +82,7 @@ public:
 
         // Data set
 
-        const int batch_instances_number = batch.inputs_2d.dimension(0);
+        const Index batch_instances_number = batch.inputs_2d.dimension(0);
 
         // Neural network
 

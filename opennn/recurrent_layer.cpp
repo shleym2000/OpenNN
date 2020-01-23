@@ -56,9 +56,9 @@ RecurrentLayer::~RecurrentLayer()
 }
 
 
-vector<int> RecurrentLayer::get_input_variables_dimensions() const
+Tensor<int, 1> RecurrentLayer::get_input_variables_dimensions() const
 {
-    return vector<int>();
+    return Tensor<int, 1>();
 }
 
 
@@ -395,13 +395,14 @@ void RecurrentLayer::set_inputs_number(const int& new_inputs_number)
 }
 
 
-void RecurrentLayer::set_input_shape(const vector<int>& size)
+void RecurrentLayer::set_input_shape(const Tensor<int, 1>& size)
 {
+    /*
     if(size.empty() || size.size() > 1)
     {
 //        throw exception(string("EXCEPTION: The new size is incompatible."));
     }
-
+*/
     const int new_size = size[0];
 
     set_inputs_number(new_size);
@@ -722,7 +723,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
 
     const int neurons_number = get_neurons_number();
 /*
-    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {
@@ -1029,7 +1030,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     const int neurons_number = get_neurons_number();
 /*
-    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {
@@ -1087,7 +1088,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 
     const int neurons_number = get_neurons_number();
 /*
-    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {
@@ -1183,7 +1184,7 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 
     const int instances_number = inputs.dimension(0);
 /*
-    Tensor<type, 2> outputs(vector<int>({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
 
     for(int i = 0; i < instances_number; i++)
     {
@@ -1446,7 +1447,7 @@ Tensor<type, 1> RecurrentLayer::calculate_biases_error_gradient(const Tensor<typ
 /// @param inputs_names Vector of strings with the name of the layer inputs. 
 /// @param outputs_names Vector of strings with the name of the layer outputs. 
 
-string RecurrentLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string RecurrentLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {  
    #ifdef __OPENNN_DEBUG__ 
 
@@ -1460,7 +1461,7 @@ string RecurrentLayer::write_expression(const vector<string>& inputs_names, cons
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
+             << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
              << "Size of inputs name must be equal to number of layer inputs.\n";
 
 	  throw logic_error(buffer.str());
@@ -1473,7 +1474,7 @@ string RecurrentLayer::write_expression(const vector<string>& inputs_names, cons
       ostringstream buffer;
 
       buffer << "OpenNN Exception: RecurrentLayer class.\n"
-             << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
+             << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
              << "Size of outputs name must be equal to number of neurons.\n";
 
 	  throw logic_error(buffer.str());

@@ -96,11 +96,11 @@ void NormalizedSquaredError::set_normalization_coefficient()
 {
     // Data set stuff
 
-    const vector<int> training_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<int, 1> training_indices = data_set_pointer->get_training_instances_indices();
 
     const int training_instances_number = training_indices.size();    
 
-    const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<type, 1> training_targets_mean = data_set_pointer->calculate_training_targets_mean();
 
@@ -146,13 +146,13 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
 
 //
 
-    const vector<int> selection_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<int, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
     const int selection_instances_number = selection_indices.size();
 
     if(selection_instances_number == 0) return;
 
-    const vector<int> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<int, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<type, 1> selection_targets_mean = data_set_pointer->calculate_selection_targets_mean();
 
@@ -247,11 +247,11 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -296,11 +296,11 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -350,13 +350,13 @@ check();
 
     // Data set
 
-    const vector<vector<int>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
     const int batches_number = selection_batches.size();
 
     double selection_error = 0.0;
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -388,7 +388,7 @@ check();
 /// Returns the mean squared error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double NormalizedSquaredError::calculate_batch_error(const vector<int>& batch_indices) const
+double NormalizedSquaredError::calculate_batch_error(const Tensor<int, 1>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -412,7 +412,7 @@ check();
 }
 
 
-double NormalizedSquaredError::calculate_batch_error(const vector<int>& batch_indices, const Tensor<type, 1>& parameters) const
+double NormalizedSquaredError::calculate_batch_error(const Tensor<int, 1>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -474,7 +474,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 
@@ -635,7 +635,7 @@ Tensor<type, 1> NormalizedSquaredError::calculate_squared_errors() const
 
    // Data set stuff
 
-   const vector<int> training_indices = data_set_pointer->get_training_instances_indices();
+   const Tensor<int, 1> training_indices = data_set_pointer->get_training_instances_indices();
 
    const int training_instances_number = training_indices.size();
 
@@ -667,7 +667,7 @@ Tensor<type, 1> NormalizedSquaredError::calculate_squared_errors() const
 /// Returns a vector with the indices of the instances which have the maximum error.
 /// @param maximal_errors_number Number of instances required.
 
-vector<int> NormalizedSquaredError::calculate_maximal_errors(const int& maximal_errors_number) const
+Tensor<int, 1> NormalizedSquaredError::calculate_maximal_errors(const int& maximal_errors_number) const
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -680,7 +680,7 @@ vector<int> NormalizedSquaredError::calculate_maximal_errors(const int& maximal_
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NormalizedquaredError class.\n"
-               << "vector<int> calculate_maximal_errors() const method.\n"
+               << "Tensor<int, 1> calculate_maximal_errors() const method.\n"
                << "Number of maximal errors(" << maximal_errors_number << ") must be equal or less than number of training instances(" << training_instances_number << ").\n";
 
        throw logic_error(buffer.str());
@@ -716,7 +716,7 @@ check();
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int batches_number = training_batches.size();
 

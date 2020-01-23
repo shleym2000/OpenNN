@@ -753,8 +753,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-   const vector<int> training_indices = data_set_pointer->get_training_instances_indices();
-   const vector<int> selection_indices = data_set_pointer->get_selection_instances_indices();
+   const Tensor<int, 1> training_indices = data_set_pointer->get_training_instances_indices();
+   const Tensor<int, 1> selection_indices = data_set_pointer->get_selection_instances_indices();
 
    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
 
@@ -1113,10 +1113,11 @@ string GradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
+/*
     ostringstream buffer;
 
-    vector<string> labels;
-    vector<string> values;
+    Tensor<string, 1> labels;
+    Tensor<string, 1> values;
 
    // Training rate method
 
@@ -1238,11 +1239,13 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
    const int columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
-/*
+
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-*/
+
     return string_matrix;
+*/
+    return Tensor<string, 2>();
 }
 
 

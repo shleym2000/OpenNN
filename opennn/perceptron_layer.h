@@ -68,7 +68,7 @@ public:
 
    bool is_empty() const;
 
-   vector<int> get_input_variables_dimensions() const;
+   Tensor<int, 1> get_input_variables_dimensions() const;
 
    int get_inputs_number() const;
    int get_neurons_number() const;
@@ -387,7 +387,7 @@ public:
 
    // Expression methods
 
-   string write_expression(const vector<string>&, const vector<string>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_activation_function_expression() const;
 
    string object_to_string() const;

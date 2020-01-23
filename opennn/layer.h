@@ -30,9 +30,8 @@
 #include "config.h"
 #include "tinyxml2.h"
 
-#include <../eigen/unsupported/Eigen/CXX11/Tensor>
-
-#include <../eigen/unsupported/Eigen/CXX11/ThreadPool>
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
 
 using namespace std;
 using namespace Eigen;
@@ -150,7 +149,7 @@ public:
 
     // Get neurons number
 
-    virtual vector<int> get_input_variables_dimensions() const;
+    virtual Tensor<int, 1> get_input_variables_dimensions() const;
 
     virtual int get_inputs_number() const;
     virtual int get_neurons_number() const;

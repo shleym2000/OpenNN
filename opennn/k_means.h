@@ -38,7 +38,7 @@ public:
 
     struct Results
     {
-      vector<vector<int>> clusters;
+      vector<Tensor<int, 1>> clusters;
     };
 
 

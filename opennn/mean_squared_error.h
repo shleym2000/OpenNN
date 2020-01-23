@@ -73,8 +73,8 @@ public:
 
    double calculate_selection_error() const;
 
-   double calculate_batch_error(const vector<int>&) const;
-   double calculate_batch_error(const vector<int>&, const Tensor<type, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&) const;
+   double calculate_batch_error(const Tensor<int, 1>&, const Tensor<type, 1>&) const;
 
    // Gradient methods
 

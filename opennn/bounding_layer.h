@@ -63,7 +63,7 @@ public:
 
    // Get methods
 
-   vector<int> get_input_variables_dimensions() const;
+   Tensor<int, 1> get_input_variables_dimensions() const;
    int get_inputs_number() const;
    int get_neurons_number() const;
 
@@ -75,7 +75,7 @@ public:
    double get_lower_bound(const int&) const;
 
    const Tensor<type, 1>& get_upper_bounds() const;
-   double get_upper_bound(const int&) const;
+   double get_upper_bound(const Index&) const;
 
    vector<Tensor<type, 1>> get_bounds();
 
@@ -115,8 +115,8 @@ public:
 
    // Expression methods
 
-   string write_expression(const vector<string>&, const vector<string>&) const;
-   string write_expression_php(const vector<string>&, const vector<string>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    // Serialization methods
 

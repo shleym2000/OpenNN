@@ -189,9 +189,9 @@ Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2
         return inputs;
     }
 
-        const vector<int> principal_components_indices(0, 1.0, get_principal_components_number()-1);
+        const Tensor<int, 1> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-        const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
+        const Tensor<int, 1> input_variables_indices(0, 1.0, inputs_number-1);
 
         const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
@@ -201,9 +201,9 @@ Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2
 
         for(int i = 0;  i < points_number; i++)
         {
-            const vector<int> principal_components_indices(0, 1.0, get_principal_components_number()-1);
+            const Tensor<int, 1> principal_components_indices(0, 1.0, get_principal_components_number()-1);
 
-            const vector<int> input_variables_indices(0, 1.0, inputs_number-1);
+            const Tensor<int, 1> input_variables_indices(0, 1.0, inputs_number-1);
 
             const Tensor<type, 2> used_principal_components = principal_components.get_submatrix(principal_components_indices, input_variables_indices);
 
@@ -239,7 +239,7 @@ Tensor<type, 2> PrincipalComponentsLayer::calculate_outputs(const Tensor<type, 2
 
 /// Returns a string with the expression of the principal components process.
 
-string PrincipalComponentsLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string PrincipalComponentsLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     switch(principal_components_method)
     {
@@ -271,7 +271,7 @@ string PrincipalComponentsLayer::write_expression(const vector<string>& inputs_n
 /// @param outputs_names Name of outputs from the principal components.*/
 
 
-string PrincipalComponentsLayer::write_no_principal_components_expression(const vector<string>&, const vector<string>&) const
+string PrincipalComponentsLayer::write_no_principal_components_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const
 {
     ostringstream buffer;
 
@@ -286,7 +286,7 @@ string PrincipalComponentsLayer::write_no_principal_components_expression(const 
 /// @param outputs_names Name of outputs from the principal components.
 
 
-string PrincipalComponentsLayer::write_principal_components_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string PrincipalComponentsLayer::write_principal_components_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 

@@ -54,11 +54,11 @@ ProbabilisticLayer::~ProbabilisticLayer()
 }
 
 
-vector<int> ProbabilisticLayer::get_input_variables_dimensions() const
+Tensor<int, 1> ProbabilisticLayer::get_input_variables_dimensions() const
 {
     const int inputs_number = get_inputs_number();
 
-    return vector<int>({inputs_number});
+    return Tensor<int, 1>(inputs_number);
 }
 
 
@@ -646,7 +646,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
     const int output_rows_number = inputs.dimension(0);
     const int output_columns_number = get_neurons_number();
 
-    Tensor<type, 2> combinations(vector<int>({output_rows_number, output_columns_number}));
+    Tensor<type, 2> combinations(Tensor<int, 1>({output_rows_number, output_columns_number}));
 
     const int inputs_dimensions_number = inputs.rank();
 
@@ -1273,7 +1273,7 @@ void ProbabilisticLayer::from_XML(const tinyxml2::XMLDocument& document)
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_binary_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
@@ -1289,7 +1289,7 @@ string ProbabilisticLayer::write_binary_expression(const vector<string>& inputs_
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_probability_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 /*
@@ -1303,7 +1303,7 @@ string ProbabilisticLayer::write_probability_expression(const vector<string>& in
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_competitive_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ProbabilisticLayer::write_competitive_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 /*
@@ -1317,7 +1317,7 @@ string ProbabilisticLayer::write_competitive_expression(const vector<string>& in
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_softmax_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ProbabilisticLayer::write_softmax_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 /*
@@ -1331,7 +1331,7 @@ string ProbabilisticLayer::write_softmax_expression(const vector<string>& inputs
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_no_probabilistic_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ProbabilisticLayer::write_no_probabilistic_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 /*
@@ -1346,7 +1346,7 @@ string ProbabilisticLayer::write_no_probabilistic_expression(const vector<string
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_expression(const vector<string>& inputs_names, const vector<string>& outputs_names) const
+string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
     switch(activation_function)
     {
@@ -1377,7 +1377,7 @@ string ProbabilisticLayer::write_expression(const vector<string>& inputs_names, 
     ostringstream buffer;
 
     buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-           << "string write_expression(const vector<string>&, const vector<string>&) const method.\n"
+           << "string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const method.\n"
            << "Unknown probabilistic method.\n";
 
     throw logic_error(buffer.str());

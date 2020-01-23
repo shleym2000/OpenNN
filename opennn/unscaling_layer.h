@@ -68,7 +68,7 @@ public:
 
    // Get methods
 
-   vector<int> get_input_variables_dimensions() const;
+   Tensor<int, 1> get_input_variables_dimensions() const;
 
    int get_inputs_number() const;
    int get_neurons_number() const;
@@ -149,17 +149,17 @@ public:
 
    // Expression methods
 
-   string write_none_expression(const vector<string>&, const vector<string>&) const;
-   string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
-   string write_mean_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
-   string write_logarithmic_expression(const vector<string>&, const vector<string>&) const;
-   string write_none_expression_php(const vector<string>&, const vector<string>&) const;
-   string write_minimum_maximum_expression_php(const vector<string>&, const vector<string>&) const;
-   string write_mean_standard_deviation_expression_php(const vector<string>&, const vector<string>&) const;
-   string write_logarithmic_expression_php(const vector<string>&, const vector<string>&) const;
+   string write_none_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_logarithmic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_none_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const vector<string>&, const vector<string>&) const;
-   string write_expression_php(const vector<string>&, const vector<string>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
 protected:
 

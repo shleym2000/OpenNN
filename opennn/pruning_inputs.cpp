@@ -210,17 +210,17 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
 //    const int inputs_number = data_set_pointer->get_input_columns_number();
 
-    const vector<int> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<int, 1> inputs_variables_indices = data_set_pointer->get_input_variables_indices();
 
     const int used_columns_number = data_set_pointer->get_used_columns_number();
 
-    const vector<string> used_columns_names = data_set_pointer->get_used_columns_names();
+    const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
 
     const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
-    const vector<int> correlations_ascending_indices = total_correlations.sort_ascending_indices();
+    const Tensor<int, 1> correlations_ascending_indices = total_correlations.sort_ascending_indices();
 
 //    data_set_pointer->set_input_columns_unused();
 
@@ -230,9 +230,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     // Optimization algorithm
 
-    vector<int> current_columns_indices = inputs_variables_indices;
+    Tensor<int, 1> current_columns_indices = inputs_variables_indices;
 
-    vector<int> optimal_columns_indices;
+    Tensor<int, 1> optimal_columns_indices;
 
     Tensor<type, 1> optimal_parameters;
 
@@ -437,11 +437,12 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 /// Writes as matrix of strings the most representative atributes.
 
 Tensor<string, 2> PruningInputs::to_string_matrix() const
-{
+{  
+/*
     ostringstream buffer;
 
-    vector<string> labels;
-    vector<string> values;
+    Tensor<string, 1> labels;
+    Tensor<string, 1> values;
 
    // Trials number
 
@@ -562,11 +563,14 @@ Tensor<string, 2> PruningInputs::to_string_matrix() const
    const int columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
-/*
+
    string_matrix.set_column(0, labels, "name");
    string_matrix.set_column(1, values, "value");
-*/
+
     return string_matrix;
+*/
+    return Tensor<string, 2>();
+
 }
 
 

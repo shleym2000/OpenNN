@@ -137,13 +137,13 @@ double MinkowskiError::calculate_training_error() const
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -182,13 +182,13 @@ double MinkowskiError::calculate_training_error(const Tensor<type, 1>& parameter
 
     // Data set
 
-    const vector<vector<int>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
     const int training_instances_number = data_set_pointer->get_training_instances_number();
 
     const int batches_number = training_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -231,11 +231,11 @@ double MinkowskiError::calculate_selection_error() const
 
     // Data set
 
-    const vector<vector<int>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
+    const vector<Tensor<int, 1>> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
 
     const int batches_number = selection_batches.size();
 
-    const int batch_instances_number = data_set_pointer->get_batch_instances_number();
+    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
     const int inputs_number = data_set_pointer->get_input_variables_number();
     const int targets_number = data_set_pointer->get_target_variables_number();
@@ -268,7 +268,7 @@ double MinkowskiError::calculate_selection_error() const
 /// Returns the Minkowski error of this batch.
 /// @param batch_indices Indices of the batch instances corresponding to the dataset.
 
-double MinkowskiError::calculate_batch_error(const vector<int>& batch_indices) const
+double MinkowskiError::calculate_batch_error(const Tensor<int, 1>& batch_indices) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -289,7 +289,7 @@ check();
 }
 
 
-double MinkowskiError::calculate_batch_error(const vector<int>& batch_indices, const Tensor<type, 1>& parameters) const
+double MinkowskiError::calculate_batch_error(const Tensor<int, 1>& batch_indices, const Tensor<type, 1>& parameters) const
 {
 #ifdef __OPENNN_DEBUG__
 

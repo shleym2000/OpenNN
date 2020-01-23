@@ -44,7 +44,7 @@ public:
    explicit ScalingLayer();
 
    explicit ScalingLayer(const int&);
-   explicit ScalingLayer(const vector<int>&);
+   explicit ScalingLayer(const Tensor<int, 1>&);
 
    explicit ScalingLayer(const vector<Descriptives>&);
 
@@ -60,8 +60,8 @@ public:
 
    // Get methods
 
-   vector<int> get_input_variables_dimensions() const;
-   vector<int> get_outputs_dimensions() const;
+   Tensor<int, 1> get_input_variables_dimensions() const;
+   Tensor<int, 1> get_outputs_dimensions() const;
 
    int get_inputs_number() const;
    int get_neurons_number() const;
@@ -82,8 +82,8 @@ public:
 
    const vector<ScalingMethod> get_scaling_methods() const;
 
-   vector<string> write_scaling_methods() const;
-   vector<string> write_scaling_methods_text() const;
+   Tensor<string, 1> write_scaling_methods() const;
+   Tensor<string, 1> write_scaling_methods_text() const;
 
    // Display messages
 
@@ -93,12 +93,12 @@ public:
 
    void set();
    void set(const int&);
-   void set(const vector<int>&);
+   void set(const Tensor<int, 1>&);
    void set(const vector<Descriptives>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
-   void set(const vector<bool>&);
+   void set(const Tensor<bool, 1>&);
 
    void set_inputs_number(const int&);
    void set_neurons_number(const int&);
@@ -119,7 +119,7 @@ public:
    // Scaling method
 
    void set_scaling_methods(const vector<ScalingMethod>&);
-   void set_scaling_methods(const vector<string>&);
+   void set_scaling_methods(const Tensor<string, 1>&);
 
    void set_scaling_methods(const ScalingMethod&);
    void set_scaling_methods(const string&);
@@ -148,15 +148,15 @@ public:
 
    // Expression methods
 
-   string write_no_scaling_expression(const vector<string>&, const vector<string>&) const;
+   string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_minimum_maximum_expression(const vector<string>&, const vector<string>&) const;
+   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_mean_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
+   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_standard_deviation_expression(const vector<string>&, const vector<string>&) const;
+   string write_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const vector<string>&, const vector<string>&) const;
+   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    // Serialization methods
 
@@ -169,7 +169,7 @@ public:
 
 protected:
 
-   vector<int> input_variables_dimensions;
+   Tensor<int, 1> input_variables_dimensions;
 
    /// Descriptives of input variables.
 
