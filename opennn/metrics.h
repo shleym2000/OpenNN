@@ -24,33 +24,12 @@ using namespace Eigen;
 
 namespace OpenNN
 {
-    double sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
+    type sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-    double l1_norm(const Tensor<type, 1>&);
-    double l2_norm(const ThreadPoolDevice&, const Tensor<type, 1>&);
+    type l1_norm(const Tensor<type, 1>&);
+    type l2_norm(const ThreadPoolDevice&, const Tensor<type, 1>&);
 
-
-    // Dot products
-/*
-     double dot(const Tensor<type, 1>&, const Tensor<type, 1>&);
-
-     Tensor<type, 1> dot(const Tensor<type, 1>&, const Tensor<type, 2>&);
-
-     Tensor<type, 1> dot(const Tensor<type, 2>&, const Tensor<type, 1>&);
-
-     Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&);
-     void dot(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&);
-
-     Tensor<type, 2> dot(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
-     Tensor<type, 2> dot(const Tensor<type, 2>&, const MatrixXd&);
-
-     void dot(const Tensor<type, 2>&, const MatrixXd&, Tensor<type, 2>&);
-     void dot(const Tensor<type, 2>&, const Tensor<type, 2>&, Tensor<type, 2>&);
-
-     Tensor<type, 2> dot_2d_2d(const Tensor<type, 2>&, const Tensor<type, 2>&);
-
-     Tensor<type, 2> dot_2d_3d(const Tensor<type, 2>&, const Tensor<type, 2>&);
+    Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>&, const type&);
 
      // Direct products
 
@@ -72,23 +51,17 @@ namespace OpenNN
 
      Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>&);
 
-     double lp_norm(const Tensor<type, 1>&, const double &);
+     type lp_norm(const Tensor<type, 1>&, const type &);
 
-//     Tensor<type, 1> lp_norm_gradient(const Tensor<type, 1>&, const double &);
 
-     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const double& p);
+     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const type& p);
 
-     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const double& p);
+     Tensor<type, 1> lp_norm(const Tensor<type, 2>&, const type& p);
 
-     Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>&, const double& p);
+     Tensor<type, 2> lp_norm_gradient(const Tensor<type, 2>&, const type& p);
 
     // INVERTING MATICES
 
-     double determinant(const Tensor<type, 2>&);
-
-     Tensor<type, 2> cofactor(const Tensor<type, 2>&);
-
-     Tensor<type, 2> inverse(const Tensor<type, 2>&);
 
      // LINEAR EQUATIONS
 
@@ -97,19 +70,15 @@ namespace OpenNN
 
      Tensor<type, 2> direct(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Tensor<type, 2> linear_combinations(const Tensor<type, 2>&, const MatrixXd&, const Tensor<type, 1>&);
-
-     void linear_combinations(const Tensor<type, 2>&, const MatrixXd&, const Tensor<type, 1>&, Tensor<type, 2>&);
-
      // Vector distances
 
-     double euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double euclidean_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type euclidean_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
      Tensor<type, 1> euclidean_weighted_distance_vector(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double manhattan_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-     double manhattan_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type manhattan_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type manhattan_weighted_distance(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      Tensor<type, 1> manhattan_weighted_distance_vector(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -122,40 +91,30 @@ namespace OpenNN
      Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      Tensor<type, 1> manhattan_distance(const Tensor<type, 2>&, const Tensor<type, 1>&);
-     double manhattan_distance(const Tensor<type, 2>&, const int&, const int&);
+     type manhattan_distance(const Tensor<type, 2>&, const int&, const int&);
 
      Tensor<type, 1> manhattan_weighted_distance(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
      Tensor<type, 2> manhattan_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      // Vector errors
 
-     double sum_squared_error(const Tensor<type, 1>&, const Tensor<type, 1>&);
+     type sum_squared_error(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     double minkowski_error(const Tensor<type, 1>&, const Tensor<type, 1>&, const double &);
+     type minkowski_error(const Tensor<type, 1>&, const Tensor<type, 1>&, const type&);
 
      // Tensor errors
 
-     double sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
+     type cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     double cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&);
+     type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&);
 
-     double minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&);
-
-     double weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&, const double&);
+     type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&, const type&);
 
      // Error rows
 
      Tensor<type, 1> error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
-     Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&, const double&, const double&);
-
-     MatrixXd matrix_to_eigen(const Tensor<type, 2>&);
-     MatrixXd tensor_to_eigen(const Tensor<type, 2>&);
-
-
-     Tensor<type, 2> eigen_to_matrix(const MatrixXd& eigen);
-     Tensor<type, 2> eigen_to_tensor(const MatrixXd& eigen);
-*/
+     Tensor<type, 1> weighted_error_rows(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&, const type&);
 
 }
 
