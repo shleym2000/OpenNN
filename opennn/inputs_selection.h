@@ -93,15 +93,15 @@ public:
 
        /// Value of minimum selection error.
 
-       double final_selection_error;
+       type final_selection_error;
 
        /// Value of loss for the neural network with minimum selection error.
 
-       double final_training_error;
+       type final_training_error;
 
        /// Inputs of the neural network with minimum selection error.
 
-       Tensor<int, 1> optimal_inputs_indices;
+       Tensor<Index, 1> optimal_inputs_indices;
 
        /// Inputs of the neural network with minimum selection error.
 
@@ -109,7 +109,7 @@ public:
 
        /// Number of iterations to perform the inputs selection.
 
-       int iterations_number;
+       Index iterations_number;
 
        /// Stopping condition of the algorithm.
 
@@ -117,7 +117,7 @@ public:
 
        /// Elapsed time during the loss of the algortihm.
 
-       double elapsed_time;
+       type elapsed_time;
     };
 
     // Get methods
@@ -128,7 +128,7 @@ public:
 
     bool has_training_strategy() const;
 
-    const int& get_trials_number() const;
+    const Index& get_trials_number() const;
 
     const bool& get_reserve_error_data() const;
     const bool& get_reserve_selection_error_data() const;
@@ -136,12 +136,12 @@ public:
 
     const bool& get_display() const;
 
-    const double& get_selection_error_goal() const;
-    const int& get_maximum_iterations_number() const;
-    const double& get_maximum_time() const;
-    const double& get_maximum_correlation() const;
-    const double& get_minimum_correlation() const;
-    const double& get_tolerance() const;
+    const type& get_selection_error_goal() const;
+    const Index& get_maximum_iterations_number() const;
+    const type& get_maximum_time() const;
+    const type& get_maximum_correlation() const;
+    const type& get_minimum_correlation() const;
+    const type& get_tolerance() const;
 
     // Set methods
 
@@ -151,7 +151,7 @@ public:
 
     void set_default();
 
-    void set_trials_number(const int&);
+    void set_trials_number(const Index&);
 
     void set_reserve_error_data(const bool&);
     void set_reserve_selection_error_data(const bool&);
@@ -159,12 +159,12 @@ public:
 
     void set_display(const bool&);
 
-    void set_selection_error_goal(const double&);
-    void set_maximum_iterations_number(const int&);
-    void set_maximum_time(const double&);
-    void set_maximum_correlation(const double&);
-    void set_minimum_correlation(const double&);
-    void set_tolerance(const double&);
+    void set_selection_error_goal(const type&);
+    void set_maximum_iterations_number(const Index&);
+    void set_maximum_time(const type&);
+    void set_maximum_correlation(const type&);
+    void set_minimum_correlation(const type&);
+    void set_tolerance(const type&);
 
     // Performances calculation methods
 
@@ -183,7 +183,7 @@ public:
     void delete_parameters_history();
     void check() const;
 
-    int get_input_index(const vector<DataSet::VariableUse>, const int);
+    Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index);
 
     /// Performs the inputs selection for a neural network.
 
@@ -213,11 +213,11 @@ protected:
 
     /// Parameters of all the neural network trained.
 
-    vector<Tensor<type, 1>> parameters_history;
+    Tensor<Tensor<type, 1>, 1> parameters_history;
 
     /// Number of trials for each neural network.
 
-    int trials_number;
+    Index trials_number;
 
     // Inputs selection results
 
@@ -245,27 +245,27 @@ protected:
 
     /// Goal value for the selection error. It is used as a stopping criterion.
 
-    double selection_error_goal;
+    type selection_error_goal;
 
     /// Maximum number of iterations to perform_inputs_selection. It is used as a stopping criterion.
 
-    int maximum_epochs_number;
+    Index maximum_epochs_number;
 
     /// Maximum value for the correlations.
 
-    double maximum_correlation;
+    type maximum_correlation;
 
     /// Minimum value for the correlations.
 
-    double minimum_correlation;
+    type minimum_correlation;
 
     /// Maximum selection algorithm time. It is used as a stopping criterion.
 
-    double maximum_time;
+    type maximum_time;
 
     /// Tolerance for the error in the trainings of the algorithm.
 
-    double tolerance;
+    type tolerance;
 };
 }
 

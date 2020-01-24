@@ -58,7 +58,7 @@ GrowingInputs::~GrowingInputs()
 
 /// Returns the maximum number of inputs in the growing inputs selection algorithm.
 
-const int& GrowingInputs::get_maximum_inputs_number() const
+const Index& GrowingInputs::get_maximum_inputs_number() const
 {
     return(maximum_inputs_number);
 }
@@ -66,7 +66,7 @@ const int& GrowingInputs::get_maximum_inputs_number() const
 
 /// Returns the minimum number of inputs in the growing inputs selection algorithm.
 
-const int& GrowingInputs::get_minimum_inputs_number() const
+const Index& GrowingInputs::get_minimum_inputs_number() const
 {
     return(minimum_inputs_number);
 }
@@ -74,7 +74,7 @@ const int& GrowingInputs::get_minimum_inputs_number() const
 
 /// Returns the maximum number of selection failures in the growing inputs selection algorithm.
 
-const int& GrowingInputs::get_maximum_selection_failures() const
+const Index& GrowingInputs::get_maximum_selection_failures() const
 {
     return(maximum_selection_failures);
 }
@@ -94,9 +94,9 @@ void GrowingInputs::set_default()
     {
         training_strategy_pointer->get_neural_network_pointer()->get_display();
 
-        const int inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
+        const Index inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
 
-        maximum_selection_failures = static_cast<int>(max(3.,inputs_number/5.));
+        maximum_selection_failures = static_cast<Index>(max(3.,inputs_number/5.));
 
         maximum_inputs_number = inputs_number;
     }
@@ -108,7 +108,7 @@ void GrowingInputs::set_default()
 /// Sets the maximum inputs number for the growing inputs selection algorithm.
 /// @param new_maximum_inputs_number Maximum inputs number in the growing inputs selection algorithm.
 
-void GrowingInputs::set_maximum_inputs_number(const int& new_maximum_inputs_number)
+void GrowingInputs::set_maximum_inputs_number(const Index& new_maximum_inputs_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -117,7 +117,7 @@ void GrowingInputs::set_maximum_inputs_number(const int& new_maximum_inputs_numb
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void set_maximum_selection_failures(const int&) method.\n"
+               << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -132,7 +132,7 @@ void GrowingInputs::set_maximum_inputs_number(const int& new_maximum_inputs_numb
 /// Sets the minimum inputs number for the growing inputs selection algorithm.
 /// @param new_minimum_inputs_number Minimum inputs number in the growing inputs selection algorithm.
 
-void GrowingInputs::set_minimum_inputs_number(const int& new_minimum_inputs_number)
+void GrowingInputs::set_minimum_inputs_number(const Index& new_minimum_inputs_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -141,7 +141,7 @@ void GrowingInputs::set_minimum_inputs_number(const int& new_minimum_inputs_numb
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void set_minimum_inputs_number(const int&) method.\n"
+               << "void set_minimum_inputs_number(const Index&) method.\n"
                << "Minimum inputs number must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -156,7 +156,7 @@ void GrowingInputs::set_minimum_inputs_number(const int& new_minimum_inputs_numb
 /// Sets the maximum selection failures for the growing inputs selection algorithm.
 /// @param new_maximum_loss_failures Maximum number of selection failures in the growing inputs selection algorithm.
 
-void GrowingInputs::set_maximum_selection_failures(const int& new_maximum_loss_failures)
+void GrowingInputs::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -165,7 +165,7 @@ void GrowingInputs::set_maximum_selection_failures(const int& new_maximum_loss_f
         ostringstream buffer;
 
         buffer << "OpenNN Exception: GrowingInputs class.\n"
-               << "void set_maximum_selection_failures(const int&) method.\n"
+               << "void set_maximum_selection_failures(const Index&) method.\n"
                << "Maximum selection failures must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -195,26 +195,25 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     const LossIndex* loss_index_pointer = training_strategy_pointer->get_loss_index_pointer();
 
-    double optimum_training_error = 999999;
-    double optimum_selection_error = 999999;
-
-    double previus_selection_error = 999999;
+    type optimum_training_error = 999999;
+    type optimum_selection_error = 999999;
+    type previus_selection_error = 999999;
 
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const int inputs_number = data_set_pointer->get_input_columns_number();
+    const Index inputs_number = data_set_pointer->get_input_columns_number();
 
-    const int used_columns_number = data_set_pointer->get_used_columns_number();
+    const Index used_columns_number = data_set_pointer->get_used_columns_number();
 
     const Tensor<string, 1> used_columns_names = data_set_pointer->get_used_columns_names();
-
-    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_double();
 /*
+    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_type();
+
     const Tensor<type, 1> total_correlations = absolute_value(correlations.calculate_rows_sum());
 
-    const Tensor<int, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
+    const Tensor<Index, 1> correlations_descending_indices = total_correlations.sort_descending_indices();
 
     data_set_pointer->set_input_columns_unused();
 
@@ -224,21 +223,21 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Optimization algorithm
 
-    double current_training_error = 0.0;
-    double current_selection_error = 0.0;
+    type current_training_error = 0.0;
+    type current_selection_error = 0.0;
 
     Tensor<type, 1> current_parameters;
 
-    Tensor<int, 1> current_columns_indices;
+    Tensor<Index, 1> current_columns_indices;
 
-    Tensor<int, 1> optimal_columns_indices;
+    Tensor<Index, 1> optimal_columns_indices;
 
     Tensor<type, 1> optimal_parameters;
 
-    int selection_failures = 0;
+    Index selection_failures = 0;
 
     time_t beginning_time, current_time;
-    double elapsed_time = 0.0;
+    type elapsed_time = 0.0;
 
     time(&beginning_time);
 
@@ -248,9 +247,9 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
 
-    for(int epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        const int column_index = correlations_descending_indices[epoch];
+        const Index column_index = correlations_descending_indices[epoch];
 
         const string column_name = used_columns_names[column_index];
 
@@ -258,7 +257,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         current_columns_indices.push_back(column_index);
 
-        const int input_variables_number = data_set_pointer->get_input_variables_number();
+        const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
         data_set_pointer->set_input_variables_dimensions({input_variables_number});
 
@@ -266,16 +265,16 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         // Trial
 
-        double optimum_selection_error_trial = 999999;
-        double optimum_training_error_trial = 999999;
+        type optimum_selection_error_trial = 999999;
+        type optimum_training_error_trial = 999999;
         Tensor<type, 1> optimum_parameters_trial;
 
-        for(int i = 0; i < trials_number; i++)
+        for(Index i = 0; i < trials_number; i++)
         {
             OptimizationAlgorithm::Results training_results = training_strategy_pointer->perform_training();
 
-            double current_training_error_trial = training_results.final_training_error;
-            double current_selection_error_trial = training_results.final_selection_error;
+            type current_training_error_trial = training_results.final_training_error;
+            type current_selection_error_trial = training_results.final_selection_error;
             Tensor<type, 1> current_parameters_trial = training_results.final_parameters;
 
             if(display)
@@ -398,11 +397,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     data_set_pointer->set_input_columns_unused();
 
-    const int optimal_inputs_number = optimal_columns_indices.size();
+    const Index optimal_inputs_number = optimal_columns_indices.size();
 
-    for(int i = 0; i< optimal_inputs_number; i++)
+    for(Index i = 0; i< optimal_inputs_number; i++)
     {
-        int optimal_input_index = optimal_columns_indices[i];
+        Index optimal_input_index = optimal_columns_indices[i];
 
         data_set_pointer->set_column_use(optimal_input_index,DataSet::Input);
     }
@@ -428,15 +427,15 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
 
 /*
-    vector<DataSet::VariableUse> current_uses(columns_uses);
-   vector<DataSet::VariableUse> optimum_uses = current_uses;
+    Tensor<DataSet::VariableUse, 1> current_uses(columns_uses);
+   Tensor<DataSet::VariableUse, 1> optimum_uses = current_uses;
 
 
     // Optimization algorithm stuff
 
-    int index;
+    Index index;
 
-    int original_index = 0;
+    Index original_index = 0;
 
     Tensor<bool, 1> inputs_selection(inputs_number, true);
 
@@ -446,22 +445,22 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     Tensor<type, 1> selection_parameters(2);
     Tensor<type, 1> history_row;
 
-    double current_training_error;
-    double current_selection_error;
+    type current_training_error;
+    type current_selection_error;
 
-    double previus_selection_error;
+    type previus_selection_error;
 
     bool flag_input = false;
 
     bool end = false;
 
-    int iterations = 0;
+    Index iterations = 0;
 
-    int selection_failures = 0;
+    Index selection_failures = 0;
 
     time_t beginning_time, current_time;
 
-    double elapsed_time = 0.0;
+    type elapsed_time = 0.0;
 
 
    if(display)
@@ -521,7 +520,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     }
     else
     {
-        for(int i = 0; i < minimum_inputs_number; i++)
+        for(Index i = 0; i < minimum_inputs_number; i++)
         {
             index = maximal_index(total_input_correlations);
 
@@ -538,7 +537,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             flag_input = true;
         }
 
-        for(int i = 0; i < total_input_correlations.size(); i++)
+        for(Index i = 0; i < total_input_correlations.size(); i++)
         {
             if(total_input_correlations[i] >= maximum_correlation*targets_number)
             {
@@ -908,8 +907,8 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
 
    values.push_back(buffer.str());
 
-   const int rows_number = labels.size();
-   const int columns_number = 2;
+   const Index rows_number = labels.size();
+   const Index columns_number = 2;
 
    Tensor<string, 2> string_matrix(rows_number, columns_number);
 
@@ -1290,7 +1289,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const int new_trials_number = static_cast<int>(atoi(element->GetText()));
+            const Index new_trials_number = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
@@ -1385,7 +1384,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_selection_error_goal = atof(element->GetText());
+            const type new_selection_error_goal = atof(element->GetText());
 
             try
             {
@@ -1404,7 +1403,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const int new_maximum_iterations_number = static_cast<int>(atoi(element->GetText()));
+            const Index new_maximum_iterations_number = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
@@ -1423,7 +1422,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_maximum_correlation = atof(element->GetText());
+            const type new_maximum_correlation = atof(element->GetText());
 
             try
             {
@@ -1442,7 +1441,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_minimum_correlation = atof(element->GetText());
+            const type new_minimum_correlation = atof(element->GetText());
 
             try
             {
@@ -1461,7 +1460,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_maximum_time = atoi(element->GetText());
+            const type new_maximum_time = atoi(element->GetText());
 
             try
             {
@@ -1480,7 +1479,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const double new_tolerance = atof(element->GetText());
+            const type new_tolerance = atof(element->GetText());
 
             try
             {
@@ -1499,7 +1498,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const int new_minimum_inputs_number = static_cast<int>(atoi(element->GetText()));
+            const Index new_minimum_inputs_number = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
@@ -1518,7 +1517,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const int new_maximum_inputs_number = static_cast<int>(atoi(element->GetText()));
+            const Index new_maximum_inputs_number = static_cast<Index>(atoi(element->GetText()));
 
             try
             {
@@ -1537,7 +1536,7 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const int new_maximum_selection_failures = static_cast<int>(atoi(element->GetText()));
+            const Index new_maximum_selection_failures = static_cast<Index>(atoi(element->GetText()));
 
             try
             {

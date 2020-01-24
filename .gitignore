@@ -14,7 +14,6 @@ pip-selfcheck.json
 .DS_Store
 .AppleDouble
 .LSOverride
-*.orig
 
 # Icon must end with two \r
 Icon
@@ -209,11 +208,22 @@ Makefile*
 *.qmlproject.user.*
 
 # Examples
+[Ee]xamples/*
 *filters
 *vcxproj
 *sln
 
-[Ee]xamples/mnist/data/mnist_test.csv
-[Ee]xamples/mnist/data/mnist_train.csv
+![Ee]xamples/airfoil_self_noise
+![Ee]xamples/breast_cancer
+![Ee]xamples/iris_plant
+![Ee]xamples/leukemia
+![Ee]xamples/logical_operations
+![Ee]xamples/pima_indians_diabetes
+![Ee]xamples/simple_function_regression
+![Ee]xamples/simple_pattern_recognition
+![Ee]xamples/urinary_inflammations_diagnosis
+![Ee]xamples/yacht_hydrodynamics_design
+![Ee]xamples/yacht_hydrodynamics_production
+![Ee]xamples/rosenbrock
 
 # Created by .ignore support plugin (hsz.mobi)

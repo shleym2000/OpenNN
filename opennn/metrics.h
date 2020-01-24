@@ -19,6 +19,7 @@
 #include "config.h"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 #include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
+
 using namespace std;
 using namespace Eigen;
 
@@ -91,7 +92,7 @@ namespace OpenNN
      Tensor<type, 2> euclidean_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
      Tensor<type, 1> manhattan_distance(const Tensor<type, 2>&, const Tensor<type, 1>&);
-     type manhattan_distance(const Tensor<type, 2>&, const int&, const int&);
+     type manhattan_distance(const Tensor<type, 2>&, const Index&, const Index&);
 
      Tensor<type, 1> manhattan_weighted_distance(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
      Tensor<type, 2> manhattan_weighted_distance_matrix(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 1>&);

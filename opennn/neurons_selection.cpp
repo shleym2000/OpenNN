@@ -101,7 +101,7 @@ bool NeuronsSelection::has_training_strategy() const
 
 /// Returns the maximum of the hidden perceptrons number used in the order order selection.
 
-const int& NeuronsSelection::get_maximum_order() const
+const Index& NeuronsSelection::get_maximum_order() const
 {
     return maximum_order;
 }
@@ -109,7 +109,7 @@ const int& NeuronsSelection::get_maximum_order() const
 
 /// Returns the minimum of the hidden perceptrons number used in the order selection.
 
-const int& NeuronsSelection::get_minimum_order() const
+const Index& NeuronsSelection::get_minimum_order() const
 {
     return minimum_order;
 }
@@ -117,7 +117,7 @@ const int& NeuronsSelection::get_minimum_order() const
 
 /// Returns the number of trials for each network architecture.
 
-const int& NeuronsSelection::get_trials_number() const
+const Index& NeuronsSelection::get_trials_number() const
 {
     return trials_number;
 }
@@ -158,7 +158,7 @@ const bool& NeuronsSelection::get_display() const
 
 /// Returns the goal for the selection error in the order selection algorithm.
 
-const double& NeuronsSelection::get_selection_error_goal() const
+const type& NeuronsSelection::get_selection_error_goal() const
 {
     return selection_error_goal;
 }
@@ -166,7 +166,7 @@ const double& NeuronsSelection::get_selection_error_goal() const
 
 /// Returns the maximum number of iterations in the order selection algorithm.
 
-const int& NeuronsSelection::get_maximum_iterations_number() const
+const Index& NeuronsSelection::get_maximum_iterations_number() const
 {
     return maximum_iterations_number;
 }
@@ -174,7 +174,7 @@ const int& NeuronsSelection::get_maximum_iterations_number() const
 
 /// Returns the maximum time in the order selection algorithm.
 
-const double& NeuronsSelection::get_maximum_time() const
+const type& NeuronsSelection::get_maximum_time() const
 {
     return maximum_time;
 }
@@ -182,7 +182,7 @@ const double& NeuronsSelection::get_maximum_time() const
 
 /// Return the tolerance of error for the order selection algorithm.
 
-const double& NeuronsSelection::get_tolerance() const
+const type& NeuronsSelection::get_tolerance() const
 {
     return tolerance;
 }
@@ -201,8 +201,8 @@ void NeuronsSelection::set_training_strategy_pointer(TrainingStrategy* new_train
 
 void NeuronsSelection::set_default()
 {
-    int inputs_number;
-    int outputs_number;
+    Index inputs_number;
+    Index outputs_number;
 
     if(training_strategy_pointer == nullptr
     || !training_strategy_pointer->has_neural_network())
@@ -246,7 +246,7 @@ void NeuronsSelection::set_default()
 /// Sets the number of the maximum hidden perceptrons for the order selection algorithm.
 /// @param new_maximum_order Number of maximum hidden perceptrons.
 
-void NeuronsSelection::set_maximum_order(const int& new_maximum_order)
+void NeuronsSelection::set_maximum_order(const Index& new_maximum_order)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -255,7 +255,7 @@ void NeuronsSelection::set_maximum_order(const int& new_maximum_order)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_order(const int&) method.\n"
+               << "void set_maximum_order(const Index&) method.\n"
                << "maximum_order(" << new_maximum_order << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -266,7 +266,7 @@ void NeuronsSelection::set_maximum_order(const int& new_maximum_order)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_order(const int&) method.\n"
+               << "void set_maximum_order(const Index&) method.\n"
                << "maximum_order(" << new_maximum_order << ") must be equal or greater than minimum_order(" << minimum_order << ").\n";
 
         throw logic_error(buffer.str());
@@ -281,7 +281,7 @@ void NeuronsSelection::set_maximum_order(const int& new_maximum_order)
 /// Sets the number of the minimum hidden perceptrons for the order selection algorithm.
 /// @param new_minimum_order Number of minimum hidden perceptrons.
 
-void NeuronsSelection::set_minimum_order(const int& new_minimum_order)
+void NeuronsSelection::set_minimum_order(const Index& new_minimum_order)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -290,7 +290,7 @@ void NeuronsSelection::set_minimum_order(const int& new_minimum_order)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_minimum_order(const int&) method.\n"
+               << "void set_minimum_order(const Index&) method.\n"
                << "minimum_order(" << new_minimum_order << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -300,7 +300,7 @@ void NeuronsSelection::set_minimum_order(const int& new_minimum_order)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_minimum_order(const int&) method.\n"
+               << "void set_minimum_order(const Index&) method.\n"
                << "minimum_order(" << new_minimum_order << ") must be less than maximum_order(" << maximum_order << ").\n";
 
         throw logic_error(buffer.str());
@@ -315,7 +315,7 @@ void NeuronsSelection::set_minimum_order(const int& new_minimum_order)
 /// Sets the number of times that each different neural network is to be trained.
 /// @param new_trials_number Number of assays for each set of parameters.
 
-void NeuronsSelection::set_trials_number(const int& new_trials_number)
+void NeuronsSelection::set_trials_number(const Index& new_trials_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -323,7 +323,7 @@ void NeuronsSelection::set_trials_number(const int& new_trials_number)
     {
         ostringstream buffer;
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_trials_number(const int&) method.\n"
+               << "void set_trials_number(const Index&) method.\n"
                << "Number of assays must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -376,7 +376,7 @@ void NeuronsSelection::set_display(const bool& new_display)
 /// Sets the selection error goal for the order selection algorithm.
 /// @param new_selection_error_goal Goal of the selection error.
 
-void NeuronsSelection::set_selection_error_goal(const double& new_selection_error_goal)
+void NeuronsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -385,7 +385,7 @@ void NeuronsSelection::set_selection_error_goal(const double& new_selection_erro
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_selection_error_goal(const double&) method.\n"
+               << "void set_selection_error_goal(const type&) method.\n"
                << "Selection loss goal must be greater or equal than 0.\n";
 
         throw logic_error(buffer.str());
@@ -400,7 +400,7 @@ void NeuronsSelection::set_selection_error_goal(const double& new_selection_erro
 /// Sets the maximum iterations number for the order selection algorithm.
 /// @param new_maximum_iterations_number Maximum number of iterations.
 
-void NeuronsSelection::set_maximum_iterations_number(const int& new_maximum_iterations_number)
+void NeuronsSelection::set_maximum_iterations_number(const Index& new_maximum_iterations_number)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -409,7 +409,7 @@ void NeuronsSelection::set_maximum_iterations_number(const int& new_maximum_iter
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_iterations_number(const int&) method.\n"
+               << "void set_maximum_iterations_number(const Index&) method.\n"
                << "Maximum iterations number must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -424,7 +424,7 @@ void NeuronsSelection::set_maximum_iterations_number(const int& new_maximum_iter
 /// Sets the maximum time for the order selection algorithm.
 /// @param new_maximum_time Maximum time for the algorithm.
 
-void NeuronsSelection::set_maximum_time(const double& new_maximum_time)
+void NeuronsSelection::set_maximum_time(const type& new_maximum_time)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -433,7 +433,7 @@ void NeuronsSelection::set_maximum_time(const double& new_maximum_time)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_maximum_time(const double&) method.\n"
+               << "void set_maximum_time(const type&) method.\n"
                << "Maximum time must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -448,7 +448,7 @@ void NeuronsSelection::set_maximum_time(const double& new_maximum_time)
 /// Set the tolerance for the errors in the trainings of the algorithm.
 /// @param new_tolerance Value of the tolerance.
 
-void NeuronsSelection::set_tolerance(const double& new_tolerance)
+void NeuronsSelection::set_tolerance(const type& new_tolerance)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -457,7 +457,7 @@ void NeuronsSelection::set_tolerance(const double& new_tolerance)
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "void set_tolerance(const double&) method.\n"
+               << "void set_tolerance(const type&) method.\n"
                << "Tolerance must be equal or greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -472,7 +472,7 @@ void NeuronsSelection::set_tolerance(const double& new_tolerance)
 /// Returns the minimum of the loss and selection error in trials_number trainings.
 /// @param order_number Number of neurons in the hidden layer to be trained with.
 
-Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, NeuralNetwork& neural_network)
+Tensor<type, 1> NeuronsSelection::calculate_losses(const Index& neurons_number, NeuralNetwork& neural_network)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -481,7 +481,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "Tensor<type, 1> calculate_losses(int) method.\n"
+               << "Tensor<type, 1> calculate_losses(Index) method.\n"
                << "Number of hidden neurons must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -492,7 +492,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuronsSelection class.\n"
-               << "Tensor<type, 1> calculate_losses(int) method.\n"
+               << "Tensor<type, 1> calculate_losses(Index) method.\n"
                << "Number of trials must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -502,14 +502,14 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
 
     // Neural network stuff
 
-    const int trainable_layers_number = neural_network.get_trainable_layers_number();
+    const Index trainable_layers_number = neural_network.get_trainable_layers_number();
 
-    const vector<Layer*> trainable_layers_pointers = neural_network.get_trainable_layers_pointers();
+    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network.get_trainable_layers_pointers();
 
     // Loss index stuff
 
-    double optimum_selection_error = 999999;
-    double optimum_training_error = 999999;
+    type optimum_selection_error = 999999;
+    type optimum_training_error = 999999;
     Tensor<type, 1> optimum_parameters;
 
     // Optimization algorithm stuff
@@ -527,7 +527,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
     bool flag_training = false;
     bool flag_selection = false;
 
-    for(int i = 0; i < order_history.size(); i++)
+    for(Index i = 0; i < order_history.size(); i++)
     {
         if(order_history[i] == neurons_number)
         {
@@ -536,7 +536,7 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
         }
     }
 
-    for(int i = 0; i < order_history.size(); i++)
+    for(Index i = 0; i < order_history.size(); i++)
     {
         if(order_history[i] == neurons_number)
         {
@@ -553,14 +553,14 @@ Tensor<type, 1> NeuronsSelection::calculate_losses(const int& neurons_number, Ne
     trainable_layers_pointers[trainable_layers_number-2]->set_neurons_number(neurons_number); // Fix
     trainable_layers_pointers[trainable_layers_number-1]->set_inputs_number(neurons_number); // Fix
 
-    for(int i = 0; i < trials_number; i++)
+    for(Index i = 0; i < trials_number; i++)
     {
         neural_network.set_parameters_random();
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy_pointer->perform_training();
 
-        const double current_training_error = optimization_algorithm_results.final_training_error;
-        const double current_selection_error = optimization_algorithm_results.final_selection_error;
+        const type current_training_error = optimization_algorithm_results.final_training_error;
+        const type current_selection_error = optimization_algorithm_results.final_selection_error;
         const Tensor<type, 1> current_parameters = optimization_algorithm_results.final_parameters;
 
         if(current_selection_error < optimum_selection_error)
@@ -771,7 +771,7 @@ void NeuronsSelection::check() const
         throw logic_error(buffer.str());
     }
 
-    const int selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     if(selection_instances_number == 0)
     {
@@ -862,7 +862,7 @@ string NeuronsSelection::Results::object_to_string() const
 
    // Optimum selection error
 
-   if(final_selection_error > numeric_limits<double>::epsilon())
+   if(final_selection_error > numeric_limits<type>::epsilon())
    {
        buffer << "% Optimum selection error:\n"
               << final_selection_error << "\n";
@@ -870,7 +870,7 @@ string NeuronsSelection::Results::object_to_string() const
 
    // Final loss
 
-   if(final_training_loss > numeric_limits<double>::epsilon())
+   if(final_training_loss > numeric_limits<type>::epsilon())
    {
        buffer << "% Final loss:\n"
               << final_training_loss << "\n";

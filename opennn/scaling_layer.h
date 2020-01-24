@@ -43,10 +43,10 @@ public:
 
    explicit ScalingLayer();
 
-   explicit ScalingLayer(const int&);
-   explicit ScalingLayer(const Tensor<int, 1>&);
+   explicit ScalingLayer(const Index&);
+   explicit ScalingLayer(const Tensor<Index, 1>&);
 
-   explicit ScalingLayer(const vector<Descriptives>&);
+   explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
    ScalingLayer(const ScalingLayer&);
 
@@ -60,16 +60,16 @@ public:
 
    // Get methods
 
-   Tensor<int, 1> get_input_variables_dimensions() const;
-   Tensor<int, 1> get_outputs_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_outputs_dimensions() const;
 
-   int get_inputs_number() const;
-   int get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
    // Inputs descriptives
 
-   vector<Descriptives> get_descriptives() const;
-   Descriptives get_descriptives(const int&) const;
+   Tensor<Descriptives, 1> get_descriptives() const;
+   Descriptives get_descriptives(const Index&) const;
 
    Tensor<type, 2> get_descriptives_matrix() const;
 
@@ -80,7 +80,7 @@ public:
 
    // Variables scaling and unscaling
 
-   const vector<ScalingMethod> get_scaling_methods() const;
+   const Tensor<ScalingMethod, 1> get_scaling_methods() const;
 
    Tensor<string, 1> write_scaling_methods() const;
    Tensor<string, 1> write_scaling_methods_text() const;
@@ -92,33 +92,33 @@ public:
    // Set methods
 
    void set();
-   void set(const int&);
-   void set(const Tensor<int, 1>&);
-   void set(const vector<Descriptives>&);
+   void set(const Index&);
+   void set(const Tensor<Index, 1>&);
+   void set(const Tensor<Descriptives, 1>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const ScalingLayer&);
 
    void set(const Tensor<bool, 1>&);
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
    void set_default();
 
    // Descriptives
 
-   void set_descriptives(const vector<Descriptives>&);
-   void set_descriptives_eigen(const MatrixXd&);
-   void set_item_descriptives(const int&, const Descriptives&);
+   void set_descriptives(const Tensor<Descriptives, 1>&);
+   void set_descriptives_eigen(const Tensor<type, 2>&);
+   void set_item_descriptives(const Index&, const Descriptives&);
 
-   void set_minimum(const int&, const double&);
-   void set_maximum(const int&, const double&);
-   void set_mean(const int&, const double&);
-   void set_standard_deviation(const int&, const double&);
+   void set_minimum(const Index&, const type&);
+   void set_maximum(const Index&, const type&);
+   void set_mean(const Index&, const type&);
+   void set_standard_deviation(const Index&, const type&);
 
    // Scaling method
 
-   void set_scaling_methods(const vector<ScalingMethod>&);
+   void set_scaling_methods(const Tensor<ScalingMethod, 1>&);
    void set_scaling_methods(const Tensor<string, 1>&);
 
    void set_scaling_methods(const ScalingMethod&);
@@ -132,7 +132,7 @@ public:
 
    void grow_neuron(const Descriptives& new_descriptives = Descriptives());
 
-   void prune_neuron(const int&);
+   void prune_neuron(const Index&);
 
    // Check methods
 
@@ -169,15 +169,15 @@ public:
 
 protected:
 
-   Tensor<int, 1> input_variables_dimensions;
+   Tensor<Index, 1> input_variables_dimensions;
 
    /// Descriptives of input variables.
 
-   vector<Descriptives> descriptives;
+   Tensor<Descriptives, 1> descriptives;
 
    /// Vector of scaling methods for each variable.
 
-   vector<ScalingMethod> scaling_methods;
+   Tensor<ScalingMethod, 1> scaling_methods;
 
    /// Display warning messages to screen. 
 

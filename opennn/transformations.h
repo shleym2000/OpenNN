@@ -26,7 +26,7 @@ namespace OpenNN
 
     // Minimum-maximum vector scaling
 
-     void scale_minimum_maximum(Tensor<type, 1>&, const double &, const double &);
+     void scale_minimum_maximum(Tensor<type, 1>&, const type &, const type &);
 
      void scale_minimum_maximum(Tensor<type, 1>&, const Descriptives&);
 
@@ -34,33 +34,33 @@ namespace OpenNN
 
      // Minimum-maximum matrix scaling
 
-     void scale_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&);
+     void scale_minimum_maximum(Tensor<type, 2>&, const Tensor<Descriptives, 1>&);
 
-     vector<Descriptives> scale_minimum_maximum(Tensor<type, 2>&);
+     Tensor<Descriptives, 1> scale_minimum_maximum(Tensor<type, 2>&);
 
      // Minimum-maximum scaling
 
-     void scale_rows_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_rows_minimum_maximum(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
-     void scale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_columns_minimum_maximum(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
      // Mean-std vector scaling
 
      void scale_mean_standard_deviation(Tensor<type, 1>&, const Descriptives &);
-     void scale_mean_standard_deviation(Tensor<type, 1>&, const double &, const double &);
+     void scale_mean_standard_deviation(Tensor<type, 1>&, const type &, const type &);
 
      Descriptives scale_mean_standard_deviation(Tensor<type, 1>&);
 
      // Mean-std matrix scaling
 
-     void scale_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&);
-     vector<Descriptives> scale_mean_standard_deviation(Tensor<type, 2>&);
-     void scale_rows_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
-     void scale_columns_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_mean_standard_deviation(Tensor<type, 2>&, const Tensor<Descriptives, 1>&);
+     Tensor<Descriptives, 1> scale_mean_standard_deviation(Tensor<type, 2>&);
+     void scale_rows_mean_standard_deviation(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
+     void scale_columns_mean_standard_deviation(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
      // Standard deviation vector scaling
 
-     void scale_standard_deviation(Tensor<type, 1>&, const double &);
+     void scale_standard_deviation(Tensor<type, 1>&, const type &);
      void scale_standard_deviation(Tensor<type, 1>&, const Tensor<type, 1>&);
      void scale_standard_deviation(Tensor<type, 1>&, const Descriptives &);
 
@@ -68,19 +68,19 @@ namespace OpenNN
 
      // Range matrix scaling
 
-     void scale_range(Tensor<type, 2>&, const vector<Descriptives>&, const double& minimum, const double& maximum);
+     void scale_range(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const type& minimum, const type& maximum);
 
-     vector<Descriptives> scale_range(Tensor<type, 2>&, const double&, const double&);
+     Tensor<Descriptives, 1> scale_range(Tensor<type, 2>&, const type&, const type&);
 
      // Logarithmic matrix scaling
 
-     void scale_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&);
+     void scale_logarithmic(Tensor<type, 2>&, const Tensor<Descriptives, 1>&);
 
-     vector<Descriptives> scale_logarithmic(Tensor<type, 2>&);
+     Tensor<Descriptives, 1> scale_logarithmic(Tensor<type, 2>&);
 
-     void scale_rows_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_rows_logarithmic(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
-     void scale_columns_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void scale_columns_logarithmic(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
     ///Unscaling Methods
 
@@ -90,11 +90,11 @@ namespace OpenNN
 
      // Minimum-maximum matrix unscaling
 
-     void unscale_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&);
+     void unscale_minimum_maximum(Tensor<type, 2>&, const Tensor<Descriptives, 1>&);
 
-     void unscale_rows_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_rows_minimum_maximum(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
-     void unscale_columns_minimum_maximum(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_columns_minimum_maximum(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
      // Mean-std vector unscaling
 
@@ -102,19 +102,19 @@ namespace OpenNN
 
      // Mean-std matrix unscaling
 
-     void unscale_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&);
+     void unscale_mean_standard_deviation(Tensor<type, 2>&, const Tensor<Descriptives, 1>&);
 
-     void unscale_rows_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_rows_mean_standard_deviation(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
-     void unscale_columns_mean_standard_deviation(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_columns_mean_standard_deviation(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
      // Logarighmic matrix unscaling
 
-     void unscale_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&);
+     void unscale_logarithmic(Tensor<type, 2>&, const Tensor<Descriptives, 1>&);
 
-     void unscale_rows_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_rows_logarithmic(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
-     void unscale_columns_logarithmic(Tensor<type, 2>&, const vector<Descriptives>&, const Tensor<int, 1>&);
+     void unscale_columns_logarithmic(Tensor<type, 2>&, const Tensor<Descriptives, 1>&, const Tensor<Index, 1>&);
 
      // Association
 
@@ -122,20 +122,20 @@ namespace OpenNN
 
      // Bounding methods
 
-     void apply_lower_bound(Tensor<type, 1>&, const double&);
+     void apply_lower_bound(Tensor<type, 1>&, const type&);
 
      void apply_lower_bound(Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     void apply_upper_bound(Tensor<type, 1>&, const double&);
+     void apply_upper_bound(Tensor<type, 1>&, const type&);
 
      void apply_upper_bound(Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     void apply_lower_upper_bounds(Tensor<type, 1>&, const double &, const double &);
+     void apply_lower_upper_bounds(Tensor<type, 1>&, const type &, const type &);
 
      void apply_lower_upper_bounds(Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-     void transform_time_series(Tensor<type, 2>&, const int&, const int&, const int&);
-     void transform_time_series(Tensor<type, 2>&, const int&, const int&);
+     void transform_time_series(Tensor<type, 2>&, const Index&, const Index&, const Index&);
+     void transform_time_series(Tensor<type, 2>&, const Index&, const Index&);
 }
 
 #endif

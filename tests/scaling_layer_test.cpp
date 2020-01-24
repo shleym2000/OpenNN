@@ -33,7 +33,7 @@ void ScalingLayerTest::test_constructor()
    assert_true(sl2.get_descriptives().size() == 3, LOG);
    assert_true(sl2.get_scaling_methods().size() == 3, LOG);
 
-   Vector<Descriptives> descriptives;
+   Tensor<Descriptives, 1> descriptives;
 
    descriptives.set(2);
 
@@ -71,7 +71,7 @@ void ScalingLayerTest::test_get_neurons_number()
 
    sl1.set(3);
 
-   Vector<Descriptives> descriptives(3);
+   Tensor<Descriptives, 1> descriptives(3);
 
    sl1.set_descriptives(descriptives);
 
@@ -97,7 +97,7 @@ void ScalingLayerTest::test_get_means()
 
    ScalingLayer sl;
 
-   Vector<double> means;
+   Tensor<type, 1> means;
 
    // Test
 
@@ -258,13 +258,13 @@ void ScalingLayerTest::test_check_range()
    cout << "test_check_range\n";
 
    ScalingLayer sl;
-   Vector<double> inputs;
+   Tensor<type, 1> inputs;
 
    // Test
 
    sl.set(1);
 
-   inputs.set(1, 0.0);
+   inputs.resize(1, 0.0);
    sl.check_range(inputs);
 
 }
@@ -276,7 +276,7 @@ void ScalingLayerTest::test_calculate_outputs()
 
    ScalingLayer scaling_layer;
    
-   Tensor<double, 2> inputs;
+   Tensor<type, 2> inputs;
 
    scaling_layer.set_display(false);
 
@@ -286,7 +286,7 @@ void ScalingLayerTest::test_calculate_outputs()
 
    scaling_layer.set(1);
 
-   inputs.set({1,1}, 0.0);
+   inputs.resize({1,1}, 0.0);
  
    assert_true(scaling_layer.calculate_outputs(inputs) == inputs, LOG);
 
@@ -296,7 +296,7 @@ void ScalingLayerTest::test_calculate_outputs()
  
    scaling_layer.set(1);
 
-   inputs.set({1,1}, 0.0);
+   inputs.resize({1,1}, 0.0);
 
    assert_true(scaling_layer.calculate_outputs(inputs) == inputs, LOG);
 }
@@ -320,8 +320,8 @@ void ScalingLayerTest::test_write_expression()
 
    ScalingLayer sl;
 
-   Vector<string> inputs_names;
-   Vector<string> outputs_names;
+   Tensor<string, 1> inputs_names;
+   Tensor<string, 1> outputs_names;
 
    string expression;
 

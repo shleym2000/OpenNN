@@ -32,7 +32,7 @@ LongShortTermMemoryLayer::LongShortTermMemoryLayer() : Layer()
 /// @param new_inputs_number Number of inputs in the layer.
 /// @param new_neurons_number Number of neurons in the layer.
 
-LongShortTermMemoryLayer::LongShortTermMemoryLayer(const int& new_inputs_number, const int& new_neurons_number) : Layer()
+LongShortTermMemoryLayer::LongShortTermMemoryLayer(const Index& new_inputs_number, const Index& new_neurons_number) : Layer()
 {
    set(new_inputs_number, new_neurons_number);
 
@@ -60,7 +60,7 @@ LongShortTermMemoryLayer::~LongShortTermMemoryLayer()
 
 /// Returns the number of inputs to the layer.
 
-int LongShortTermMemoryLayer::get_inputs_number() const
+Index LongShortTermMemoryLayer::get_inputs_number() const
 {
     return input_weights.dimension(0);
 }
@@ -68,7 +68,7 @@ int LongShortTermMemoryLayer::get_inputs_number() const
 
 /// Returns the size of the neurons vector.
 
-int LongShortTermMemoryLayer::get_neurons_number() const
+Index LongShortTermMemoryLayer::get_neurons_number() const
 {
    return output_biases.size();
 }
@@ -76,18 +76,19 @@ int LongShortTermMemoryLayer::get_neurons_number() const
 
 /// Returns the number of parameters (biases, weights, recurrent weights) of the layer.
 
-int LongShortTermMemoryLayer::get_parameters_number() const
+Index LongShortTermMemoryLayer::get_parameters_number() const
 {
-    int neurons_number = get_neurons_number();
-    int inputs_number = get_inputs_number();
+    Index neurons_number = get_neurons_number();
+    Index inputs_number = get_inputs_number();
 
     return 4 * neurons_number * (1 + inputs_number + neurons_number);
 }
 
+
 /// Returns the forget biases from all the lstm in the layer.
 /// The format is a vector of real values.
 /// The size of this vector is the number of neurons in the layer.
-///
+
 Tensor<type, 1> LongShortTermMemoryLayer::get_forget_biases() const
 {
    return forget_biases;
@@ -212,8 +213,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_output_recurrent_weights() const
 
 Tensor<type, 2> LongShortTermMemoryLayer::get_weights() const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 /*
     Tensor<type, 2> weights(inputs_number,neurons_number,4);
 
@@ -236,7 +237,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_weights() const
 
 Tensor<type, 2> LongShortTermMemoryLayer::get_recurrent_weights() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 /*
     Tensor<type, 2> recurrent_weights(neurons_number, neurons_number, 4);
 
@@ -258,7 +259,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_recurrent_weights() const
 
 Tensor<type, 2> LongShortTermMemoryLayer::get_biases() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> biases(neurons_number,4);
 /*
@@ -273,7 +274,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::get_biases() const
 
 /// Returns the number of timesteps.
 
-int LongShortTermMemoryLayer::get_timesteps() const
+Index LongShortTermMemoryLayer::get_timesteps() const
 {
     return timesteps;
 }
@@ -470,14 +471,14 @@ void LongShortTermMemoryLayer::set()
 /// @param new_inputs_number Number of inputs.
 /// @param new_neurons_number Number of neurons.
 
-void LongShortTermMemoryLayer::set(const int& new_inputs_number, const int& new_neurons_number)
+void LongShortTermMemoryLayer::set(const Index& new_inputs_number, const Index& new_neurons_number)
 {
 /*
 
-    input_biases.set(new_neurons_number);
-    forget_biases.set(new_neurons_number);
-    state_biases.set(new_neurons_number);
-    output_biases.set(new_neurons_number);
+    input_biases.resize(new_neurons_number);
+    forget_biases.resize(new_neurons_number);
+    state_biases.resize(new_neurons_number);
+    output_biases.resize(new_neurons_number);
 
     input_weights.set(new_inputs_number, new_neurons_number);
     forget_weights.set(new_inputs_number, new_neurons_number);
@@ -529,9 +530,9 @@ void LongShortTermMemoryLayer::set_default()
 /// The new biases, weights and recurrent weights are initialized at random.
 /// @param new_inputs_number Number of layer inputs.
 
-void LongShortTermMemoryLayer::set_inputs_number(const int& new_inputs_number)
+void LongShortTermMemoryLayer::set_inputs_number(const Index& new_inputs_number)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
     set(new_inputs_number, neurons_number);
 }
 
@@ -540,7 +541,7 @@ void LongShortTermMemoryLayer::set_inputs_number(const int& new_inputs_number)
 /// The new biases, weights and recurrent weights are initialized at random.
 /// @param size dimensions of layer inputs.
 
-void LongShortTermMemoryLayer::set_input_shape(const Tensor<int, 1>& size)
+void LongShortTermMemoryLayer::set_input_shape(const Tensor<Index, 1>& size)
 {
 /*
     if(size.empty() || size.size() > 1)
@@ -548,7 +549,7 @@ void LongShortTermMemoryLayer::set_input_shape(const Tensor<int, 1>& size)
 //        throw exception(string("EXCEPTION: The new size is incompatible."));
     }
 */
-    const int new_size = size[0];
+    const Index new_size = size[0];
 
     set_inputs_number(new_size);
 }
@@ -558,9 +559,9 @@ void LongShortTermMemoryLayer::set_input_shape(const Tensor<int, 1>& size)
 /// All the parameters are also initialized at random.
 /// @param new_neurons_number New number of neurons in the layer.
 
-void LongShortTermMemoryLayer::set_neurons_number(const int& new_neurons_number)
+void LongShortTermMemoryLayer::set_neurons_number(const Index& new_neurons_number)
 {    
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     set(inputs_number, new_neurons_number);
 }
@@ -572,7 +573,7 @@ void LongShortTermMemoryLayer::set_neurons_number(const int& new_neurons_number)
 void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    forget_biases.set(new_biases);
+    forget_biases.resize(new_biases);
     */
 }
 
@@ -583,7 +584,7 @@ void LongShortTermMemoryLayer::set_forget_biases(const Tensor<type, 1>& new_bias
 void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    input_biases.set(new_biases);
+    input_biases.resize(new_biases);
 */
 }
 
@@ -595,7 +596,7 @@ void LongShortTermMemoryLayer::set_input_biases(const Tensor<type, 1>& new_biase
 void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    state_biases.set(new_biases);
+    state_biases.resize(new_biases);
 */
 }
 
@@ -607,7 +608,7 @@ void LongShortTermMemoryLayer::set_state_biases(const Tensor<type, 1>& new_biase
 void LongShortTermMemoryLayer::set_output_biases(const Tensor<type, 1>& new_biases)
 {
 /*
-    output_biases.set(new_biases);
+    output_biases.resize(new_biases);
 */
 }
 
@@ -731,14 +732,14 @@ void LongShortTermMemoryLayer::set_output_recurrent_weights(const Tensor<type, 2
 
 void LongShortTermMemoryLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 {
-    const int neurons_number = get_neurons_number();
-    const int inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
 
    #ifdef __OPENNN_DEBUG__ 
 
-    const int parameters_number = get_parameters_number();
+    const Index parameters_number = get_parameters_number();
 
-    const int new_parameters_size = new_parameters.size();
+    const Index new_parameters_size = new_parameters.size();
 
    if(new_parameters_size != parameters_number)
    {
@@ -914,10 +915,10 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
 }
 
 
-/// Sets the timesteps of the layer from a int.
+/// Sets the timesteps of the layer from a Index.
 /// @param new_timesteps New set of timesteps in the layer.
 
-void LongShortTermMemoryLayer::set_timesteps(const int & new_timesteps)
+void LongShortTermMemoryLayer::set_timesteps(const Index & new_timesteps)
 {
     timesteps = new_timesteps;
 }
@@ -936,7 +937,7 @@ void LongShortTermMemoryLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the neurons in the layer with a given value.
 /// @param value Biases initialization value. 
 
-void LongShortTermMemoryLayer::initialize_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_biases(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -947,7 +948,7 @@ void LongShortTermMemoryLayer::initialize_biases(const double& value)
 /// Initializes the forget biases of all the neurons in the layer with a given value.
 /// @param value Forget biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_forget_biases(const type& value)
 {
     forget_biases.setConstant(value);
 }
@@ -956,7 +957,7 @@ void LongShortTermMemoryLayer::initialize_forget_biases(const double& value)
 /// Initializes the input biases of all the neurons in the layer with a given value.
 /// @param value Input biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_input_biases(const type& value)
 {
      input_biases.setConstant(value);
 }
@@ -965,7 +966,7 @@ void LongShortTermMemoryLayer::initialize_input_biases(const double& value)
 /// Initializes the state biases of all the neurons in the layer with a given value.
 /// @param value State biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_state_biases(const type& value)
 {
      state_biases.setConstant(value);
 }
@@ -974,7 +975,7 @@ void LongShortTermMemoryLayer::initialize_state_biases(const double& value)
 /// Initializes the oputput biases of all the neurons in the layer with a given value.
 /// @param value Output biases initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_biases(const double& value)
+void LongShortTermMemoryLayer::initialize_output_biases(const type& value)
 {
     output_biases.setConstant(value);
 }
@@ -982,7 +983,7 @@ void LongShortTermMemoryLayer::initialize_output_biases(const double& value)
 /// Initializes the weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_weights(const type& value)
 {
     forget_weights.setConstant(value);
     input_weights.setConstant(value);
@@ -994,7 +995,7 @@ void LongShortTermMemoryLayer::initialize_weights(const double& value)
 /// Initializes the forget weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Forget weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_forget_weights(const type& value)
 {
     forget_weights.setConstant(value);
 }
@@ -1003,7 +1004,7 @@ void LongShortTermMemoryLayer::initialize_forget_weights(const double& value)
 /// Initializes the input weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Input weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_input_weights(const type& value)
 {
      input_weights.setConstant(value);
 }
@@ -1012,7 +1013,7 @@ void LongShortTermMemoryLayer::initialize_input_weights(const double& value)
 /// Initializes the state weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value State weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_state_weights(const type& value)
 {
      state_weights.setConstant(value);
 }
@@ -1021,7 +1022,7 @@ void LongShortTermMemoryLayer::initialize_state_weights(const double& value)
 /// Initializes the output weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_weights(const double & value)
+void LongShortTermMemoryLayer::initialize_output_weights(const type & value)
 {
     output_weights.setConstant(value);
 }
@@ -1030,7 +1031,7 @@ void LongShortTermMemoryLayer::initialize_output_weights(const double & value)
 /// Initializes the recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_recurrent_weights(const type& value)
 {
     forget_recurrent_weights.setConstant(value);
     input_recurrent_weights.setConstant(value);
@@ -1042,7 +1043,7 @@ void LongShortTermMemoryLayer::initialize_recurrent_weights(const double& value)
 /// Initializes the forget recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Forget recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const type& value)
 {
     forget_recurrent_weights.setConstant(value);
 }
@@ -1051,7 +1052,7 @@ void LongShortTermMemoryLayer::initialize_forget_recurrent_weights(const double&
 /// Initializes the input recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Input recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const type& value)
 {
      input_recurrent_weights.setConstant(value);
 }
@@ -1060,7 +1061,7 @@ void LongShortTermMemoryLayer::initialize_input_recurrent_weights(const double& 
 /// Initializes the state recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value State recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const double& value)
+void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const type& value)
 {
      state_recurrent_weights.setConstant(value);
 }
@@ -1069,7 +1070,7 @@ void LongShortTermMemoryLayer::initialize_state_recurrent_weights(const double& 
 /// Initializes the output recurrent weights of all the neurons in the layer of neurons neuron with a given value.
 /// @param value Output recurrent weights initialization value.
 
-void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const double & value)
+void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const type & value)
 {
     output_recurrent_weights.setConstant(value);
 }
@@ -1078,7 +1079,7 @@ void LongShortTermMemoryLayer::initialize_output_recurrent_weights(const double 
 /// Initializes hidden states of the layer with a given value.
 /// @param value Hidden states initialization value.
 
-void LongShortTermMemoryLayer::initialize_hidden_states(const double& value)
+void LongShortTermMemoryLayer::initialize_hidden_states(const type& value)
 {
     hidden_states.setConstant(value);
 }
@@ -1087,13 +1088,13 @@ void LongShortTermMemoryLayer::initialize_hidden_states(const double& value)
 /// Initializes cell states of the layer with a given value.
 /// @param value Cell states initialization value.
 
-void LongShortTermMemoryLayer::initialize_cell_states(const double& value)
+void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
 {
     cell_states.setConstant(value);
 }
 
 
-void LongShortTermMemoryLayer::initialize_weights_Glorot(const double& minimum,const double& maximum)
+void LongShortTermMemoryLayer::initialize_weights_Glorot(const type& minimum,const type& maximum)
 {
     /*
     get_weights().setRandom(minimum, maximum);
@@ -1104,7 +1105,7 @@ void LongShortTermMemoryLayer::initialize_weights_Glorot(const double& minimum,c
 /// Initializes all the biases, weights and recurrent weights in the neural newtork with a given value.
 /// @param value Parameters initialization value. 
 
-void LongShortTermMemoryLayer::initialize_parameters(const double& value)
+void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 {
     forget_biases.setConstant(value);
     input_biases.setConstant(value);
@@ -1151,7 +1152,7 @@ void LongShortTermMemoryLayer::set_parameters_random()
 
 /// Calculates the norm of a layer parameters vector. 
 
-double LongShortTermMemoryLayer::calculate_parameters_norm() const
+type LongShortTermMemoryLayer::calculate_parameters_norm() const
 {
 /*
     return(l2_norm(get_parameters()));
@@ -1165,7 +1166,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_combinations(const Te
 
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1191,7 +1192,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_combinations(const Ten
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1217,7 +1218,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_combinations(const Ten
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1244,7 +1245,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_combinations(const Te
 
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1269,20 +1270,20 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_combinations(const Te
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Tensor<type, 2>& inputs)
 {
     /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
 
     // forget activations, input activations, state activations, output activations, state, hidden state
     Tensor<type, 2> activations_states(instances_number,neurons_number,6);
 
-    int forget_activations_index = 0;
-    int input_activations_index = instances_number*neurons_number;
-    int state_activations_index = 2*instances_number*neurons_number;
-    int output_activations_index = 3*instances_number*neurons_number;
-    int states_index = 4*instances_number*neurons_number;
-    int hidden_states_index = 5*instances_number*neurons_number;
+    Index forget_activations_index = 0;
+    Index input_activations_index = instances_number*neurons_number;
+    Index state_activations_index = 2*instances_number*neurons_number;
+    Index output_activations_index = 3*instances_number*neurons_number;
+    Index states_index = 4*instances_number*neurons_number;
+    Index hidden_states_index = 5*instances_number*neurons_number;
 
-    for(int i = 0; i < instances_number; i++)
+    for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0)
         {
@@ -1290,7 +1291,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_states(const Ten
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
         const Tensor<type, 1> forget_combinations = calculate_forget_combinations(current_inputs);
         const Tensor<type, 1> forget_activations = calculate_recurrent_activations(forget_combinations);
@@ -1333,9 +1334,9 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int combinations_columns_number = combinations.dimension(1);
+    const Index combinations_columns_number = combinations.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1383,9 +1384,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations(const Tensor<typ
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int combinations_columns_number = combinations.size();
+    const Index combinations_columns_number = combinations.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1434,9 +1435,9 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
     /*
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int combinations_columns_number = combinations.get_dimension(2);
+    const Index combinations_columns_number = combinations.dimension(2);
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1484,9 +1485,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations(const 
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int combinations_columns_number = combinations.size();
+    const Index combinations_columns_number = combinations.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1534,9 +1535,9 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int combinations_columns_number = combinations.dimension(1);
+    const Index combinations_columns_number = combinations.dimension(1);
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1586,9 +1587,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_activations_derivatives(cons
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int combinations_columns_number = combination.size();
+    const Index combinations_columns_number = combination.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1635,9 +1636,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_recurrent_activations_deriva
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int combinations_columns_number = combination.size();
+    const Index combinations_columns_number = combination.size();
 
     if(combinations_columns_number != neurons_number)
     {
@@ -1685,7 +1686,7 @@ void LongShortTermMemoryLayer::update_cell_states(const Tensor<type, 1>& inputs)
 {   
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1717,7 +1718,7 @@ void LongShortTermMemoryLayer::update_hidden_states(const Tensor<type, 1>& input
 {
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     if(inputs.size() != inputs_number)
     {
@@ -1745,9 +1746,9 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     /*
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
-    const int inputs_columns_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(1);
 
     if(inputs_columns_number != inputs_number)
     {
@@ -1761,11 +1762,11 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     }
     #endif
 
-    const int instances_number = inputs.dimension(0);
+    const Index instances_number = inputs.dimension(0);
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<Index, 1>({instances_number, neurons_number}));
 
     Tensor<type, 1> forget_combinations;
     Tensor<type, 1> forget_activations;
@@ -1776,7 +1777,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     Tensor<type, 1> output_combinations;
     Tensor<type, 1> output_activations;
 
-    for(int i = 0; i < instances_number; i++)
+    for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0)
         {
@@ -1784,7 +1785,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
 #pragma omp parallel
         {
@@ -1816,11 +1817,11 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters)
 {
 /*
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_columns_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(1);
 
     if(inputs_columns_number != inputs_number)
     {
@@ -1845,8 +1846,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     }
     #endif
 
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
 
     const Tensor<type, 2> new_forget_weights = parameters.get_subvector(0, inputs_number * neurons_number - 1).to_matrix(inputs_number, neurons_number);
     const Tensor<type, 2> new_input_weights = parameters.get_subvector(inputs_number * neurons_number, 2 * inputs_number * neurons_number - 1).to_matrix(inputs_number, neurons_number);
@@ -1863,7 +1864,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     const Tensor<type, 1> new_state_biases = parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 2 * neurons_number , 4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number - 1);
     const Tensor<type, 1> new_output_biases = parameters.get_subvector(4 * neurons_number * (inputs_number + neurons_number) + 3 * neurons_number, 4 * neurons_number * (inputs_number + neurons_number + 1) - 1);
 
-    Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
+    Tensor<type, 2> outputs(Tensor<Index, 1>({instances_number, neurons_number}));
 
     Tensor<type, 1> forget_combinations;
     Tensor<type, 1> forget_activations;
@@ -1877,7 +1878,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
     Tensor<type, 1> output_combinations;
     Tensor<type, 1> output_activations;
 
-    for(int i = 0; i < instances_number; i++)
+    for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0)
         {
@@ -1885,7 +1886,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
 #pragma omp parallel
         {
@@ -1916,13 +1917,13 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 
 Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2>& inputs, const Tensor<type, 2>& new_biases, const Tensor<type, 2>& new_weights, const Tensor<type, 2>& new_recurrent_weights)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     #ifdef __OPENNN_DEBUG__
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
-    const int inputs_columns_number = inputs.dimension(1);
+    const Index inputs_columns_number = inputs.dimension(1);
 
     if(inputs_columns_number != inputs_number)
     {
@@ -2009,9 +2010,9 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
      const Tensor<type, 1> new_state_biases(new_biases.get_column(2));
      const Tensor<type, 1> new_output_biases(new_biases.get_column(3));
 
-     const int instances_number = inputs.dimension(0);
+     const Index instances_number = inputs.dimension(0);
 
-     Tensor<type, 2> outputs(Tensor<int, 1>({instances_number, neurons_number}));
+     Tensor<type, 2> outputs(Tensor<Index, 1>({instances_number, neurons_number}));
 
      Tensor<type, 1> forget_combinations;
      Tensor<type, 1> forget_activations;
@@ -2025,7 +2026,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
      Tensor<type, 1> output_combinations;
      Tensor<type, 1> output_activations;
 
-     for(int i = 0; i < instances_number; i++)
+     for(Index i = 0; i < instances_number; i++)
      {
          if(i%timesteps == 0)
          {
@@ -2033,7 +2034,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
              cell_states.setZero();
          }
 
-         const Tensor<type, 1> current_inputs = inputs.get_row(i);
+         const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
  #pragma omp parallel
          {
@@ -2066,8 +2067,8 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_outputs(const Tensor<type, 2
 Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagation(const Tensor<type, 2>& inputs)
 {
     /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> activations(instances_number,neurons_number);
 
@@ -2075,11 +2076,11 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagatio
     Tensor<type, 2> activations_derivatives(instances_number,neurons_number, 5);
     activations_derivatives.setZero();
 
-    int forget_activations_index = 0;
-    int input_activations_index = instances_number*neurons_number;
-    int state_activations_index = 2*instances_number*neurons_number;
-    int output_activations_index = 3*instances_number*neurons_number;
-    int hidden_states_index = 4*instances_number*neurons_number;
+    Index forget_activations_index = 0;
+    Index input_activations_index = instances_number*neurons_number;
+    Index state_activations_index = 2*instances_number*neurons_number;
+    Index output_activations_index = 3*instances_number*neurons_number;
+    Index hidden_states_index = 4*instances_number*neurons_number;
 
     Tensor<type, 1> forget_combinations;
     Tensor<type, 1> forget_activations;
@@ -2097,7 +2098,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagatio
     Tensor<type, 1> output_activations;
     Tensor<type, 1> output_activations_derivatives;
 
-    for(int i = 0; i < instances_number; i++)
+    for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0)
         {
@@ -2105,7 +2106,7 @@ Layer::ForwardPropagation LongShortTermMemoryLayer::calculate_forward_propagatio
             cell_states.setZero();
         }
 
-        const Tensor<type, 1> current_inputs = inputs.get_row(i);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
  #pragma omp parallel
         {
@@ -2170,7 +2171,7 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
     /*
     const Type layer_type = next_layer_pointer->get_type();
 
-    MatrixXd synaptic_weights_transpose;
+    Tensor<type, 2> synaptic_weights_transpose;
 
     if(layer_type == Perceptron)
     {
@@ -2196,16 +2197,16 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<
                                                                   const Tensor<type, 2> & deltas)
 {
     /*
-    const int parameters_number = get_parameters_number();
+    const Index parameters_number = get_parameters_number();
 
-    const int neurons_number = get_neurons_number();
-    const int inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
 
     // For each layer
 
-    const int weights_number = inputs_number*neurons_number;
-    const int recurrent_weights_number = neurons_number*neurons_number;
-    const int biases_number = neurons_number;
+    const Index weights_number = inputs_number*neurons_number;
+    const Index recurrent_weights_number = neurons_number*neurons_number;
+    const Index biases_number = neurons_number;
 
     Tensor<type, 1> error_gradient(parameters_number, 0.0);
 
@@ -2275,10 +2276,10 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
                                                                                  const Tensor<type, 2>& activations_states)
  {
     /*
-    const int instances_number = inputs.dimension(0);
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = inputs_number*neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = inputs_number*neurons_number;
 
      Tensor<type, 1> forget_weights_error_gradient(parameters_number, 0.0);
 
@@ -2302,26 +2303,26 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
      const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
      const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-     int column_index = 0;
-     int input_index = 0;
+     Index column_index = 0;
+     Index input_index = 0;
 
-     for(int instance = 0; instance < instances_number; instance++)
+     for(Index instance = 0; instance < instances_number; instance++)
      {
-         const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
          const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-         const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-         const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-         const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-         const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+         const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+         const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+         const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+         const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-         const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-         const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-         const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
          Tensor<type, 1> previous_cell_state_activations(neurons_number,0.0);
 
@@ -2347,7 +2348,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_weights_error_gradien
          column_index = 0;
          input_index = 0;
 
-         for(int i = 0; i < parameters_number; i++)
+         for(Index i = 0; i < parameters_number; i++)
          {
              forget_combinations_weights_derivatives(i, column_index) += current_inputs[input_index];
 
@@ -2385,10 +2386,10 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
                                                                                 const Tensor<type, 2>& activations_states)
 {
     /*
-    const int instances_number = inputs.dimension(0);
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = inputs_number*neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = inputs_number*neurons_number;
 
     Tensor<type, 1> input_weights_error_gradient(parameters_number, 0.0);
 
@@ -2412,26 +2413,26 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
     const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
     const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-    int column_index = 0;
-    int input_index = 0;
+    Index column_index = 0;
+    Index input_index = 0;
 
-    for(int instance = 0; instance < instances_number; instance++)
+    for(Index instance = 0; instance < instances_number; instance++)
     {
-        const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+        const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -2457,7 +2458,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_weights_error_gradient
         column_index = 0;
         input_index = 0;
 
-        for(int i = 0; i < parameters_number; i++)
+        for(Index i = 0; i < parameters_number; i++)
         {
             input_combinations_weights_derivatives(i, column_index) += current_inputs[input_index];
 
@@ -2494,10 +2495,10 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
                                                                                 const Tensor<type, 2>& activations_states)
 {
     /*
-    const int instances_number = inputs.dimension(0);
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = inputs_number*neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = inputs_number*neurons_number;
 
     Tensor<type, 1> state_weights_error_gradient(parameters_number, 0.0);
 
@@ -2521,26 +2522,26 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
     const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
     const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-    int column_index = 0;
-    int input_index = 0;
+    Index column_index = 0;
+    Index input_index = 0;
 
-    for(int instance = 0; instance < instances_number; instance++)
+    for(Index instance = 0; instance < instances_number; instance++)
     {
-        const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+        const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -2566,7 +2567,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_weights_error_gradient
         column_index = 0;
         input_index = 0;
 
-        for(int i = 0; i < parameters_number; i++)
+        for(Index i = 0; i < parameters_number; i++)
         {
             state_combinations_weights_derivatives(i, column_index) += current_inputs[input_index];
 
@@ -2603,10 +2604,10 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
                                                                                  const Tensor<type, 2>& activations_states)
  {
     /*
-     const int instances_number = inputs.dimension(0);
-     const int inputs_number = get_inputs_number();
-     const int neurons_number = get_neurons_number();
-     const int parameters_number = inputs_number*neurons_number;
+     const Index instances_number = inputs.dimension(0);
+     const Index inputs_number = get_inputs_number();
+     const Index neurons_number = get_neurons_number();
+     const Index parameters_number = inputs_number*neurons_number;
 
      Tensor<type, 1> output_weights_error_gradient(parameters_number, 0.0);
 
@@ -2630,26 +2631,26 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
      const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
      const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-     int column_index = 0;
-     int input_index = 0;
+     Index column_index = 0;
+     Index input_index = 0;
 
-     for(int instance = 0; instance < instances_number; instance++)
+     for(Index instance = 0; instance < instances_number; instance++)
      {
-         const Tensor<type, 1> current_inputs = inputs.get_row(instance);
+         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
 
          const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-         const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-         const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-         const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-         const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+         const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+         const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+         const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+         const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+         const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-         const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-         const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-         const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+         const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+         const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
          Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -2675,7 +2676,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_weights_error_gradien
          column_index = 0;
          input_index = 0;
 
-         for(int i = 0; i < parameters_number; i++)
+         for(Index i = 0; i < parameters_number; i++)
          {
              output_combinations_weights_derivatives(i, column_index) += current_inputs[input_index];
 
@@ -2712,9 +2713,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
                                                                                            const Tensor<type, 2>& activations_states)
 {
     /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = neurons_number*neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = neurons_number*neurons_number;
 
     Tensor<type, 1> forget_recurrent_weights_error_gradient(parameters_number, 0.0);
 
@@ -2739,24 +2740,24 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
     const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
     const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-    int column_index = 0;
-    int activation_index = 0;
+    Index column_index = 0;
+    Index activation_index = 0;
 
-    for(int instance = 0; instance < instances_number; instance++)
+    for(Index instance = 0; instance < instances_number; instance++)
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         if(instance%timesteps == 0)
         {
@@ -2777,7 +2778,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_recurrent_weights_err
             column_index = 0;
             activation_index = 0;
 
-            for(int i = 0; i < parameters_number; i++)
+            for(Index i = 0; i < parameters_number; i++)
             {
                 forget_combinations_recurrent_weights_derivatives(i, column_index) += previous_hidden_state_activations[activation_index];
 
@@ -2815,9 +2816,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
                                                                                           const Tensor<type, 2>& activations_states)
 {
     /*
-   const int instances_number = inputs.dimension(0);
-   const int neurons_number = get_neurons_number();
-   const int parameters_number = neurons_number*neurons_number;
+   const Index instances_number = inputs.dimension(0);
+   const Index neurons_number = get_neurons_number();
+   const Index parameters_number = neurons_number*neurons_number;
 
    Tensor<type, 1> input_recurrent_weights_error_gradient(parameters_number, 0.0);
 
@@ -2842,24 +2843,24 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
    const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
    const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-   int column_index = 0;
-   int activation_index = 0;
+   Index column_index = 0;
+   Index activation_index = 0;
 
-   for(int instance = 0; instance < instances_number; instance++)
+   for(Index instance = 0; instance < instances_number; instance++)
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        if(instance%timesteps == 0)
        {
@@ -2879,7 +2880,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_recurrent_weights_erro
            column_index = 0;
            activation_index = 0;
 
-           for(int i = 0; i < parameters_number; i++)
+           for(Index i = 0; i < parameters_number; i++)
            {
                input_combinations_recurrent_weights_derivatives(i, column_index) += previous_hidden_state_activations[activation_index];
 
@@ -2917,9 +2918,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
                                                                                           const Tensor<type, 2>& activations_states)
 {
     /*
-   const int instances_number = inputs.dimension(0);
-   const int neurons_number = get_neurons_number();
-   const int parameters_number = neurons_number*neurons_number;
+   const Index instances_number = inputs.dimension(0);
+   const Index neurons_number = get_neurons_number();
+   const Index parameters_number = neurons_number*neurons_number;
 
    Tensor<type, 1> state_recurrent_weights_error_gradient(parameters_number, 0.0);
 
@@ -2944,24 +2945,24 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
    const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
    const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-   int column_index = 0;
-   int activation_index = 0;
+   Index column_index = 0;
+   Index activation_index = 0;
 
-   for(int instance = 0; instance < instances_number; instance++)
+   for(Index instance = 0; instance < instances_number; instance++)
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        if(instance%timesteps == 0)
        {
@@ -2981,7 +2982,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_recurrent_weights_erro
            column_index = 0;
            activation_index = 0;
 
-           for(int i = 0; i < parameters_number; i++)
+           for(Index i = 0; i < parameters_number; i++)
            {
                state_combinations_recurrent_weights_derivatives(i, column_index) += previous_hidden_state_activations[activation_index];
 
@@ -3019,9 +3020,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
                                                                                            const Tensor<type, 2>& activations_states)
  {
 /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = neurons_number*neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = neurons_number*neurons_number;
 
     Tensor<type, 1> output_recurrent_weights_error_gradient(parameters_number, 0.0);
 
@@ -3046,24 +3047,24 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
     const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
     const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-    int column_index = 0;
-    int activation_index = 0;
+    Index column_index = 0;
+    Index activation_index = 0;
 
-    for(int instance = 0; instance < instances_number; instance++)
+    for(Index instance = 0; instance < instances_number; instance++)
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         if(instance%timesteps == 0)
         {
@@ -3083,7 +3084,7 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_recurrent_weights_err
             column_index = 0;
             activation_index = 0;
 
-            for(int i = 0; i < parameters_number; i++)
+            for(Index i = 0; i < parameters_number; i++)
             {
                 output_combinations_recurrent_weights_derivatives(i, column_index) += previous_hidden_state_activations[activation_index];
 
@@ -3121,9 +3122,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
                                                                                 const Tensor<type, 2>& activations_states)
 {
     /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = neurons_number;
 
     Tensor<type, 1> forget_biases_error_gradient(parameters_number, 0.0);
 
@@ -3147,21 +3148,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_forget_biases_error_gradient
     const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
     const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-    for(int instance = 0; instance < instances_number; instance++)
+    for(Index instance = 0; instance < instances_number; instance++)
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number,0.0);
 
@@ -3210,9 +3211,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
                                                                                const Tensor<type, 2>& activations_states)
 {
 /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = neurons_number;
 
    Tensor<type, 1> input_biases_error_gradient(parameters_number, 0.0);
 
@@ -3236,21 +3237,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_input_biases_error_gradient(
    const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
    const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-   for(int instance = 0; instance < instances_number; instance++)
+   for(Index instance = 0; instance < instances_number; instance++)
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -3300,9 +3301,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
                                                                                const Tensor<type, 2>& activations_states)
 {
 /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = neurons_number;
 
    Tensor<type, 1> state_biases_error_gradient(parameters_number, 0.0);
 
@@ -3326,21 +3327,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_state_biases_error_gradient(
    const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
    const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-   for(int instance = 0; instance < instances_number; instance++)
+   for(Index instance = 0; instance < instances_number; instance++)
    {
        const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-       const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-       const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-       const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-       const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+       const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+       const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+       const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+       const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+       const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-       const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-       const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-       const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+       const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+       const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
        Tensor<type, 1> previous_cell_state_activations(neurons_number, 0.0);
 
@@ -3389,9 +3390,9 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
                                                                                 const Tensor<type, 2>& activations_states)
 {
 /*
-    const int instances_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
-    const int parameters_number = neurons_number;
+    const Index instances_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
+    const Index parameters_number = neurons_number;
 
     Tensor<type, 1> output_biases_error_gradient(parameters_number, 0.0);
 
@@ -3415,21 +3416,21 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
     const Tensor<type, 2> output_derivatives = layers.activations_derivatives.get_matrix(3);
     const Tensor<type, 2> hidden_derivatives = layers.activations_derivatives.get_matrix(4);
 
-    for(int instance = 0; instance < instances_number; instance++)
+    for(Index instance = 0; instance < instances_number; instance++)
     {
         const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-        const Tensor<type, 1> current_forget_activations = forget_activations.get_row(instance);
-        const Tensor<type, 1> current_input_activations = input_activations.get_row(instance);
-        const Tensor<type, 1> current_state_activations = state_activations.get_row(instance);
-        const Tensor<type, 1> current_output_activations = output_activations.get_row(instance);
-        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.get_row(instance);
+        const Tensor<type, 1> current_forget_activations = forget_activations.chip(instance, 0);
+        const Tensor<type, 1> current_input_activations = input_activations.chip(instance, 0);
+        const Tensor<type, 1> current_state_activations = state_activations.chip(instance, 0);
+        const Tensor<type, 1> current_output_activations = output_activations.chip(instance, 0);
+        const Tensor<type, 1> current_cell_state_activations = cell_state_activations.chip(instance, 0);
 
-        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.get_row(instance);
-        const Tensor<type, 1> current_input_derivatives = input_derivatives.get_row(instance);
-        const Tensor<type, 1> current_state_derivatives = state_derivatives.get_row(instance);
-        const Tensor<type, 1> current_output_derivatives = output_derivatives.get_row(instance);
-        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.get_row(instance);
+        const Tensor<type, 1> current_forget_derivatives = forget_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_input_derivatives = input_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_state_derivatives = state_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_output_derivatives = output_derivatives.chip(instance, 0);
+        const Tensor<type, 1> current_hidden_derivatives = hidden_derivatives.chip(instance, 0);
 
         Tensor<type, 1> previous_cell_state_activations(neurons_number,0.0);
 
@@ -3479,13 +3480,13 @@ Tensor<type, 1> LongShortTermMemoryLayer::calculate_output_biases_error_gradient
 string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
 /*
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    const int inputs_number = get_inputs_number();
+    const Index inputs_number = get_inputs_number();
 
    #ifdef __OPENNN_DEBUG__ 
 
-   const int inputs_name_size = inputs_names.size();
+   const Index inputs_name_size = inputs_names.size();
 
    if(inputs_name_size != inputs_number)
    {
@@ -3498,7 +3499,7 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 	  throw logic_error(buffer.str());
    }
 
-   const int outputs_name_size = outputs_names.size();
+   const Index outputs_name_size = outputs_names.size();
 
    if(outputs_name_size != neurons_number)
    {
@@ -3517,16 +3518,16 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
    // Forget gate
 
-   for(int j = 0; j < neurons_number; j++)
+   for(Index j = 0; j < neurons_number; j++)
    {
        buffer << "forget_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << forget_biases[j] << "+";
 
-       for(int i = 0; i < inputs_number; i++)
+       for(Index i = 0; i < inputs_number; i++)
        {
            buffer << inputs_names[i] << "*" << forget_weights.get_column(j)[i] << "+";
        }
 
-       for(int k = 0; k < neurons_number-1; k++)
+       for(Index k = 0; k < neurons_number-1; k++)
        {
            buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << forget_recurrent_weights.get_column(j)[k] << "+";
        }
@@ -3536,16 +3537,16 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
    // Input gate
 
-   for(int j = 0; j < neurons_number; j++)
+   for(Index j = 0; j < neurons_number; j++)
    {
        buffer << "input_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << input_biases[j] << "+";
 
-       for(int i = 0; i < inputs_number; i++)
+       for(Index i = 0; i < inputs_number; i++)
        {
            buffer << inputs_names[i] << "*" << input_weights.get_column(j)[i] << "+";
        }
 
-       for(int k = 0; k < neurons_number-1; k++)
+       for(Index k = 0; k < neurons_number-1; k++)
        {
            buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << input_recurrent_weights.get_column(j)[k] << "+";
        }
@@ -3555,16 +3556,16 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
    // State gate
 
-   for(int j = 0; j < neurons_number; j++)
+   for(Index j = 0; j < neurons_number; j++)
    {
        buffer << "state_gate_" << to_string(j+1) << " = " << write_activation_function_expression() << " (" << state_biases[j] << "+";
 
-       for(int i = 0; i < inputs_number; i++)
+       for(Index i = 0; i < inputs_number; i++)
        {
            buffer << inputs_names[i] << "*" << state_weights.get_column(j)[i] << "+";
        }
 
-       for(int k = 0; k < neurons_number-1; k++)
+       for(Index k = 0; k < neurons_number-1; k++)
        {
            buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << state_recurrent_weights.get_column(j)[k] << "+";
        }
@@ -3574,16 +3575,16 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
    // Output gate
 
-   for(int j = 0; j < neurons_number; j++)
+   for(Index j = 0; j < neurons_number; j++)
    {
        buffer << "output_gate_" << to_string(j+1) << " = " << write_recurrent_activation_function_expression() << " (" << output_biases[j] << "+";
 
-       for(int i = 0; i < inputs_number; i++)
+       for(Index i = 0; i < inputs_number; i++)
        {
            buffer << inputs_names[i] << "*" << output_weights.get_column(j)[i] << "+";
        }
 
-       for(int k = 0; k < neurons_number-1; k++)
+       for(Index k = 0; k < neurons_number-1; k++)
        {
            buffer << "hidden_state_" << to_string(k+1) << "(t-1)*" << output_recurrent_weights.get_column(j)[k] << "+";
        }
@@ -3593,21 +3594,21 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
    // Cell state
 
-   for(int i = 0; i < neurons_number; i++)
+   for(Index i = 0; i < neurons_number; i++)
    {
         buffer << "cell_state_" << to_string(i+1) << "(t) = forget_gate_" << to_string(i+1) << "*cell_state_" << to_string(i+1) << "(t-1)+input_gate_" << to_string(i+1) << "*state_gate_" << to_string(i+1) << ";\n";
    }
 
    // Hidden state
 
-   for(int i = 0; i < neurons_number; i++)
+   for(Index i = 0; i < neurons_number; i++)
    {
         buffer << "hidden_state_" << to_string(i+1) << "(t) = output_gate_" << to_string(i+1) << "*" << write_activation_function_expression() << "(cell_state_" << to_string(i+1) << ");\n";
    }
 
    // Output
 
-   for(int i = 0; i < neurons_number; i++)
+   for(Index i = 0; i < neurons_number; i++)
    {
        buffer << outputs_names[i] << " = " << "hidden_state_" << to_string(i+1) << "(t);\n";
    }
@@ -3620,8 +3621,8 @@ string LongShortTermMemoryLayer::write_expression(const Tensor<string, 1>& input
 
 string LongShortTermMemoryLayer::object_to_string() const
 {
-    const int inputs_number = get_inputs_number();
-    const int neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 

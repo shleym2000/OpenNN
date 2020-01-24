@@ -45,7 +45,7 @@ public:
 
    explicit ProbabilisticLayer();
 
-   explicit ProbabilisticLayer(const int&, const int&);
+   explicit ProbabilisticLayer(const Index&, const Index&);
 
    ProbabilisticLayer(const ProbabilisticLayer&);
 
@@ -61,12 +61,12 @@ public:
 
    // Get methods
 
-   Tensor<int, 1> get_input_variables_dimensions() const;
+   Tensor<Index, 1> get_input_variables_dimensions() const;
 
-   int get_inputs_number() const;
-   int get_neurons_number() const;
+   Index get_inputs_number() const;
+   Index get_neurons_number() const;
 
-   const double& get_decision_threshold() const;
+   const type& get_decision_threshold() const;
 
    const ActivationFunction& get_activation_function() const;
    string write_activation_function() const;
@@ -77,18 +77,18 @@ public:
    // Set methods
 
    void set();
-   void set(const int&, const int&);
+   void set(const Index&, const Index&);
    void set(const ProbabilisticLayer&);
 
-   void set_inputs_number(const int&);
-   void set_neurons_number(const int&);
+   void set_inputs_number(const Index&);
+   void set_neurons_number(const Index&);
 
    void set_biases(const Tensor<type, 1>&);
    void set_synaptic_weights(const Tensor<type, 2>&);
 
    void set_parameters(const Tensor<type, 1>&);
 
-   void set_decision_threshold(const double&);
+   void set_decision_threshold(const type&);
 
    void set_activation_function(const ActivationFunction&);
    void set_activation_function(const string&);
@@ -103,9 +103,7 @@ public:
    Tensor<type, 1> get_biases(const Tensor<type, 1>&) const;
    Tensor<type, 2> get_synaptic_weights(const Tensor<type, 1>&) const;
 
-   Tensor<type, 2> get_synaptic_weights_transpose() const;
-
-   int get_parameters_number() const;
+   Index get_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
    // Display messages
@@ -114,15 +112,15 @@ public:
 
    // Pruning and growing
 
-   void prune_neuron(const int&);
+   void prune_neuron(const Index&);
 
    // Parameters initialization methods
 
-   void initialize_biases(const double&);
-   void initialize_synaptic_weights(const double&);
-   void initialize_synaptic_weights_Glorot(const double&,const double&);
+   void initialize_biases(const type&);
+   void initialize_synaptic_weights(const type&);
+   void initialize_synaptic_weights_Glorot(const type&,const type&);
 
-   void initialize_parameters(const double&);
+   void set_parameters_constant(const type&);
 
    void set_parameters_random();
 
@@ -132,9 +130,6 @@ public:
 
    void calculate_combinations(const Tensor<type, 2>& inputs, Tensor<type, 2>& combinations) const
    {
-       /*
-       linear_combinations(inputs, synaptic_weights, biases, combinations);
-       */
    }
 
    // Outputs
@@ -170,8 +165,8 @@ public:
    void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
    {
         #ifdef __OPENNN_DEBUG__
-/*
-        const int dimensions_number = combinations.dimensions_number();
+
+        const Index dimensions_number = combinations.rank();
 
         if(dimensions_number != 2)
         {
@@ -183,10 +178,10 @@ public:
 
            throw logic_error(buffer.str());
         }
-*/
-        const int neurons_number = get_neurons_number();
 
-        const int combinations_columns_number = combinations.dimension(1);
+        const Index neurons_number = get_neurons_number();
+
+        const Index combinations_columns_number = combinations.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {
@@ -203,7 +198,6 @@ public:
 
         switch(activation_function)
         {
-/*
             case Binary: binary(combinations, activations); return;
 
             case Logistic: logistic(combinations, activations); return;
@@ -211,7 +205,6 @@ public:
             case Competitive: competitive(combinations, activations); return;
 
             case Softmax: softmax(combinations, activations); return;
-*/
         }
 
         ostringstream buffer;
@@ -229,7 +222,7 @@ public:
    {
         #ifdef __OPENNN_DEBUG__
 
-        const int dimensions_number = combinations.rank();
+        const Index dimensions_number = combinations.rank();
 
         if(dimensions_number != 2)
         {
@@ -242,9 +235,9 @@ public:
            throw logic_error(buffer.str());
         }
 
-        const int neurons_number = get_neurons_number();
+        const Index neurons_number = get_neurons_number();
 
-        const int combinations_columns_number = combinations.dimension(1);
+        const Index combinations_columns_number = combinations.dimension(1);
 
         if(combinations_columns_number != neurons_number)
         {
@@ -261,7 +254,6 @@ public:
 
         switch(activation_function)
         {
-/*
             case Binary:
             {
                  ostringstream buffer;
@@ -291,7 +283,6 @@ public:
             {
                 softmax_derivatives(combinations, activations_derivatives); return;
             }
-*/
         }
 
         ostringstream buffer;
@@ -341,7 +332,7 @@ protected:
 
    ActivationFunction activation_function = Logistic;
 
-   double decision_threshold;
+   type decision_threshold;
 
    /// Display messages to screen.
 

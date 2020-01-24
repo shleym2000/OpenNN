@@ -60,10 +60,6 @@ int main(void)
     {
         cout << "Hello Blank Application" << endl;
 
-        // Here your code
-
-        cout << "Bye Blank Application" << endl;
-
         return 0;
 
     }

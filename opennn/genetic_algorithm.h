@@ -121,19 +121,19 @@ public:
 
     const FitnessAssignment& get_fitness_assignment_method() const;
 
-    const int& get_population_size() const;
+    const Index& get_population_size() const;
 
-    const double& get_mutation_rate() const;
+    const type& get_mutation_rate() const;
 
-    const int& get_elitism_size() const;
+    const Index& get_elitism_size() const;
 
-    const int& get_crossover_first_point() const;
+    const Index& get_crossover_first_point() const;
 
-    const int& get_crossover_second_point() const;
+    const Index& get_crossover_second_point() const;
 
-    const double& get_selective_pressure() const;
+    const type& get_selective_pressure() const;
 
-    const double& get_incest_prevention_distance() const;
+    const type& get_incest_prevention_distance() const;
 
     const bool& get_reserve_generation_mean() const;
 
@@ -167,19 +167,19 @@ public:
     void set_fitness_assignment_method(const string&);
     void set_crossover_method(const string&);
 
-    void set_population_size(const int&);
+    void set_population_size(const Index&);
 
-    void set_mutation_rate(const double&);
+    void set_mutation_rate(const type&);
 
-    void set_elitism_size(const int&);
+    void set_elitism_size(const Index&);
 
-    void set_crossover_first_point(const int&);
+    void set_crossover_first_point(const Index&);
 
-    void set_crossover_second_point(const int&);
+    void set_crossover_second_point(const Index&);
 
-    void set_selective_pressure(const double&);
+    void set_selective_pressure(const type&);
 
-    void set_incest_prevention_distance(const double&);
+    void set_incest_prevention_distance(const type&);
 
     void set_reserve_generation_mean(const bool&);
 
@@ -229,7 +229,7 @@ public:
 
     // Order selection methods
 
-    int get_optimal_individual_index() const;
+    Index get_optimal_individual_index() const;
 
     GeneticAlgorithmResults* perform_inputs_selection();
 
@@ -278,43 +278,43 @@ private:
 
     /// Initial uses of the variables in the data set.
 
-    vector<DataSet::VariableUse> original_uses;
+    Tensor<DataSet::VariableUse, 1> original_uses;
 
     /// Size of the population.
 
-    int population_size;
+    Index population_size;
 
     /// Incest prevention distance
     /// Distance between two individuals to prevent the crossover.
 
-    double incest_prevention_distance;
+    type incest_prevention_distance;
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.
     /// This is a parameter of the mutation operator.
 
-    double mutation_rate;
+    type mutation_rate;
 
     /// Elitism size.
     /// It represents the number of individuals which will always be selected for recombination.
     /// This is a parameter of the selection operator.
 
-    int elitism_size;
+    Index elitism_size;
 
     /// First point used in the OnePoint and TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    int crossover_first_point;
+    Index crossover_first_point;
 
     /// Second point used in the TwoPoint crossover method.
     /// If it is 0 the algorithm selects a random point for each pair of offsprings.
 
-    int crossover_second_point;
+    Index crossover_second_point;
 
     /// Linear ranking allows values for the selective pressure greater than 0.
     /// This is a parameter of the fitness assignment operator.
 
-    double selective_pressure;
+    type selective_pressure;
 
     // Inputs selection results
 

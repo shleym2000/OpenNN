@@ -18,7 +18,7 @@
 
 //#define EIGEN_TEST_FUNC cxx11_tensor_cuda
 
-//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE int
+//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE Index
 
 //#define EIGEN_USE_GPU
 
@@ -54,23 +54,35 @@ int main(void)
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
+//        data_set.generate_Rosenbrock_data(1000, 4);
 
         // Data set
 
-        DataSet data_set;
+        Tensor<type, 2> data(6,3);
 
-        data_set.generate_Rosenbrock_data(100, 4);
+        data.setValues({{0,1,2},
+                       {3,4,5},
+                       {6,7,8},
+                       {9,10,11},
+                       {12,13,14},
+                       {15,16,17}});
+
+        DataSet data_set(data);
 
         data_set.set_training();
 
 
+
+        data_set.set_batch_instances_number(2);
+
+
         // Neural network
 
-        const int inputs_number = data_set.get_input_variables_number();
-        const int hidden_neurons_number = 1000;
-        const int outputs_number = data_set.get_target_variables_number();
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index hidden_neurons_number = 1000;
+        const Index outputs_number = data_set.get_target_variables_number();
 
-        Tensor<int, 1> arquitecture(3);
+        Tensor<Index, 1> arquitecture(3);
 
         arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 

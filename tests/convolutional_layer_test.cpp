@@ -56,12 +56,12 @@ void ConvolutionalLayerTest::test_get_parameters()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<double, 2> new_synaptic_weights;
-    Vector<double> new_biases;
-    Vector<double> new_parameters;
+    Tensor<type, 1> new_biases;
+    Tensor<type, 1> new_parameters;
 
     // Test
 
-    new_synaptic_weights.set(Vector<size_t>({2,3,2,2}));
+    new_synaptic_weights.resize(({2,3,2,2}));
     new_synaptic_weights(0,0,0,0) = 1.111;
     new_synaptic_weights(0,0,0,1) = 1.112;
     new_synaptic_weights(0,0,1,0) = 1.121;
@@ -86,8 +86,8 @@ void ConvolutionalLayerTest::test_get_parameters()
     new_synaptic_weights(1,2,0,1) = 2.312;
     new_synaptic_weights(1,2,1,0) = 2.321;
     new_synaptic_weights(1,2,1,1) = 2.322;
-    new_biases = Vector<double>({4,8});
-    new_parameters = Vector<double>({1.111,2.111,1.211,2.211,1.311,2.311,1.121,2.121,1.221,2.221,1.321,2.321,
+    new_biases = Tensor<type, 1>({4,8});
+    new_parameters = Tensor<type, 1>({1.111,2.111,1.211,2.211,1.311,2.311,1.121,2.121,1.221,2.221,1.321,2.321,
                                      1.112,2.112,1.212,2.212,1.312,2.312,1.122,2.122,1.222,2.222,1.322,2.322,
                                      4,8});
 
@@ -193,11 +193,11 @@ void ConvolutionalLayerTest::test_set_parameters()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<double, 2> new_synaptic_weights;
-    Vector<double> new_biases;
+    Tensor<type, 1> new_biases;
 
     // Test
 
-    new_synaptic_weights.set(Vector<size_t>({2,2,2,2}));
+    new_synaptic_weights.resize(({2,2,2,2}));
     new_synaptic_weights(0,0,0,0) = 1.111;
     new_synaptic_weights(0,0,0,1) = 1.112;
     new_synaptic_weights(0,0,1,0) = 1.121;
@@ -214,7 +214,7 @@ void ConvolutionalLayerTest::test_set_parameters()
     new_synaptic_weights(1,1,0,1) = 2.212;
     new_synaptic_weights(1,1,1,0) = 2.221;
     new_synaptic_weights(1,1,1,1) = 2.222;
-    new_biases = Vector<double>({-1,1});
+    new_biases = Tensor<type, 1>({-1,1});
 
     convolutional_layer.set({2,3,3}, {2,2,2});
     convolutional_layer.set_parameters({1.111,2.111,1.211,2.211,1.121,2.121,1.221,2.221,1.112,2.112,1.212,2.212,1.122,2.122,1.222,2.222,-1,1});
@@ -239,9 +239,9 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    // Test
 
-   image.set(Vector<size_t>({1, 2, 2}));
+   image.set(Tensor<Index, 1>({1, 2, 2}));
 
-   filter.set(Vector<size_t>({1, 1, 1}));
+   filter.set(Tensor<Index, 1>({1, 1, 1}));
 
    convolutions = convolutional_layer.calculate_image_convolution(image, filter);
 
@@ -253,7 +253,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    image.set({1, 5, 5}, 1.0);
 
-   filter.set(Vector<size_t>({1, 2, 2}));
+   filter.set(Tensor<Index, 1>({1, 2, 2}));
    filter(0,0,0) = 1;
    filter(0,0,1) = 2;
    filter(0,1,0) = 3;
@@ -270,7 +270,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    // Test
 
-   image.set(Vector<size_t>({1,4,4}));
+   image.set(Tensor<Index, 1>({1,4,4}));
    image(0,0,0) = 3;
    image(0,0,1) = 4;
    image(0,0,2) = 4;
@@ -288,7 +288,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
    image(0,3,2) = 2;
    image(0,3,3) = 1;
 
-   filter.set(Vector<size_t>({1, 2, 2}));
+   filter.set(Tensor<Index, 1>({1, 2, 2}));
    filter(0,0,0) = 1;
    filter(0,0,1) = 2;
    filter(0,1,0) = 3;
@@ -314,7 +314,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    // Test
 
-   image.set(Vector<size_t>({1,5,4}));
+   image.set(Tensor<Index, 1>({1,5,4}));
    image(0,0,0) = 3;
    image(0,0,1) = 4;
    image(0,0,2) = 4;
@@ -336,7 +336,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
    image(0,4,2) = 1;
    image(0,4,3) = 1;
 
-   filter.set(Vector<size_t>({1, 2, 2}));
+   filter.set(Tensor<Index, 1>({1, 2, 2}));
    filter(0,0,0) = 1;
    filter(0,0,1) = 0;
    filter(0,1,0) = 0;
@@ -359,7 +359,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    // Test
 
-   image.set(Vector<size_t>({1,5,4}));
+   image.set(Tensor<Index, 1>({1,5,4}));
    image(0,0,0) = 3;
    image(0,0,1) = 4;
    image(0,0,2) = 4;
@@ -381,7 +381,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
    image(0,4,2) = 1;
    image(0,4,3) = 1;
 
-   filter.set(Vector<size_t>({1, 2, 2}));
+   filter.set(Tensor<Index, 1>({1, 2, 2}));
    filter(0,0,0) = 1;
    filter(0,0,1) = 0;
    filter(0,1,0) = 0;
@@ -406,7 +406,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    // Test
 
-   image.set(Vector<size_t>({2,3,3}));
+   image.set(Tensor<Index, 1>({2,3,3}));
    image(0,0,0) = 1;
    image(0,0,1) = 2;
    image(0,0,2) = 3;
@@ -426,7 +426,7 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
    image(1,2,1) = 3;
    image(1,2,2) = 3;
 
-   filter.set(Vector<size_t>({2, 2, 2}));
+   filter.set(Tensor<Index, 1>({2, 2, 2}));
    filter(0,0,0) = 1;
    filter(0,0,1) = 2;
    filter(0,1,0) = 2;
@@ -465,7 +465,7 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     // Test
 
-    images.set(Vector<size_t>({2,2,3,3}));
+    images.set(Tensor<Index, 1>({2,2,3,3}));
     images(0,0,0,0) = 1.1;
     images(0,0,0,1) = 1.1;
     images(0,0,0,2) = 1.1;
@@ -511,10 +511,10 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     convolutions = convolutional_layer.calculate_combinations(images);
 
-    alt_convolutions.set(Vector<size_t>({2,2,2,2}));
+    alt_convolutions.set(Tensor<Index, 1>({2,2,2,2}));
     convolutional_layer.calculate_combinations(images, alt_convolutions);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = -1;
     result(0,0,0,1) = -1;
     result(0,0,1,0) = -1;
@@ -537,7 +537,7 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     // Test
 
-    images.set(Vector<size_t>({2,1,6,6}));
+    images.set(Tensor<Index, 1>({2,1,6,6}));
     images(0,0,0,0) = 1;
     images(0,0,0,1) = 2;
     images(0,0,0,2) = 3;
@@ -611,7 +611,7 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
     images(1,0,5,4) = -35;
     images(1,0,5,5) = -36;
 
-    filters.set(Vector<size_t>({3,1,3,3}));
+    filters.set(Tensor<Index, 1>({3,1,3,3}));
     filters(0,0,0,0) = 1;
     filters(0,0,0,1) = 1;
     filters(0,0,0,2) = 1;
@@ -646,10 +646,10 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     convolutions = convolutional_layer.calculate_combinations(images);
 
-    alt_convolutions.set(Vector<size_t>({2,3,4,4}));
+    alt_convolutions.set(Tensor<Index, 1>({2,3,4,4}));
     convolutional_layer.calculate_combinations(images, alt_convolutions);
 
-    result.set(Vector<size_t>({2,3,4,4}));
+    result.set(Tensor<Index, 1>({2,3,4,4}));
     result(0,0,0,0) = 71;
     result(0,0,0,1) = 80;
     result(0,0,0,2) = 89;
@@ -757,13 +757,13 @@ void ConvolutionalLayerTest::test_calculate_activations()
     cout << "test_calculate_activations\n";
 
     ConvolutionalLayer convolutional_layer;
-    Tensor<double, 2> inputs;
+    Tensor<type, 2> inputs;
     Tensor<double, 2> activations;
     Tensor<double, 2> result;
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -785,7 +785,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     activations = convolutional_layer.calculate_activations(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0;
     result(0,0,0,1) = 0;
     result(0,0,1,0) = 0;
@@ -807,7 +807,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -829,7 +829,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     activations = convolutional_layer.calculate_activations(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = -1;
     result(0,0,0,1) = -1;
     result(0,0,1,0) = -1;
@@ -851,7 +851,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -873,7 +873,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     activations = convolutional_layer.calculate_activations(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = -0.804416;
     result(0,0,0,1) = -0.804768;
     result(0,0,1,0) = -0.807916;
@@ -910,7 +910,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -932,7 +932,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     activations = convolutional_layer.calculate_activations(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0;
     result(0,0,0,1) = 0;
     result(0,0,1,0) = 0;
@@ -954,7 +954,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -976,7 +976,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     activations = convolutional_layer.calculate_activations(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0.284600;
     result(0,0,0,1) = 0.284352;
     result(0,0,1,0) = 0.282132;
@@ -1018,13 +1018,13 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
     cout << "test_calculate_activations_derivatives\n";
 
     ConvolutionalLayer convolutional_layer;
-    Tensor<double, 2> inputs;
+    Tensor<type, 2> inputs;
     Tensor<double, 2> activations_derivatives;
     Tensor<double, 2> result;
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -1052,7 +1052,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -1080,7 +1080,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -1102,7 +1102,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0.352916;
     result(0,0,0,1) = 0.352348;
     result(0,0,1,0) = 0.347271;
@@ -1139,7 +1139,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -1161,7 +1161,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0;
     result(0,0,0,1) = 0;
     result(0,0,1,0) = 0;
@@ -1183,7 +1183,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     // Test
 
-    inputs.set(Vector<size_t>({2,2,2,2}));
+    inputs.resize(({2,2,2,2}));
     inputs(0,0,0,0) = -1.111;
     inputs(0,0,0,1) = -1.112;
     inputs(0,0,1,0) = -1.121;
@@ -1205,7 +1205,7 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     activations_derivatives = convolutional_layer.calculate_activations_derivatives(inputs);
 
-    result.set(Vector<size_t>({2,2,2,2}));
+    result.set(Tensor<Index, 1>({2,2,2,2}));
     result(0,0,0,0) = 0.247685;
     result(0,0,0,1) = 0.247498;
     result(0,0,1,0) = 0.245826;
@@ -1250,11 +1250,11 @@ void ConvolutionalLayerTest::test_calculate_outputs()
 
     Tensor<double, 2> images;
     Tensor<double, 2> filters;
-    Tensor<double, 2> outputs;
+    Tensor<type, 2> outputs;
 
     // Test
 
-    images.set(Vector<size_t>({2,2,3,3}));
+    images.set(Tensor<Index, 1>({2,2,3,3}));
     images(0,0,0,0) = 1.1;
     images(0,0,0,1) = 1.1;
     images(0,0,0,2) = 1.1;
@@ -1320,7 +1320,7 @@ void ConvolutionalLayerTest::test_calculate_outputs()
 
     // Test
 
-    images.set(Vector<size_t>({2,1,6,6}));
+    images.set(Tensor<Index, 1>({2,1,6,6}));
     images(0,0,0,0) = 1;
     images(0,0,0,1) = 2;
     images(0,0,0,2) = 3;
@@ -1394,7 +1394,7 @@ void ConvolutionalLayerTest::test_calculate_outputs()
     images(1,0,5,4) = -35;
     images(1,0,5,5) = -36;
 
-    filters.set(Vector<size_t>({3,1,3,3}));
+    filters.set(Tensor<Index, 1>({3,1,3,3}));
     filters(0,0,0,0) = 1;
     filters(0,0,0,1) = 1;
     filters(0,0,0,2) = 1;

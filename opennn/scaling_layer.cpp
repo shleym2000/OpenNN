@@ -25,13 +25,13 @@ ScalingLayer::ScalingLayer() : Layer()
 /// The members of this object are initialized with the default values. 
 /// @param new_neurons_number Number of scaling neurons in the layer.
 
-ScalingLayer::ScalingLayer(const int& new_neurons_number) : Layer()
+ScalingLayer::ScalingLayer(const Index& new_neurons_number) : Layer()
 {
     set(new_neurons_number);
 }
 
 
-ScalingLayer::ScalingLayer(const Tensor<int, 1>& new_inputs_dimensions) : Layer()
+ScalingLayer::ScalingLayer(const Tensor<Index, 1>& new_inputs_dimensions) : Layer()
 {
     set(new_inputs_dimensions);
 }
@@ -42,7 +42,7 @@ ScalingLayer::ScalingLayer(const Tensor<int, 1>& new_inputs_dimensions) : Layer(
 /// The rest of members of this object are initialized with the default values.
 /// @param new_descriptives Vector of vectors with the variables descriptives.
 
-ScalingLayer::ScalingLayer(const vector<Descriptives>& new_descriptives) : Layer()
+ScalingLayer::ScalingLayer(const Tensor<Descriptives, 1>& new_descriptives) : Layer()
 {
     set(new_descriptives);
 }
@@ -63,25 +63,25 @@ ScalingLayer::~ScalingLayer()
 }
 
 
-Tensor<int, 1> ScalingLayer::get_input_variables_dimensions() const
+Tensor<Index, 1> ScalingLayer::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
 }
 
 
-Tensor<int, 1> ScalingLayer::get_outputs_dimensions() const
+Tensor<Index, 1> ScalingLayer::get_outputs_dimensions() const
 {
     return input_variables_dimensions;
 }
 
 
-int ScalingLayer::get_inputs_number() const
+Index ScalingLayer::get_inputs_number() const
 {
     return descriptives.size();
 }
 
 
-int ScalingLayer::get_neurons_number() const
+Index ScalingLayer::get_neurons_number() const
 {
     return descriptives.size();
 }
@@ -90,7 +90,7 @@ int ScalingLayer::get_neurons_number() const
 /// Returns all the scaling layer descriptives.
 /// The format is a vector of descriptives structures of size the number of scaling neurons.
 
-vector<Descriptives> ScalingLayer::get_descriptives() const
+Tensor<Descriptives, 1> ScalingLayer::get_descriptives() const
 {
     return descriptives;
 }
@@ -99,7 +99,7 @@ vector<Descriptives> ScalingLayer::get_descriptives() const
 /// Returns the descriptives structure of a single scaling neuron.
 /// @param index Neuron index.
 
-Descriptives ScalingLayer::get_descriptives(const int& index) const
+Descriptives ScalingLayer::get_descriptives(const Index& index) const
 {
     return(descriptives[index]);
 }
@@ -111,11 +111,11 @@ Descriptives ScalingLayer::get_descriptives(const int& index) const
 
 Tensor<type, 2> ScalingLayer::get_descriptives_matrix() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> statistics_matrix(neurons_number, 4);
 /*
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         statistics_matrix.set_row(i, descriptives[i].to_vector());
     }
@@ -128,11 +128,11 @@ Tensor<type, 2> ScalingLayer::get_descriptives_matrix() const
 
 Tensor<type, 1> ScalingLayer::get_minimums() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 1> minimums(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         minimums[i] = descriptives[i].minimum;
     }
@@ -145,16 +145,16 @@ Tensor<type, 1> ScalingLayer::get_minimums() const
 
 Tensor<type, 1> ScalingLayer::get_maximums() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 1> maximums(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         maximums[i] = descriptives[i].maximum;
     }
 
-    return(maximums);
+    return maximums;
 }
 
 
@@ -162,11 +162,11 @@ Tensor<type, 1> ScalingLayer::get_maximums() const
 
 Tensor<type, 1> ScalingLayer::get_means() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 1> means(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         means[i] = descriptives[i].mean;
     }
@@ -179,11 +179,11 @@ Tensor<type, 1> ScalingLayer::get_means() const
 
 Tensor<type, 1> ScalingLayer::get_standard_deviations() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 1> standard_deviations(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         standard_deviations[i] = descriptives[i].standard_deviation;
     }
@@ -194,7 +194,7 @@ Tensor<type, 1> ScalingLayer::get_standard_deviations() const
 
 /// Returns the methods used for scaling.
 
-const vector<ScalingLayer::ScalingMethod> ScalingLayer::get_scaling_methods() const
+const Tensor<ScalingLayer::ScalingMethod, 1> ScalingLayer::get_scaling_methods() const
 {
     return scaling_methods;
 }
@@ -204,11 +204,11 @@ const vector<ScalingLayer::ScalingMethod> ScalingLayer::get_scaling_methods() co
 
 Tensor<string, 1> ScalingLayer::write_scaling_methods() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         if(scaling_methods[i] == NoScaling)
         {
@@ -247,7 +247,7 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods() const
 
 Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -266,7 +266,7 @@ Tensor<string, 1> ScalingLayer::write_scaling_methods_text() const
 
     Tensor<string, 1> scaling_methods_strings(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         if(scaling_methods[i] == NoScaling)
         {
@@ -323,17 +323,19 @@ void ScalingLayer::set()
 /// Sets a new size in the scaling layer. 
 /// It also sets the members to their default values. 
 
-void ScalingLayer::set(const int& new_inputs_number)
+void ScalingLayer::set(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
 
-    scaling_methods.resize(new_inputs_number, MinimumMaximum);
+    scaling_methods.resize(new_inputs_number);
+
+    scaling_methods.setConstant(MinimumMaximum);
 
     set_default();
 }
 
 
-void ScalingLayer::set(const Tensor<int, 1>& new_inputs_dimensions)
+void ScalingLayer::set(const Tensor<Index, 1>& new_inputs_dimensions)
 {
 /*
     descriptives.resize(new_inputs_dimensions.calculate_product());
@@ -351,11 +353,13 @@ void ScalingLayer::set(const Tensor<int, 1>& new_inputs_dimensions)
 /// The size of this vector must be 4. 
 /// The size of each subvector will be the size of the scaling layer. 
 
-void ScalingLayer::set(const vector<Descriptives>& new_descriptives)
+void ScalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
     descriptives = new_descriptives;
 
-    scaling_methods.resize(new_descriptives.size(), MinimumMaximum);
+    scaling_methods.resize(new_descriptives.size());
+
+    scaling_methods.setConstant(MinimumMaximum);
 
     set_default();
 }
@@ -392,7 +396,7 @@ void ScalingLayer::set(const ScalingLayer& new_scaling_layer)
 void ScalingLayer::set(const Tensor<bool, 1>& new_uses)
 {
 /*
-    const Tensor<int, 1> indices = new_uses.get_indices_equal_to(true);
+    const Tensor<Index, 1> indices = new_uses.get_indices_equal_to(true);
 */
 //    descriptives = descriptives.get_subvector(indices);
 
@@ -400,17 +404,23 @@ void ScalingLayer::set(const Tensor<bool, 1>& new_uses)
 }
 
 
-void ScalingLayer::set_inputs_number(const int& new_inputs_number)
+void ScalingLayer::set_inputs_number(const Index& new_inputs_number)
 {
     descriptives.resize(new_inputs_number);
-    scaling_methods.resize(new_inputs_number, MinimumMaximum);
+
+    scaling_methods.resize(new_inputs_number);
+
+    scaling_methods.setConstant(MinimumMaximum);
 }
 
 
-void ScalingLayer::set_neurons_number(const int& new_neurons_number)
+void ScalingLayer::set_neurons_number(const Index& new_neurons_number)
 {
     descriptives.resize(new_neurons_number);
-    scaling_methods.resize(new_neurons_number, MinimumMaximum);
+
+    scaling_methods.resize(new_neurons_number);
+
+    scaling_methods.setConstant(MinimumMaximum);
 }
 
 
@@ -438,20 +448,20 @@ void ScalingLayer::set_default()
 /// The size of the vector must be equal to the number of scaling neurons in the layer.
 /// @param new_descriptives Scaling layer descriptives.
 
-void ScalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives)
+void ScalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descriptives)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const int new_descriptives_size = new_descriptives.size();
+    const Index new_descriptives_size = new_descriptives.size();
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(new_descriptives_size != neurons_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_descriptives(const vector<Descriptives>&) method.\n"
+               << "void set_descriptives(const Tensor<Descriptives, 1>&) method.\n"
                << "Size of descriptives (" << new_descriptives_size << ") is not equal to number of scaling neurons (" << neurons_number << ").\n";
 
         throw logic_error(buffer.str());
@@ -465,18 +475,18 @@ void ScalingLayer::set_descriptives(const vector<Descriptives>& new_descriptives
 }
 
 
-void ScalingLayer::set_descriptives_eigen(const MatrixXd& descriptives_eigen)
+void ScalingLayer::set_descriptives_eigen(const Tensor<type, 2>& descriptives_eigen)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    vector<Descriptives> descriptives(neurons_number);
+    Tensor<Descriptives, 1> descriptives(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
-        descriptives[i].set_minimum(descriptives_eigen(static_cast<int>(i), 0));
-        descriptives[i].set_maximum(descriptives_eigen(static_cast<int>(i), 1));
-        descriptives[i].set_mean(descriptives_eigen(static_cast<int>(i), 2));
-        descriptives[i].set_standard_deviation(descriptives_eigen(static_cast<int>(i), 3));
+        descriptives[i].set_minimum(descriptives_eigen(i, 0));
+        descriptives[i].set_maximum(descriptives_eigen(i, 1));
+        descriptives[i].set_mean(descriptives_eigen(i, 2));
+        descriptives[i].set_standard_deviation(descriptives_eigen(i, 3));
     }
 
     set_descriptives(descriptives);
@@ -487,7 +497,7 @@ void ScalingLayer::set_descriptives_eigen(const MatrixXd& descriptives_eigen)
 /// @param i Index of neuron.
 /// @param item_descriptives Descriptives structure for that neuron.
 
-void ScalingLayer::set_item_descriptives(const int& i, const Descriptives& item_descriptives)
+void ScalingLayer::set_item_descriptives(const Index& i, const Descriptives& item_descriptives)
 {
     descriptives[i] = item_descriptives;
 }
@@ -497,7 +507,7 @@ void ScalingLayer::set_item_descriptives(const int& i, const Descriptives& item_
 /// @param i Index of scaling neuron.
 /// @param new_minimum Minimum value.
 
-void ScalingLayer::set_minimum(const int& i, const double& new_minimum)
+void ScalingLayer::set_minimum(const Index& i, const type& new_minimum)
 {
     descriptives[i].set_minimum(new_minimum);
 }
@@ -507,7 +517,7 @@ void ScalingLayer::set_minimum(const int& i, const double& new_minimum)
 /// @param i Index of scaling neuron.
 /// @param new_maximum Maximum value.
 
-void ScalingLayer::set_maximum(const int& i, const double& new_maximum)
+void ScalingLayer::set_maximum(const Index& i, const type& new_maximum)
 {
     descriptives[i].set_maximum(new_maximum);
 }
@@ -517,7 +527,7 @@ void ScalingLayer::set_maximum(const int& i, const double& new_maximum)
 /// @param i Index of scaling neuron.
 /// @param new_mean Mean value.
 
-void ScalingLayer::set_mean(const int& i, const double& new_mean)
+void ScalingLayer::set_mean(const Index& i, const type& new_mean)
 {
     descriptives[i].set_mean(new_mean);
 }
@@ -527,7 +537,7 @@ void ScalingLayer::set_mean(const int& i, const double& new_mean)
 /// @param i Index of scaling neuron.
 /// @param new_standard_deviation Standard deviation value.
 
-void ScalingLayer::set_standard_deviation(const int& i, const double& new_standard_deviation)
+void ScalingLayer::set_standard_deviation(const Index& i, const type& new_standard_deviation)
 {
     descriptives[i].set_standard_deviation(new_standard_deviation);
 }
@@ -536,18 +546,18 @@ void ScalingLayer::set_standard_deviation(const int& i, const double& new_standa
 /// Sets the methods to be used for scaling each variable.
 /// @param new_scaling_methods New scaling methods for the variables.
 
-void ScalingLayer::set_scaling_methods(const vector<ScalingLayer::ScalingMethod>& new_scaling_methods)
+void ScalingLayer::set_scaling_methods(const Tensor<ScalingLayer::ScalingMethod, 1>& new_scaling_methods)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(neurons_number == 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void set_scaling_methods(const vector<ScalingMethod>&) method.\n"
+               << "void set_scaling_methods(const Tensor<ScalingMethod, 1>&) method.\n"
                << "Neurons number (" << neurons_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -565,7 +575,7 @@ void ScalingLayer::set_scaling_methods(const vector<ScalingLayer::ScalingMethod>
 
 void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_methods_string)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -582,9 +592,9 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
 
 #endif
 
-    vector<ScalingMethod> new_scaling_methods(neurons_number);
+    Tensor<ScalingMethod, 1> new_scaling_methods(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         if(new_scaling_methods_string[i] == "NoScaling")
         {
@@ -624,7 +634,7 @@ void ScalingLayer::set_scaling_methods(const Tensor<string, 1>& new_scaling_meth
 
 void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
@@ -641,9 +651,9 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 
 #endif
 
-    vector<ScalingMethod> new_scaling_methods(neurons_number);
+    Tensor<ScalingMethod, 1> new_scaling_methods(neurons_number);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         if(new_scaling_methods_string == "NoScaling")
         {
@@ -682,9 +692,9 @@ void ScalingLayer::set_scaling_methods(const string& new_scaling_methods_string)
 
 void ScalingLayer::set_scaling_methods(const ScalingLayer::ScalingMethod& new_scaling_method)
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         scaling_methods[i] = new_scaling_method;
     }
@@ -707,33 +717,36 @@ void ScalingLayer::set_display(const bool& new_display)
 
 void ScalingLayer::grow_neuron(const Descriptives& new_descriptives)
 {
+/*
     descriptives.push_back(new_descriptives);
+*/
 }
 
 
 /// Removes a given scaling neuron from the scaling layer.
 /// @param index Index of neuron to be removed.
 
-void ScalingLayer::prune_neuron(const int& index)
+void ScalingLayer::prune_neuron(const Index& index)
 {
 #ifdef __OPENNN_DEBUG__
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     if(index >= neurons_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: ScalingLayer class.\n"
-               << "void prune_neuron(const int&) method.\n"
+               << "void prune_neuron(const Index&) method.\n"
                << "Index of scaling neuron is equal or greater than number of scaling neurons.\n";
 
         throw logic_error(buffer.str());
     }
 
 #endif
-
+/*
     descriptives.erase(descriptives.begin() + static_cast<long long>(index));
+*/
 }
 
 
@@ -741,7 +754,7 @@ void ScalingLayer::prune_neuron(const int& index)
 
 bool ScalingLayer::is_empty() const
 {
-    const int inputs_number = get_neurons_number();
+    const Index inputs_number = get_neurons_number();
 
     if(inputs_number == 0)
     {
@@ -762,11 +775,11 @@ bool ScalingLayer::is_empty() const
 
 void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 {
-    const int inputs_number = get_neurons_number();
+    const Index inputs_number = get_neurons_number();
 
 #ifdef __OPENNN_DEBUG__
 
-    const int size = inputs.size();
+    const Index size = inputs.size();
 
     if(size != inputs_number)
     {
@@ -785,7 +798,7 @@ void ScalingLayer::check_range(const Tensor<type, 1>& inputs) const
 
     if(display)
     {
-        for(int i = 0; i < inputs_number; i++)
+        for(Index i = 0; i < inputs_number; i++)
         {
             if(inputs[i] < descriptives[i].minimum)
             {
@@ -814,13 +827,13 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 /*
     if(inputs.rank() == 2)
     {
-        const int neurons_number = get_neurons_number();
+        const Index neurons_number = get_neurons_number();
 
     #ifdef __OPENNN_DEBUG__
 
         ostringstream buffer;
 
-        const int columns_number = inputs.dimension(1);
+        const Index columns_number = inputs.dimension(1);
 
         if(columns_number != neurons_number)
         {
@@ -833,13 +846,13 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     #endif
 
-        const int points_number = inputs.dimension(0);
+        const Index points_number = inputs.dimension(0);
 
         outputs = Tensor<type, 2>(points_number, neurons_number);
 
-        for(int i = 0; i < points_number; i++)
+        for(Index i = 0; i < points_number; i++)
         {
-            for(int j = 0; j < neurons_number; j++)
+            for(Index j = 0; j < neurons_number; j++)
             {
                 if(abs(descriptives[j].minimum - descriptives[j].maximum) < 1.0e-99)
                 {
@@ -887,13 +900,13 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     }
     else if(inputs.rank() == 4)
     {
-        const int neurons_number = get_neurons_number();
+        const Index neurons_number = get_neurons_number();
 
     #ifdef __OPENNN_DEBUG__
 
         ostringstream buffer;
 
-        const int columns_number = inputs.dimension(1) * inputs.dimension(2) * inputs.dimension(3);
+        const Index columns_number = inputs.dimension(1) * inputs.dimension(2) * inputs.dimension(3);
 
         if(columns_number != neurons_number)
         {
@@ -906,17 +919,17 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     #endif
 
-        const int points_number = inputs.dimension(0);
+        const Index points_number = inputs.dimension(0);
 
-        outputs.set(Tensor<int, 1>({points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3)}));
+        outputs.set(points_number, inputs.dimension(1), inputs.dimension(2), inputs.dimension(3));
 
-        for(int i = 0; i < points_number; i++)
+        for(Index i = 0; i < points_number; i++)
         {
-            for(int j = 0; j < neurons_number; j++)
+            for(Index j = 0; j < neurons_number; j++)
             {
-                int channel_index = j%(inputs.dimension(1));
-                int row_index = (j/(inputs.dimension(1)))%(inputs.dimension(2));
-                int column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%(inputs.dimension(3));
+                Index channel_index = j%(inputs.dimension(1));
+                Index row_index = (j/(inputs.dimension(1)))%(inputs.dimension(2));
+                Index column_index = (j/(inputs.dimension(1) * inputs.dimension(2)))%(inputs.dimension(3));
 
                 if(abs(descriptives[j].minimum - descriptives[j].maximum) < 1.0e-99)
                 {
@@ -972,12 +985,12 @@ Tensor<type, 2> ScalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
 Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<type, 2>& inputs) const
 {
-    const int points_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index points_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> outputs(points_number, neurons_number);
 /*
-    for(int j = 0; j < neurons_number; j++)
+    for(Index j = 0; j < neurons_number; j++)
     {
         if(abs(descriptives[j].maximum-descriptives[j].minimum) < 1.0e-99)
         {
@@ -1006,12 +1019,12 @@ Tensor<type, 2> ScalingLayer::calculate_minimum_maximum_outputs(const Tensor<typ
 
 Tensor<type, 2> ScalingLayer::calculate_mean_standard_deviation_outputs(const Tensor<type, 2>& inputs) const
 {
-    const int points_number = inputs.dimension(0);
-    const int neurons_number = get_neurons_number();
+    const Index points_number = inputs.dimension(0);
+    const Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> outputs(points_number, neurons_number);
 /*
-    for(int j = 0; j < neurons_number; j++)
+    for(Index j = 0; j < neurons_number; j++)
     {
         if(abs(descriptives[j].standard_deviation) < 1.0e-99)
         {
@@ -1041,13 +1054,13 @@ Tensor<type, 2> ScalingLayer::calculate_mean_standard_deviation_outputs(const Te
 
 string ScalingLayer::write_no_scaling_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const int inputs_number = get_neurons_number();
+    const Index inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer << outputs_names[i] << "=" << inputs_names[i] << ";\n";
     }
@@ -1062,13 +1075,13 @@ string ScalingLayer::write_no_scaling_expression(const Tensor<string, 1>& inputs
 
 string ScalingLayer::write_minimum_maximum_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const int inputs_number = get_neurons_number();
+    const Index inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer << outputs_names[i] << "=2*(" << inputs_names[i] << "-" << descriptives[i].minimum << ")/(" << descriptives[i].maximum << "-" << descriptives[i].minimum << ")-1;\n";
     }
@@ -1083,13 +1096,13 @@ string ScalingLayer::write_minimum_maximum_expression(const Tensor<string, 1>& i
 
 string ScalingLayer::write_mean_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const int inputs_number = get_neurons_number();
+    const Index inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer << outputs_names[i] << "= (" << inputs_names[i] << "-" << descriptives[i].mean << ")/" << descriptives[i].standard_deviation << ";\n";
     }
@@ -1104,13 +1117,13 @@ string ScalingLayer::write_mean_standard_deviation_expression(const Tensor<strin
 
 string ScalingLayer::write_standard_deviation_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const int inputs_number = get_neurons_number();
+    const Index inputs_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(int i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < inputs_number; i++)
     {
         buffer << outputs_names[i] << "=" << inputs_names[i] << "/" << descriptives[i].standard_deviation << ";\n";
     }
@@ -1123,13 +1136,13 @@ string ScalingLayer::write_standard_deviation_expression(const Tensor<string, 1>
 
 string ScalingLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     ostringstream buffer;
 
     buffer.precision(10);
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         if(scaling_methods[i] == NoScaling)
         {
@@ -1169,11 +1182,11 @@ string ScalingLayer::object_to_string() const
 {
     ostringstream buffer;
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     buffer << "Scaling layer\n";
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         buffer << "Descriptives " << i+1 << "\n"
                << "Minimum: " << descriptives[i].minimum << "\n"
@@ -1206,7 +1219,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
     tinyxml2::XMLElement* size_element = document->NewElement("ScalingNeuronsNumber");
     scaling_layer_element->LinkEndChild(size_element);
 
-    const int neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     buffer.str("");
     buffer << neurons_number;
@@ -1216,7 +1229,7 @@ tinyxml2::XMLDocument* ScalingLayer::to_XML() const
 
     const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
 
-    for(int i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         tinyxml2::XMLElement* scaling_neuron_element = document->NewElement("ScalingNeuron");
         scaling_neuron_element->SetAttribute("Index", static_cast<unsigned>(i+1));
@@ -1292,7 +1305,7 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    const size_t neurons_number = get_neurons_number();
+    const Index neurons_number = get_neurons_number();
 
     // Scaling layer
 
@@ -1309,17 +1322,17 @@ void ScalingLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 //@todo
-//    const Vector<string> scaling_methods_string = write_scaling_methods();
+//    const Tensor<string, 1> scaling_methods_string = write_scaling_methods();
 
     // Scaling neurons
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         // Scaling neuron
 
         file_stream.OpenElement("ScalingNeuron");
 
-        file_stream.PushAttribute("Index",static_cast<unsigned>(i)+1);
+        file_stream.PushAttribute("Index",i+1);
 
         // Minimum
 
@@ -1419,15 +1432,15 @@ void ScalingLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    const size_t neurons_number = static_cast<size_t>(atoi(neurons_number_element->GetText()));
+    const Index neurons_number = static_cast<Index>(atoi(neurons_number_element->GetText()));
 
     set(neurons_number);
 
-    unsigned index = 0; // size_t does not work
+    unsigned index = 0; // Index does not work
 
     const tinyxml2::XMLElement* start_element = neurons_number_element;
 
-    for(size_t i = 0; i < neurons_number; i++)
+    for(Index i = 0; i < neurons_number; i++)
     {
         const tinyxml2::XMLElement* scaling_neuron_element = start_element->NextSiblingElement("ScalingNeuron");
         start_element = scaling_neuron_element;
