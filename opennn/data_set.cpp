@@ -179,11 +179,12 @@ DataSet::Column::~Column()
 
 void DataSet::Column::set_use(const VariableUse& new_column_use)
 {
-/*
     column_use = new_column_use;
 
-    categories_uses.assign(categories_uses.size(), new_column_use);
-*/
+    for(int i = 0; i < categories_uses.size(); i ++)
+    {
+        categories_uses[i] = new_column_use;
+    }
 }
 
 
@@ -532,7 +533,7 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
     if(type != Categorical && column_use != UnusedVariable)
     {
-/*
+/* @todo
         used_variables_names.resize(1, name);
 */
     }
@@ -542,7 +543,7 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
         {
             if(categories_uses[i] != UnusedVariable)
             {
-/*
+/*@todo
                 used_variables_names.push_back(categories[i]);
 */
             }
@@ -1365,7 +1366,8 @@ void DataSet::split_instances_random(const double& training_instances_ratio,
 
       i++;
    }
-*/
+   */
+
 }
 
 
@@ -6307,22 +6309,9 @@ void DataSet::initialize_data(const double& new_value)
 /// Initializes the data matrix with random values chosen from a uniform distribution
 /// with given minimum and maximum.
 
-void DataSet::randomize_data_uniform(const double& minimum, const double& maximum)
+void DataSet::set_data_random()
 {
-/*
-   data.setRandom(minimum, maximum);
-*/
-}
-
-
-/// Initializes the data matrix with random values chosen from a normal distribution
-/// with given mean and standard deviation.
-
-void DataSet::randomize_data_normal(const double& mean, const double& standard_deviation)
-{
-/*
-   data.setRandom(mean, standard_deviation);
-*/
+   data.setRandom();
 }
 
 
@@ -8623,10 +8612,19 @@ void DataSet::read_csv()
 {
     read_csv_1();
 cout << "read_csv_1" << endl;
+
+cout << "data_preview[0]: " << data_file_preview[0] << endl;
+cout << "data_preview[1]: " << data_file_preview[1] << endl;
+cout << "data_preview[2]: " << data_file_preview[2] << endl;
+
     if(!has_time_variables() && !has_categorical_variables())
     {
         read_csv_2_simple();
         cout << "read_csv_2" << endl;
+
+//        cout << "Columns uses: " << get_columns_uses() << endl;
+
+
         read_csv_3_simple();
         cout << "read_csv_3" << endl;
     }
@@ -8728,16 +8726,16 @@ void DataSet::read_csv_1()
 
     // Check empty file    @todo, size() methods returns 0
 
-    /*if(data_file_preview[0].size() == 0)
+    if(data_file_preview[0].size() == 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "void read_csv() method.\n"
+               << "void read_csv_1() method.\n"
                << "File " << data_file_name << " is empty.\n";
 
         throw logic_error(buffer.str());
-    }*/
+    }
 
     // Set rows labels and columns names
 
@@ -8747,6 +8745,8 @@ void DataSet::read_csv_1()
     }
 
     const int columns_number = data_file_preview[0].size();
+
+    cout << "Columns number: " << columns_number << endl;
 
     columns.resize(columns_number);
 
@@ -8871,8 +8871,6 @@ void DataSet::read_csv_2_simple()
 
     data.resize(instances_count, columns_number);
 
-    cout << "Resize: " << instances_count << "; " << columns_number << endl;
-
     set_default_columns_uses();
 
     instances_uses.resize(instances_count);
@@ -8920,6 +8918,8 @@ void DataSet::read_csv_3_simple()
         }
     }
 
+    cout << "end read header" << endl;
+
     // Read data
 
     while(file.good())
@@ -8950,6 +8950,8 @@ void DataSet::read_csv_3_simple()
 
         instance_index++;
     }
+
+    cout << "end read data" << endl;
 
     // Check Binary
 

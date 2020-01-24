@@ -243,7 +243,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     DataSet data_set(2, 1, 1);
 
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     Vector<size_t> instances_indices(0, 1, data_set.get_instances_number()-1);
 
@@ -263,7 +263,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
     sum_squared_error.set_regularization_method(LossIndex::L2);
 
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     loss = sum_squared_error.calculate_training_loss();
     training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
@@ -305,12 +305,12 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     // Test
 
     data_set.set(1, 1, 1);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     instances_indices.set(0, 1, data_set.get_instances_number()-1);
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     loss = sum_squared_error.calculate_training_loss();
     training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
@@ -326,12 +326,12 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
     // Test
 
     data_set.set(3, 1, 1);
-    data_set.randomize_data_normal();
+    data_set.set_data_random();
 
     instances_indices.set(0, 1, data_set.get_instances_number()-1);
 
     neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.randomize_parameters_normal();
+    neural_network.set_parameters_random();
 
     loss = sum_squared_error.calculate_training_loss();
     training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);

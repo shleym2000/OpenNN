@@ -63,10 +63,10 @@ void StochasticGradientDescentTest::test_perform_training()
    cout << "test_perform_training\n";
 
    DataSet data_set(1, 1, 2);
-   data_set.randomize_data_normal();
+   data_set.set_data_random();
 
    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 2});
-   neural_network.randomize_parameters_normal();
+   neural_network.set_parameters_random();
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
