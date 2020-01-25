@@ -210,8 +210,6 @@ Makefile*
 
 # Examples
 *filters
-*vcxproj
-*sln
 
 [Ee]xamples/mnist/data/mnist_test.csv
 [Ee]xamples/mnist/data/mnist_train.csv
