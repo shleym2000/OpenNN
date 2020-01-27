@@ -281,12 +281,12 @@ Tensor<RegressionResults, 1> TestingAnalysis::linear_regression(const Tensor<typ
     const Index outputs_number = data_set_pointer->get_target_variables_number();
 
    Tensor<RegressionResults, 1> linear_regression(outputs_number);
-/*
+
    for(Index i = 0; i < outputs_number; i++)
    {
-       linear_regression[i] = OpenNN::linear_regression(output.get_column(i), target.get_column(i));
+       linear_regression[i] = OpenNN::linear_regression(output.chip(i,1), target.chip(i,1));
    }
-*/
+
    return linear_regression;
 }
 
@@ -362,11 +362,11 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
    // Approximation testing stuff
 
    Tensor<LinearRegressionAnalysis, 1> linear_regression_results(outputs_number);
-/*
+
    for(Index i = 0;  i < outputs_number; i++)
    {
-       const Tensor<type, 1> targets = testing_targets.get_column(i);
-       const Tensor<type, 1> outputs = testing_outputs.get_column(i);
+       const Tensor<type, 1> targets = testing_targets.chip(i,1);
+       const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
        const RegressionResults linear_regression = OpenNN::linear_regression(outputs, targets);
 
@@ -377,7 +377,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
        linear_regression_results[i].slope = linear_regression.b;
        linear_regression_results[i].correlation = linear_regression.correlation;
    }
-*/
+
    return linear_regression_results;
 }
 
@@ -745,12 +745,12 @@ Tensor<Tensor<Index, 1>, 1> TestingAnalysis::calculate_maximal_errors(const Inde
     const Index outputs_number = error_data.size();
 
     Tensor<Tensor<Index, 1>, 1> maximal_errors(outputs_number);
-/*
+
     for(Index i = 0; i < outputs_number; i++)
     {
-        maximal_errors[i] = maximal_indices(error_data[i].get_column(0), instances_number);
+        maximal_errors[i] = maximal_indices(error_data[i].chip(0,1), instances_number);
     }
-*/
+
     return maximal_errors;
 }
 
@@ -2687,9 +2687,9 @@ Tensor<type, 2> TestingAnalysis::calculate_calibration_plot(const Tensor<type, 2
 Tensor<Histogram, 1> TestingAnalysis::calculate_output_histogram(const Tensor<type, 2>& outputs, const Index& bins_number) const
 {
     Tensor<Histogram, 1> output_histogram(1);
-/*
-    output_histogram [0] = histogram(outputs.get_column(0), bins_number);
-*/
+
+//    output_histogram [0] = histogram(outputs.chip(0,1), bins_number);
+
     return output_histogram;
 }
 
@@ -3035,12 +3035,12 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_error_autocorrelation(cons
     const Tensor<type, 2> error = targets - outputs;
 
     Tensor<Tensor<type, 1>, 1> error_autocorrelations(targets_number);
-/*
+
     for(Index i = 0; i < targets_number; i++)
     {
-        error_autocorrelations[i] = autocorrelations(error.get_column(i), maximum_lags_number);
+        error_autocorrelations[i] = autocorrelations(error.chip(i,1), maximum_lags_number);
     }
-*/
+
     return error_autocorrelations;
 }
 
@@ -3110,12 +3110,12 @@ Tensor<Tensor<type, 1>, 1> TestingAnalysis::calculate_inputs_errors_cross_correl
     const Tensor<type, 2> errors = targets - outputs;
 
     Tensor<Tensor<type, 1>, 1> inputs_errors_cross_correlation(targets_number);
-/*
+
     for(Index i = 0; i < targets_number; i++)
     {
-        inputs_errors_cross_correlation[i] = cross_correlations(inputs.get_column(i), errors.get_column(i), lags_number);
+        inputs_errors_cross_correlation[i] = cross_correlations(inputs.chip(i,1), errors.chip(i,1), lags_number);
     }
-*/
+
     return inputs_errors_cross_correlation;
 }
 
