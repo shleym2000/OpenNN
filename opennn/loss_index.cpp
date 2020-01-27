@@ -108,7 +108,7 @@ LossIndex::~LossIndex()
 
 const type& LossIndex::get_regularization_weight() const
 {
-   return(regularization_weight);
+   return regularization_weight;
 }
 
 
@@ -440,16 +440,25 @@ Tensor<type, 1> LossIndex::calculate_error_gradient(const Tensor<type, 2>& input
     Tensor<type, 1> error_gradient(parameters_number);
 
     Index index = 0;
-/*
-    error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
-*/
+
+//    error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
+    for(Index i = 0; i < trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]).size(); i++)
+    {
+        error_gradient(i + index) = (trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]))(i);
+    }
+
     index += trainable_layers_parameters_number[0];
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
-/*
-      error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
-*/
+
+//      error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
+      for(Index i = 0; i < trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]).size(); i++)
+      {
+          error_gradient(i + index) = (trainable_layers_pointers[i]->calculate_error_gradient(
+                                      forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]))(i);
+      }
+
       index += trainable_layers_parameters_number[i];
     }
 
@@ -505,16 +514,24 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
    Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
 
    Index index = 0;
-/*
-   error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[0], inputs));
-*/
+
+//   error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[0], inputs));
+   for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[0], inputs).size(); i++)
+   {
+       error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[0], inputs))(i);
+   }
+
    index += layers_parameters_number[0];
 
    for(Index i = 1; i < layers_number; i++)
    {
-/*
-      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
-*/
+
+//      error_Jacobian.embed(0, index, calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations));
+      for(Index i = 0; i < calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations).size(); i++)
+      {
+          error_Jacobian(i + index) = (calculate_layer_error_terms_Jacobian(layers_delta[i], forward_propagation[i-1].activations))(i);
+      }
+
       index += layers_parameters_number[i];
    }
 
@@ -696,7 +713,7 @@ type LossIndex::calculate_regularization() const
     check();
 
     #endif
-/*
+
     switch(regularization_method)
     {
        case L1:
@@ -712,7 +729,7 @@ type LossIndex::calculate_regularization() const
             return 0.0;
        }
     }
-*/
+
     return 0.0;
 }
 
@@ -723,7 +740,7 @@ type LossIndex::calculate_regularization() const
 
 type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) const
 {
-/*
+
     switch(regularization_method)
     {
        case L1:
@@ -739,7 +756,7 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
             return 0.0;
        }
     }
-*/
+
     return 0.0;
 }
 
@@ -756,7 +773,7 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
     check();
 
     #endif
-/*
+
     switch(regularization_method)
     {
        case L1:
@@ -769,10 +786,10 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
        }
        case NoRegularization:
        {
-            return Tensor<type, 1>(neural_network_pointer->get_parameters_number(), 0.0);
+            return Tensor<type, 1>(neural_network_pointer->get_parameters_number()).setConstant(0.0);
        }
     }
-*/
+
     return Tensor<type, 1>();
 }
 
@@ -785,7 +802,7 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
 
 Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters) const
 {
-/*
+
     switch(regularization_method)
     {
        case L1:
@@ -798,10 +815,10 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
        }
        case NoRegularization:
        {
-            return Tensor<type, 1>(parameters.size(), 0.0);
+            return Tensor<type, 1>(parameters.size()).setConstant(0.0);
        }
     }
-*/
+
     return Tensor<type, 1>();
 }
 
@@ -818,7 +835,7 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
     check();
 
     #endif
-/*
+
     switch(regularization_method)
     {
        case L1:
@@ -833,10 +850,10 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
        {
             const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-            return Tensor<type, 2>(parameters_number,parameters_number,0.0);
+            return Tensor<type, 2>(parameters_number,parameters_number).setConstant(0.0);
        }
     }
-*/
+
     return Tensor<type, 2>();
 }
 
@@ -849,7 +866,7 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
 
 Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters) const
 {
-/*
+
     switch(regularization_method)
     {
        case L1:
@@ -864,10 +881,10 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1
        {
             const Index parameters_number = parameters.size();
 
-            return Tensor<type, 2>(parameters_number,parameters_number,0.0);
+            return Tensor<type, 2>(parameters_number,parameters_number).setConstant(0.0);
        }
     }
-*/
+
     return Tensor<type, 2>();
 }
 
@@ -1193,7 +1210,7 @@ Tensor<Tensor<type, 2>, 1> LossIndex::calculate_layers_delta(const Tensor<Layer:
 
 type LossIndex::calculate_training_error() const
 {
-    /*
+
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1218,20 +1235,18 @@ check();
 
     for(Index i = 0; i < batches_number; i++)
     {
-        const type batch_error = calculate_batch_error(training_batches[i]);
+        const type batch_error = calculate_batch_error(training_batches.chip(i,0));
 
         training_error += batch_error;
     }
 
     return training_error;
-    */
-    return 0.0;
 }
 
 
 type LossIndex::calculate_training_error(const Tensor<type, 1>& parameters) const
 {
-    /*
+
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1253,16 +1268,15 @@ check();
     type training_error = 0.0;
 
     #pragma omp parallel for reduction(+ : training_error)
+
     for(Index i = 0; i < batches_number; i++)
     {
-        const type batch_error = calculate_batch_error(training_batches[i, parameters);
+        const type batch_error = calculate_batch_error(training_batches.chip(i,0), parameters);
 
         training_error += batch_error;
     }
 
     return training_error;
-    */
-    return 0.0;
 }
 
 
@@ -1272,7 +1286,7 @@ check();
 
 type LossIndex::calculate_selection_error() const
 {
-    /*
+
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1294,16 +1308,15 @@ check();
     type selection_error = 0.0;
 
     #pragma omp parallel for reduction(+ : selection_error)
+
     for(Index i = 0; i < batches_number; i++)
     {
-        const type batch_error = calculate_batch_error(selection_batches[i);
+        const type batch_error = calculate_batch_error(selection_batches.chip(i,0));
 
         selection_error += batch_error;
     }
 
     return selection_error;
-    */
-    return 0.0;
 }
 
 
@@ -1341,7 +1354,7 @@ Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const Tensor<Index, 1>
 
 Tensor<type, 1> LossIndex::calculate_training_error_gradient() const
 {
-    /*
+
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -1351,7 +1364,7 @@ check();
     // Neural network
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-     bool is_forecasting = false;
+    bool is_forecasting = false;
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
@@ -1377,8 +1390,7 @@ check();
     }
 
     return training_error_gradient;
-    */
-    return 0.0;
+
 }
 
 
@@ -1390,10 +1402,9 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
     numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-/*
+
     return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error, parameters);
-*/
-    return Tensor<type, 1>();
+
 }
 
 

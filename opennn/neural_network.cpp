@@ -113,10 +113,18 @@ NeuralNetwork::~NeuralNetwork()
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
     const Layer::Type layer_type = layer_pointer->get_type();
-/*
+
     if(check_layer_type(layer_type))
     {
-        layers_pointers.push_back(layer_pointer);
+        const Index old_layers_number = get_layers_number();
+
+        Tensor<Layer*, 1> old_layers_pointers = get_layers_pointers();
+
+        layers_pointers.resize(old_layers_number+1);
+
+        for(Index i = 0; i < old_layers_number; i++) layers_pointers(i) = old_layers_pointers(i);
+
+        layers_pointers(old_layers_number) = layer_pointer;
     }
     else
     {
@@ -129,7 +137,6 @@ void NeuralNetwork::add_layer(Layer* layer_pointer)
 
         throw logic_error(buffer.str());
     }
-*/
 }
 
 
@@ -306,9 +313,15 @@ string NeuralNetwork::get_input_name(const Index& index) const
 
 Index NeuralNetwork::get_input_index(const string& name) const
 {
-/*
-    return inputs_names.get_first_index(name);
-*/
+
+    for(Index i = 0; i < inputs_names.size(); i++)
+    {
+        if(inputs_names(i) == name)
+        {
+            return i;
+            break;
+        }
+    }
     return 0;
 }
 
@@ -335,9 +348,16 @@ string NeuralNetwork::get_output_name(const Index& index) const
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-/*
-    return outputs_names.get_first_index(name);
-*/
+
+    for(Index i = 0; i < outputs_names.size(); i++)
+    {
+        if(outputs_names(i) == name)
+        {
+            return i;
+            break;
+        }
+    }
+
     return 0;
 }
 
@@ -356,7 +376,11 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
 {
     const Index layers_number = get_layers_number();
 
-    Tensor<Layer*, 1> trainable_layers_pointers;
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Layer*, 1> trainable_layers_pointers(trainable_layers_number);
+
+    Index trainable_layer_index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -364,9 +388,8 @@ Tensor<Layer*, 1> NeuralNetwork::get_trainable_layers_pointers() const
         && layers_pointers[i]->get_type() != Layer::Unscaling
         && layers_pointers[i]->get_type() != Layer::Bounding)
         {
-/*
-            trainable_layers_pointers.push_back(layers_pointers[i]);
-*/
+            trainable_layers_pointers[trainable_layer_index] = layers_pointers[i];
+            trainable_layer_index++;
         }
     }
 
@@ -380,7 +403,11 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
 {
     const Index layers_number = get_layers_number();
 
-    Tensor<Index, 1> trainable_layers_indices;
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Index, 1> trainable_layers_indices(trainable_layers_number);
+
+    Index trainable_layer_index = 0;
 
     for(Index i = 0; i < layers_number; i++)
     {
@@ -388,6 +415,8 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
         && layers_pointers[i]->get_type() != Layer::Unscaling
         && layers_pointers[i]->get_type() != Layer::Bounding)
         {
+            trainable_layers_indices[trainable_layer_index] = i;
+            trainable_layer_index++;
             //trainable_layers_indices.push_back(i);
         }
     }
@@ -792,7 +821,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
 
 Index NeuralNetwork::get_inputs_number() const
 {
-    if(layers_pointers.dimension(0) == 0)
+    if(layers_pointers.dimension(0) != 0)
     {
         return layers_pointers[0]->get_inputs_number();
     }
@@ -828,27 +857,29 @@ Index NeuralNetwork::get_outputs_number() const
 
 Tensor<Index, 1> NeuralNetwork::get_architecture() const
 {
-    Tensor<Index, 1> architecture;
-/*
+    const Index layers_number = get_layers_number();
+
+    Tensor<Index, 1> architecture(layers_number);
+
     const Index inputs_number = get_inputs_number();
 
     if(inputs_number == 0)
     {
-        return(architecture);
+        return architecture;
     }
 
-    architecture.push_back(inputs_number);
+//    architecture.push_back(inputs_number);
 
-    const Index layers_number = get_layers_number();
+//    architecture(0) = inputs_number;
 
     if(layers_number > 0)
     {
         for(Index i = 0; i < layers_number; i++)
         {
-            architecture.push_back(layers_pointers[i]->get_neurons_number());
+            architecture(i) = layers_pointers(i)->get_neurons_number(); //.push_back(layers_pointers[i]->get_neurons_number());
         }
     }
-    */
+
     return architecture;
 }
 
@@ -908,13 +939,17 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-/*
+
         const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
 
-        parameters.embed(position, layer_parameters);
+//        parameters.embed(position, layer_parameters);
+        for(Index i = 0; i < layer_parameters.size(); i++)
+        {
+            parameters(i + position) = layer_parameters(i);
+        }
 
         position += layer_parameters.size();
-*/
+
     }
 
     return parameters;

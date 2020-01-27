@@ -53,15 +53,42 @@ using namespace OpenNN;
 using namespace std;
 using namespace chrono;
 
+using Eigen::MatrixXd;
+using Eigen::Vector3d;
+
+
+
+void push_back(Tensor<Index, 1>& m, Index& value)
+{
+    cout<<"hello"<<endl;
+
+    cout<<m<<endl;
+
+    Index size = m.size();
+
+    m.resize(size + 1);
+
+    m[size + 1] = value;
+
+    cout<<"end"<<endl;
+
+    system("pause");
+
+
+}
+
+
 
 int main(void)
 {
     try
     {
-        cout << "Hello Blank Application" << endl;
+        cout << "Hello Blank Application." << endl;
+
+        cout << Tensor<type, 2>(2,2).setConstant(2) << endl;
+
 
         return 0;
-
     }
        catch(exception& e)
     {

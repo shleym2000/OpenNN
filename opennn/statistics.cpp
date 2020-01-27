@@ -1521,7 +1521,7 @@ Tensor<Histogram, 1> histograms(const Tensor<type, 2>& matrix, const Index& bins
 /*
    for(Index i = 0; i < columns_number; i++)
    {
-      column = matrix.get_column(i);
+      column = matrix.chip(i,1);
 
       if(column.is_binary())
       {
@@ -1597,9 +1597,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix)
 
    for(Index i = 0; i < columns_number; i++)
    {
-
-//      column = matrix.get_column(i);
-       column = matrix.chip(i,1);
+      column = matrix.chip(i,1);
 
       descriptives[i] = OpenNN::descriptives(column);
 
@@ -1642,8 +1640,7 @@ Tensor<Descriptives, 1> descriptives_missing_values(const Tensor<type, 2>& matri
 
    for(Index i = 0; i < columns_number; i++)
    {
-//      column = matrix.get_column(i);
-       column =  matrix.chip(i,1);
+      column =  matrix.chip(i,1);
 
       descriptives[i] = descriptives_missing_values(column);
    }
@@ -2660,6 +2657,7 @@ Tensor<type, 1> mean_missing_values(const Tensor<type, 2>& matrix, const Tensor<
    const Index rows_number = matrix.dimension(0);
    const Index columns_number = matrix.dimension(1);
 
+
    // Rows check
 
    if(row_indices_size > rows_number)
@@ -3084,6 +3082,7 @@ Tensor<type, 1> median_missing_values(const Tensor<type, 2>& matrix,
     const Index row_indices_size = row_indices.size();
 
    #ifdef __OPENNN_DEBUG__
+
 
    // Rows check
 
@@ -3771,7 +3770,7 @@ Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix)
 /*
     const Index integers_number = matrix.size();
     Tensor<type, 1> elements_uniques = matrix.get_column(0).get_unique_elements();
-    Tensor<type, 1> values = matrix.get_column(1);
+    Tensor<type, 1> values = matrix.chip(1,1);
 
     #ifdef __OPENNN_DEBUG__
 
@@ -3837,7 +3836,7 @@ Tensor<type, 1> means_by_categories_missing_values(const Tensor<type, 2>& matrix
     const Index integers_number = matrix.size();
 
     Tensor<type, 1> elements_uniques = matrix.get_column(0).get_unique_elements();
-    Tensor<type, 1> values = matrix.get_column(1);
+    Tensor<type, 1> values = matrix.chip(1,1);
 
     #ifdef __OPENNN_DEBUG__
 

@@ -74,7 +74,7 @@ LossIndex* LearningRateAlgorithm::get_loss_index_pointer() const
 
     #endif
 
-   return(loss_index_pointer);
+   return loss_index_pointer;
 }
 
 
@@ -98,7 +98,7 @@ bool LearningRateAlgorithm::has_loss_index() const
 
 const LearningRateAlgorithm::LearningRateMethod& LearningRateAlgorithm::get_learning_rate_method() const
 {
-   return(learning_rate_method);
+   return learning_rate_method;
 }
 
 
@@ -139,7 +139,7 @@ const type& LearningRateAlgorithm::get_loss_tolerance() const
 
 const type& LearningRateAlgorithm::get_warning_learning_rate() const
 {
-   return(warning_learning_rate);
+   return warning_learning_rate;
 }
 
 
@@ -148,7 +148,7 @@ const type& LearningRateAlgorithm::get_warning_learning_rate() const
 
 const type& LearningRateAlgorithm::get_error_learning_rate() const
 {
-   return(error_learning_rate);
+   return error_learning_rate;
 }
 
 
@@ -193,7 +193,7 @@ void LearningRateAlgorithm::set_default()
 
    // TRAINING PARAMETERS
 
-   loss_tolerance = 1.0e-3;
+   loss_tolerance = static_cast<type>(1.0e-3);
 
    warning_learning_rate = 1.0e6;
 
@@ -260,7 +260,7 @@ void LearningRateAlgorithm::set_loss_tolerance(const type& new_loss_tolerance)
 {  
    #ifdef __OPENNN_DEBUG__ 
                                       
-   if(new_loss_tolerance <= 0.0)
+   if(new_loss_tolerance <= static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -287,7 +287,7 @@ void LearningRateAlgorithm::set_warning_learning_rate(const type& new_warning_le
 {  
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_warning_learning_rate < 0.0)
+   if(new_warning_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -312,7 +312,7 @@ void LearningRateAlgorithm::set_error_learning_rate(const type& new_error_learni
 {  
    #ifdef __OPENNN_DEBUG__ 
 
-   if(new_error_learning_rate < 0.0)
+   if(new_error_learning_rate < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
