@@ -248,15 +248,15 @@
     </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="C:\MyProjects\RTS\Trial\TestLib\SandBox\OpenNN\examples\logical_operations\main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="C:\MyProjects\RTS\Trial\TestLib\SandBox\OpenNN\build\ZERO_CHECK.vcxproj">
       <Project>{29786C34-9FDD-3FD7-9FC5-0CF323706A45}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
