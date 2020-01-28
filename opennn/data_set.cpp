@@ -512,6 +512,21 @@ Index DataSet::Column::get_categories_number() const
 }
 
 
+/// Returns the number of used categories.
+
+Index DataSet::Column::get_used_categories_number() const
+{
+    Index used_categories_number = 0;
+
+    for(Index i = 0; i < categories.size(); i++)
+    {
+        if(categories_uses[i] != UnusedVariable) used_categories_number++;
+    }
+
+    return used_categories_number;
+}
+
+
 /// Returns a string vector that contains the names of the used variables in the data set.
 
 Tensor<string, 1> DataSet::Column::get_used_variables_names() const
@@ -520,19 +535,22 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
     if(type != Categorical && column_use != UnusedVariable)
     {
-/* @todo
-        used_variables_names.resize(1, name);
-*/
+        used_variables_names.resize(1);
+        used_variables_names.setConstant(name);
     }
     else if(type == Categorical)
     {
+        used_variables_names.resize(get_used_categories_number());
+
+        Index category_index = 0;
+
         for(Index i = 0; i < categories.size(); i++)
         {
             if(categories_uses[i] != UnusedVariable)
             {
-/*@todo
-                used_variables_names.push_back(categories[i]);
-*/
+                used_variables_names[category_index] = categories[i];
+
+                category_index++;
             }
         }
     }
@@ -594,8 +612,6 @@ void DataSet::transform_columns_time_series()
 
             new_column_index++;
         }
-
-
 
         if(lag_index > 0 && column_index == columns_number - 1)
         {
@@ -1725,10 +1741,9 @@ Tensor<string, 1> DataSet::get_input_variables_names() const
 
        const Tensor<string, 1> current_used_variables_names = columns[input_index].get_used_variables_names();
 
-//       input_variables_names.embed(index, current_used_variables_names);
-       for(Index i = 0; i < current_used_variables_names.size(); i++)
+       for(Index j = 0; j < current_used_variables_names.size(); j++)
        {
-           input_variables_names(i + index) = current_used_variables_names(i);
+           input_variables_names(index + j) = current_used_variables_names(j);
        }
 
        index += current_used_variables_names.size();
@@ -1757,10 +1772,9 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 
         const Tensor<string, 1> current_used_variables_names = columns[target_index].get_used_variables_names();
 
-//        target_variables_names.embed(index, current_used_variables_names);
-        for(Index i = 0; i < current_used_variables_names.size(); i++)
+        for(Index j = 0; j < current_used_variables_names.size(); j++)
         {
-            target_variables_names(i + index) = current_used_variables_names(i);
+            target_variables_names(index + j) = current_used_variables_names(j);
         }
 
         index += current_used_variables_names.size();
@@ -2931,7 +2945,7 @@ Tensor<type, 2> DataSet::get_training_data() const
 
    const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-   return get_data_subtensor(training_indices, variables_indices);
+   return get_subtensor_data(training_indices, variables_indices);
    */
    return Tensor<type,2>();
 }
@@ -2950,7 +2964,7 @@ Tensor<type, 2> DataSet::get_selection_data() const
    Tensor<Index, 1> variables_indices;
    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
-   return get_data_subtensor(selection_indices, variables_indices);
+   return get_subtensor_data(selection_indices, variables_indices);
 }
 
 
@@ -2967,7 +2981,7 @@ Tensor<type, 2> DataSet::get_testing_data() const
 
    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_data_subtensor(testing_indices, variables_indices);
+   return get_subtensor_data(testing_indices, variables_indices);
 }
 
 
@@ -2984,7 +2998,7 @@ Tensor<type, 2> DataSet::get_input_data() const
 
    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   return get_data_subtensor(indices, input_variables_indices);
+   return get_subtensor_data(indices, input_variables_indices);
 }
 
 
@@ -3001,7 +3015,7 @@ Tensor<type, 2> DataSet::get_target_data() const
 
    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return get_data_subtensor(indices, target_variables_indices);
+   return get_subtensor_data(indices, target_variables_indices);
 }
 
 
@@ -3013,7 +3027,7 @@ Tensor<type, 2> DataSet::get_input_data(const Tensor<Index, 1>& instances_indice
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_data_subtensor(instances_indices, input_variables_indices);
+    return get_subtensor_data(instances_indices, input_variables_indices);
 }
 
 
@@ -3025,7 +3039,7 @@ Tensor<type, 2> DataSet::get_target_data(const Tensor<Index, 1>& instances_indic
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_data_subtensor(instances_indices, target_variables_indices);
+    return get_subtensor_data(instances_indices, target_variables_indices);
 
 }
 
@@ -3040,7 +3054,7 @@ Tensor<type, 2> DataSet::get_training_input_data() const
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_data_subtensor(training_indices, input_variables_indices);
+    return get_subtensor_data(training_indices, input_variables_indices);
 }
 
 
@@ -3054,7 +3068,7 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 
    const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
 
-   return get_data_subtensor(training_indices, target_variables_indices);
+   return get_subtensor_data(training_indices, target_variables_indices);
 }
 
 
@@ -3068,7 +3082,7 @@ Tensor<type, 2> DataSet::get_selection_input_data() const
 
    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-   return get_data_subtensor(selection_indices, input_variables_indices);
+   return get_subtensor_data(selection_indices, input_variables_indices);
 }
 
 
@@ -3082,7 +3096,7 @@ Tensor<type, 2> DataSet::get_selection_target_data() const
 
    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-   return get_data_subtensor(selection_indices, target_variables_indices);
+   return get_subtensor_data(selection_indices, target_variables_indices);
 }
 
 
@@ -3096,7 +3110,7 @@ Tensor<type, 2> DataSet::get_testing_input_data() const
 
    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_data_subtensor(testing_indices, input_variables_indices);
+   return get_subtensor_data(testing_indices, input_variables_indices);
 }
 
 
@@ -3110,7 +3124,7 @@ Tensor<type, 2> DataSet::get_testing_target_data() const
 
    const Tensor<Index, 1> testing_indices = get_testing_instances_indices();
 
-   return get_data_subtensor(testing_indices, target_variables_indices);
+   return get_subtensor_data(testing_indices, target_variables_indices);
 }
 
 
@@ -3191,7 +3205,7 @@ Tensor<type, 2> DataSet::get_instance_input_data(const Index & instance_index) c
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_data_subtensor(Tensor<Index, 1>({instance_index}), input_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>({instance_index}), input_variables_indices);
 }
 
 
@@ -3202,7 +3216,7 @@ Tensor<type, 2> DataSet::get_instance_target_data(const Index & instance_index) 
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_data_subtensor(Tensor<Index, 1>({instance_index}), target_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>({instance_index}), target_variables_indices);
 }
 
 
@@ -3511,7 +3525,7 @@ Tensor<type, 1> DataSet::get_variable_data(const string& variable_name, const Te
 }
 
 
-Tensor<type, 2> DataSet::get_data_subtensor(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
+Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
 {
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
@@ -3527,7 +3541,7 @@ Tensor<type, 2> DataSet::get_data_subtensor(const Tensor<Index, 1> & rows_indice
 
         for(Index j = 0; j < columns_number; j++)
         {
-            column_index = columns_indices[i];
+            column_index = columns_indices[j];
 
             subtensor(i, j) = data(row_index, column_index);
         }
@@ -4570,7 +4584,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const In
     const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
 
     const Index inputs_number = inputs_variables_indices.size();
-/*
+
     const Tensor<Index, 1> class_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
 
     Tensor<type, 2> data_statistics_matrix(inputs_number, 4);
@@ -4682,6 +4696,30 @@ Tensor<Descriptives, 1> DataSet::calculate_target_variables_descriptives() const
    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
    return descriptives_missing_values(data, used_indices, target_variables_indices);
+}
+
+
+Tensor<type, 1> DataSet::calculate_input_variables_minimums() const
+{
+    return columns_minimums(data, get_used_instances_indices(), get_input_variables_indices());
+}
+
+
+Tensor<type, 1> DataSet::calculate_target_variables_minimums() const
+{
+    return columns_minimums(data, get_used_instances_indices(), get_target_variables_indices());
+}
+
+
+Tensor<type, 1> DataSet::calculate_input_variables_maximums() const
+{
+    return columns_maximums(data, get_used_instances_indices(), get_input_variables_indices());
+}
+
+
+Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
+{
+    return columns_maximums(data, get_used_instances_indices(), get_target_variables_indices());
 }
 
 
@@ -4968,7 +5006,7 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
     Tensor<type, 1> target_correlations(inputs_number);
 
     Tensor<string, 2> top_correlations(inputs_number, 2);
-
+/*
     map<type,string> top_correlation;
 
     for(Index i = 0 ; i < inputs_number; i++)
@@ -4984,7 +5022,7 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
     for(it = top_correlation.begin(); it!=top_correlation.end(); it++)
     {
         cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
-    }
+    }*/
 }
 
 
@@ -5119,7 +5157,7 @@ void DataSet::print_top_inputs_correlations(const Index& number) const
     const Index correlations_number = variables_number*(variables_number-1)/2;
 
     Tensor<string, 2> top_correlations(correlations_number, 3);
-
+/*
     map<type, string> top_correlation;
 
     for(Index i = 0; i < variables_number; i++)
@@ -5137,7 +5175,7 @@ void DataSet::print_top_inputs_correlations(const Index& number) const
     for(it=top_correlation.begin(); it!=top_correlation.end(); it++)
     {
         cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
-    }
+    }*/
 }
 
 
@@ -8102,7 +8140,7 @@ void DataSet::generate_constant_data(const Index& instances_number, const Index&
 
     for(Index i = 0; i < instances_number; i++)
     {
-        data(i, variables_number-1) = 0.0;
+        data(i, variables_number-1) = static_cast<type>(0.0);
     }
 
     scale_minimum_maximum(data);
@@ -8189,7 +8227,7 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
 
     for(Index i = 0; i < instances_number; i++)
     {
-        rosenbrock = 0.0;
+        rosenbrock = static_cast<type>(0.0);
 
         for(Index j = 0; j < inputs_number-1; j++)
         {

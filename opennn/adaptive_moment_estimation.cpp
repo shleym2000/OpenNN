@@ -221,12 +221,12 @@ void AdaptiveMomentEstimation::set_default()
 {
    // TRAINING OPERATORS
 
-   initial_learning_rate = 0.001;
-   initial_decay = 0.0;
-   beta_1 = 0.9;
-   beta_2 = 0.999;
+   initial_learning_rate = static_cast<type>(0.001);
+   initial_decay = static_cast<type>(0.0);
+   beta_1 = static_cast<type>(0.9);
+   beta_2 = static_cast<type>(0.999);
 
-   epsilon =1.e-7;
+   epsilon =static_cast<type>(1.e-7);
 
    // TRAINING PARAMETERS
 
@@ -237,10 +237,10 @@ void AdaptiveMomentEstimation::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = 0.0;
-   minimum_loss_decrease = 0.0;
+   minimum_parameters_increment_norm = static_cast<type>(0.0);
+   minimum_loss_decrease = static_cast<type>(0.0);
    loss_goal = -999999;
-   gradient_norm_goal = 0.0;
+   gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_failures = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number = 10000;
@@ -324,7 +324,7 @@ void AdaptiveMomentEstimation::set_warning_parameters_norm(const type& new_warni
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_warning_parameters_norm < 0.0)
+   if(new_warning_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -352,7 +352,7 @@ void AdaptiveMomentEstimation::set_warning_gradient_norm(const type& new_warning
    
    #ifdef __OPENNN_DEBUG__
 
-   if(new_warning_gradient_norm < 0.0)
+   if(new_warning_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -381,7 +381,7 @@ void AdaptiveMomentEstimation::set_error_parameters_norm(const type& new_error_p
 
    #ifdef __OPENNN_DEBUG__
 
-   if(new_error_parameters_norm < 0.0)
+   if(new_error_parameters_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -408,7 +408,7 @@ void AdaptiveMomentEstimation::set_error_gradient_norm(const type& new_error_gra
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_error_gradient_norm < 0.0)
+   if(new_error_gradient_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -434,7 +434,7 @@ void AdaptiveMomentEstimation:: set_maximum_epochs_number(const Index& new_maxim
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_maximum_epochs_number < 0.0)
+   if(new_maximum_epochs_number < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -460,7 +460,7 @@ void AdaptiveMomentEstimation::set_minimum_parameters_increment_norm(const type&
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_minimum_parameters_increment_norm < 0.0)
+   if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -486,7 +486,7 @@ void AdaptiveMomentEstimation::set_minimum_loss_increase(const type& new_minimum
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_minimum_loss_increase < 0.0)
+   if(new_minimum_loss_increase < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -523,7 +523,7 @@ void AdaptiveMomentEstimation::set_gradient_norm_goal(const type& new_gradient_n
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_gradient_norm_goal < 0.0)
+   if(new_gradient_norm_goal < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -558,7 +558,7 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 {
    #ifdef __OPENNN_DEBUG__
 
-   if(new_maximum_time < 0.0)
+   if(new_maximum_time < static_cast<type>(0.0))
    {
       ostringstream buffer;
 
@@ -665,8 +665,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
-   const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-   const Tensor<Index, 1>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+//   const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+//   const Tensor<Index, 1>& target_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
 
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
@@ -682,7 +682,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
    Tensor<type, 1> parameters_increment(parameters_number);
 
-   type parameters_norm = 0.0;
+   type parameters_norm = static_cast<type>(0.0);
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
@@ -690,17 +690,17 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    LossIndex::FirstOrderLoss first_order_loss(loss_index_pointer);
 
-   type training_error = 0.0;
+   type training_error = static_cast<type>(0.0);
 
-   type selection_error = 0.0;
-   type old_selection_error = 0.0;
+   type selection_error = static_cast<type>(0.0);
+   type old_selection_error = static_cast<type>(0.0);
 
-   type loss = 0.0;
-   type gradient_norm = 0.0;
+   type loss = static_cast<type>(0.0);
+   type gradient_norm = static_cast<type>(0.0);
 
    // Optimization algorithm stuff
 
-   type learning_rate = 0.0;
+   type learning_rate = static_cast<type>(0.0);
 
    Index selection_failures = 0;
 
@@ -711,7 +711,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = 0.0;
+   type elapsed_time = static_cast<type>(0.0);
 
    results.resize_training_history(maximum_epochs_number + 1);
 
@@ -728,7 +728,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
    // Main loop
-/*
+
    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
    {
        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
@@ -739,7 +739,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-       loss = 0.0;
+       loss = static_cast<type>(0.0);
 
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
@@ -747,16 +747,18 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            // Data set
 
-           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
-           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
+           data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), input_variables_indices);
+           data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), target_variables_indices);
+//           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
+//           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
 
            // Neural network
-
-           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
+/*@todo device*/
+//           neural_network_pointer->calculate_forward_propagation(batch, forward_propagation);
 
            // Loss index
-
-           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
+/*@todo device*/
+//           loss_index_pointer->calculate_first_order_loss(batch, forward_propagation, first_order_loss);
 
            learning_rate = initial_learning_rate*sqrt(1.0 - pow(beta_2, iteration_count))/(1.0 - pow(beta_1, iteration_count));
 
@@ -882,7 +884,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                    << "Gradient norm: " << gradient_norm << "\n"
                    << loss_index_pointer->write_information()
                    << "Learning rate: " << learning_rate << "\n"
-                   << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+//                   << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
                    << "Selection error: " << selection_error << endl;
            }
 
@@ -907,12 +909,12 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
         else if(display && epoch % display_period == 0)
         {
            cout << "Epoch " << epoch << ";\n"
-                << "Training loss: " << training_error << "\n"
+                << "Training loss: " << training_error << "\n";
 //                << "Batch size: " << batch_instances_number << "\n"
 //                << "Gradient norm: " << gradient_norm << "\n"
 //                << loss_index_pointer->write_information()
 //                << "Learning rate: " << learning_rate<< "\n"
-                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
+//                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 //                << "Selection error: " << selection_error << endl;
 
         }
@@ -940,7 +942,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    results.final_selection_error = selection_error;
    results.final_gradient_norm = gradient_norm;
    results.elapsed_time = elapsed_time;
-*/
+
    return results;
 }
 

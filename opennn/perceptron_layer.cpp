@@ -107,7 +107,7 @@ Index PerceptronLayer::get_parameters_number() const
 /// The format is a vector of real values. 
 /// The size of this vector is the number of neurons in the layer.
 
-const Tensor<type, 1>& PerceptronLayer::get_biases() const
+const Tensor<type, 2>& PerceptronLayer::get_biases() const
 {   
    return biases;
 }
@@ -152,11 +152,32 @@ Tensor<type, 1> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 /// The format is a vector of real values. 
 /// The size is the number of parameters in the layer. 
 
-Tensor<type, 1> PerceptronLayer::get_parameters() const
+Tensor<type, 1> PerceptronLayer::   get_parameters() const
 {
-//    return synaptic_weights.to_vector().assemble(biases);
 
-    return Tensor<type, 1>();
+    Eigen::array<Index, 1> one_dim{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
+
+    Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim);
+
+    Tensor<type, 1> parameters(synaptic_weights_vector.size() + biases.size());
+
+    Index index = 0;
+
+    for(Index i = 0; i<synaptic_weights_vector.dimension(0); i++)
+    {
+        parameters(i) = synaptic_weights_vector(i);
+
+        index++;
+    }
+
+    for(Index i=0; i<biases.dimension(0); i++)
+    {
+        parameters(i + index) = biases(i);
+    }
+
+    return parameters;
+
+
 }
 
 
@@ -250,11 +271,11 @@ const bool& PerceptronLayer::get_display() const
 
 void PerceptronLayer::set()
 {
-    biases.resize(0);
+    biases.resize(0, 0);
 
     synaptic_weights.resize(0, 0);
 
-   set_default();
+    set_default();
 }
 
 
@@ -266,7 +287,7 @@ void PerceptronLayer::set()
 void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
 {
-    biases = Tensor<type, 1>(new_neurons_number);
+    biases = Tensor<type, 2>(new_neurons_number, 1);
 
     biases.setRandom();
 
@@ -320,7 +341,7 @@ void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
 
-    biases.resize(neurons_number);
+    biases.resize(neurons_number,1);
 
     synaptic_weights.resize(new_inputs_number, neurons_number);
 }
@@ -334,7 +355,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 {    
     const Index inputs_number = get_inputs_number();
 
-    biases.resize(new_neurons_number);
+    biases.resize(new_neurons_number, 1);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
 }
@@ -343,7 +364,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 /// Sets the biases of all perceptrons in the layer from a single vector.
 /// @param new_biases New set of biases in the layer. 
 
-void PerceptronLayer::set_biases(const Tensor<type, 1>& new_biases)
+void PerceptronLayer::set_biases(const Tensor<type, 2>& new_biases)
 {
     biases = new_biases;
 }
@@ -479,101 +500,12 @@ void PerceptronLayer::set_display(const bool& new_display)
 }
 
 
-/// Makes the perceptron layer to have one more input.
-
-void PerceptronLayer::grow_input()
-{
-    const Index new_inputs_number = get_inputs_number() + 1;
-
-    set_inputs_number(new_inputs_number);
-}
-
-
-/// Makes the perceptron layer to have one more perceptron.
-
-void PerceptronLayer::grow_perceptron()
-{
-    const Index new_neurons_number = get_neurons_number() + 1;
-
-    set_neurons_number(new_neurons_number);
-}
-
-
-/// Makes the perceptron layer to have perceptrons_added more perceptrons.
-/// @param neurons_added Number of perceptrons to be added.
-
-void PerceptronLayer::grow_perceptrons(const Index& neurons_added)
-{
-    const Index new_neurons_number = get_neurons_number() + neurons_added;
-
-    set_neurons_number(new_neurons_number);
-}
-
-
-/// This method removes a given input from the layer of perceptrons.
-/// @param index Index of input to be pruned.
-
-void PerceptronLayer::prune_input(const Index& index)
-{
-    #ifdef __OPENNN_DEBUG__
-
-    const Index inputs_number = get_inputs_number();
-
-    if(index >= inputs_number)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void prune_input(const Index&) method.\n"
-              << "Index of input is equal or greater than number of inputs.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif    
-/*
-    synaptic_weights = synaptic_weights.delete_row(index);
-*/
-}
-
-
-/// This method removes a given perceptron from the layer.
-/// @param index Index of perceptron to be pruned.
-
-void PerceptronLayer::prune_neuron(const Index& index)
-{
-    #ifdef __OPENNN_DEBUG__
-
-    const Index neurons_number = get_neurons_number();
-
-    if(index >= neurons_number)
-    {
-       ostringstream buffer;
-
-       buffer << "OpenNN Exception: PerceptronLayer class.\n"
-              << "void prune_neuron(const Index&) method.\n"
-              << "Index of perceptron is equal or greater than number of perceptrons.\n";
-
-       throw logic_error(buffer.str());
-    }
-
-    #endif
-/*
-    biases = biases.delete_index(index);
-
-    synaptic_weights = synaptic_weights.delete_column(index);
-*/
-}
-
-
 /// Initializes the biases of all the perceptrons in the layer of perceptrons with a given value. 
 /// @param value Biases initialization value. 
 
 void PerceptronLayer::initialize_biases(const type& value)
 {
-/*
     biases.setConstant(value);
-*/
 }
 
 
@@ -582,9 +514,7 @@ void PerceptronLayer::initialize_biases(const type& value)
 
 void PerceptronLayer::initialize_synaptic_weights(const type& value)
 {
-/*
     synaptic_weights.setConstant(value);
-*/
 }
 
 
@@ -603,6 +533,7 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 
     scale /= ((fan_in + fan_out) / 2.0);
     limit = sqrt(3.0 * scale);
+
 /*
     synaptic_weights.setRandom(-limit, limit);
 */
@@ -614,11 +545,11 @@ void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
 
 void PerceptronLayer::set_parameters_constant(const type& value)
 {
-/*
+
     biases.setConstant(value);
 
     synaptic_weights.setConstant(value);
-*/
+
 }
 
 
@@ -993,8 +924,9 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
    for(Index j = 0; j < outputs_names.size(); j++)
    {
-       buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
 /*
+       buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
+
        for(Index i = 0; i < inputs_names.size() - 1; i++)
        {
 

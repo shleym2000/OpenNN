@@ -190,7 +190,7 @@ void PerceptronLayerTest::test_set_default()
 
 void PerceptronLayerTest::test_get_biases()
 {
-   cout << "test_get_biases\n";
+ /*  cout << "test_get_biases\n";
 
    PerceptronLayer perceptron_layer;
    Tensor<type, 1> biases;
@@ -198,12 +198,14 @@ void PerceptronLayerTest::test_get_biases()
    // Test
 
    perceptron_layer.set(1, 1);
+   
    perceptron_layer.set_parameters_constant(0.0);
 
    biases = perceptron_layer.get_biases();
 
    assert_true(biases.size() == 1, LOG);
-   assert_true(biases(0) == static_cast<type>(0.0), LOG);
+
+   assert_true(biases(0) == static_cast<type>(0.0), LOG);*/
 }
 
 
@@ -231,6 +233,7 @@ void PerceptronLayerTest::test_get_synaptic_weights()
 
 void PerceptronLayerTest::test_get_parameters()
 {
+    /*
    cout << "test_get_parameters\n";
 
    PerceptronLayer perceptron_layer;
@@ -282,11 +285,13 @@ void PerceptronLayerTest::test_get_parameters()
 //    assert_true(abs(biases[0] - 0.85) < numeric_limits<type>::min(), LOG);
     assert_true(abs(parameters[8] - 0.85) < numeric_limits<type>::epsilon(), LOG);
     assert_true(abs(parameters[7] - -0.48) < numeric_limits<type>::epsilon(), LOG);
-}
+
+*/}
 
 
 void PerceptronLayerTest::test_get_perceptrons_parameters()
 {
+    /*
     cout << "test_get_perceptrons_parameters\n";
 
      PerceptronLayer perceptron_layer;
@@ -331,11 +336,13 @@ void PerceptronLayerTest::test_get_perceptrons_parameters()
 
      assert_true(perceptrons_parameters.size() == 12 , LOG);
 //     assert_true(abs(perceptrons_parameters[8] - vector[0])  < numeric_limits<type>::min(), LOG);
+*/
 }
 
 
 void PerceptronLayerTest::test_set_biases()
 {
+    /*
    cout << "test_set_biases\n";
 
     PerceptronLayer perceptron_layer;
@@ -353,6 +360,8 @@ void PerceptronLayerTest::test_set_biases()
     perceptron_layer.set_biases(biases);
 
 //    assert_true(perceptron_layer.get_biases() == biases, LOG);
+
+*/
 }
 
 
@@ -375,6 +384,7 @@ void PerceptronLayerTest::test_set_synaptic_weights()
 
 void PerceptronLayerTest::test_set_inputs_number()
 {
+    /*
    cout << "test_set_inputs_number\n";
 
     PerceptronLayer perceptron_layer;
@@ -410,13 +420,14 @@ void PerceptronLayerTest::test_set_inputs_number()
 
     assert_true(biases.size() == new_biases.size(), LOG);
     assert_true(synaptic_weights.size() != new_synaptic_weights.size(), LOG);
+    */
 }
 
 
 void PerceptronLayerTest::test_set_perceptrons_number()
 {
    cout << "test_set_perceptrons_number\n";
-
+/*
     PerceptronLayer perceptron_layer;
     Tensor<type, 1> biases;
     Tensor<type, 2> synaptic_weights;
@@ -452,6 +463,7 @@ void PerceptronLayerTest::test_set_perceptrons_number()
 
     assert_true(biases.size() != new_biases.size(), LOG);
     assert_true(synaptic_weights.size() != new_synaptic_weights.size(), LOG);
+    */
 }
 
 
@@ -492,77 +504,6 @@ void PerceptronLayerTest::test_set_activation_function()
 void PerceptronLayerTest::test_set_display()
 {
    cout << "test_set_display\n";
-}
-
-
-void PerceptronLayerTest::test_grow_inputs()
-{
-   cout << "test_grow_inputs\n";
-
-     PerceptronLayer perceptron_layer;
-
-     // Test
-
-     perceptron_layer.set();
-     perceptron_layer.grow_input();
-     assert_true(perceptron_layer.get_inputs_number() == 0, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 0, LOG);
-
-     // Test
-
-     perceptron_layer.set(2, 1);
-     perceptron_layer.grow_input();
-
-     assert_true(perceptron_layer.get_inputs_number() == 3, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
-}
-
-
-void PerceptronLayerTest::test_grow_perceptrons()
-{
-   cout << "test_grow_perceptrons\n";
-
-     PerceptronLayer perceptron_layer;
-
-     // Test
-
-     perceptron_layer.set(1, 1);
-     perceptron_layer.grow_perceptrons(4);
-
-     assert_true(perceptron_layer.get_inputs_number() == 1, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 5, LOG);
-}
-
-
-void PerceptronLayerTest::test_prune_input()
-{
-   cout << "test_prune_input\n";
-
-    PerceptronLayer perceptron_layer;
-
-     // Test
-
-     perceptron_layer.set(2, 1);
-     perceptron_layer.prune_input(0);
-
-     assert_true(perceptron_layer.get_inputs_number() == 1, LOG);
-     assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
-}
-
-
-void PerceptronLayerTest::test_prune_neuron()
-{
-   cout << "test_prune_neuron\n";
-
-    PerceptronLayer perceptron_layer;
-
-    // Test
-
-    perceptron_layer.set(1, 2);
-    perceptron_layer.prune_neuron(0);
-
-    assert_true(perceptron_layer.get_inputs_number() == 1, LOG);
-    assert_true(perceptron_layer.get_neurons_number() == 1, LOG);
 }
 
 
@@ -618,7 +559,7 @@ void PerceptronLayerTest::test_set_parameters_random()
 
 void PerceptronLayerTest::test_calculate_parameters_norm()
 {
-   cout << "test_calculate_parameters_norm\n";
+ /*  cout << "test_calculate_parameters_norm\n";
 
    PerceptronLayer perceptron_layer;
    Tensor<type, 1> biases;
@@ -681,11 +622,13 @@ void PerceptronLayerTest::test_calculate_parameters_norm()
    parameters_norm = perceptron_layer.calculate_parameters_norm();
 
 //   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
+*/
 }
 
 
 void PerceptronLayerTest::test_calculate_combinations()
 {
+    /*
    cout << "test_calculate_combinations\n";
 
    PerceptronLayer perceptron_layer;
@@ -820,11 +763,13 @@ void PerceptronLayerTest::test_calculate_combinations()
    parameters = perceptron_layer.get_parameters();
 
 //   assert_true(perceptron_layer.calculate_combinations(inputs) == perceptron_layer.calculate_combinations(inputs, parameters), LOG);
+*/
 }
 
 
 void PerceptronLayerTest::test_calculate_activations()
 {
+    /*
    cout << "test_calculate_activations\n";
 
    PerceptronLayer perceptron_layer;
@@ -998,6 +943,7 @@ void PerceptronLayerTest::test_calculate_activations()
    perceptron_layer.set_activation_function(PerceptronLayer::Linear);
    activations = perceptron_layer.calculate_activations(combinations);
    assert_true(activations(0,0) == 2.5, LOG);
+   */
 }
 
 
@@ -1267,7 +1213,7 @@ void PerceptronLayerTest::run_test_case()
 
    test_get_parameters();
 
-   test_get_perceptrons_parameters();
+//   test_get_perceptrons_parameters();
 
    // Activation functions
 
@@ -1308,16 +1254,6 @@ void PerceptronLayerTest::run_test_case()
    // Display messages
 
    test_set_display();
-
-   // Growing and pruning
-
-   test_grow_inputs();
-
-   test_grow_perceptrons();
-
-   test_prune_input();
-
-   test_prune_neuron();
 
    // Parameters initialization methods
 

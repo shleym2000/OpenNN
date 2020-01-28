@@ -23,13 +23,14 @@
 #include <exception>
 #include <regex>
 //#include <math.h>
+#include <map>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
 
 // OpenNN includes
 
-#include "metrics.h"
+//#include "metrics.h"
 #include "statistics.h"
 #include "transformations.h"
 #include "correlations.h"
@@ -39,7 +40,7 @@
 
 // Eigen includes
 
-#include "../eigen/Eigen/Eigen"
+//#include "../eigen/Eigen/Eigen"
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 #ifdef __OPENNN_CUDA__
@@ -159,6 +160,7 @@ public:
        // Methods
 
        Index get_categories_number() const;
+       Index get_used_categories_number() const;
 
        Tensor<string, 1> get_used_variables_names() const;
 
@@ -380,7 +382,7 @@ public:
    Tensor<type, 1> get_variable_data(const Index&, const Tensor<Index, 1>&) const;
    Tensor<type, 1> get_variable_data(const string&, const Tensor<Index, 1>&) const;
 
-   Tensor<type, 2> get_data_subtensor(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
+   Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
    // Members get methods
 
@@ -527,9 +529,13 @@ public:
 
    // Splitting methods
 
-   void split_instances_sequential(const type& training_ratio = 0.6, const type& selection_ratio = 0.2, const type& testing_ratio = 0.2);
+   void split_instances_sequential(const type& training_ratio = static_cast<type>(0.6),
+                                   const type& selection_ratio = static_cast<type>(0.2),
+                                   const type& testing_ratio = static_cast<type>(0.2));
 
-   void split_instances_random(const type& training_ratio = 0.6, const type& selection_ratio = 0.2, const type& testing_ratio = 0.2);
+   void split_instances_random(const type& training_ratio = static_cast<type>(0.6),
+                               const type& selection_ratio = static_cast<type>(0.2),
+                               const type& testing_ratio = static_cast<type>(0.2));
 
    // Unusing methods
 
@@ -565,6 +571,11 @@ public:
 
    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
+
+   Tensor<type, 1> calculate_input_variables_minimums() const;
+   Tensor<type, 1> calculate_target_variables_minimums() const;
+   Tensor<type, 1> calculate_input_variables_maximums() const;
+   Tensor<type, 1> calculate_target_variables_maximums() const;
 
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
 
