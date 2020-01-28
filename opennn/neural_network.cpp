@@ -1256,6 +1256,8 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     if(layers_number == 0) return inputs;
 
+    cout<<inputs;
+
     Tensor<type, 2> outputs = layers_pointers[0]->calculate_outputs(inputs);
 
     for(Index i = 1; i < layers_number; i++)
@@ -1648,10 +1650,12 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs number
 
+    const Index outputs_number = outputs_names.size();
+
     file_stream.OpenElement("OutputsNumber");
 
     buffer.str("");
-    buffer << get_inputs_number();
+    buffer << outputs_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1659,7 +1663,7 @@ void NeuralNetwork::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Outputs names
 
-    for(Index i = 0; i < outputs_names.size(); i++)
+    for(Index i = 0; i < outputs_number; i++)
     {
         file_stream.OpenElement("Output");
 
@@ -1885,7 +1889,7 @@ string NeuralNetwork::write_expression() const
 /*
     cout << "Inputs names: " << inputs_names << endl;
     cout << "Outputs names: " << outputs_names << endl;
-*/
+
     Index position = 0;
 
     string search;
@@ -2189,6 +2193,9 @@ string NeuralNetwork::write_expression() const
     }
 
     return expression;
+    */
+
+    return "";
 }
 
 

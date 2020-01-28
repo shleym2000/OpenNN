@@ -375,13 +375,9 @@ public:
 
        const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-       cout<<"trainable_layers_pointer"<<trainable_layers_pointers[0];
-
        // First layer
 
-
        trainable_layers_pointers[0]->calculate_forward_propagation(thread_pool_device, batch.inputs_2d, forward_propagation.layers[0]);
-
 
        // Rest of layers
 

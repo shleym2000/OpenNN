@@ -54,7 +54,8 @@ int main(void)
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
-//        data_set.generate_Rosenbrock_data(1000, 4);
+
+//      data_set.generate_Rosenbrock_data(1000, 4);
 
         // Data set
 
@@ -71,7 +72,7 @@ int main(void)
 
         data_set.set_training();
 
-        data_set.set_batch_instances_number(2);
+        data_set.set_batch_instances_number(3);
 
 
         // Neural network
@@ -95,6 +96,8 @@ int main(void)
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+
+        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(MeanSquaredError::NoRegularization);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(0);
 
