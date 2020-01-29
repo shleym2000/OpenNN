@@ -36,7 +36,7 @@ GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
 }
 
 
-// XML CONSTRUCTOR
+
 
 /// XML constructor.
 /// It creates a gradient descent optimization algorithm not associated to any loss index object.
@@ -788,7 +788,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
    Tensor<type, 1> training_direction(parameters_number);
 
-   const type first_learning_rate = 0.01;
+   const type first_learning_rate = static_cast<type>(0.01);
 
    type initial_learning_rate = static_cast<type>(0.0);
    type learning_rate = static_cast<type>(0.0);
@@ -870,15 +870,13 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
 
-      const Tensor<type, 0> dot_training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
-
-      const type training_slope = dot_training_slope(0);
+      const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
 
 //      const type training_slope = dot(gradient/gradient_norm, training_direction);
 
       // Check for a descent direction
 
-      if(training_slope >= 0.0) throw logic_error("Training slope is equal or greater than zero");
+      if(training_slope(0) >= 0.0) throw logic_error("Training slope is equal or greater than zero");
 
       if(epoch == 0)
       {
@@ -897,7 +895,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       {
           cout << "Training rate is zero" << endl;
 
-          learning_rate = 1.0e-2;
+          learning_rate = static_cast<type>(1.0e-2);
           //throw logic_error("Training rate is zero");ç
       }
 
@@ -1699,7 +1697,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_parameters_norm = atof(element->GetText());
+          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1718,7 +1716,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_gradient_norm = atof(element->GetText());
+          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1737,7 +1735,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_learning_rate = atof(element->GetText());
+          const type new_warning_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1756,7 +1754,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_parameters_norm = atof(element->GetText());
+          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1775,7 +1773,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_gradient_norm = atof(element->GetText());
+          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1794,7 +1792,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_learning_rate = atof(element->GetText());
+          const type new_error_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1849,7 +1847,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_parameters_increment_norm = atof(element->GetText());
+          const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1868,7 +1866,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_loss_increase = atof(element->GetText());
+          const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1887,7 +1885,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_loss_goal = atof(element->GetText());
+          const type new_loss_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1906,7 +1904,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_gradient_norm_goal = atof(element->GetText());
+          const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1963,7 +1961,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_maximum_time = atof(element->GetText());
+          const type new_maximum_time = static_cast<type>(atof(element->GetText()));
 
           try
           {

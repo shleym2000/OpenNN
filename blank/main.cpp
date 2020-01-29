@@ -66,17 +66,18 @@ int main(void)
     {
         cout << "Hello Blank Application." << endl;
 
-        Eigen::Tensor<int, 1> b(3);
-        b.setValues({1, 2, 3});
-        Eigen::Tensor<int, 2> a(3,3);
-        a.setValues({{1, 2, 3}, {1, 2, 3}, {1, 2, 3}});
+        Eigen::Tensor<int, 2> a(2, 3);
+        a.setValues({{1, 2, 3}, {6, 5, 4}});
+//        Eigen::array<int, 1> dims({1});
+//        Eigen::array<int, 2> dims({0, 1});
 
-        cout << a << endl;
+        // Sum columns ({0}) or rows ({1})
 
-        Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(1, 0) };
-        Eigen::Tensor<int, 1> AB = a.contract(b, product_dims);
+        Eigen::array<int, 1> dims = {Eigen::array<int, 1>({1})};
+        Eigen::Tensor<int, 1> b = a.sum(dims);
 
-        cout << AB << endl;
+        cout << a << "a+b = " << endl;
+        cout << b << endl;
 
         return 0;
     }

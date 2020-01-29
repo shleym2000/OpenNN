@@ -414,6 +414,7 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
    biases = new_parameters.get_subvector(inputs_number*neurons_number, parameters_number-1);
 */
+
 }
 
 
@@ -579,14 +580,30 @@ type PerceptronLayer::calculate_parameters_norm() const
 
 Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs) const
 {
-    return Tensor<type, 2>();
+
+    const Index batch_size = inputs.dimension(0);
+
+    const  Index neurons_number = get_neurons_number();
+
+    Tensor<type, 2> combinations(batch_size,neurons_number);
+
+    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+    combinations = inputs.contract(synaptic_weights, product_dimensions);
+
+    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
+
+    combinations = combinations + biases.broadcast(broadcast);
+
+    return combinations;
+
 }
 
 
 Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters) const
 {
 /*
-    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
+//    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
     const Tensor<type, 1> new_biases = get_biases(parameters);
 
 */
@@ -828,6 +845,10 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
                                                        const Tensor<type, 2>& activations_derivatives,
                                                        const Tensor<type, 2>& next_layer_delta) const
 {
+    // Eigen stuff
+
+    const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_matrix = { Eigen::IndexPair<int>(1, 0) };
+
     const Type layer_type = next_layer_pointer->get_type();
 
     Tensor<type, 2> synaptic_weights_transpose;
@@ -839,12 +860,15 @@ Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointe
     else if(layer_type == Probabilistic)
     {
         const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-    }        
+    }
+
+    const Tensor<type, 2> delta_dot_synaptic = next_layer_delta.contract(synaptic_weights_transpose, product_matrix_matrix);
+
+    return activations_derivatives*delta_dot_synaptic;
 
 /*
     return activations_derivatives*dot(next_layer_delta, synaptic_weights_transpose);
 */
-    return Tensor<type, 2>();
 }
 
 
