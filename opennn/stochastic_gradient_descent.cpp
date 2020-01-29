@@ -219,7 +219,8 @@ void StochasticGradientDescent::set_default()
 {
    // TRAINING OPERATORS
 
-   initial_learning_rate = 0.01;
+
+   initial_learning_rate = static_cast<type>(0.01);
    initial_decay = static_cast<type>(0.0);
    momentum = static_cast<type>(0.0);
    nesterov = false;
@@ -739,6 +740,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
 
    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+
    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
    DataSet::Batch batch(data_set_pointer);
@@ -752,6 +754,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    const Index parameters_number = neural_network_pointer->get_parameters_number();
 
    Tensor<type, 1> parameters_increment(parameters_number);
+
    Tensor<type, 1> last_increment(parameters_number);
 
    type parameters_norm = static_cast<type>(0.0);
@@ -790,15 +793,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    results.resize_training_history(maximum_epochs_number + 1);
 
-
    Index current_iteration = 0;
+
    Index learning_rate_iteration = 1;
 
    bool is_forecasting = false;
 
    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
-   Index n = omp_get_max_threads();
+   int n = omp_get_max_threads();
 
    cout << "Threads: " << n << endl;
 
@@ -810,7 +813,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    for(Index epoch = 0; epoch <= epochs_number; epoch++)
    {
-       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(false);
+       const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(is_forecasting);
 
        const Index batches_number = training_batches.dimension(0);
 
@@ -823,7 +826,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
 
-
 //         Data set
 
            batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
@@ -832,51 +834,46 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            neural_network_pointer->calculate_forward_propagation(thread_pool_device, batch, forward_propagation);
 
-           forward_propagation.print();
-/*
-
-//           Loss
+//         Loss
 
            loss_index_pointer->calculate_first_order_loss(thread_pool_device, batch, forward_propagation, first_order_loss);
 
-           first_order_loss.print();
-
            loss += first_order_loss.loss;
 
-//            Gradient
+//         Gradient
 
-            initial_decay > 0.0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
+           initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
-            parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
+           parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
 
-            if(momentum > 0.0 && !nesterov)
-            {
-                parameters_increment.device(thread_pool_device) += last_increment*momentum;
+           if(momentum > 0 && !nesterov)
+           {
+               parameters_increment.device(thread_pool_device) += last_increment*momentum;
 
-                last_increment = parameters_increment;
+               last_increment = parameters_increment;
 
-                parameters.device(thread_pool_device) += parameters_increment;
-            }
-            else if(momentum > 0.0 && nesterov)
-            {
-                parameters_increment.device(thread_pool_device) += last_increment*momentum;
+               parameters.device(thread_pool_device) += parameters_increment;
+           }
+           else if(momentum > 0 && nesterov)
+           {
+               parameters_increment.device(thread_pool_device) += last_increment*momentum;
 
-                last_increment = parameters_increment;
+               last_increment = parameters_increment;
 
-                nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
+               nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
 
-                parameters.device(thread_pool_device) += nesterov_increment;
-            }
-            else
-            {
-                parameters.device(thread_pool_device) += parameters_increment;
-            }
+               parameters.device(thread_pool_device) += nesterov_increment;
+           }
+           else
+           {
+               parameters.device(thread_pool_device) = parameters + parameters_increment;
+           }
 
-            neural_network_pointer->set_parameters(parameters);
+           neural_network_pointer->set_parameters(parameters);
 
-            learning_rate_iteration++;
+           learning_rate_iteration++;
 
-*/
+
 
        }
 
@@ -1568,7 +1565,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_parameters_norm = atof(element->GetText());
+          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1587,7 +1584,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_gradient_norm = atof(element->GetText());
+          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1606,7 +1603,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_parameters_norm = atof(element->GetText());
+          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1625,7 +1622,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_gradient_norm = atof(element->GetText());
+          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1680,7 +1677,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_parameters_increment_norm = atof(element->GetText());
+          const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1699,7 +1696,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_loss_increase = atof(element->GetText());
+          const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1718,7 +1715,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_loss_goal = atof(element->GetText());
+          const type new_loss_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1737,7 +1734,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_gradient_norm_goal = atof(element->GetText());
+          const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -1794,7 +1791,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_maximum_time = atof(element->GetText());
+          const type new_maximum_time = static_cast<type>(atof(element->GetText()));
 
           try
           {

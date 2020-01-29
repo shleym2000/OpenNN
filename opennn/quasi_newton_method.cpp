@@ -771,7 +771,7 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<typ
 {
 //  normalized(dot(inverse_hessian_approximation, gradient))*(-1.0);
 
-    Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(1, 0) }; // Normal product as matrix times tensor
+    Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(1, 0) }; // Normal product as matrix times vector
 
     Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, product_dims);
 
@@ -934,16 +934,25 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
       throw logic_error(buffer.str());	  
    }*/
 
+   // Dots
 
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Normal product vector times vector
+   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Normal product vector times vector
 
-   const Tensor<type, 0> parameter_dot_gradient = parameters_difference.contract(gradient_difference, product_dims);
+   const Tensor<type, 0> parameter_dot_gradient = parameters_difference.contract(gradient_difference, product_vector_vector);
 
    const type parameters_dot_gradient =parameter_dot_gradient(0);
 
+   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_matrix = { Eigen::IndexPair<int>(0, 1) }; // Normal product vector times matrix
+
+   const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix);
+
+   const Tensor<type, 0> gradient_dot_hesian_dot_gradient = gradient_dot_hessian.contract(gradient_difference,product_vector_vector);
+
 //   const type parameters_dot_gradient = dot(parameters_difference, gradient_difference);
 
-/*
+//   dot(dot(gradient_difference, old_inverse_hessian), gradient_difference)
+
+
    if(abs(parameters_dot_gradient) < static_cast<type>(1.0e-50))
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
@@ -952,7 +961,7 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
 
       throw logic_error(buffer.str());	  
    }
-   else if(abs(dot(dot(gradient_difference, old_inverse_hessian), gradient_difference)) < 1.0e-50)
+   else if(abs(gradient_dot_hesian_dot_gradient(0)) < static_cast<type>(1.0e-50))
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
@@ -960,16 +969,20 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
 
       throw logic_error(buffer.str());	  
    }
-*/
+
    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-/*
-   const Tensor<type, 1> hessian_dot_gradient_difference = dot(old_inverse_hessian, gradient_difference);
+
+   const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(1, 0) };
+
+   const Tensor<type, 1> hessian_dot_gradient_difference = old_inverse_hessian.contract(gradient_difference,product_matrix_vector);//dot(old_inverse_hessian, gradient_difference);
+
+   const Tensor<type, 0> gradient_dot_gradient = gradient_difference.contract(hessian_dot_gradient_difference, product_vector_vector);
 
    inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
 
    inverse_hessian_approximation -= direct(hessian_dot_gradient_difference, hessian_dot_gradient_difference)
-            /dot(gradient_difference, hessian_dot_gradient_difference);
-*/
+            /(gradient_dot_gradient(0)); //dot(gradient_difference, hessian_dot_gradient_difference);
+
    return inverse_hessian_approximation;
 }
 
@@ -1103,25 +1116,28 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
 //   }
 
    // BGFS Vector
-/*
-   const type parameters_dot_gradient = dot(parameters_difference, gradient_difference);
-   const Tensor<type, 1> hessian_dot_gradient = dot(old_inverse_hessian, gradient_difference);
-   const type gradient_dot_hessian_dot_gradient = dot(gradient_difference, hessian_dot_gradient);
 
-   const Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient
-   - hessian_dot_gradient/gradient_dot_hessian_dot_gradient;
-*/
+   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) };
+   const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(1, 0) };
+
+   const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, product_vector_vector); //dot(parameters_difference, gradient_difference);
+   const Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, product_matrix_vector);//dot(old_inverse_hessian, gradient_difference);
+   const Tensor<type, 0> gradient_dot_hessian_dot_gradient = gradient_difference.contract(hessian_dot_gradient, product_vector_vector);//dot(gradient_difference, hessian_dot_gradient);
+
+   const Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient(0)
+   - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
+
    // Calculate inverse hessian approximation
 
    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-/*
-   inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient;
+
+   inverse_hessian_approximation += direct(parameters_difference, parameters_difference)/parameters_dot_gradient(0);
 
    inverse_hessian_approximation -= direct(hessian_dot_gradient, hessian_dot_gradient)
-   /gradient_dot_hessian_dot_gradient;
+   /gradient_dot_hessian_dot_gradient(0);
 
-   inverse_hessian_approximation += direct(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient);
-*/
+   inverse_hessian_approximation += direct(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0));
+
    return inverse_hessian_approximation;
 }
 
@@ -1194,9 +1210,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
    type training_slope;
 
-   const type first_learning_rate = 0.01;
+   const type first_learning_rate = static_cast<type>(0.01);
 
-   type initial_learning_rate = 0.01;
+   type initial_learning_rate = static_cast<type>(0.01);
    type learning_rate = static_cast<type>(0.0);
    type old_learning_rate = static_cast<type>(0.0);
 
@@ -1213,6 +1229,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    time_t beginning_time, current_time;
    time(&beginning_time);
    type elapsed_time;
+
+   // Eigen stuff
+
+   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) };
 
    // Main loop 
 
@@ -1302,10 +1322,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
               }
               break;
            }
-/*
-           old_parameters.resize();
-           old_gradient.set();
-*/
+
+//           old_parameters.resize();
+           old_parameters.resize(0);
+//           old_gradient.set();
+           old_gradient.resize(0);
+
        }
 
        // Optimization algorithm
@@ -1313,12 +1335,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        training_direction = calculate_training_direction(gradient, inverse_hessian);
 
        // Calculate loss training slope
-/*
-       training_slope = dot(gradient/gradient_norm, training_direction);
-*/
+
+       const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, product_vector_vector);
+
+//       training_slope = dot(gradient/gradient_norm, training_direction);
+
        // Check for a descent direction
 
-       if(training_slope >= 0.0)
+       if(training_slope(0) >= static_cast<type>(0.0))
        {
            // Reset training direction
 
@@ -1337,7 +1361,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
        // Reset training direction when training rate is 0
 
-       if(epoch != 0 && abs(learning_rate) < 1.0e-99)
+       if(epoch != 0 && abs(learning_rate) < static_cast<type>(1.0e-99))
        {
            training_direction = calculate_gradient_descent_training_direction(gradient);
 
@@ -2248,7 +2272,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_parameters_norm = atof(element->GetText());
+          const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2267,7 +2291,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_gradient_norm = atof(element->GetText());
+          const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2286,7 +2310,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_warning_learning_rate = atof(element->GetText());
+          const type new_warning_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2305,7 +2329,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_parameters_norm = atof(element->GetText());
+          const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2324,7 +2348,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_gradient_norm = atof(element->GetText());
+          const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2343,7 +2367,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_error_learning_rate = atof(element->GetText());
+          const type new_error_learning_rate = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2398,7 +2422,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_parameters_increment_norm = atof(element->GetText());
+          const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2417,7 +2441,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_minimum_loss_increase = atof(element->GetText());
+          const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2436,7 +2460,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_loss_goal = atof(element->GetText());
+          const type new_loss_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2455,7 +2479,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_gradient_norm_goal = atof(element->GetText());
+          const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
 
           try
           {
@@ -2512,7 +2536,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 
        if(element)
        {
-          const type new_maximum_time = atof(element->GetText());
+          const type new_maximum_time = static_cast<type>(atof(element->GetText()));
 
           try
           {
