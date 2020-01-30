@@ -127,13 +127,17 @@ const Tensor<type, 2>& PerceptronLayer::get_synaptic_weights() const
 Tensor<type, 2> PerceptronLayer::get_synaptic_weights(const Tensor<type, 1>& parameters) const
 {
     const Index inputs_number = get_inputs_number();
+
     const Index neurons_number = get_neurons_number();
 
     const Index synaptic_weights_number = get_synaptic_weights_number();
-/*
-    return parameters.get_first(synaptic_weights_number).to_matrix(inputs_number, neurons_number);
-*/
-    return Tensor<type, 2>();
+
+    Tensor<type, 1> new_synaptic_weights = parameters.slice(Eigen::array<Eigen::Index, 1>({0}), Eigen::array<Eigen::Index, 1>({synaptic_weights_number}));
+
+    Eigen::array<Index, 2> two_dim{{inputs_number , neurons_number}};
+
+    return new_synaptic_weights.reshape(two_dim);
+
 }
 
 
@@ -142,10 +146,16 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 {
     const Index biases_number = biases.size();
 
-/*
-    return parameters.get_last(biases_number);
-*/
-    return Tensor<type, 2>();
+    const Index parameters_size = parameters.size();
+
+    const Index start_bias = parameters_size - biases_number;
+
+    Tensor<type,1> new_biases = parameters.slice(Eigen::array<Eigen::Index, 1>({start_bias}), Eigen::array<Eigen::Index, 1>({parameters_size}));
+
+    Eigen::array<Index, 2> two_dim{{1 , biases.dimension(1)}};
+
+    return new_biases.reshape(two_dim);
+
 }
 
 
@@ -155,7 +165,6 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer:: get_parameters() const
 {
-
     Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
 
     Eigen::array<Index, 1> one_dim_bias{biases.dimension(1)};
@@ -173,7 +182,6 @@ Tensor<type, 1> PerceptronLayer:: get_parameters() const
         parameters(i) = synaptic_weights_vector(i);
 
         index++;
-
     }
 
     for(Index i=0; i< biases_vector.dimension(0); i++)
@@ -182,7 +190,6 @@ Tensor<type, 1> PerceptronLayer:: get_parameters() const
     }
 
     return parameters;
-
 }
 
 
@@ -292,7 +299,7 @@ void PerceptronLayer::set()
 void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neurons_number,
                           const PerceptronLayer::ActivationFunction& new_activation_function)
 {
-    biases = Tensor<type, 2>(new_neurons_number, 1);
+    biases = Tensor<type, 2>(1, new_neurons_number);
 
     biases.setRandom();
 
@@ -607,18 +614,34 @@ Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& i
 
 Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& parameters) const
 {
-/*
-//    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
-    const Tensor<type, 1> new_biases = get_biases(parameters);
 
-*/
-    return Tensor<type, 2>();
+    const Tensor<type, 2> new_synaptic_weights = get_synaptic_weights(parameters);
+
+    const Tensor<type, 2> new_biases = get_biases(parameters);
+
+    return calculate_combinations(inputs, new_biases, new_synaptic_weights);
+
 }
 
 
-Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 1>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
+Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 2>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
 {
-    return Tensor<type, 2>();
+
+    const Index batch_size = inputs.dimension(0);
+
+    const  Index neurons_number = get_neurons_number();
+
+    Tensor<type, 2> combinations(batch_size, neurons_number);
+
+    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+
+    combinations = inputs.contract(new_synaptic_weights, product_dimensions);
+
+    const Eigen::array<Index, 2> broadcast = {batch_size, 1};
+
+    combinations = combinations + new_biases.broadcast(broadcast);
+
+    return combinations;
 }
 
 
@@ -645,7 +668,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
 
     switch(activation_function)
     {
-/*
+
         case Linear: return linear(combinations);
 
         case Logistic: return logistic(combinations);
@@ -667,7 +690,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
         case HardSigmoid: return hard_sigmoid(combinations);
 
         case ExponentialLinear: return exponential_linear(combinations);
-*/
+
     }
 
     return Tensor<type, 2>();
@@ -764,11 +787,10 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 
    #endif
 
-    Tensor<type, 2> outputs;// = calculate_combinations(inputs, synaptic_weights, biases);
+    const Tensor<type, 2> outputs = calculate_combinations(inputs);
 
-//    calculate_activations()
+    return calculate_activations(outputs);
 
-    return outputs;
 }
 
 
@@ -1124,7 +1146,16 @@ void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Parameters");
 
     buffer.str("");
-    buffer << get_parameters();
+
+    const Tensor<type, 1> parameters = get_parameters();
+    const Index parameters_size = parameters.size();
+
+    for(Index i = 0; i < parameters_size; i++)
+    {
+        buffer << parameters(i);
+
+        if(i != (parameters_size-1)) buffer << " ";
+    }
 
     file_stream.PushText(buffer.str().c_str());
 
