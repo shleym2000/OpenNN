@@ -2737,7 +2737,7 @@ bool DataSet::is_multiple_classification() const
 
     for(Index i = 0; i < targets.dimension(0); i++)
     {
-        if(targets.chip(i, 0).calculate_sum() == 0.0)
+        if(targets.chip(i, 0).calculate_sum()) < numeric_limits<type>::min())
         {
             return false;
         }
@@ -4281,7 +4281,7 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
     {
         const Index training_index = training_indices[i];
 
-        if(data(training_index, target_index) == 0.0)
+        if(abs(data(training_index, target_index)) < numeric_limits<type>::min())
         {
             negatives++;
         }
@@ -4316,7 +4316,7 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
     {
         const Index selection_index = selection_indices[i];
 
-        if(data(selection_index, target_index) == 0.0)
+        if(abs(data(selection_index, target_index)) < numeric_limits<type>::min())
         {
             negatives++;
         }
@@ -4919,9 +4919,8 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_type() const
+Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() const
 {
-
     Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index rows_number = correlations.dimension(0);
@@ -5448,7 +5447,7 @@ void DataSet::scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& 
 
    for(Index i = 0; i < variables_number; i++)
    {
-       if(display && abs(data_descriptives[i].standard_deviation) < 1.0e-99)
+       if(display && abs(data_descriptives[i].standard_deviation) < numeric_limits<type>::min())
        {
           cout << "OpenNN Warning: DataSet class.\n"
                     << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
@@ -5585,7 +5584,7 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
    for(Index i = 0; i < variables_number; i++)
    {
        if(display
-       && abs(data_descriptives[i].maximum - data_descriptives[i].minimum) < 1.0e-99)
+       && abs(data_descriptives[i].maximum - data_descriptives[i].minimum) < numeric_limits<type>::min())
        {
           cout << "OpenNN Warning: DataSet class.\n"
                     << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
@@ -7532,7 +7531,7 @@ void DataSet::fill_time_series(const Index& period )
 
     Tensor<type, 2> new_data(rows, data.dimension(1));
 
-    new_data.initialize(static_cast<type>(NAN));
+    new_data.setConstant(static_cast<type>(NAN));
 
     Index j = 1;
 
@@ -7658,7 +7657,7 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
       {
           if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
           {
-              if(data(static_cast<Index>(instance_index),target_index) < 0.5)
+              if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
               {
                   negatives++;
               }

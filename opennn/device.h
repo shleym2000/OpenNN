@@ -4,9 +4,8 @@
 #define EIGEN_USE_THREADS
 #endif
 
-#include <../eigen/unsupported/Eigen/CXX11/Tensor>
-
-#include <../../eigen/unsupported/Eigen/CXX11/ThreadPool>
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
 
 using namespace Eigen;
 
@@ -14,41 +13,35 @@ class Device
 {
     public:
 
-        enum device_type{SimpleThreadPoolType, NonBlockingThreadPoolType};
+        enum Type{EigenDefault, EigenThreadPool, EigenGpu, IntelMkl};
 
+        explicit Device() {}
+
+        virtual ~Device() {}
+
+        Type get_type() const {return type;}
+
+        DefaultDevice* get_eigen_default_device() const {return default_device;}
+
+        ThreadPoolDevice* get_eigen_thread_pool_device() const {return thread_pool_device;}
+
+        GpuDevice* get_eigen_gpu_device() const {return gpu_device;}
 
 
     private:
 
+        Type type = EigenThreadPool;
 
-        // Private Constructor
+        DefaultDevice* default_device = nullptr;
 
-        Device();
+        SimpleThreadPool* simple_thread_pool = nullptr;
+        NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
 
-        // Stop the compiler generating methods of copy the object
+        ThreadPoolDevice* thread_pool_device = nullptr;
 
-        Device(Device const& copy);            // Not Implemented
-
-        Device& operator=(Device const& copy); // Not Implemented
-
-        NonBlockingThreadPool* non_blocking_thread_pool;
-
-        ThreadPoolDevice* thread_pool_device;
+        GpuDevice* gpu_device = nullptr;
 
 
-        static Device& getInstance()
-        {
-            // The only instance
-            // Guaranteed to be lazy initialized
-            // Guaranteed that it will be destroyed correctly
-            static Device instance;
-            return instance;
-        }
-/*
-        static set_device(const string&)
-        {
-            non_blocking_thread_pool = new NonBlockingThreadPool(1);
-        }
-*/
+
 };
 

@@ -20,7 +20,7 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 {
 }
 
-/*
+
 void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -32,7 +32,7 @@ void ConvolutionalLayerTest::test_constructor()
     assert_true(convolutional_layer.is_empty() == true, LOG);
 
     // Test
-
+/*
     convolutional_layer = OpenNN::ConvolutionalLayer({3,32,64}, {1,2,3});
 
     assert_true(convolutional_layer.get_filters_channels_number() == 3 &&
@@ -41,6 +41,7 @@ void ConvolutionalLayerTest::test_constructor()
                 convolutional_layer.get_filters_number() == 1 &&
                 convolutional_layer.get_filters_rows_number() == 2 &&
                 convolutional_layer.get_filters_columns_number() == 3, LOG);
+*/
 }
 
 
@@ -49,19 +50,19 @@ void ConvolutionalLayerTest::test_destructor()
    cout << "test_destructor\n";
 }
 
-
+/*
 void ConvolutionalLayerTest::test_get_parameters()
 {
     cout << "test_get_parameters\n";
 
     ConvolutionalLayer convolutional_layer;
-    Tensor<double, 2> new_synaptic_weights;
+    Tensor<type, 2> new_synaptic_weights;
     Tensor<type, 1> new_biases;
     Tensor<type, 1> new_parameters;
 
     // Test
 
-    new_synaptic_weights.resize(({2,3,2,2}));
+    new_synaptic_weights.resize(2,3,2,2);
     new_synaptic_weights(0,0,0,0) = 1.111;
     new_synaptic_weights(0,0,0,1) = 1.112;
     new_synaptic_weights(0,0,1,0) = 1.121;
@@ -192,7 +193,7 @@ void ConvolutionalLayerTest::test_set_parameters()
     cout << "test_set_parameters\n";
 
     ConvolutionalLayer convolutional_layer;
-    Tensor<double, 2> new_synaptic_weights;
+    Tensor<type, 2> new_synaptic_weights;
     Tensor<type, 1> new_biases;
 
     // Test
@@ -232,10 +233,10 @@ void ConvolutionalLayerTest::test_calculate_image_convolution()
 
    ConvolutionalLayer convolutional_layer;
 
-   Tensor<double, 2> image;
-   Tensor<double, 2> filter;
-   Tensor<double, 2> convolutions;
-   Tensor<double, 2> result;
+   Tensor<type, 2> image;
+   Tensor<type, 2> filter;
+   Tensor<type, 2> convolutions;
+   Tensor<type, 2> result;
 
    // Test
 
@@ -457,11 +458,11 @@ void ConvolutionalLayerTest::test_calculate_convolutions()
 
     ConvolutionalLayer convolutional_layer;
 
-    Tensor<double, 2> images;
-    Tensor<double, 2> filters;
-    Tensor<double, 2> convolutions;
-    Tensor<double, 2> alt_convolutions;
-    Tensor<double, 2> result;
+    Tensor<type, 2> images;
+    Tensor<type, 2> filters;
+    Tensor<type, 2> convolutions;
+    Tensor<type, 2> alt_convolutions;
+    Tensor<type, 2> result;
 
     // Test
 
@@ -758,8 +759,8 @@ void ConvolutionalLayerTest::test_calculate_activations()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<type, 2> inputs;
-    Tensor<double, 2> activations;
-    Tensor<double, 2> result;
+    Tensor<type, 2> activations;
+    Tensor<type, 2> result;
 
     // Test
 
@@ -1019,8 +1020,8 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 
     ConvolutionalLayer convolutional_layer;
     Tensor<type, 2> inputs;
-    Tensor<double, 2> activations_derivatives;
-    Tensor<double, 2> result;
+    Tensor<type, 2> activations_derivatives;
+    Tensor<type, 2> result;
 
     // Test
 
@@ -1248,8 +1249,8 @@ void ConvolutionalLayerTest::test_calculate_outputs()
 
     ConvolutionalLayer convolutional_layer;
 
-    Tensor<double, 2> images;
-    Tensor<double, 2> filters;
+    Tensor<type, 2> images;
+    Tensor<type, 2> filters;
     Tensor<type, 2> outputs;
 
     // Test
@@ -1536,8 +1537,8 @@ void ConvolutionalLayerTest::test_insert_padding()
 
     ConvolutionalLayer convolutional_layer;
 
-    Tensor<double, 2> image;
-    Tensor<double, 2> padded_image;
+    Tensor<type, 2> image;
+    Tensor<type, 2> padded_image;
 
     // Test
 

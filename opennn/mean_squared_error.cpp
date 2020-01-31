@@ -289,15 +289,14 @@ type MeanSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indic
 check();
 
 #endif
-    cout<<"1";
+
     // Loss index
 
     const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    cout<<"2";
+
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-    cout<<"3";
+
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-    cout<<"4";
 
     return sum_squared_error(outputs, targets);
 }
@@ -374,7 +373,7 @@ check();
     }
 
     first_order_loss.loss /= static_cast<type>(training_instances_number);
-    first_order_loss.gradient *= (2.0/static_cast<type>(training_instances_number));
+    first_order_loss.gradient = (2.0/static_cast<type>(training_instances_number))*first_order_loss.gradient;
 */
     return first_order_loss;
 }

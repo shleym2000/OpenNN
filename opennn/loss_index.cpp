@@ -1082,9 +1082,9 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const Index output_channels_number = layer_pointer->get_filters_number();
             const Index output_rows_number = layer_pointer->get_outputs_rows_number();
             const Index output_columns_number = layer_pointer->get_outputs_columns_number();
-/*
-            layers_delta[i].resize(Tensor<Index, 1>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
-*/
+
+//            layers_delta[i].resize(batch_instances_number, output_channels_number, output_rows_number, output_columns_number);
+
         }
         else if(layer_type == Layer::Pooling)
         {
@@ -1093,9 +1093,8 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const Index output_channels_number = layer_pointer->get_inputs_channels_number();
             const Index output_rows_number = layer_pointer->get_outputs_rows_number();
             const Index output_columns_number = layer_pointer->get_outputs_columns_number();
-/*
-            layers_delta[i].resize(Tensor<Index, 1>({batch_instances_number, output_channels_number, output_rows_number, output_columns_number}));
-*/
+
+//            layers_delta[i].resize(batch_instances_number, output_channels_number, output_rows_number, output_columns_number);
         }
         else if(layer_type == Layer::Perceptron)
         {
@@ -1104,6 +1103,7 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
             const Index neurons_number = layer_pointer->get_neurons_number();
 
             layers_delta[i] = Tensor<type, 2>(batch_instances_number, neurons_number);
+
             layers_delta[i].setRandom();
         }
         else if(layer_type == Layer::Recurrent)
@@ -1248,7 +1248,6 @@ check();
 
 type LossIndex::calculate_training_error_parameters(const Tensor<type, 1>& parameters) const
 {
-    cout<<"calculate_training_error"<<endl;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -1266,7 +1265,7 @@ check();
 
     Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const Index batches_number = training_batches.size();
+    const Index batches_number = training_batches.dimension(0);
 
     type training_error = static_cast<type>(0.0);
 
@@ -1274,15 +1273,11 @@ check();
 
     for(Index i = 0; i < batches_number; i++)
     {
-        cout<<"batch"<<i<<endl;
-
         const type batch_error = calculate_batch_error(training_batches.chip(i,0), parameters);
 
         training_error += batch_error;
 
     }
-
-
 
     return training_error;
 }
@@ -1380,7 +1375,7 @@ check();
 
     Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
 
-    const Index batches_number = training_batches.size();
+    const Index batches_number = training_batches.dimension(0);
 
     // Loss index
 
@@ -1390,6 +1385,7 @@ check();
 
     for(Index i = 0; i < batches_number; i++)
     {
+
         const Tensor<type, 1> batch_gradient = calculate_batch_error_gradient(training_batches.chip(i,0));
 
         #pragma omp critical
@@ -1398,7 +1394,6 @@ check();
     }
 
     return training_error_gradient;
-
 }
 
 
@@ -1411,9 +1406,7 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-    Tensor<type, 1> ndd = numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
-
-    return ndd;
+    return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
 
 }
 

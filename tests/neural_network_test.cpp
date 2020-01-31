@@ -203,8 +203,6 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 {
     NeuralNetwork neural_network;
 
-//    Tensor<Index, 1> layers_parameters_numbers;
-
     Tensor<Index, 1> architecture(3);
 
     architecture.setValues({1, 2, 3});
@@ -225,14 +223,14 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 
     Tensor<type, 1> parameters = neural_network.get_parameters();
 
-    cout<<"Hello"<<endl;
-
     Tensor<Tensor<type, 1>, 1> training_parameters = neural_network.get_trainable_layers_parameters(parameters);
 
-    cout<<training_parameters(1);
-    cout<<"bye"<<endl;
-
-
+    assert_true(training_parameters(0).size() == 4, LOG);
+    assert_true(training_parameters(1).size() == 9, LOG);
+    assert_true(training_parameters(0)(0) == 0, LOG);
+    assert_true(training_parameters(0)(2) == 1, LOG);
+    assert_true(training_parameters(1)(0) == 2, LOG);
+    assert_true(training_parameters(1)(6) == 3, LOG);
 
 }
 
@@ -303,7 +301,7 @@ void NeuralNetworkTest::test_set_parameters()
 
    assert_true(parameters.size() == parameters_number, LOG);
    assert_true(parameters[0] == 0.0, LOG);
-//   assert_true(parameters[parameters_number-1] - parameters_number - 1.0 < numeric_limits<double>::min(), LOG);
+//   assert_true(parameters[parameters_number-1] - parameters_number - 1.0 < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -368,7 +366,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
    cout << "test_calculate_parameters_norm\n";
 
    NeuralNetwork neural_network;
-   double parameters_norm;
+   type parameters_norm;
    Tensor<Index, 1> architecture;
 
    // Test 
