@@ -239,7 +239,7 @@ void AdaptiveMomentEstimation::set_default()
 
    minimum_parameters_increment_norm = static_cast<type>(0.0);
    minimum_loss_decrease = static_cast<type>(0.0);
-   loss_goal = -999999;
+   loss_goal = -numeric_limits<type>::max();
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_failures = 1000000;
    maximum_time = 1000.0;
@@ -705,7 +705,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
    Index selection_failures = 0;
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
-   type minimum_selection_error = 999999;
+   type minimum_selection_error = numeric_limits<type>::max();
 
    bool stop_training = false;
 
@@ -749,8 +749,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), input_variables_indices);
            data_set_pointer->get_subtensor_data(training_batches.chip(iteration,0), target_variables_indices);
-//           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs);
-//           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets);
+//           data.get_tensor(training_batches[iteration], input_variables_indices, input_variables_dimensions, batch.inputs_2d);
+//           data.get_tensor(training_batches[iteration], target_variables_indices, target_variables_dimensions, batch.targets_2d);
 
            // Neural network
 /*@todo device*/

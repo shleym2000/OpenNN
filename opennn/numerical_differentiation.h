@@ -710,7 +710,7 @@ public:
    template<class T> 
    Tensor<type, 1> calculate_central_differences_gradient(const T& t, type (T::*f)(const Tensor<type, 1>&) const, const Tensor<type, 1>& x) const
    {
-      cout << "holaa" << endl;
+
       const Index n = x.size();
 
       type h;
@@ -725,15 +725,12 @@ public:
 
       for(Index i = 0; i < n; i++)
       {
-         cout<<i<<endl;
-
          h = calculate_h(x(i));
 
          x_forward(i) += h;
 
          y_forward = (t.*f)(x_forward);
 
-/*
          x_forward(i) -= h;
          x_backward(i) -= h;
 
@@ -741,7 +738,7 @@ public:
          x_backward(i) += h;
 
          g(i) = (y_forward - y_backward)/(2.0*h);
-*/
+
       }
 
       return g;
@@ -1159,8 +1156,6 @@ public:
    Tensor<type, 1> calculate_central_differences_gradient(const T& t, type(T::*f)(const Tensor<Index, 1>&, const Tensor<type, 1>&) const, const Tensor<Index, 1>& dummy, const Tensor<type, 1>& x) const
    {
       const Index n = x.size();
-
-      cout<<"HelloWorld"<<endl;
 
       type h;
       Tensor<type, 1> x_forward(x);

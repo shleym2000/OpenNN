@@ -349,7 +349,7 @@ void QuasiNewtonMethod::set_default()
    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
    minimum_loss_decrease = static_cast<type>(0.0);
-   loss_goal = -999999;
+   loss_goal = -numeric_limits<type>::max();
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 
@@ -903,7 +903,7 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
    const Tensor<type, 1> parameters_difference = parameters - old_parameters;
    
 /*
-   if(parameters_difference.abs() < 1.0e-99)
+   if(parameters_difference.abs() < numeric_limits<type>::min())
    {
       buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
              << "Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 2>&) method.\n"
@@ -1093,7 +1093,7 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
    
    const Tensor<type, 1> gradient_difference = gradient - old_gradient;
 
-//   if(absolute_value(gradient_difference) < 1.0e-99)
+//   if(absolute_value(gradient_difference) < numeric_limits<type>::min())
 //   {
 //       ostringstream buffer;
 
@@ -1299,8 +1299,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
        }
 
        if(epoch == 0
-       /*|| (old_parameters - parameters).abs() < 1.0e-99
-       || (old_gradient - gradient).abs() < 1.0e-99*/)
+       /*|| (old_parameters - parameters).abs() < numeric_limits<type>::min()
+       || (old_gradient - gradient).abs() < numeric_limits<type>::min()*/)
        {
 /*
            inverse_hessian.initialize_identity();

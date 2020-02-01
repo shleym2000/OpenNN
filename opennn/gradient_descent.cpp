@@ -248,7 +248,7 @@ void GradientDescent::set_default()
 
    minimum_loss_decrease = static_cast<type>(0.0);
 
-   loss_goal = -999999;
+   loss_goal = -numeric_limits<type>::max();
    gradient_norm_goal = static_cast<type>(0.0);
    maximum_selection_error_decreases = 1000000;
 
@@ -777,7 +777,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       
    type training_loss = static_cast<type>(0.0);
    type old_training_loss = static_cast<type>(0.0);
-   type training_loss_decrease = -999999;
+   type training_loss_decrease = -numeric_limits<type>::max();
 
    Tensor<type, 1> gradient(parameters_number);
    type gradient_norm = static_cast<type>(0.0);
@@ -797,7 +797,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
    pair<type,type> directional_point(2, 0.0);
 
    Tensor<type, 1> minimum_selection_error_parameters(parameters_number);
-   type minimum_selection_error = 999999;
+   type minimum_selection_error = numeric_limits<type>::max();
 
    bool stop_training = false;
 
@@ -850,7 +850,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       gradient = loss_index_pointer->calculate_training_loss_gradient();
 
-      if(gradient(0) == 0.0) throw logic_error("Gradient is zero");
+      if(abs(gradient(0)) < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
 
       gradient_norm = l2_norm(gradient);
 
@@ -863,8 +863,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       training_direction = calculate_training_direction(gradient);
 
-//      if(training_direction == 0.0) throw logic_error("Training direction is zero");
-      if(training_direction(0) == 0.0) throw logic_error("Training direction is zero");
+//      if(training_direction) < numeric_limits<type>::min()) throw logic_error("Training direction is zero");
+      if(abs(training_direction(0)) < numeric_limits<type>::min()) throw logic_error("Training direction is zero");
 
       // Calculate loss training_slope
 
@@ -876,7 +876,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       // Check for a descent direction
 
-      if(training_slope(0) >= 0.0) throw logic_error("Training slope is equal or greater than zero");
+      if(training_slope(0) >= static_cast<type>(0.0)) throw logic_error("Training slope is equal or greater than zero");
 
       if(epoch == 0)
       {
@@ -891,7 +891,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
       learning_rate = directional_point.first;
 
-      if(learning_rate == 0.0)
+      if(abs(learning_rate) < numeric_limits<type>::min())
       {
           cout << "Training rate is zero" << endl;
 

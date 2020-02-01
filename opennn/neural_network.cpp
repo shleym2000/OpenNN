@@ -417,7 +417,7 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
         {
             trainable_layers_indices[trainable_layer_index] = i;
             trainable_layer_index++;
-            //trainable_layers_indices.push_back(i);
+            /*trainable_layers_indices.push_back(i);*/
         }
     }
 
@@ -680,15 +680,18 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
         outputs_dimensions = pooling_layer_1->get_outputs_dimensions();
     }
-/*
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions.sum(), 18);
+
+//    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions.sum(), 18);
+    const Tensor<Index, 0> outputs_dimensions_sum = outputs_dimensions.sum();
+
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(outputs_dimensions_sum(0), 18);
     add_layer(perceptron_layer);
 
     const Index perceptron_layer_outputs = perceptron_layer->get_neurons_number();
 
     ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
     add_layer(probabilistic_layer);
-*/
+
 }
 
 
@@ -807,7 +810,7 @@ PerceptronLayer* NeuralNetwork::get_first_perceptron_layer_pointer() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-        if(layers_pointers[i]->get_type() == Layer::Perceptron)
+        if(layers_pointers(i)->get_type() == Layer::Perceptron)
         {
             return dynamic_cast<PerceptronLayer*>(layers_pointers[i]);
         }
@@ -980,21 +983,16 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 
     Tensor<Tensor<type, 1>, 1> trainable_layers_parameters(trainable_layers_number);
 
-
     Index index = 0;
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
-///@todo
-  //      trainable_layers_parameters[i] = parameters.get_subvector(index, index + trainable_layers_parameters_number[i]-1);
 
-        trainable_layers_parameters(i)= parameters.slice(Eigen::array<Eigen::Index, 1>({index}), Eigen::array<Eigen::Index, 1>({index + trainable_layers_parameters_number(i)-1}));
+        trainable_layers_parameters(i).resize(trainable_layers_parameters_number(i));
 
-        cout<<trainable_layers_parameters(i);
+        trainable_layers_parameters(i) = parameters.slice(Eigen::array<Eigen::Index, 1>({index}), Eigen::array<Eigen::Index, 1>({trainable_layers_parameters_number(i)}));
 
-        system("pause");
-
-        index += trainable_layers_parameters_number[i];
+        index += trainable_layers_parameters_number(i);
 
     }
 
@@ -1030,34 +1028,14 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
     Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
-    const Tensor<Index, 1> trainable_layers_parameters_number = get_trainable_layers_parameters_numbers();
+    Tensor<Tensor<type, 1>, 1> layers_parameters = get_trainable_layers_parameters(new_parameters);
 
-    Index position = 0;
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
 
-
-//    for(Index i = 0; i < trainable_layers_number; i++)
-//    {
-
-
-//        if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
-
-//        Eigen::array<Eigen::Index,1>start = {position};
-
-//        Eigen::array<Eigen::Index,1>end = {position + trainable_layers_parameters_number[i]};
-
-//        /* new_parameters.get_subvector(position, position+trainable_layers_parameters_number[i]-1) */;
-
-//        Tensor<type, 1> layer_parameters(trainable_layers_parameters_number[i]);
-
-//        cout<<"size"<<new_parameters.slice(start, end);
-
-//        layer_parameters = new_parameters.slice(start, end);
-
-//        trainable_layers_pointers[i]->set_parameters(layer_parameters);
-
-//        position += trainable_layers_parameters_number[i];
-
-//    }
+        trainable_layers_pointers(i)->set_parameters(layers_parameters(i));
+    }
 }
 
 
@@ -1154,12 +1132,10 @@ void NeuralNetwork::set_parameters_random()
 type NeuralNetwork::calculate_parameters_norm() const
 {
     const Tensor<type, 1> parameters = get_parameters();
-/*
+
     const type parameters_norm = l2_norm(parameters);
 
     return parameters_norm;
-*/
-    return 0.0;
 }
 
 
@@ -1169,10 +1145,9 @@ type NeuralNetwork::calculate_parameters_norm() const
 Descriptives NeuralNetwork::calculate_parameters_descriptives() const
 {
     const Tensor<type, 1> parameters = get_parameters();
-/*
+
     return descriptives(parameters);
-*/
-    return Descriptives();
+
 }
 
 
@@ -1183,10 +1158,9 @@ Descriptives NeuralNetwork::calculate_parameters_descriptives() const
 Histogram NeuralNetwork::calculate_parameters_histogram(const Index& bins_number) const
 {
     const Tensor<type, 1> parameters = get_parameters();
-/*
+
     return histogram(parameters, bins_number);
-*/
-    return Histogram();
+
 }
 
 
@@ -1274,11 +1248,11 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
     cout<<inputs;
 
-    Tensor<type, 2> outputs = layers_pointers[0]->calculate_outputs(inputs);
+    Tensor<type, 2> outputs = layers_pointers(0)->calculate_outputs(inputs);
 
     for(Index i = 1; i < layers_number; i++)
     {
-        outputs = layers_pointers[i]->calculate_outputs(outputs);
+        outputs = layers_pointers(i)->calculate_outputs(outputs);
     }
 
     return outputs;
@@ -1337,8 +1311,10 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
 
 Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs,
-                                                          const Tensor<type, 1>& parameters) const
+                                                           const Tensor<type, 1>& parameters) const
 {
+    const Index batch_size = inputs.dimension(0);
+
     const Index trainable_layers_number = get_trainable_layers_number();
 
     #ifdef __OPENNN_DEBUG__
@@ -1360,16 +1336,19 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
 
     const Tensor<Tensor<type, 1>, 1> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
 
-    Tensor<type, 2> outputs;
+    Tensor<type, 2> outputs(batch_size, trainable_layers_pointers[0]->get_neurons_number());
 
     if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::Type::Pooling)
     {
         outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
     }
+
     else outputs = trainable_layers_pointers[0]->calculate_outputs(inputs, trainable_layers_parameters[0]);
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
+        outputs.resize(batch_size, trainable_layers_pointers[i]->get_neurons_number());
+
         if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::Type::Pooling)
         {
             outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
@@ -1479,13 +1458,9 @@ Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& po
 
 Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
 {
-/*
    const Tensor<type, 2> outputs = calculate_outputs(inputs);
 
-   return histograms(outputs.to_matrix(), bins_number);
-*/
-   return Tensor<Histogram, 1>();
-
+   return histograms(outputs, bins_number);
 }
 
 
