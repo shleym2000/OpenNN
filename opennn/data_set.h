@@ -22,30 +22,29 @@
 #include <ctime>
 #include <exception>
 #include <regex>
-//#include <math.h>
 #include <map>
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
 
+
 // OpenNN includes
 
-//#include "metrics.h"
+#include "config.h"
+#include "device.h"
 #include "statistics.h"
 #include "transformations.h"
 #include "correlations.h"
 #include "opennn_strings.h"
 #include "tinyxml2.h"
-#include "config.h"
-
-// Eigen includes
-
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 #ifdef __OPENNN_CUDA__
     #include "D:/artelnics/opennn_cuda/opennn_cuda/kernels.h"
 #endif
+
+// Eigen includes
+
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -220,28 +219,7 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
-       {
-           const Index rows_number = instances.dimension(0);
-           const Index inputs_number = inputs.dimension(0);
-           const Index targets_number = targets.dimension(0);
-
-           const Tensor<type, 2>& data = data_set_pointer->get_data();
-
-           for(Index i = 0; i < rows_number; i++)
-           {
-               for(Index j = 0; j < inputs_number; j++)
-               {
-                   inputs_2d(i,j) = data(instances[i], inputs[j]);
-               }
-
-               for(Index j = 0; j < targets_number; j++)
-               {
-                   targets_2d(i,j) = data(instances[i], targets[j]);
-               }
-           }
-
-       }
+       void fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets);
 
        DataSet* data_set_pointer = nullptr;
 
@@ -328,6 +306,10 @@ public:
    Tensor<Index, 1> get_input_variables_indices() const;
    Tensor<Index, 1> get_target_variables_indices() const;
 
+   vector<Index> get_input_variables_indices_stl() const;
+   vector<Index> get_target_variables_indices_stl() const;
+
+
    VariableUse get_variable_use(const Index&) const;
    Tensor<VariableUse, 1> get_variables_uses() const;
 
@@ -384,6 +366,20 @@ public:
 
    Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
+   static vector<Index> tensor_to_vector(const Tensor<Index, 1>& tensor)
+   {
+       const size_t size = static_cast<size_t>(tensor.dimension(0));
+
+       vector<Index> new_vector(static_cast<size_t>(size));
+
+       for(size_t i = 0; i < size; i++)
+       {
+           new_vector[i] = tensor(i);
+       }
+
+       return new_vector;
+   }
+
    // Members get methods
 
    MissingValuesMethod get_missing_values_method() const;
@@ -422,6 +418,8 @@ public:
    void set(const string&);
 
    void set_default();
+
+   void set_device_pointer(Device*);
 
    // Instances set methods
 
@@ -803,6 +801,8 @@ public:
 
 private:
 
+   Device* device_pointer = nullptr;
+
    /// Data file name.
 
    string data_file_name;
@@ -890,6 +890,9 @@ private:
    Index gmt = 0;
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
+
+   Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"

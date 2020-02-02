@@ -725,8 +725,10 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
     }
 
     #endif
-
-   return normalized(gradient)*static_cast<type>(-1.0);
+/*
+   return static_cast<type>(-1.0)*normalized(gradient);
+   */
+    return Tensor<type, 1>();
 }
 
 
@@ -867,8 +869,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
       if(abs(training_direction(0)) < numeric_limits<type>::min()) throw logic_error("Training direction is zero");
 
       // Calculate loss training_slope
-
-      Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
 
       const Tensor<type, 0> training_slope = (gradient/gradient_norm).contract(training_direction, product_dims);
 

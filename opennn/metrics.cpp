@@ -15,7 +15,7 @@ type sum_squared_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     const auto error = y - x;
 
-    const Eigen::array<Eigen::IndexPair<Index>, 2> product_dimensions = { Eigen::IndexPair<Index>(0, 0), Eigen::IndexPair<Index>(1, 1) };
+    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
 
     const Tensor<type, 0> sse = error.contract(error, product_dimensions);
 
@@ -145,7 +145,7 @@ type lp_norm(const Tensor<type, 1>& vector, const type &p)
     norm += pow(abs(vector[i]), p);
   }
 
-  norm = pow(norm, 1.0 / p);
+  norm = pow(norm, static_cast<type>(1.0)/p);
 
   return norm;
 }
@@ -1209,7 +1209,7 @@ type minkowski_error(const Tensor<type, 2>& x, const Tensor<type, 2>& y, const t
             row_minkowski_error += pow(abs(x(i,j) - y(i,j)), minkowski_parameter);
         }
 
-        minkowski_error += pow(row_minkowski_error, 1.0 / minkowski_parameter);
+        minkowski_error += pow(row_minkowski_error, static_cast<type>(1.0) / minkowski_parameter);
     }
 
     return minkowski_error;
@@ -1307,7 +1307,4 @@ Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& vector)
   return hessian;
 }
 
-
 }
-
-

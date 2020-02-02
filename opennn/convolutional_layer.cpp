@@ -56,65 +56,32 @@ bool ConvolutionalLayer::is_empty() const
 
 Tensor<type, 2> ConvolutionalLayer::calculate_activations(const Tensor<type, 2>& convolutions) const
 {
-
+/*
    switch(activation_function)
    {
-       case ConvolutionalLayer::Linear:
-       {
-            return linear(convolutions);
-       }
+       case ConvolutionalLayer::Linear: return linear(convolutions);
 
-       case ConvolutionalLayer::Logistic:
-       {
-            return logistic(convolutions);
-       }
+       case ConvolutionalLayer::Logistic: return logistic(convolutions);
 
-       case ConvolutionalLayer::HyperbolicTangent:
-       {
-            return hyperbolic_tangent(convolutions);
-       }
+       case ConvolutionalLayer::HyperbolicTangent: return hyperbolic_tangent(convolutions);
 
-       case ConvolutionalLayer::Threshold:
-       {
-            return threshold(convolutions);
-       }
+       case ConvolutionalLayer::Threshold: return threshold(convolutions);
 
-       case ConvolutionalLayer::SymmetricThreshold:
-       {
-            return symmetric_threshold(convolutions);
-       }
+       case ConvolutionalLayer::SymmetricThreshold: return symmetric_threshold(convolutions);
 
-       case ConvolutionalLayer::RectifiedLinear:
-       {
-            return rectified_linear(convolutions);
-       }
+       case ConvolutionalLayer::RectifiedLinear: return rectified_linear(convolutions);
 
-       case ConvolutionalLayer::ScaledExponentialLinear:
-       {
-            return scaled_exponential_linear(convolutions);
-       }
+       case ConvolutionalLayer::ScaledExponentialLinear: return scaled_exponential_linear(convolutions);
 
-       case ConvolutionalLayer::SoftPlus:
-       {
-            return soft_plus(convolutions);
-       }
+       case ConvolutionalLayer::SoftPlus: return soft_plus(convolutions);
 
-       case ConvolutionalLayer::SoftSign:
-       {
-            return soft_sign(convolutions);
-       }
+       case ConvolutionalLayer::SoftSign: return soft_sign(convolutions);
 
-       case ConvolutionalLayer::HardSigmoid:
-       {
-            return hard_sigmoid(convolutions);
-       }
+       case ConvolutionalLayer::HardSigmoid: return hard_sigmoid(convolutions);
 
-       case ConvolutionalLayer::ExponentialLinear:
-       {
-            return exponential_linear(convolutions);
-       }
+       case ConvolutionalLayer::ExponentialLinear: return exponential_linear(convolutions);
    }
-
+*/
     return Tensor<type, 2>();
 }
 
@@ -305,60 +272,27 @@ Tensor<type, 2> ConvolutionalLayer::calculate_activations_derivatives(const Tens
 /*
     switch(activation_function)
     {
-        case Linear:
-        {
-            return linear_derivatives(combinations);
-        }
+        case Linear: return linear_derivatives(combinations);
 
-        case Logistic:
-        {
-            return logistic_derivatives(combinations);
-        }
+        case Logistic: return logistic_derivatives(combinations);
 
-        case HyperbolicTangent:
-        {
-            return hyperbolic_tangent_derivatives(combinations);
-        }
+        case HyperbolicTangent: return hyperbolic_tangent_derivatives(combinations);
 
-        case Threshold:
-        {
-            return threshold_derivatives(combinations);
-        }
+        case Threshold: return threshold_derivatives(combinations);
 
-        case SymmetricThreshold:
-        {
-            return symmetric_threshold_derivatives(combinations);
-        }
+        case SymmetricThreshold: return symmetric_threshold_derivatives(combinations);
 
-        case RectifiedLinear:
-        {
-            return rectified_linear_derivatives(combinations);
-        }
+        case RectifiedLinear: return rectified_linear_derivatives(combinations);
 
-        case ScaledExponentialLinear:
-        {
-            return scaled_exponential_linear_derivatives(combinations);
-        }
+        case ScaledExponentialLinear: return scaled_exponential_linear_derivatives(combinations);
 
-        case SoftPlus:
-        {
-            return soft_plus_derivatives(combinations);
-        }
+        case SoftPlus: return soft_plus_derivatives(combinations);
 
-        case SoftSign:
-        {
-            return soft_sign_derivatives(combinations);
-        }
+        case SoftSign: return soft_sign_derivatives(combinations);
 
-        case HardSigmoid:
-        {
-            return hard_sigmoid_derivatives(combinations);
-        }
+        case HardSigmoid: return hard_sigmoid_derivatives(combinations);
 
-        case ExponentialLinear:
-        {
-            return exponential_linear_derivatives(combinations);
-        }
+        case ExponentialLinear: return exponential_linear_derivatives(combinations);
     }
 */
     return Tensor<type, 2>();
@@ -395,12 +329,6 @@ Layer::ForwardPropagation ConvolutionalLayer::calculate_forward_propagation(cons
     layers.activations_derivatives = calculate_activations_derivatives(combinations);
 
     return layers;
-}
-
-
-Tensor<type, 2> ConvolutionalLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
-{
-    return activations_derivatives*output_gradient;
 }
 
 
@@ -790,7 +718,7 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
 /*
     Tensor<type, 2> layers_inputs;
 
-    switch (get_padding_option()) {
+    switch(get_padding_option()) {
 
         case OpenNN::ConvolutionalLayer::PaddingOption::NoPadding:
         {

@@ -771,11 +771,12 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_training_direction(const Tensor<typ
 {
 //  normalized(dot(inverse_hessian_approximation, gradient))*(-1.0);
 
-    Eigen::array<Eigen::IndexPair<int>, 1> product_dims = { Eigen::IndexPair<int>(1, 0) }; // Normal product as matrix times vector
-
-    Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, product_dims);
-
+    const Tensor<type, 1> hessian_dot_gradient = inverse_hessian_approximation.contract(gradient, product_dims);
+/*
     return normalized((-1.0)*hessian_dot_gradient);
+*/
+    return Tensor<type, 1>();
+
 }
 
 
@@ -812,8 +813,10 @@ Tensor<type, 1> QuasiNewtonMethod::calculate_gradient_descent_training_direction
     }
 
     #endif
-
-    return normalized(gradient)*static_cast<type>(-1.0);
+/*
+    return static_cast<type>(-1.0)*normalized(gradient);
+*/
+    return Tensor<type, 1>();
 }
 
 
@@ -936,13 +939,9 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
 
    // Dots
 
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Normal product vector times vector
-
    const Tensor<type, 0> parameter_dot_gradient = parameters_difference.contract(gradient_difference, product_vector_vector);
 
    const type parameters_dot_gradient =parameter_dot_gradient(0);
-
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_matrix = { Eigen::IndexPair<int>(0, 1) }; // Normal product vector times matrix
 
    const Tensor<type, 1> gradient_dot_hessian = gradient_difference.contract(old_inverse_hessian, product_vector_matrix);
 
@@ -971,8 +970,6 @@ const Tensor<type, 1>& old_parameters, const Tensor<type, 1>& parameters, const 
    }
 
    Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(1, 0) };
 
    const Tensor<type, 1> hessian_dot_gradient_difference = old_inverse_hessian.contract(gradient_difference,product_matrix_vector);//dot(old_inverse_hessian, gradient_difference);
 
@@ -1117,9 +1114,6 @@ const Tensor<type, 1>& old_gradient, const Tensor<type, 1>& gradient, const Tens
 
    // BGFS Vector
 
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) };
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_vector = { Eigen::IndexPair<int>(1, 0) };
-
    const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, product_vector_vector); //dot(parameters_difference, gradient_difference);
    const Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, product_matrix_vector);//dot(old_inverse_hessian, gradient_difference);
    const Tensor<type, 0> gradient_dot_hessian_dot_gradient = gradient_difference.contract(hessian_dot_gradient, product_vector_vector);//dot(gradient_difference, hessian_dot_gradient);
@@ -1229,10 +1223,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
    time_t beginning_time, current_time;
    time(&beginning_time);
    type elapsed_time;
-
-   // Eigen stuff
-
-   const Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) };
 
    // Main loop 
 

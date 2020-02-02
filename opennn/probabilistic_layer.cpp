@@ -670,7 +670,6 @@ Tensor<type, 2> ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>
 
     Tensor<type, 2> combinations(batch_size,neurons_number);
 
-    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
 
     combinations = inputs.contract(synaptic_weights, product_dimensions);
 
@@ -705,25 +704,15 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 
     switch(activation_function)
     {
-        case Binary:
-        {
-            return binary(combinations);
-        }
+/*
+        case Binary: return binary(combinations);
 
-        case Logistic:
-        {
-            return logistic(combinations);
-        }
+        case Logistic: return logistic(combinations);
 
-        case Competitive:
-        {
-            return competitive(combinations);
-        }
+        case Competitive: return competitive(combinations);
 
-        case Softmax:
-        {
-            return softmax(combinations);
-        }
+        case Softmax: return softmax(combinations);
+*/
     }
 
     ostringstream buffer;
@@ -888,8 +877,6 @@ Tensor<type, 1> ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 
     Tensor<type, 1> error_gradient(parameters_number);
     error_gradient.setZero();
 
-    Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_transpose_vector = { Eigen::IndexPair<int>(1, 1) };
-
     Tensor<type, 2> inputs_dot_delta = layer_inputs.contract(layer_deltas, product_matrix_transpose_vector);
 
     for(Index i = 0; i < inputs_dot_delta.size(); i++)
@@ -958,6 +945,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>&
 
     switch(activation_function)
     {
+/*
         case Binary: return binary(combinations);
 
         case Logistic: return logistic(combinations);
@@ -965,6 +953,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations(const Tensor<type, 2>&
         case Competitive: return competitive(combinations);
 
         case Softmax: return softmax(combinations);
+*/
     }
 
     ostringstream buffer;
@@ -1013,6 +1002,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations_derivatives(const Tens
 
     switch(activation_function)
     {
+/*
         case Binary:
         {
              ostringstream buffer;
@@ -1042,6 +1032,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_activations_derivatives(const Tens
         {
             return softmax_derivatives(combinations);
         }
+*/
     }
 
     ostringstream buffer;

@@ -3,9 +3,8 @@
 //
 //   S T O C H A S T I C   G R A D I E N T   D E S C E N T   C L A S S   H E A D E R
 //
-//   Carlos Barranquero                                                    
 //   Artificial Intelligence Techniques SL
-//   carlosbarranquero@artelnics.com                                       
+//   artelnics@artelnics.com
 
 #ifndef STOCHASTICGRADIENTDESCENT_H
 #define STOCHASTICGRADIENTDESCENT_H
@@ -145,6 +144,42 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
+
+   void update_parameters(const LossIndex::FirstOrderLoss& first_order_loss)
+   {
+/*
+       initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
+
+       parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
+
+       if(momentum > 0 && !nesterov)
+       {
+           parameters_increment.device(thread_pool_device) += last_increment*momentum;
+
+           last_increment = parameters_increment;
+
+           parameters.device(thread_pool_device) += parameters_increment;
+       }
+       else if(momentum > 0 && nesterov)
+       {
+           parameters_increment.device(thread_pool_device) += last_increment*momentum;
+
+           last_increment = parameters_increment;
+
+           nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
+
+           parameters.device(thread_pool_device) += nesterov_increment;
+       }
+       else
+       {
+           parameters.device(thread_pool_device) = parameters + parameters_increment;
+       }
+
+       neural_network_pointer->set_parameters(parameters);
+
+       learning_rate_iteration++;
+*/
+   }
 
 
 private:
