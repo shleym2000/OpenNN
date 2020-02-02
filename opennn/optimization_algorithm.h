@@ -161,6 +161,8 @@ public:
 
    virtual void set_default();
 
+   void set_device_pointer(Device*);
+
    virtual void set_loss_index_pointer(LossIndex*);
 
    virtual void set_display(const bool&);
@@ -197,6 +199,8 @@ public:
 
 protected:
 
+   Device* device_pointer;
+
    /// Pointer to a loss index for a neural network object.
 
    LossIndex* loss_index_pointer = nullptr;
@@ -222,6 +226,11 @@ protected:
    /// Display messages to screen.
 
    bool display;
+
+   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)};
+   const Eigen::array<IndexPair<Index>, 1> product_dims = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+   const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
+   const Eigen::array<IndexPair<Index>, 1> product_matrix_vector = {IndexPair<Index>(1, 0)};
 };
 
 }

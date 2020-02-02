@@ -2368,6 +2368,31 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
 }
 
 
+vector<Index> DataSet::get_input_variables_indices_stl() const
+{
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    const Index input_variables_number = input_variables_indices.size();
+
+    vector<Index> input_variables_indices_stl(input_variables_number);
+
+    for(Index i = 0; i < input_variables_number; i++)
+    {
+        input_variables_indices_stl[i] = input_variables_indices[i];
+    }
+
+    return input_variables_indices_stl;
+}
+
+
+vector<Index> DataSet::get_target_variables_indices_stl() const
+{
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    return vector<Index>();
+}
+
+
 /// Sets the uses of the data set columns.
 /// @param new_columns_uses String vector that contains the new uses to be set,
 /// note that this vector needs to be the size of the number of columns in the data set.
@@ -2768,7 +2793,6 @@ const Tensor<type, 2>& DataSet::get_data() const
 {
    return data;
 }
-
 
 
 /// Returns a reference to the time series data matrix in the data set.
@@ -3979,6 +4003,12 @@ void DataSet::set_steps_ahead_number(const Index& new_steps_ahead_number)
 void DataSet::set_time_index(const Index& new_time_index)
 {
     time_index = new_time_index;
+}
+
+
+void DataSet::set_device_pointer(Device* new_device_pointer)
+{
+    device_pointer = new_device_pointer;
 }
 
 
@@ -5401,9 +5431,6 @@ void DataSet::transform_principal_components_data(const Tensor<type, 2>& princip
 
         for(Index j = 0; j < principal_components_number; j++)
         {
-
-            Eigen::array<Eigen::IndexPair<int>, 1> product_vector_vector = { Eigen::IndexPair<int>(0, 0) }; // Vector product, (0,0) first vector is transpose
-
             Tensor<type, 0> dot = (inputs.chip(instance_index, 0)).contract(principal_components.chip(j,0),product_vector_vector);
 
             new_data(i,j) = dot(0);
@@ -8119,7 +8146,7 @@ Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleani
             }
         }
 
-        return_values[1][i] = variables_outliers;
+        return_values[1](i) = variables_outliers;
     }
 */
     return return_values;
@@ -8920,13 +8947,13 @@ void DataSet::read_csv_1()
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if((is_date_time_string(data_file_preview[1][i]) && data_file_preview[1][i] != missing_values_label)
-        || (is_date_time_string(data_file_preview[2][i]) && data_file_preview[2][i] != missing_values_label))
+        if((is_date_time_string(data_file_preview[1](i)) && data_file_preview[1](i) != missing_values_label)
+        || (is_date_time_string(data_file_preview[2](i)) && data_file_preview[2](i) != missing_values_label))
         {
             columns[i].type = DateTime;
         }
-        else if((is_numeric_string(data_file_preview[1][i]) && data_file_preview[1][i] != missing_values_label)
-             || (is_numeric_string(data_file_preview[2][i]) && data_file_preview[2][i] != missing_values_label))
+        else if((is_numeric_string(data_file_preview[1](i)) && data_file_preview[1](i) != missing_values_label)
+             || (is_numeric_string(data_file_preview[2](i)) && data_file_preview[2](i) != missing_values_label))
         {
             columns[i].type = Numeric;
         }
@@ -9561,7 +9588,6 @@ Index DataSet::count_nan() const
 }
 
 
-
 void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor, const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
@@ -9600,6 +9626,51 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& training_indices, co
 
     return batches;
 }
+
+
+void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets)
+{
+    const Index rows_number = instances.size();
+    const Index inputs_number = inputs.size();
+    const Index targets_number = targets.size();
+
+    const Tensor<type, 2>& data = data_set_pointer->get_data();
+
+    const Index total_rows = data.dimension(0);
+
+
+    const Index* instances_pointer = instances.data();
+    const Index* inputs_pointer = inputs.data();
+    const Index* targets_pointer = targets.data();
+
+    const type* data_pointer = data.data();
+    type* inputs_2d_pointer = inputs_2d.data();
+    type* targets_2d_pointer = targets_2d.data();
+
+    Index instance;
+    Index variable;
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        instance = instances[i];
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+            variable = inputs[j];
+
+            inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+        }
+
+//        for(Index j = 0; j < targets_number; j++)
+//        {
+//            variable = targets_pointer[j];
+
+//            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+//        }
+    }
+}
+
+
 }
 
 

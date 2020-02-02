@@ -142,55 +142,46 @@ public:
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&) const;
 
-   void calculate_combinations(const ThreadPoolDevice& thread_pool_device,
-                               const Tensor<type, 2>& inputs,
+   void calculate_combinations(const Tensor<type, 2>& inputs,
                                Tensor<type, 2>& combinations) const
    {
+       const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
 
-       switch (device.get_type())
+       switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
-/*
-                DefaultDevice* default_device = device.get_eigen_default_device();
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+                combinations.device(*default_device) = biases.broadcast(broadcast);
 
-                combinations.device(default_device) = inputs.contract(synaptic_weights, product_dimensions);
+                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
 
-                const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
-
-                combinations.device(default_device) = combinations + biases.broadcast(broadcast);
-*/
                 break;
             }
 
-            case Device::EigenThreadPool:
+            case Device::EigenSimpleThreadPool:
             {
-                ThreadPoolDevice* thread_pool_device = device.get_eigen_thread_pool_device();
-/*
-                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
+               combinations.device(*thread_pool_device) = biases.broadcast(broadcast);
 
-                const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
+               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
 
-                combinations.device(thread_pool_device) = combinations + biases.broadcast(broadcast);
-*/
                 break;
             }
 
            case Device::EigenGpu:
            {
-                GpuDevice* gpu_device = device.get_eigen_gpu_device();
+/*
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
+                combinations.device(*gpu_device) = biases.broadcast(broadcast);
 
-                //combinations.device(gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
-
+                combinations.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
+*/
                 break;
            }
-
 
             #ifdef USE_INTEL_MKL
 
@@ -208,21 +199,11 @@ public:
 
                buffer << "OpenNN Exception: PerceptronLayer class.\n"
                       << "void calculate_combinations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device has not been found.\n";
+                      << "Unknown device.\n";
 
                throw logic_error(buffer.str());
            }
        }
-
-
-        const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
-
-        combinations.device(thread_pool_device) = inputs.contract(synaptic_weights, product_dimensions);
-
-        const Eigen::array<Index, 2> broadcast = {inputs.dimension(0), 1};
-
-        combinations.device(thread_pool_device) = combinations + biases.broadcast(broadcast);
-
    }
 
    Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
@@ -235,7 +216,7 @@ public:
 
    Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
-   void calculate_activations(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
+   void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -262,7 +243,7 @@ public:
 
             case Logistic: logistic(combinations, activations); return;
 
-            case HyperbolicTangent: hyperbolic_tangent(thread_pool_device, combinations, activations); return;
+            //case HyperbolicTangent: hyperbolic_tangent(thread_pool_device, combinations, activations); return;
 
             case Threshold: threshold(combinations, activations); return;
 
@@ -283,7 +264,7 @@ public:
    }
 
 
-   void calculate_activations_derivatives(const ThreadPoolDevice& thread_pool_device, const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_derivatives) const
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations_derivatives) const
    {
         #ifdef __OPENNN_DEBUG__
 
@@ -310,7 +291,7 @@ public:
 
             case Logistic: logistic_derivatives(combinations, activations_derivatives); return;
 
-            case HyperbolicTangent: hyperbolic_tangent_derivatives(thread_pool_device, combinations, activations_derivatives); return;
+            //case HyperbolicTangent: hyperbolic_tangent_derivatives(thread_pool_device, combinations, activations_derivatives); return;
 
             case Threshold: threshold_derivatives(combinations, activations_derivatives); return;
 
@@ -338,35 +319,21 @@ public:
 
    ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
 
-   void calculate_forward_propagation(const ThreadPoolDevice& thread_pool_device,
-                                      const Tensor<type, 2>& inputs,
+   void calculate_forward_propagation(const Tensor<type, 2>& inputs,
                                       ForwardPropagation& forward_propagation)
    {
+       calculate_combinations(inputs, forward_propagation.combinations);
 
-       calculate_combinations(thread_pool_device, inputs, forward_propagation.combinations);
+       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
-       calculate_activations(thread_pool_device, forward_propagation.combinations, forward_propagation.activations);
-
-       calculate_activations_derivatives(thread_pool_device, forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
    }
 
    // Delta methods
 
-   Tensor<type, 2> calculate_output_delta(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   void calculate_output_delta(const ThreadPoolDevice& thread_pool_device,
-                               const Tensor<type, 2>& activations_derivatives,
-                               const Tensor<type, 2>& output_gradient,
-                               Tensor<type, 2>& output_delta) const
-   {
-       output_delta.device(thread_pool_device) = activations_derivatives*output_gradient;
-   }
-
-
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   void calculate_hidden_delta(const ThreadPoolDevice& thread_pool_device,
-                               Layer* next_layer_pointer,
+   void calculate_hidden_delta(Layer* next_layer_pointer,
                                const Tensor<type, 2>&,
                                const Tensor<type, 2>& activations_derivatives,
                                const Tensor<type, 2>& next_layer_delta,
@@ -374,27 +341,124 @@ public:
    {
        const Type next_layer_type = next_layer_pointer->get_type();
 
-       if(next_layer_type == Perceptron)
+       switch (next_layer_type)
        {
-           const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+            case Perceptron:
 
-           const Eigen::array<Eigen::IndexPair<Index>, 1> transposed_product_dimensions = { Eigen::IndexPair<Index>(1, 1) };
+            calculate_hidden_delta_perceptron(next_layer_pointer, activations_derivatives, next_layer_delta, hidden_delta);
 
-           const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
+            break;
 
-           hidden_delta.device(thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions);
-           hidden_delta.device(thread_pool_device) = hidden_delta*activations_derivatives;
-       }
-       else if(next_layer_type == Probabilistic)
-       {
-        //   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-       }
-       else
-       {
-           /// @todo Throw exception.
+            case Probabilistic:
+
+           break;
+
+       default:
+
+           break;
        }
    }
 
+   void calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
+                                          const Tensor<type, 2>& activations_derivatives,
+                                          const Tensor<type, 2>& next_layer_delta,
+                                          Tensor<type, 2>& hidden_delta) const
+   {
+       const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+
+       const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+
+                hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+
+               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+   }
+
+
+   void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
+                                             const Tensor<type, 2>&,
+                                             const Tensor<type, 2>& activations_derivatives,
+                                             const Tensor<type, 2>& next_layer_delta,
+                                             Tensor<type, 2>& hidden_delta) const
+   {
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       //   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+   }
 
    // Gradient methods
 
@@ -415,8 +479,6 @@ public:
        const Index biases_number = get_biases_number();
 
        Eigen::array<Index, 1> one_dim{{inputs_number*neurons_number}};
-
-       const Eigen::array<IndexPair<Index>, 1> dimensions = {IndexPair<Index>(0, 0)};
 
        Tensor<type, 1> synaptic_weights_derivatives(inputs_number*neurons_number);
 
@@ -472,8 +534,6 @@ protected:
    /// Display messages to screen. 
 
    bool display;
-
-
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"

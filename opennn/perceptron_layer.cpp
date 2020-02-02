@@ -614,8 +614,6 @@ Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& i
 
     Tensor<type, 2> combinations(batch_size,neurons_number);
 
-    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
-
     combinations = inputs.contract(synaptic_weights, product_dimensions);
 
     const Eigen::array<Index, 2> broadcast = {batch_size, 1};
@@ -641,14 +639,11 @@ Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& i
 
 Tensor<type, 2> PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs, const Tensor<type, 2>& new_biases, const Tensor<type, 2>& new_synaptic_weights) const
 {
-
     const Index batch_size = inputs.dimension(0);
 
     const  Index neurons_number = get_neurons_number();
 
     Tensor<type, 2> combinations(batch_size, neurons_number);
-
-    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
 
     combinations = inputs.contract(new_synaptic_weights, product_dimensions);
 
@@ -683,7 +678,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
 
     switch(activation_function)
     {
-
+/*
         case Linear: return linear(combinations);
 
         case Logistic: return logistic(combinations);
@@ -705,7 +700,7 @@ Tensor<type, 2> PerceptronLayer::calculate_activations(const Tensor<type, 2>& co
         case HardSigmoid: return hard_sigmoid(combinations);
 
         case ExponentialLinear: return exponential_linear(combinations);
-
+*/
     }
 
     return Tensor<type, 2>();
@@ -873,20 +868,12 @@ Layer::ForwardPropagation PerceptronLayer::calculate_forward_propagation(const T
 }
 
 
-Tensor<type, 2> PerceptronLayer::calculate_output_delta(const Tensor<type, 2>& activations_derivatives, const Tensor<type, 2>& output_gradient) const
-{
-    return activations_derivatives*output_gradient;
-}
-
-
 Tensor<type, 2> PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
                                                        const Tensor<type, 2>&,
                                                        const Tensor<type, 2>& activations_derivatives,
                                                        const Tensor<type, 2>& next_layer_delta) const
 {
     // Eigen stuff
-
-    const Eigen::array<Eigen::IndexPair<int>, 1> product_matrix_matrix = { Eigen::IndexPair<int>(1, 0) };
 
     const Type layer_type = next_layer_pointer->get_type();
 
@@ -993,7 +980,7 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
        for(Index i = 0; i < inputs_names.size() - 1; i++)
        {
 
-           buffer << " (" << inputs_names[i] << "*" << synaptic_weights.get_column(j)[i] << ")+";
+           buffer << " (" << inputs_names[i] << "*" << synaptic_weights.get_column(j)(i) << ")+";
        }
 
        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights.get_column(j)[inputs_names.size() - 1] << "));\n";
