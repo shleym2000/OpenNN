@@ -46,11 +46,69 @@ class PerceptronLayer : public Layer
 
 public:
 
-    // Enumerations
-
     /// Enumeration of available activation functions for the perceptron neuron model.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+
+    struct ForwardPropagation : Layer::ForwardPropagation
+    {
+        /// Default constructor.
+
+        explicit ForwardPropagation() : Layer::ForwardPropagation(){}
+
+        explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+            : Layer::ForwardPropagation(new_batch_instances_number, new_layer_pointer)
+        {
+
+        }
+
+        virtual ~ForwardPropagation() {}
+
+        void allocate()
+        {
+            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(layer_pointer);
+
+            const Index neurons_number = perceptron_layer->get_neurons_number();
+
+            combinations.resize(batch_instances_number, neurons_number);
+
+            activations.resize(batch_instances_number, neurons_number);
+
+            activations_derivatives.resize(batch_instances_number, neurons_number);
+        }
+
+        Tensor<type, 2> combinations;
+
+        Tensor<type, 2> activations_derivatives;
+    };
+
+
+    struct BackPropagation : Layer::BackPropagation
+    {
+        /// Default constructor.
+
+        explicit BackPropagation() : Layer::BackPropagation(){}
+
+        virtual ~BackPropagation() {}
+
+        void allocate()
+        {
+            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(layer_pointer);
+
+            const Index neurons_number = perceptron_layer->get_neurons_number();
+            const Index inputs_number = perceptron_layer->get_inputs_number();
+
+            biases_derivatives.resize(neurons_number);
+
+            synaptic_weights_derivatives.resize(neurons_number, inputs_number);
+        }
+
+        Tensor<type, 1> biases_derivatives;
+
+        Tensor<type, 2> synaptic_weights_derivatives;
+    };
+
+
 
    // Constructors
 
@@ -317,19 +375,60 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>&);
-
-   void calculate_forward_propagation(const Tensor<type, 2>& inputs,
-                                      ForwardPropagation& forward_propagation)
+   void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
    {
-       calculate_combinations(inputs, forward_propagation.combinations);
+       calculate_combinations(inputs, forward_propagation->combinations);
 
-       calculate_activations(forward_propagation.combinations, forward_propagation.activations);
+       calculate_activations(forward_propagation->combinations, forward_propagation->activations);
 
-       calculate_activations_derivatives(forward_propagation.combinations, forward_propagation.activations_derivatives);
+       calculate_activations_derivatives(forward_propagation->combinations, forward_propagation->activations_derivatives);
    }
 
    // Delta methods
+
+   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
+                               const Tensor<type, 2>& output_gradient,
+                               Tensor<type, 2>& output_delta) const
+   {
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                output_delta.device(*default_device) = activations_derivatives*output_gradient;
+
+                return;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+
+               return;
+            }
+
+           case Device::EigenGpu:
+           {
+//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+   }
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
@@ -421,7 +520,6 @@ public:
    {
 //   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
-
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
@@ -479,7 +577,7 @@ public:
 
        Tensor<type, 1> biases_derivatives(biases_number);
 
-       Tensor<type, 2> synaptic_weights_derivatives(neurons_number, inputs_number);
+//       Tensor<type, 2> synaptic_weights_derivatives(neurons_number, inputs_number);
 
        switch(device_pointer->get_type())
        {
@@ -524,25 +622,8 @@ public:
            }
        }
 
-       Index index = 0;
-
-       for(Index i = 0; i < neurons_number; i++)
-       {
-           for(Index j = 0; j < inputs_number; j++)
-           {
-               error_gradient(index) = synaptic_weights_derivatives(i, j);
-
-               index++;
-           }
-       }
-
-       // Biases
-
-       for(Index i = 0; i < biases_number; i++)
-       {
-           error_gradient(synaptic_weights_number + i) = biases_derivatives(i);
-       }
-
+       memcpy(error_gradient.data(), biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+//       memcpy(error_gradient.data(), synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
 

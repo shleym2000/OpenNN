@@ -37,11 +37,32 @@ class RecurrentLayer : public Layer
 
 public:
 
-    // Enumerations
-
     /// Enumeration of the available activation functions for the recurrent layer.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
+
+    struct RecurrentLayerForwardPropagation : ForwardPropagation
+    {
+        /// Default constructor.
+
+        explicit RecurrentLayerForwardPropagation() : ForwardPropagation(){}
+
+        virtual ~RecurrentLayerForwardPropagation() {}
+
+        void allocate()
+        {
+/*
+           const RecurrentLayer* recurrent_layer = dynamic_cast<RecurrentLayer*>(trainable_layers_pointers[i]);
+
+           const Index neurons_number = recurrent_layer->get_neurons_number();
+
+           layers[i].combinations = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].activations = Tensor<type, 2>(batch_instances_number, neurons_number);
+           layers[i].activations_derivatives = Tensor<type, 2>(batch_instances_number, neurons_number);
+*/
+        }
+    };
+
 
    // Constructors
 
@@ -181,8 +202,6 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
-   Layer::ForwardPropagation calculate_forward_propagation(const Tensor<type, 2>& inputs);
 
    void calculate_forward_propagation(const Tensor<type, 2>& inputs, Layer::ForwardPropagation& forward_propagation)
    {

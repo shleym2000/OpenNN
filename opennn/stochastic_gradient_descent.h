@@ -78,7 +78,7 @@ public:
    const type& get_maximum_time() const;
    const bool& get_return_minimum_selection_error_neural_network() const;
    const bool& get_apply_early_stopping() const;
-   const Index& get_maximum_selection_failures() const;
+   const Index& get_maximum_selection_error_increases() const;
 
    // Reserve training history
 
@@ -145,7 +145,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_parameters(const LossIndex::FirstOrderLoss& first_order_loss)
+   void update_parameters(const LossIndex::BackPropagation& back_propagation)
    {
        /*
        NeuralNetwork* neural_network_pointer = get_loss_index_pointer()->get_neural_network_pointer();
@@ -156,7 +156,7 @@ public:
 
        initial_decay > 0 ? learning_rate = initial_learning_rate * (1 / (1 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
 
-       parameters_increment.device(thread_pool_device) = first_order_loss.gradient*static_cast<type>(-learning_rate);
+       parameters_increment.device(thread_pool_device) = back_propagation.gradient*static_cast<type>(-learning_rate);
 
        if(momentum > 0 && !nesterov)
        {
@@ -172,7 +172,7 @@ public:
 
            last_increment = parameters_increment;
 
-           nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - first_order_loss.gradient*learning_rate;
+           nesterov_increment.device(thread_pool_device) = parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
            parameters.device(thread_pool_device) += nesterov_increment;
        }
@@ -247,7 +247,7 @@ private:
    /// Maximum number of iterations at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_failures;
+   Index maximum_selection_error_increases;
 
    /// Maximum epochs number
 
