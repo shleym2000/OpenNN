@@ -402,76 +402,6 @@ void LossIndex::check() const
 }
 
 
-/// Calculate the gradient error from layers.
-/// Returns the gradient of the objective, according to the objective type.
-/// That gradient is the vector of partial derivatives of the objective with respect to the parameters.
-/// The size is thus the number of parameters.
-/// @param inputs Tensor with inputs.
-/// @param layers_activations vector of tensors with layers activations.
-/// @param layers_delta vector of tensors with layers delta.
-
-Tensor<type, 1> LossIndex::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                                   const Tensor<Layer::ForwardPropagation, 1>& forward_propagation,
-                                                   const Tensor<Tensor<type, 2>, 1>& layers_delta) const
-{
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    // Hidden errors size
-
-    const Index layers_delta_size = layers_delta.size();
-
-    if(layers_delta_size != trainable_layers_number)
-    {
-       ostringstream buffer;
-
-      buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Tensor<Tensor<type, 1>, 1> calculate_layers_error_gradient(const Tensor<Tensor<type, 1>, 1>&, const Tensor<type, 1>&) method.\n"
-             << "Size of layers delta(" << layers_delta_size << ") must be equal to number of layers(" << trainable_layers_number << ").\n";
-
-      throw logic_error(buffer.str());
-    }
-
-    #endif
-
-    const Index parameters_number = neural_network_pointer->get_trainable_parameters_number();
-
-    const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
-    Tensor<type, 1> error_gradient(parameters_number);
-
-    Index index = 0;
-
-//    error_gradient.embed(index, trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]));
-    for(Index i = 0; i < trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]).size(); i++)
-    {
-        error_gradient(i + index) = (trainable_layers_pointers[0]->calculate_error_gradient(inputs, forward_propagation[0], layers_delta[0]))(i);
-    }
-
-    index += trainable_layers_parameters_number[0];
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-
-//      error_gradient.embed(index, trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]));
-      for(Index i = 0; i < trainable_layers_pointers[i]->calculate_error_gradient(forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]).size(); i++)
-      {
-          error_gradient(i + index) = (trainable_layers_pointers[i]->calculate_error_gradient(
-                                      forward_propagation[i-1].activations, forward_propagation[i-1], layers_delta[i]))(i);
-      }
-
-      index += trainable_layers_parameters_number[i];
-    }
-
-    return error_gradient;
-}
-
-
 /// Calculates the <i>Jacobian</i> matrix of the error terms from layers.
 /// Returns the Jacobian of the error terms function, according to the objective type used in the loss index expression.
 /// Note that this function is only defined when the objective can be expressed as a sum of squared terms.
@@ -528,7 +458,7 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
    }
 
    index += layers_parameters_number[0];
-
+/*
    for(Index i = 1; i < layers_number; i++)
    {
 
@@ -540,7 +470,7 @@ Tensor<type, 2> LossIndex::calculate_error_terms_Jacobian(const Tensor<type, 2>&
 
       index += layers_parameters_number[i];
    }
-
+*/
    return error_Jacobian;
 }
 
@@ -1049,7 +979,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 /// Set of loss value and gradient vector of the loss index.
 /// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
 
-LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
+LossIndex::BackPropagation::BackPropagation(const LossIndex* loss_index_pointer)
 {
     // Data set
 
@@ -1153,62 +1083,8 @@ LossIndex::FirstOrderLoss::FirstOrderLoss(const LossIndex* loss_index_pointer)
 
 /// Destructor.
 
-LossIndex::FirstOrderLoss::~FirstOrderLoss()
+LossIndex::BackPropagation::~BackPropagation()
 {
-}
-
-
-Tensor<Tensor<type, 2>, 1> LossIndex::calculate_layers_delta(const Tensor<Layer::ForwardPropagation, 1>& forward_propagation,
-                                                         const Tensor<type, 2>& output_gradient) const
-{
-    const Index forward_propagation_size = forward_propagation.size();
-
-   // Neural network stuff
-
-   #ifdef __OPENNN_DEBUG__
-
-    check();
-
-   const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-   if(forward_propagation_size != trainable_layers_number)
-   {
-       ostringstream buffer;
-
-      buffer << "OpenNN Exception: LossIndex class.\n"
-             << "Tensor<Tensor<type, 2>, 1> calculate_layers_delta(const Tensor<Tensor<type, 2>, 1>&, const Tensor<type, 2>&) method.\n"
-             << "Size of forward propagation activation derivative vector ("<< forward_propagation_size << ") must be equal to number of layers (" << trainable_layers_number << ").\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
-   Tensor<Tensor<type, 2>, 1> layers_delta(forward_propagation_size);
-
-   if(forward_propagation_size == 0) return layers_delta;
-
-   // Output layer
-
-   layers_delta[forward_propagation_size-1] = trainable_layers_pointers[forward_propagation_size-1]
-           ->calculate_output_delta(forward_propagation[forward_propagation_size-1].activations_derivatives, output_gradient);
-
-   // Hidden layers
-
-   for(Index i = static_cast<Index>(forward_propagation_size)-2; i >= 0; i--)
-   {
-       Layer* previous_layer_pointer = trainable_layers_pointers[static_cast<Index>(i+1)];
-
-       layers_delta[i] = trainable_layers_pointers[i]
-               ->calculate_hidden_delta(previous_layer_pointer,
-                                        forward_propagation[i].activations,
-                                        forward_propagation[i].activations_derivatives,
-                                        layers_delta[static_cast<Index>(i+1)]);
-   }
-
-   return layers_delta;
 }
 
 
@@ -1346,7 +1222,7 @@ Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const Tensor<Index, 1>
 
     const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
     const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
+/*
     const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
 
     const Index size = forward_propagation.size();
@@ -1356,6 +1232,8 @@ Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const Tensor<Index, 1>
     const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
 
     return calculate_error_gradient(inputs, forward_propagation, layers_delta);
+*/
+    return Tensor<type, 1>();
 }
 
 
