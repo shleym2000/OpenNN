@@ -654,11 +654,11 @@ type LossIndex::calculate_regularization() const
     {
        case L1:
        {
-            return l1_norm(neural_network_pointer->get_parameters());
+//            return l1_norm(neural_network_pointer->get_parameters());
        }
        case L2:
        {
-            return l2_norm(neural_network_pointer->get_parameters());
+//            return l2_norm(neural_network_pointer->get_parameters());
        }
        case NoRegularization:
        {
@@ -681,11 +681,11 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
     {
        case L1:
        {
-            return l1_norm(parameters);
+//            return l1_norm(parameters);
        }
        case L2:
        {
-            return l2_norm(parameters);
+//            return l2_norm(parameters);
        }
        case NoRegularization:
        {
@@ -714,11 +714,11 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
     {
        case L1:
        {
-            return l1_norm_gradient(neural_network_pointer->get_parameters());
+//            return l1_norm_gradient(neural_network_pointer->get_parameters());
        }
        case L2:
        {
-            return l2_norm_gradient(neural_network_pointer->get_parameters());
+//            return l2_norm_gradient(neural_network_pointer->get_parameters());
        }
        case NoRegularization:
        {
@@ -743,11 +743,11 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
     {
        case L1:
        {
-            return l1_norm_gradient(parameters);
+//            return l1_norm_gradient(parameters);
        }
        case L2:
        {
-            return l2_norm_gradient(parameters);
+//            return l2_norm_gradient(parameters);
        }
        case NoRegularization:
        {
@@ -776,11 +776,11 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
     {
        case L1:
        {
-            return l1_norm_hessian(neural_network_pointer->get_parameters());
+//            return l1_norm_hessian(neural_network_pointer->get_parameters());
        }
        case L2:
        {
-            return l2_norm_hessian(neural_network_pointer->get_parameters());
+//            return l2_norm_hessian(neural_network_pointer->get_parameters());
        }
        case NoRegularization:
        {
@@ -807,11 +807,11 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1
     {
        case L1:
        {
-            return l1_norm_hessian(parameters);
+//            return l1_norm_hessian(parameters);
        }
        case L2:
        {
-            return l2_norm_hessian(parameters);
+//            return l2_norm_hessian(parameters);
        }
        case NoRegularization:
        {
@@ -972,112 +972,6 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
     regularization_document.InsertFirstChild(element_clone);
 
     regularization_from_XML(regularization_document);
-}
-
-
-/// Default constructor.
-/// Set of loss value and gradient vector of the loss index.
-/// A method returning this structure might be implemented more efficiently than the loss and gradient methods separately.
-
-LossIndex::BackPropagation::BackPropagation(const LossIndex* loss_index_pointer)
-{
-    // Data set
-
-    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
-    const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
-
-    // Neural network
-
-    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
-
-    // First order loss
-
-    output_gradient = Tensor<type, 2>(batch_instances_number, outputs_number);
-
-    layers_delta.resize(trainable_layers_number);
-
-    layers_error_gradient.resize(trainable_layers_number);
-
-    for(Index i = 0; i < trainable_layers_number; i++)
-    {
-        const Layer::Type layer_type = trainable_layers_pointers[i]->get_type();
-
-        if(layer_type == Layer::Convolutional)
-        {
-            ConvolutionalLayer* layer_pointer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
-
-            const Index output_channels_number = layer_pointer->get_filters_number();
-            const Index output_rows_number = layer_pointer->get_outputs_rows_number();
-            const Index output_columns_number = layer_pointer->get_outputs_columns_number();
-
-//            layers_delta[i].resize(batch_instances_number, output_channels_number, output_rows_number, output_columns_number);
-
-        }
-        else if(layer_type == Layer::Pooling)
-        {
-            PoolingLayer* layer_pointer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
-
-            const Index output_channels_number = layer_pointer->get_inputs_channels_number();
-            const Index output_rows_number = layer_pointer->get_outputs_rows_number();
-            const Index output_columns_number = layer_pointer->get_outputs_columns_number();
-
-//            layers_delta[i].resize(batch_instances_number, output_channels_number, output_rows_number, output_columns_number);
-        }
-        else if(layer_type == Layer::Perceptron)
-        {
-            PerceptronLayer* layer_pointer = dynamic_cast<PerceptronLayer*>(trainable_layers_pointers[i]);
-
-            const Index neurons_number = layer_pointer->get_neurons_number();
-
-            layers_delta[i].resize(batch_instances_number, neurons_number);
-
-            layers_delta[i].setRandom();
-        }
-        else if(layer_type == Layer::Recurrent)
-        {
-            /// @todo add
-        }
-        else if(layer_type == Layer::LongShortTermMemory)
-        {
-            /// @todo add
-        }
-        else if(layer_type == Layer::Probabilistic)
-        {
-            ProbabilisticLayer* layer_pointer = dynamic_cast<ProbabilisticLayer*>(trainable_layers_pointers[i]);
-
-            const Index output_columns_number = layer_pointer->get_neurons_number();
-
-            layers_delta[i].resize(batch_instances_number, output_columns_number);
-        }
-        else
-        {
-            /// @todo add exception
-        }
-
-        layers_error_gradient[i].resize(trainable_layers_pointers[i]->get_parameters_number());
-        layers_error_gradient[i].setRandom();
-    }
-
-    errors.resize(batch_instances_number);
-
-    loss = static_cast<type>(0.0);
-
-    error_gradient.resize(parameters_number);
-    regularization_gradient.resize(parameters_number);
-    gradient.resize(parameters_number);
-
-    error_gradient.setRandom();
-    regularization_gradient.setRandom();
-    gradient.setRandom();
 }
 
 
