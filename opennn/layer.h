@@ -63,22 +63,57 @@ public:
 
         explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
-            batch_instances_number = new_batch_instances_number;
-
-            layer_pointer = new_layer_pointer;
+            set(new_batch_instances_number, new_layer_pointer);
         }
+
 
         virtual ~ForwardPropagation() {}
 
-        virtual void allocate() = 0;
 
-        virtual void print() const {}
+        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        {
+            batch_instances_number = new_batch_instances_number;
+
+            layer_pointer = new_layer_pointer;
+
+            allocate();
+        }
+
+
+        virtual void allocate()
+        {
+            const Index neurons_number = layer_pointer->get_neurons_number();
+
+            combinations.resize(batch_instances_number, neurons_number);
+
+            activations.resize(batch_instances_number, neurons_number);
+
+            activations_derivatives.resize(batch_instances_number, neurons_number);
+        }
+
+
+        void print() const
+        {
+            cout << "Combinations: " << endl;
+            cout << combinations << endl;
+
+            cout << "Activations: " << endl;
+            cout << activations << endl;
+
+            cout << "Activations derivatives: " << endl;
+            cout << activations_derivatives << endl;
+        }
 
         Index batch_instances_number = 0;
 
         Layer* layer_pointer;
 
+        Tensor<type, 2> combinations;
+
         Tensor<type, 2> activations;
+
+        Tensor<type, 2> activations_derivatives;
+
     };
 
 
@@ -90,18 +125,31 @@ public:
         {
         }
 
+
         explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
+        {
+            set(new_batch_instances_number, new_layer_pointer);
+        }
+
+
+        virtual ~BackPropagation() {}
+
+
+        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
             batch_instances_number = new_batch_instances_number;
 
             layer_pointer = new_layer_pointer;
 
-//            allocate();
+            const Index neurons_number = layer_pointer->get_neurons_number();
+            const Index inputs_number = layer_pointer->get_inputs_number();
+
+            biases_derivatives.resize(neurons_number);
+
+            synaptic_weights_derivatives.resize(neurons_number, inputs_number);
+
+            delta.resize(batch_instances_number, neurons_number);
         }
-
-        virtual ~BackPropagation() {}
-
-        virtual void allocate() = 0;
 
         void print() const
         {
@@ -110,6 +158,12 @@ public:
         Index batch_instances_number = 0;
 
         Layer* layer_pointer = nullptr;
+
+        Tensor<type, 2> delta;
+
+        Tensor<type, 1> biases_derivatives;
+
+        Tensor<type, 2> synaptic_weights_derivatives;
     };
 
 
@@ -138,29 +192,25 @@ public:
 
     void set_device_pointer(Device*);
 
+    virtual void insert_derivatives(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
+
     // Outputs
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
-    virtual Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
+    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
-    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&, Tensor<type, 1>&) {}
+    virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Layer::BackPropagation&) {}
 
-    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation*) {}
+    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
 
     // Deltas
 
     void calculate_output_delta(const Tensor<type, 2>&,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
-
-
-
-    virtual Tensor<type, 2> calculate_hidden_delta(Layer*,
-                                                  const Tensor<type, 2>&,
-                                                  const Tensor<type, 2>&,
-                                                  const Tensor<type, 2>&) const;
 
     virtual void calculate_hidden_delta(Layer*,
                                         const Tensor<type, 2>&,

@@ -85,44 +85,71 @@ public:
 
        explicit BackPropagation() {}
 
-       explicit BackPropagation(const LossIndex*);
+       explicit BackPropagation(const LossIndex* loss_index_pointer)
+       {
+           set(loss_index_pointer);
+       }
 
        virtual ~BackPropagation();
+
+       void set(const LossIndex* loss_index_pointer)
+       {
+           // Data set
+
+           DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
+
+           const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
+
+           // Neural network
+
+           NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+           const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+           const Index outputs_number = neural_network_pointer->get_outputs_number();
+
+           // First order loss
+
+           errors.resize(batch_instances_number);
+
+           loss = 0;
+
+           output_gradient.resize(batch_instances_number, outputs_number);
+
+           neural_network.set(batch_instances_number, neural_network_pointer);
+
+           gradient.resize(parameters_number);
+       }
+
 
        void print()
        {
            cout << "Output gradient:" << endl;
            cout << output_gradient << endl;
-
+/*
            for(Index i = 0; i < layers_delta.size(); i++)
            {
                cout << "Layers delta " << i << ":" << endl;
                cout << layers_delta[i] << endl;
            }
-
+*/
            cout << "Loss:" << endl;
            cout << loss << endl;
-
-           cout << "Error gradient:" << endl;
-           cout << error_gradient << endl;
-
-           cout << "Regularization gradient:" << endl;
-           cout << regularization_gradient << endl;
 
            cout << "Gradient:" << endl;
            cout << gradient << endl;
        }
 
+       NeuralNetwork::BackPropagation neural_network;
+
        Tensor<type, 2> output_gradient;
 
-       Tensor<Tensor<type, 2>, 1> layers_delta;
-       Tensor<Tensor<type, 1>, 1> layers_error_gradient;
+//       Tensor<Tensor<type, 1>, 1> layers_error_gradient;
 
        type loss;
 
        Tensor<type, 1> errors;
-       Tensor<type, 1> error_gradient;
-       Tensor<type, 1> regularization_gradient;
+
        Tensor<type, 1> gradient;
    };
 
@@ -279,7 +306,7 @@ public:
                                    BackPropagation& back_propagation) const
    {
        // Loss index
-/*
+
        calculate_errors(batch, forward_propagation, back_propagation);
 
        calculate_error(back_propagation);
@@ -290,19 +317,14 @@ public:
 
        calculate_error_gradient(batch, forward_propagation, back_propagation);
 
-//       back_propagation.gradient = back_propagation.error_gradient;
-
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
        {
            back_propagation.loss += regularization_weight*calculate_regularization();
 
-           back_propagation.regularization_gradient = calculate_regularization_gradient();
-
-           back_propagation.gradient += back_propagation.regularization_gradient*regularization_weight;
+           back_propagation.gradient += regularization_weight*calculate_regularization_gradient();
        }
-*/
    }
 
    virtual BackPropagation calculate_back_propagation() const {return BackPropagation();}
@@ -331,11 +353,11 @@ public:
         const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
         // Output layer
-/*
+
         trainable_layers_pointers[trainable_layers_number-1]
         ->calculate_output_delta(forward_propagation.layers[trainable_layers_number-1].activations_derivatives,
                                  back_propagation.output_gradient,
-                                 back_propagation.layers_delta[trainable_layers_number-1]);
+                                 back_propagation.neural_network.layers[trainable_layers_number-1].delta);
 
       // Hidden layers
 
@@ -347,13 +369,13 @@ public:
           ->calculate_hidden_delta(previous_layer_pointer,
                                    forward_propagation.layers[i].activations,
                                    forward_propagation.layers[i].activations_derivatives,
-                                   back_propagation.layers_delta[static_cast<Index>(i+1)],
-                                   back_propagation.layers_delta[i]);
+                                   back_propagation.neural_network.layers[i+1].delta,
+                                   back_propagation.neural_network.layers[i].delta);
+
       }
-*/
    }
 
-   virtual void calculate_errors(const DataSet::Batch& batch,
+   void calculate_errors(const DataSet::Batch& batch,
                          const NeuralNetwork::ForwardPropagation& forward_propagation,
                          BackPropagation& back_propagation) const
    {
@@ -371,7 +393,7 @@ public:
              {
                  DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                 //back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                 back_propagation.errors.device(*default_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
 
                  return;
              }
@@ -380,9 +402,9 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                //back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
+                back_propagation.errors.device(*thread_pool_device) = forward_propagation.layers[trainable_layers_number-1].activations - batch.targets_2d;
 
-                 return;
+                return;
              }
 
             case Device::EigenGpu:
@@ -409,7 +431,7 @@ public:
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
-   {
+   {/*
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
        #ifdef __OPENNN_DEBUG__
@@ -432,31 +454,33 @@ public:
        }
 
        #endif
-/*
+
        const Tensor<Index, 1> trainable_layers_parameters_number = neural_network_pointer->get_trainable_layers_parameters_numbers();
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
 
-       Index index = 0;
-
        trainable_layers_pointers[0]->calculate_error_gradient(batch.inputs_2d,
                                                               forward_propagation.layers[0],
-                                                              back_propagation.layers_delta[0],
-                                                              back_propagation.layers_error_gradient[0]);
+                                                              back_propagation.neural_network.layers[0]);
 
-       memcpy(back_propagation.error_gradient.data(), back_propagation.layers_error_gradient[0].data(), static_cast<size_t>(trainable_layers_parameters_number[0])*sizeof(type));
+       Index index = 0;
+
+       trainable_layers_pointers[0]->insert_derivatives(back_propagation.neural_network.layers[0], index, back_propagation.gradient);
+
+       index += trainable_layers_parameters_number[0];
 
        for(Index i = 1; i < trainable_layers_number; i++)
        {
            trainable_layers_pointers[i]->calculate_error_gradient(
                    forward_propagation.layers[i-1].activations,
                    forward_propagation.layers[i-1],
-                   back_propagation.layers_delta[i],
-                   back_propagation.layers_error_gradient[i]);
+                   back_propagation.neural_network.layers[i]);
 
-           memcpy(back_propagation.error_gradient.data(), back_propagation.layers_error_gradient[i].data(), static_cast<size_t>(trainable_layers_parameters_number[i])*sizeof(type));
+//           trainable_layers_pointers[i]->insert_derivatives(back_propagation.neural_network.layers[i], index, back_propagation.gradient);
+
+           index += trainable_layers_parameters_number[i];
        }
-*/
+       */
    }
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
@@ -512,7 +536,7 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
    const Eigen::array<IndexPair<Index>, 1> product_matrix_vector = {IndexPair<Index>(0, 0)}; // Matrix times vector, (0,0) matrix is transpose
 
-   const Eigen::array<IndexPair<int>, 2> double_contraction = {IndexPair<int>(0, 0), IndexPair<int>(1, 1)};
+   const Eigen::array<IndexPair<Index>, 2> double_contraction = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };
 
 }
