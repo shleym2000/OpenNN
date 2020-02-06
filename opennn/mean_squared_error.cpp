@@ -129,7 +129,7 @@ check();
     type training_error = static_cast<type>(0.0);
 
     #pragma omp parallel for reduction(+ : training_error)
-/*
+
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
@@ -143,8 +143,6 @@ check();
     }
 
     return training_error/training_instances_number;
-    */
-    return 0;
 }
 
 
@@ -184,7 +182,7 @@ check();
     type training_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : training_error)
-/*
+
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
@@ -198,8 +196,6 @@ check();
     }
 
     return training_error/training_instances_number;
-*/
-    return 0;
 }
 
 
@@ -244,7 +240,7 @@ check();
     type selection_error = static_cast<type>(0.0);
 
      #pragma omp parallel for reduction(+ : selection_error)
-/*
+
     for(Index i = 0; i < batches_number; i++)
     {
         inputs = data_set_pointer->get_input_data(selection_batches.chip(i,0));
@@ -258,8 +254,6 @@ check();
     }
 
     return selection_error/selection_instances_number;
-*/
-    return 0;
 }
 
 
@@ -282,8 +276,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
 
-//    return sum_squared_error(outputs, targets);
-    return 0;
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -304,8 +297,7 @@ check();
 
     const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
 
-//    return sum_squared_error(outputs, targets);
-    return 0;
+    return sum_squared_error(outputs, targets);
 }
 
 
@@ -431,25 +423,6 @@ check();
     }
 */
     return back_propagation;
-}
-
-
-/// This method calculates the gradient of the output error function, necessary for backpropagation.
-/// Returns the gradient value.
-/// @param outputs Tensor with the values of the outputs from the neural network.
-/// @param targets Tensor with the values of the targets from the dataset.
-
-Tensor<type, 2> MeanSquaredError::calculate_output_gradient(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    const Index instances_number = data_set_pointer->get_training_instances_number();
-
-    return (outputs-targets)*static_cast<type>(2.0)/static_cast<type>(instances_number);
 }
 
 
@@ -659,6 +632,18 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Regularization
 
     write_regularization_XML(file_stream);
+}
+
+
+type MeanSquaredError::sum_squared_error(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
+{
+    const auto error = targets - outputs;
+
+    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
+
+    const Tensor<type, 0> sse = error.contract(error, product_dimensions);
+
+    return sse(0);
 }
 
 }
