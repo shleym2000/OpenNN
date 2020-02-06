@@ -760,7 +760,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
-
    type training_error = 0;
 
    type selection_error = static_cast<type>(0.0);
@@ -798,6 +797,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
 
    // Main loop
+
    ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
    for(Index epoch = 0; epoch <= epochs_number; epoch++)
@@ -809,6 +809,16 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
 //       parameters_norm = l2_norm(thread_pool_device, parameters);
 
+       const Index parameters_number = parameters.size();
+
+       type norm = 0.0;
+
+       for(Index k = 0; k < parameters_number; k++) {
+         norm += parameters(k) *parameters(k);
+       }
+
+       parameters_norm = sqrt(norm);
+
        if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
        loss = static_cast<type>(0.0);
@@ -818,7 +828,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
             // Data set
-/*
+
 //           batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
 
            // Neural network
@@ -830,7 +840,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            loss_index_pointer->calculate_back_propagation(batch, forward_propagation, back_propagation);
 
 //           loss += back_propagation.loss;
-*/
+
 //         Gradient
 
            initial_decay > 0 ? learning_rate = initial_learning_rate * (1.0 / (1.0 + learning_rate_iteration*initial_decay)) : initial_learning_rate ;
@@ -953,7 +963,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                         << "Gradient norm: " << gradient_norm << "\n"
                         << loss_index_pointer->write_information()
                         << "Learning rate: " << learning_rate << "\n"
-                           //                        << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+//                        << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
                         << "Elapsed time: " << elapsed_time <<"\n"
                         << "Selection error: " << selection_error << endl;
            }
@@ -986,7 +996,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 << "Gradient norm: " << gradient_norm << "\n"
                 << loss_index_pointer->write_information()
                 << "Learning rate: " << learning_rate<< "\n"
-                   //                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
+//                << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n"
                 << "Elapsed time: " << elapsed_time<<"\n"
                 << "Selection error: " << selection_error << endl;
 
