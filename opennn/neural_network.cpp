@@ -1049,7 +1049,7 @@ void NeuralNetwork::set_parameters(const Tensor<type, 1>& new_parameters)
 
         trainable_layers_pointers(i)->insert_parameters(index, new_parameters);
 
-        index += 0;
+        index += trainable_layers_pointers(i)->get_parameters_number();
     }
 }
 
@@ -1147,12 +1147,10 @@ void NeuralNetwork::set_parameters_random()
 type NeuralNetwork::calculate_parameters_norm() const
 {
     const Tensor<type, 1> parameters = get_parameters();
-/*
-    const type parameters_norm = l2_norm(parameters);
 
-    return parameters_norm;
-*/
-    return 0;
+    const Tensor<type, 0> parameters_norm = parameters.square().sum().sqrt();
+
+    return parameters_norm(0);
 }
 
 
