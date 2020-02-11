@@ -2947,7 +2947,7 @@ const string& DataSet::get_missing_values_label() const
 
 const Index& DataSet::get_lags_number() const
 {
-    return(lags_number);
+    return lags_number;
 }
 
 
@@ -2955,7 +2955,7 @@ const Index& DataSet::get_lags_number() const
 
 const Index& DataSet::get_steps_ahead() const
 {
-    return(steps_ahead);
+    return steps_ahead;
 }
 
 
@@ -2974,27 +2974,27 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
 {
     if(scaling_unscaling_method == "NoScaling")
     {
-        return(NoScaling);
+        return NoScaling;
     }
     else if(scaling_unscaling_method == "NoUnscaling")
     {
-        return(NoUnscaling);
+        return NoUnscaling;
     }
     else if(scaling_unscaling_method == "MinimumMaximum")
     {
-        return(MinimumMaximum);
+        return MinimumMaximum;
     }
     else if(scaling_unscaling_method == "Logarithmic")
     {
-        return(Logarithmic);
+        return Logarithmic;
     }
     else if(scaling_unscaling_method == "MeanStandardDeviation")
     {
-        return(MeanStandardDeviation);
+        return MeanStandardDeviation;
     }
     else if(scaling_unscaling_method == "StandardDeviation")
     {
-        return(StandardDeviation);
+        return StandardDeviation;
     }
     else
     {
@@ -4510,57 +4510,51 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
     }
 #endif
 
-    const Index target_index = get_target_variables_indices()[0];
+    const Index target_index = get_target_variables_indices()(0);
+
 
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     const Index instances_number = used_instances_indices.size();
 
-    Tensor<type, 1 > targets(instances_number);
+    cout << "1" << endl;
+
+    // Count used positive instances
+
+    Index positive_instances_number = 0;
 
     for (Index i = 0; i < instances_number; i++)
     {
-        Index instace_index = used_instances_indices(i);
+        Index instance_index = used_instances_indices(i);
 
-        targets(i) = data(instace_index, target_index);
+        if(data(instance_index, target_index) == static_cast<type>(1.0)) positive_instances_number++;
     }
-/*
-#ifdef __OPENNN_DEBUG__
 
-    if(!targets.is_binary())
+    cout << "2" << endl;
+
+    // Get used positive instances indices
+
+    Tensor<Index, 1> positive_used_instances_indices(positive_instances_number);
+    Index positive_instance_index = 0;
+
+    for(Index i = 0; i < instances_number; i++)
     {
-        ostringstream buffer;
+        Index instance_index = used_instances_indices(i);
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_columns_descriptives_positive_instances() const method.\n"
-               << "Targets vector must be binary.\n";
-
-        throw logic_error(buffer.str());
-    }
-#endif
-
-    const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
-
-    const Index inputs_number = inputs_variables_indices.size();
-
-    const Tensor<Index, 1> positives_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(1.0));
-
-    Tensor<type, 2> data_statistics_matrix(inputs_number, 4);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        const Index variable_index = inputs_variables_indices[i];
-
-        const Tensor<type, 1> variable_data = data.get_column(variable_index, positives_used_instances_indices);
-
-        const Descriptives data_descriptives = descriptives(variable_data);
-
-        data_statistics_matrix.set_row(i, data_descriptives.to_vector());
+        if(data(instance_index, target_index) == static_cast<type>(1.0))
+        {
+            positive_used_instances_indices(positive_instance_index) = instance_index;
+            positive_instance_index++;
+        }
     }
 
-    return data_statistics_matrix;
-*/
-    return Tensor<Descriptives, 1>();
+    cout << "3" << endl;
+
+    cout << "positive_used_instances_indices: " << positive_used_instances_indices << endl;
+    cout << "input_variables_indices: " << input_variables_indices << endl;
+
+    return descriptives(data, positive_used_instances_indices, input_variables_indices);
 }
 
 
@@ -4586,48 +4580,42 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
     }
 #endif
 
-    const Index target_index = get_target_variables_indices()[0];
+    const Index target_index = get_target_variables_indices()(0);
 
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
-/*
-    const Tensor<type, 1> targets = data.get_column(target_index, used_instances_indices);
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-#ifdef __OPENNN_DEBUG__
+    const Index instances_number = used_instances_indices.size();
 
-    if(!targets.is_binary())
+    // Count used negative instances
+
+    Index negative_instances_number = 0;
+
+    for (Index i = 0; i < instances_number; i++)
     {
-        ostringstream buffer;
+        Index instance_index = used_instances_indices(i);
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_columns_descriptives_positive_instances() const method.\n"
-               << "Targets vector must be binary.\n";
-
-        throw logic_error(buffer.str());
-    }
-#endif
-
-    const Tensor<Index, 1> inputs_variables_indices = get_input_variables_indices();
-
-    const Index inputs_number = inputs_variables_indices.size();
-
-    const Tensor<Index, 1> negatives_used_instances_indices = used_instances_indices.get_subvector(targets.get_indices_equal_to(0.0));
-
-    Tensor<type, 2> data_statistics_matrix(inputs_number, 4);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        const Index variable_index = inputs_variables_indices[i];
-
-        const Tensor<type, 1> variable_data = data.get_column(variable_index, negatives_used_instances_indices);
-
-        const Descriptives data_descriptives = descriptives(variable_data);
-
-        data_statistics_matrix.set_row(i, data_descriptives.to_vector());
+        if(data(instance_index, target_index) == static_cast<type>(0.0)) negative_instances_number++;
     }
 
-    return data_statistics_matrix;
-*/
-    return Tensor<Descriptives, 1>();
+    // Get used negative instances indices
+
+    Tensor<Index, 1> negative_used_instances_indices(negative_instances_number);
+    Index negative_instance_index = 0;
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+        Index instance_index = used_instances_indices(i);
+
+        if(data(instance_index, target_index) == static_cast<type>(0.0))
+        {
+            negative_used_instances_indices(negative_instance_index) = instance_index;
+            negative_instance_index++;
+        }
+
+    }
+
+    return descriptives(data, negative_used_instances_indices, input_variables_indices);
 }
 
 
@@ -8669,7 +8657,7 @@ Tensor<Index, 1> DataSet::filter_column(const Index& variable_index, const type&
         }
     }
 /*
-    return(filtered_indices.get_indices_greater_than(0.5));
+    return filtered_indices.get_indices_greater_than(0.5);
 */
 
     return Tensor<Index, 1>();
