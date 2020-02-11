@@ -519,74 +519,15 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 }
 
 
-/// It calculates training loss, obtaining the term of error and the regularization if it had it.
-/// Note that the error term can be obtained by different methodata_set.
-/// Returns the training loss.
-
-type LossIndex::calculate_training_loss() const
-{
-    if(regularization_method == NoRegularization)
-    {
-        return calculate_training_error();
-    }
-    else
-    {
-        return calculate_training_error() + regularization_weight*calculate_regularization();
-    }
-}
-
-
-/// It calculates training loss, obtaining the term of error and the regularization if it had it.
-/// Note that the error term can be obtained by different methodata_set.
-/// Returns the training loss.
-/// @param parameters vector with the parameters to get the training loss term.
-
-type LossIndex::calculate_training_loss(const Tensor<type, 1>& parameters) const
-{
-    if(regularization_method == NoRegularization)
-    {
-        return calculate_training_error_parameters(parameters);
-    }
-    else
-    {
-        return calculate_training_error_parameters(parameters) + regularization_weight*calculate_regularization(parameters);
-    }
-}
-
-
 /// Returns the value of the loss function at some step along some direction.
-
+/*
 type LossIndex::calculate_training_loss(const Tensor<type, 1>& direction, const type& rate) const
 {    
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
     return calculate_training_loss(parameters + direction*rate);
 }
-
-
-/// It calculates training loss using the gradient method, obtaining the term of error and the regularization if it had it.
-/// Note that the error term can be obtained by different methods.
-/// That gradient is the vector of partial derivatives of the loss index with respect to the parameters.
-/// Returns the training loss.
-
-Tensor<type, 1> LossIndex::calculate_training_loss_gradient() const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    if(regularization_method == NoRegularization)
-    {
-        return calculate_training_error_gradient();
-    }
-    else
-    {
-        return calculate_training_error_gradient() + calculate_regularization_gradient()*regularization_weight;
-    }
-}
-
+*/
 
 /// Returns a string with the default type of error term, "USER_PERFORMANCE_TERM".
 
@@ -621,63 +562,14 @@ string LossIndex::write_regularization_method() const
 {
     switch(regularization_method)
     {
-       case L1:
-       {
-            return "L1_NORM";
-       }
-       case L2:
-       {
-            return "L2_NORM";
-       }
-       case NoRegularization:
-       {
-            return "NO_REGULARIZATION";
-       }
+       case L1: return "L1_NORM";
+
+       case L2: return "L2_NORM";
+
+       case NoRegularization: return "NO_REGULARIZATION";
     }
 
     return string();
-}
-
-
-/// It calculate the regularization term using different methods.
-/// Returns the regularization evaluation, according to the respective regularization type used in the loss index expression.
-
-type LossIndex::calculate_regularization() const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    switch(regularization_method)
-    {
-       case L1:
-       {
-//            return l1_norm(neural_network_pointer->get_parameters());
-       }
-       case L2:
-       {
-            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-            const Index parameters_number = parameters.size();
-
-            type l2_norm = 0.0;
-
-            for(Index k = 0; k < parameters_number; k++) {
-              l2_norm += parameters(k) *parameters(k);
-            }
-
-            return l2_norm;
-//            return l2_norm(neural_network_pointer->get_parameters());
-       }
-       case NoRegularization:
-       {
-            return 0.0;
-       }
-    }
-
-    return 0.0;
 }
 
 
@@ -714,62 +606,11 @@ type LossIndex::calculate_regularization(const Tensor<type, 1>& parameters) cons
 /// It calculate the regularization term using the gradient method.
 /// Returns the gradient of the regularization, according to the regularization type.
 /// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
-/// The size is thus the number of parameters.
-
-Tensor<type, 1> LossIndex::calculate_regularization_gradient() const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    switch(regularization_method)
-    {
-       case L1:
-       {
-//            return l1_norm_gradient(neural_network_pointer->get_parameters());
-       }
-       case L2:
-       {
-//            return l2_norm_gradient(neural_network_pointer->get_parameters());
-
-            Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-            const Index parameters_number = parameters.size();
-
-            Tensor<type, 1> gradient(parameters_number);
-
-    //          const type norm = l2_norm(vector);
-            Tensor<type, 0> norm = parameters.square().sum();
-
-              if(norm(0) < numeric_limits<type>::min()) {
-                gradient.setZero();
-              } else {
-                gradient = parameters/ norm(0);
-              }
-
-              return gradient;
-       }
-       case NoRegularization:
-       {
-            return Tensor<type, 1>(neural_network_pointer->get_parameters_number()).setConstant(0.0);
-       }
-    }
-
-    return Tensor<type, 1>();
-}
-
-
-/// It calculate the regularization term using the gradient method.
-/// Returns the gradient of the regularization, according to the regularization type.
-/// That gradient is the vector of partial derivatives of the regularization with respect to the parameters.
 /// The size is thus the number of parameters
 /// @param parameters vector with the parameters to get the regularization term.
 
 Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 1>& parameters) const
 {
-
     switch(regularization_method)
     {
        case L1:
@@ -791,41 +632,6 @@ Tensor<type, 1> LossIndex::calculate_regularization_gradient(const Tensor<type, 
 
 
 /// It calculate the regularization term using the <i>Hessian</i>.
-/// Returns the <i>Hessian</i> of the regularization, according to the regularization type.
-/// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
-/// That matrix is symmetric, with size the number of parameters.
-
-Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    switch(regularization_method)
-    {
-       case L1:
-       {
-//            return l1_norm_hessian(neural_network_pointer->get_parameters());
-       }
-       case L2:
-       {
-//            return l2_norm_hessian(neural_network_pointer->get_parameters());
-       }
-       case NoRegularization:
-       {
-            const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-            return Tensor<type, 2>(parameters_number,parameters_number).setConstant(0.0);
-       }
-    }
-
-    return Tensor<type, 2>();
-}
-
-
-/// It calculate the regularization term using the <i>Hessian</i>.
 /// Returns the Hessian of the regularization, according to the regularization type.
 /// That Hessian is the matrix of second partial derivatives of the regularization with respect to the parameters.
 /// That matrix is symmetric, with size the number of parameters.
@@ -833,7 +639,6 @@ Tensor<type, 2> LossIndex::calculate_regularization_hessian() const
 
 Tensor<type, 2> LossIndex::calculate_regularization_hessian(const Tensor<type, 1>& parameters) const
 {
-
     switch(regularization_method)
     {
        case L1:
@@ -1013,200 +818,6 @@ LossIndex::BackPropagation::~BackPropagation()
 }
 
 
-/// This method separates training instances and calculates batches from the dataset.
-/// It also calculates the outputs and the sum squared error from the targets and outputs.
-/// Returns a sum squared error of the training instances.
-
-type LossIndex::calculate_training_error() const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    //Neural network
-
-    bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.size();
-
-    type training_error = static_cast<type>(0.0);
-
-    #pragma omp parallel for reduction(+ : training_error)
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const type batch_error = calculate_batch_error(training_batches.chip(i,0));
-
-        training_error += batch_error;
-    }
-
-    cout<<training_error;
-
-    return training_error;
-}
-
-
-type LossIndex::calculate_training_error_parameters(const Tensor<type, 1>& parameters) const
-{
-
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    //Neural network
-
-    bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.dimension(0);
-
-    type training_error = static_cast<type>(0.0);
-
-    #pragma omp parallel for reduction(+ : training_error)
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const type batch_error = calculate_batch_error(training_batches.chip(i,0), parameters);
-
-        training_error += batch_error;
-
-    }
-
-    return training_error;
-}
-
-
-/// This method separates selection instances and calculates batches from the dataset.
-/// It also calculates the outputs and the sum squared error from the targets and outputs.
-/// Returns a sum squared error of the training instances.
-
-type LossIndex::calculate_selection_error() const
-{
-
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    //Neural network
-
-     bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(!is_forecasting);
-
-    const Index batches_number = selection_batches.size();
-
-    type selection_error = static_cast<type>(0.0);
-
-    #pragma omp parallel for reduction(+ : selection_error)
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const type batch_error = calculate_batch_error(selection_batches.chip(i,0));
-
-        selection_error += batch_error;
-    }
-
-    return selection_error;
-}
-
-
-/// This method calculates the error term gradient for batch instances.
-/// It is used for optimization of parameters during training.
-/// Returns the value of the error term gradient.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset.
-
-Tensor<type, 1> LossIndex::calculate_batch_error_gradient(const Tensor<Index, 1>& batch_indices) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-    check();
-
-    #endif
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-/*
-    const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->calculate_forward_propagation(inputs);
-
-    const Index size = forward_propagation.size();
-
-    const Tensor<type, 2> output_gradient = calculate_output_gradient(forward_propagation[size-1].activations, targets);
-
-    const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-    return calculate_error_gradient(inputs, forward_propagation, layers_delta);
-*/
-    return Tensor<type, 1>();
-}
-
-
-/// This method calculates the error term gradient for training instances.
-/// It is used for optimization of parameters during training.
-/// Returns the value of the error term gradient.
-
-Tensor<type, 1> LossIndex::calculate_training_error_gradient() const
-{
-
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Neural network
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-    bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-    Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.dimension(0);
-
-    // Loss index
-
-    Tensor<type, 1> training_error_gradient(parameters_number);
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-
-        const Tensor<type, 1> batch_gradient = calculate_batch_error_gradient(training_batches.chip(i,0));
-
-        #pragma omp critical
-
-        training_error_gradient += batch_gradient;
-    }
-
-    return training_error_gradient;
-}
-
-
 Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation() const
 {
 
@@ -1216,10 +827,10 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-    return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
+    //return numerical_differentiation.calculate_gradient(*this, &LossIndex::calculate_training_error_parameters, parameters);
 
+    return Tensor<type, 1>();
 }
-
 
 }
 

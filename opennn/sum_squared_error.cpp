@@ -85,50 +85,6 @@ SumSquaredError::~SumSquaredError()
 }
 
 
-/// This method calculates the sum squared error of the given batch.
-/// Returns the sum squared error of this batch.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset
-
-type SumSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-
-    return sum_squared_error(outputs, targets);
-}
-
-
-type SumSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices, const Tensor<type, 1>& parameters) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
-    return sum_squared_error(outputs, targets);
-}
-
-
 /// Calculates the squared error terms for each instance, and returns it in a vector of size the number training instances. 
 
 Tensor<type, 1> SumSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
@@ -399,17 +355,6 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     regularization_from_XML(regularization_document);
 }
 
-
-type SumSquaredError::sum_squared_error(const Tensor<type, 2>& outputs ,const Tensor<type, 2>& targets) const
-{
-    const auto error = targets - outputs;
-
-    const Eigen::array<IndexPair<Index>, 2> product_dimensions = { IndexPair<Index>(0, 0), IndexPair<Index>(1, 1) };
-
-    const Tensor<type, 0> sse = error.contract(error, product_dimensions);
-
-    return sse(0);
-}
 }
 
 // OpenNN: Open Neural Networks Library.

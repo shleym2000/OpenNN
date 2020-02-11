@@ -254,69 +254,12 @@ void WeightedSquaredError::set_selection_normalization_coefficient()
 }
 
 
-/// This method calculates the error term gradient for batch instances.
-/// It is used for optimization of parameters during training.
-/// Returns the value of the error term gradient.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset.
-
-type WeightedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-        check();
-
-    #endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-/*
-    const type batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
-
-    return batch_error / training_normalization_coefficient;
-*/
-
-    return 0.0;
-}
-
-
-type WeightedSquaredError::calculate_batch_error(const Tensor<Index, 1>& batch_indices,
-                                                   const Tensor<type, 1>& parameters) const
-{
-    #ifdef __OPENNN_DEBUG__
-
-        check();
-
-    #endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-/*
-    const type batch_error = weighted_sum_squared_error(outputs, targets, positives_weight, negatives_weight);
-
-    return batch_error / training_normalization_coefficient;
-*/
-    return 0.0;
-
-}
-
-
 /// This method calculates the error term gradient for training instances.
 /// It is used for optimization of parameters during training.
 /// Returns the value of the error term gradient.
 
 Tensor<type, 1> WeightedSquaredError::calculate_training_error_gradient() const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 check();
@@ -375,7 +318,7 @@ check();
 /// @param outputs Output data.
 /// @param targets Target data.
 
-Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 2>& outputs, const Tensor<type, 2>& targets) const
+Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 2>& /*outputs*/, const Tensor<type, 2>& /*targets*/) const
 {
     // Control sentence
 
@@ -493,9 +436,9 @@ check();
 
     if(regularization_method != RegularizationMethod::NoRegularization)
     {
-        terms_second_order_loss.loss += calculate_regularization();
-        terms_second_order_loss.gradient += calculate_regularization_gradient();
-        terms_second_order_loss.hessian += calculate_regularization_hessian();
+//        terms_second_order_loss.loss += calculate_regularization();
+//        terms_second_order_loss.gradient += calculate_regularization_gradient();
+//        terms_second_order_loss.hessian += calculate_regularization_hessian();
     }
 
     return terms_second_order_loss;
@@ -649,7 +592,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
       try
       {
-         set_positives_weight(atof(string.c_str()));
+         set_positives_weight(static_cast<type>(atof(string.c_str())));
       }
       catch(const logic_error& e)
       {
@@ -667,7 +610,7 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
       try
       {
-         set_negatives_weight(atof(string.c_str()));
+         set_negatives_weight(static_cast<type>(atof(string.c_str())));
       }
       catch(const logic_error& e)
       {

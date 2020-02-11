@@ -66,19 +66,13 @@ public:
 
    // Error methods
 
-   type calculate_training_error() const;
+   
    type calculate_training_error(const Tensor<type, 1>&) const;
 
-   type calculate_selection_error() const;
+   
 
-   type calculate_batch_error(const Tensor<Index, 1>&) const;
-   type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const;
-
-   // Gradient methods
-
-   BackPropagation calculate_back_propagation() const;
-
-
+   
+   
 
    // Error terms methods
 
@@ -87,7 +81,6 @@ public:
 
    string get_error_type() const;
    string get_error_type_text() const;
-
 
    void calculate_error(BackPropagation& back_propagation) const
    {
@@ -192,8 +185,6 @@ public:
    }
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
-
-   type sum_squared_error(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
 
    // Serialization methods
 

@@ -108,7 +108,6 @@ public:
 
         Tensor<type, 2> activations_derivatives_2d;
         Tensor<type, 3> activations_derivatives_3d;
-
     };
 
 
@@ -116,10 +115,7 @@ public:
     {
         /// Default constructor.
 
-        explicit BackPropagation()
-        {
-        }
-
+        explicit BackPropagation() {}
 
         explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
@@ -146,9 +142,7 @@ public:
             delta.resize(batch_instances_number, neurons_number);
         }
 
-        void print() const
-        {
-        }       
+        virtual void print() const {}
 
         Index batch_instances_number = 0;
 
@@ -277,18 +271,13 @@ protected:
     void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
     void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
 
-    const Eigen::array<IndexPair<Index>, 1> product_dimensions = {IndexPair<Index>(1, 0)};
-    const Eigen::array<IndexPair<Index>, 1> transposed_product_dimensions = {IndexPair<Index>(1, 1)};
-    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-    const Eigen::array<IndexPair<Index>, 1> product_matrix_transpose_vector = {IndexPair<Index>(0, 0) }; // Matrix times vector, (0,0) matrix is transpose
-    const Eigen::array<IndexPair<Index>, 1> product_matrix_transpose_matrix = {IndexPair<Index>(0, 0) }; // Matrix times matrix, (0,0) first matrix is transpose
-    const Eigen::array<IndexPair<Index>, 1> product_matrix_matrix = {IndexPair<Index>(1, 0)};
-    const Eigen::array<IndexPair<Index>, 1> dimensions = {IndexPair<Index>(0, 0)};
+    const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
+    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
+    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
-
 
 };
 

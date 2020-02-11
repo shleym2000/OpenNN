@@ -80,7 +80,7 @@ void DataSetTest::test_destructor()
    delete dsp;
 }
 
-
+/*
 void DataSetTest::test_assignment_operator()
 {
    cout << "test_assignment_operator\n";
@@ -2863,7 +2863,7 @@ void DataSetTest::run_test_case()
    test_get_variables_number();
    test_get_variables();
    test_get_display();
-   test_is_binary_variable();
+//   test_is_binary_variable();
    test_is_binary_classification();
    test_is_multiple_classification();
 

@@ -260,33 +260,9 @@ public:
 
    bool has_selection() const;
 
-   // Loss methods
-
-   type calculate_training_loss() const;
-   type calculate_training_loss(const Tensor<type, 1>&) const;
-   type calculate_training_loss(const Tensor<type, 1>&, const type&) const;
-
-   // Loss gradient methods
-
-   Tensor<type, 1> calculate_training_loss_gradient() const;
-
-   // ERROR METHODS
-
-   virtual type calculate_training_error() const;
-   virtual type calculate_training_error_parameters(const Tensor<type, 1>&) const;
-
-   virtual type calculate_selection_error() const;
-
-   virtual type calculate_batch_error(const Tensor<Index, 1>&) const = 0;
-   virtual type calculate_batch_error(const Tensor<Index, 1>&, const Tensor<type, 1>&) const = 0;
-
    // GRADIENT METHODS
 
    virtual void calculate_output_gradient(const NeuralNetwork::ForwardPropagation&, BackPropagation&) const = 0;
-
-   virtual Tensor<type, 1> calculate_batch_error_gradient(const Tensor<Index, 1>&) const;
-
-   Tensor<type, 1> calculate_training_error_gradient() const;
 
    Tensor<type, 1> calculate_training_error_gradient_numerical_differentiation() const;
 
@@ -294,6 +270,8 @@ public:
 
    virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
+
+   virtual type calculate_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const {return 0;}
 
    virtual void calculate_error(BackPropagation&) const {}
 
@@ -316,21 +294,18 @@ public:
        // Regularization
 
        if(regularization_method != RegularizationMethod::NoRegularization)
-       {
-           back_propagation.loss += regularization_weight*calculate_regularization();
+       {      
+           const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-           back_propagation.gradient += regularization_weight*calculate_regularization_gradient();
+           back_propagation.loss += regularization_weight*calculate_regularization(parameters);
+
+           back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
    }
 
-   virtual BackPropagation calculate_back_propagation() const {return BackPropagation();}
    virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
 
    // Regularization methods
-
-   type calculate_regularization() const;
-   Tensor<type, 1> calculate_regularization_gradient() const;
-   Tensor<type, 2> calculate_regularization_hessian() const;
 
    type calculate_regularization(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_regularization_gradient(const Tensor<type, 1>&) const;
@@ -338,9 +313,8 @@ public:
 
    // Delta methods
 
-   Tensor<Tensor<type, 2>, 1> calculate_layers_delta(const Tensor<Layer::ForwardPropagation, 1>&, const Tensor<type, 2>&) const;
-
-   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation, BackPropagation& back_propagation) const
+   void calculate_layers_delta(const NeuralNetwork::ForwardPropagation& forward_propagation,
+                               BackPropagation& back_propagation) const
    {
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -421,7 +395,6 @@ public:
             }
         }
    }
-
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -527,10 +500,9 @@ protected:
 
    bool display = true;
 
-   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-   const Eigen::array<IndexPair<Index>, 1> product_matrix_vector = {IndexPair<Index>(0, 0)}; // Matrix times vector, (0,0) matrix is transpose
+   const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
 
-   const Eigen::array<IndexPair<Index>, 2> double_contraction = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
+   const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };
 
 }

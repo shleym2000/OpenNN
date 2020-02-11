@@ -22,8 +22,6 @@
 
 #include "config.h"
 #include "layer.h"
-
-
 #include "probabilistic_layer.h"
 
 #ifdef __OPENNN_CUDA__
@@ -132,15 +130,11 @@ public:
 
    void set_parameters_random();
 
-   // Parameters norm 
-
-   type calculate_parameters_norm() const;
-
    // Perceptron layer combinations
 
-   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&) const;
-
    void calculate_combinations(const Tensor<type, 2>& inputs,
+                               const Tensor<type, 2>& biases,
+                               const Tensor<type, 2>& synaptic_weights,
                                Tensor<type, 2>& combinations) const
    {
        const Index batch_instances_number = inputs.dimension(0);
@@ -157,7 +151,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                combinations.device(*default_device) += inputs.contract(synaptic_weights, product_dimensions);
+                combinations.device(*default_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }
@@ -166,7 +160,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, product_dimensions);
+               combinations.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 
                 break;
             }
@@ -207,15 +201,7 @@ public:
        }
    }
 
-   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
-
-   Tensor<type, 2> calculate_combinations(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-
    // Perceptron layer activations
-
-   Tensor<type, 2> calculate_activations(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_activations_derivatives(const Tensor<type, 2>&) const;
 
    void calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
    {
@@ -320,7 +306,7 @@ public:
 
    void calculate_forward_propagation(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
    {
-       calculate_combinations(inputs, forward_propagation.combinations);
+       calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations);
 
        calculate_activations(forward_propagation.combinations, forward_propagation.activations);
 
@@ -413,7 +399,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
 
                 hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
 
@@ -424,7 +410,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, transposed_product_dimensions) ;
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
 
                hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
@@ -511,7 +497,7 @@ public:
 
                 back_propagation.biases_derivatives.device(*default_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-                back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, dimensions);
+                back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
 
                 break;
             }
@@ -522,7 +508,7 @@ public:
 
                 back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-                back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, dimensions);
+                back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
 
                 break;
             }
