@@ -58,12 +58,12 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, 
 /// XML constructor. 
 /// It creates a cross entropy error not associated to any neural network and not measured on any data set.
 /// It also sets all the rest of class members from a TinyXML document->
-/// @param sum_squared_error_document XML document with the class members. 
+/// @param cross_entropy_error_document XML document with the class members.
 
-CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& sum_squared_error_document)
- : LossIndex(sum_squared_error_document)
+CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& cross_entropy_error_document)
+ : LossIndex(cross_entropy_error_document)
 {
-    from_XML(sum_squared_error_document);
+    from_XML(cross_entropy_error_document);
 }
 
 
@@ -83,50 +83,6 @@ CrossEntropyError::CrossEntropyError(const CrossEntropyError& new_cross_entropy_
 
 CrossEntropyError::~CrossEntropyError() 
 {
-}
-
-
-/// This method calculates the cross entropy error of the given batch.
-/// Returns the cross entropy error of this batch.
-/// @param batch_indices Indices of the batch instances corresponding to the dataset.
-
-type CrossEntropyError::calculate_batch_error(const Tensor<Index, 1>& batch_indices) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs);
-
-//    return cross_entropy_error(outputs, targets);
-    return 0;
-}
-
-
-type CrossEntropyError::calculate_batch_error(const Tensor<Index, 1>& batch_indices, const Tensor<type, 1>& parameters) const
-{
-#ifdef __OPENNN_DEBUG__
-
-check();
-
-#endif
-
-    // Data set
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_input_data(batch_indices);
-    const Tensor<type, 2> targets = data_set_pointer->get_target_data(batch_indices);
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-
-//    return cross_entropy_error(outputs, targets);
-    return 0;
 }
 
 

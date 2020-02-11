@@ -807,13 +807,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
       do
       {        
+//         terms_second_order_loss.hessian.sum_diagonal(damping_parameter);
+
+//         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
+
+//         const type new_loss = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
 /*
-         terms_second_order_loss.hessian.sum_diagonal(damping_parameter);
-
-         parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian, terms_second_order_loss.gradient*(-1.0));
-
-         const type new_loss = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
-
          if(new_loss <= training_loss) // succesfull step
          {
              set_damping_parameter(damping_parameter/damping_parameter_factor);
@@ -828,7 +827,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          }
          else
          {
-             terms_second_order_loss.hessian.sum_diagonal(-damping_parameter);
+//             terms_second_order_loss.hessian.sum_diagonal(-damping_parameter);
+
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
 */
@@ -846,7 +846,14 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
          training_loss_decrease = training_loss - old_training_loss;
       }
 
-      if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+      if(selection_instances_number > 0)
+      {
+//          neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+
+//          selection_error = loss_index_pointer->calculate_error(
+//                      selection_forward_propagation.layers[trainable_layers_number].activations,
+//                      selection_batch.targets_2d);
+      }
 
       if(epoch == 0)
       {
@@ -883,6 +890,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
       }
 
 	  // Stopping Criteria
+
+      parameters_increment_norm = static_cast<type>(0.0);
 
       if(parameters_increment_norm <= minimum_parameters_increment_norm)
       {
@@ -949,10 +958,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
       else if(epoch == maximum_epochs_number)
       {
-         if(display)
-         {
-            cout << "Epoch " << epoch << ": Maximum number of iterations reached." << endl;
-         }
+         if(display) cout << "Epoch " << epoch << ": Maximum number of iterations reached." << endl;
 
          stop_training = true;
 
@@ -1038,7 +1044,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
        neural_network_pointer->set_parameters(parameters);
 
-       training_loss = loss_index_pointer->calculate_training_loss();
+//       training_loss = loss_index_pointer->calculate_training_loss();
        selection_error = minimum_selection_error;
    }
 
@@ -1494,7 +1500,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.CloseElement();
 
     // Return minimum selection error neural network
-
     {
         file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
 
@@ -1663,7 +1668,7 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
    if(choose_best_selection_element)
    {
-       string new_choose_best_selection = choose_best_selection_element->GetText();
+       const string new_choose_best_selection = choose_best_selection_element->GetText();
 
        try
        {
@@ -1859,18 +1864,21 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
 /// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
 
-Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b) const
+Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A,
+                                                                                  const Tensor<type, 1>& b) const
 {
     const Index n = A.dimension(0);
 
     Tensor<type, 1> x(n);
-/*
-    const Map<Tensor<type, 2>> A_eigen((type*)A.data(), static_cast<Index>(n), static_cast<Index>(n));
-    const Map<VectorXd> b_eigen((type*)b.data(), static_cast<Index>(n));
-    Map<VectorXd> x_eigen(x.data(), static_cast<Index>(n));
 
-    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
-*/
+//    const Map<Tensor<type, 2>> A_eigen((type*)A.data(), static_cast<Index>(n), static_cast<Index>(n));
+
+//    const Map<VectorXd> b_eigen(b.data(), n);
+
+//    Map<VectorXd> x_eigen(x.data(), static_cast<Index>(n));
+
+//    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
+
     return x;
 }
 
