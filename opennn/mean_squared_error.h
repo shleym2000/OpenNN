@@ -66,13 +66,77 @@ public:
 
    // Error methods
 
-   
-   type calculate_training_error(const Tensor<type, 1>&) const;
+   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
+   {
+       Tensor<type, 0> sum_squared_error;
 
-   
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-   
-   
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                sum_squared_error.device(*default_device) = (forward_propagation.layers[trainable_layers_number-1].activations
+                                                             - batch.targets_2d).square().sum();
+
+                break;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations
+                                                                - batch.targets_2d).square().sum();
+
+                break;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+       const Index batch_instances_number = batch.inputs_2d.dimension(0);
+
+       return sum_squared_error(0)/static_cast<type>(batch_instances_number);
+   }
+
+
+   type calculate_error(const DataSet::Batch& batch,
+                        const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation) const
+   {
+       const Index instances_number = batch.get_instances_number();
+
+       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations;
+
+       const Tensor<type, 2>& targets = batch.targets_2d;
+
+       Tensor<type, 0> sum_squared_error;
+
+       sum_squared_error = (outputs - targets).square().sum();
+
+       return sum_squared_error(0)/static_cast<type>(instances_number);
+   }
+
 
    // Error terms methods
 
