@@ -220,8 +220,8 @@ void StochasticGradientDescent::set_default()
    // TRAINING OPERATORS
 
    initial_learning_rate = static_cast<type>(0.01);
-   initial_decay = static_cast<type>(0.0);
-   momentum = static_cast<type>(0.0);
+   initial_decay = 0;
+   momentum = 0;
    nesterov = false;
 
    // TRAINING PARAMETERS
@@ -234,10 +234,10 @@ void StochasticGradientDescent::set_default()
 
    // Stopping criteria
 
-   minimum_parameters_increment_norm = static_cast<type>(0.0);
-   minimum_loss_decrease = static_cast<type>(0.0);
+   minimum_parameters_increment_norm = 0;
+   minimum_loss_decrease = 0;
    loss_goal = -numeric_limits<type>::max();
-   gradient_norm_goal = static_cast<type>(0.0);
+   gradient_norm_goal = 0;
    maximum_selection_error_increases = 1000000;
    maximum_time = 1000.0;
    maximum_epochs_number = 1000;
@@ -724,7 +724,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    if(display) cout << "Training with stochastic gradient descent...\n";
 
-   // Data set stuff
+   // Data set
 
    DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
@@ -736,9 +736,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
 
-   DataSet::Batch batch(data_set_pointer);
+   DataSet::Batch batch(batch_instances_number, data_set_pointer);
 
-   // Neural network stuff
+   // Neural network
 
    NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -750,24 +750,24 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    Tensor<type, 1> last_increment(parameters_number);
 
-   Tensor<type, 0> parameters_norm;
+   type parameters_norm = 0;
 
    NeuralNetwork::ForwardPropagation forward_propagation(batch_instances_number, neural_network_pointer);
 
-   // Loss index stuff
+   // Loss index
 
    LossIndex::BackPropagation back_propagation(loss_index_pointer);
 
    type training_error = 0;
 
-   type selection_error = static_cast<type>(0.0);
-   type old_selection_error = static_cast<type>(0.0);
+   type selection_error = 0;
+   type old_selection_error = 0;
 
-   type loss = static_cast<type>(0.0);
+   type loss = 0;
 
-   Tensor<type, 0> gradient_norm;
+   type gradient_norm = 0;
 
-   // Optimization algorithm stuff
+   // Optimization algorithm
 
    OptimizationParameters optimization_parameters(this);
 
@@ -784,7 +784,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
    time_t beginning_time, current_time;
    time(&beginning_time);
-   type elapsed_time = static_cast<type>(0.0);
+   type elapsed_time = 0;
 
    results.resize_training_history(maximum_epochs_number + 1);
 
@@ -806,11 +806,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
        const Index batches_number = training_batches.dimension(0);
 
-       parameters_norm = parameters.square().sum().sqrt();
+       parameters_norm = l2_norm(parameters);
 
-       if(display && parameters_norm(0) >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
+       if(display && parameters_norm >= warning_parameters_norm) cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-       loss = static_cast<type>(0.0);
+       loss = 0;
 
        for(Index iteration = 0; iteration < batches_number; iteration++)
        {
@@ -866,13 +866,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
            learning_rate_iteration++;
        }
 
-       gradient_norm = back_propagation.gradient.square().sum().sqrt();
+       gradient_norm = l2_norm(back_propagation.gradient);
 
        // Loss
 
        training_error = loss/static_cast<type>(batches_number);
 
-//       if(selection_instances_number > 0) selection_error = loss_index_pointer->calculate_selection_error();
+//       if(has_selection) selection_error = loss_index_pointer->calculate_selection_error();
 
        if(epoch == 0)
        {
@@ -963,13 +963,13 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
            results.final_parameters = parameters;
 
-           results.final_parameters_norm = parameters_norm(0);
+           results.final_parameters_norm = parameters_norm;
 
            results.final_training_error = training_error;
 
            results.final_selection_error = selection_error;
 
-           results.final_gradient_norm = gradient_norm(0);
+           results.final_gradient_norm = gradient_norm;
 
            results.elapsed_time = elapsed_time;
 
@@ -1015,12 +1015,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
    }
 
    results.final_parameters = parameters;
-   results.final_parameters_norm = parameters_norm(0);
+   results.final_parameters_norm = parameters_norm;
 
    results.final_training_error= training_error;
    results.final_selection_error = selection_error;
 
-   results.final_gradient_norm = gradient_norm(0);
+   results.final_gradient_norm = gradient_norm;
 
    results.elapsed_time = elapsed_time;
 
