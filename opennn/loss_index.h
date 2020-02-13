@@ -30,7 +30,7 @@
 namespace OpenNN
 {
 
-/// This abstrac class represents the concept of loss index composed of an error term and a regularization term.
+/// This abstract class represents the concept of loss index composed of an error term and a regularization term.
 
 ///
 /// The error terms could be:
@@ -288,7 +288,7 @@ public:
        calculate_output_gradient(forward_propagation, back_propagation);
 
        calculate_layers_delta(forward_propagation, back_propagation);
-
+// Not ok in Adam
        calculate_error_gradient(batch, forward_propagation, back_propagation);
 
        // Regularization
