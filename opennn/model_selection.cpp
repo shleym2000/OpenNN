@@ -39,7 +39,6 @@ ModelSelection::ModelSelection(TrainingStrategy* new_training_strategy_pointer)
     set_default();
 }
 
-
 /// File constructor.
 /// @param file_name Name of XML model selection file.
 
@@ -54,7 +53,6 @@ ModelSelection::ModelSelection(const string& file_name)
     load(file_name);
 }
 
-
 /// XML constructor.
 /// @param model_selection_document Pointer to a TinyXML document containing the model selection data.
 
@@ -68,7 +66,6 @@ ModelSelection::ModelSelection(const tinyxml2::XMLDocument& model_selection_docu
 
     from_XML(model_selection_document);
 }
-
 
 /// Destructor.
 
@@ -1062,7 +1059,6 @@ void ModelSelection::load(const string& file_name)
     from_XML(document);
 }
 
-
 /// Results constructor.
 
 ModelSelection::Results::Results()
@@ -1112,7 +1108,6 @@ void ModelSelection::Results::save(const string& file_name) const
 
     file.close();
 }
-
 
 /// @todo
 
@@ -1181,7 +1176,7 @@ Tensor<NeuralNetwork, 1> ModelSelection::perform_k_fold_cross_validation(const I
         /*
                 const type current_error = loss_index_pointer->calculate_selection_error();
 
-                  neural_network_pointer->calculate_forward_propagation(selection_batch, selection_forward_propagation);
+                  neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
                   const type selection_error = loss_index_pointer->calculate_error(
                               selection_forward_propagation.layers[trainable_layers_number].activations,

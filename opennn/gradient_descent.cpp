@@ -138,7 +138,7 @@ const type& GradientDescent::get_minimum_parameters_increment_norm() const
 
 /// Returns the minimum loss improvement during training.
 
-const type& GradientDescent::get_minimum_loss_increase() const
+const type& GradientDescent::get_minimum_loss_decrease() const
 {
     return minimum_loss_decrease;
 }
@@ -521,15 +521,15 @@ void GradientDescent::set_minimum_parameters_increment_norm(const type& new_mini
 
 
 /// Sets a new minimum loss improvement during training.
-/// @param new_minimum_loss_increase Minimum improvement in the loss between two iterations.
+/// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
 
-void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_increase)
+void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
 
 
 #ifdef __OPENNN_DEBUG__
 
-    if(new_minimum_loss_increase < static_cast<type>(0.0))
+    if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
         ostringstream buffer;
 
@@ -544,7 +544,7 @@ void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_inc
 
     // Set minimum loss improvement
 
-    minimum_loss_decrease = new_minimum_loss_increase;
+    minimum_loss_decrease = new_minimum_loss_decrease;
 }
 
 
@@ -782,9 +782,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     type old_training_loss = 0;
     type training_loss_decrease = -numeric_limits<type>::max();
 
-    type gradient_norm;
+    type gradient_norm = 0;
 
-    LossIndex::BackPropagation training_back_propagation(loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
     // Learning rate
 
@@ -810,7 +810,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     Tensor<type, 0> training_slope;
 
     type minimum_selection_error = numeric_limits<type>::max();
-    Tensor<type, 1> minimum_selection_error_parameters = parameters;
+    Tensor<type, 1> minimal_selection_parameters = parameters;
 
     results.resize_training_history(maximum_epochs_number+1);
 
@@ -829,11 +829,11 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         if(display && parameters_norm >= warning_parameters_norm)
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
 
-        neural_network_pointer->calculate_forward_propagation(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
 
-        loss_index_pointer->calculate_back_propagation(training_batch, training_forward_propagation, training_back_propagation);
+        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         training_loss = training_back_propagation.loss;
 
@@ -861,7 +861,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             else if(selection_error <= minimum_selection_error)
             {
                 minimum_selection_error = selection_error;
-                minimum_selection_error_parameters = parameters;
+                minimal_selection_parameters = parameters;
             }
         }
 
@@ -974,7 +974,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum number of iterations reached.\n";
+                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
             }
 
             stop_training = true;
@@ -1007,8 +1007,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                      << "Training loss: " << training_loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << learning_rate << "\n";
-//                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                     << "Training rate: " << learning_rate << "\n"
+                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection) cout << "Selection error: " << selection_error << endl;
             }
@@ -1038,8 +1038,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                  << "Training loss: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << learning_rate << "\n";
-//              << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                 << "Training rate: " << learning_rate << "\n"
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection) cout << "Selection error: " << selection_error << endl;
         }
@@ -1062,7 +1062,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     if(choose_best_selection)
     {
-        parameters = minimum_selection_error_parameters;
+        parameters = minimal_selection_parameters;
         parameters_norm = l2_norm(parameters);
 
         neural_network_pointer->set_parameters(parameters);
@@ -1159,7 +1159,7 @@ Tensor<string, 2> GradientDescent::to_string_matrix() const
 
        values.push_back(buffer.str());
 
-       // Maximum selection error decreases
+       // Maximum selection error increases
 
        labels.push_back("Maximum selection error increases");
 
@@ -1727,11 +1727,11 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const type new_minimum_loss_increase = static_cast<type>(atof(element->GetText()));
+            const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try
             {
-                set_minimum_loss_decrease(new_minimum_loss_increase);
+                set_minimum_loss_decrease(new_minimum_loss_decrease);
             }
             catch(const logic_error& e)
             {

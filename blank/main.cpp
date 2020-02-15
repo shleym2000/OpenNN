@@ -57,23 +57,22 @@ using namespace chrono;
 using Eigen::MatrixXd;
 using Eigen::Vector3d;
 
-
 int main(void)
 {
     try
     {
         cout << "Blank application" << endl;
 
-        Tensor<type, 2> a(3,3);
-        a.setConstant(2);
 
-        TensorMap<Tensor<type, 2>> b(a.data(), 2, 2);
+        Tensor<type, 2> A;
+        Tensor<type, 2> B;
 
-        cout << b << endl;
 
-        cout << "End" << endl;
+//        cout << "b: " << b << endl;
+
 
         return 0;
+
     }
        catch(exception& e)
     {
