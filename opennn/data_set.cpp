@@ -949,7 +949,7 @@ const Tensor<DataSet::InstanceUse,1 >& DataSet::get_instances_uses() const
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 /// @todo In forecasting must be false.
 
-Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
     Tensor<Index, 1> training_indices = get_training_instances_indices();
 
@@ -960,7 +960,7 @@ Tensor<Index, 2> DataSet::get_training_batches(const bool& shuffle_batches_insta
 }
 
 
-Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_selection_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
     Tensor<Index, 1> training_indices = get_selection_instances_indices();
 
@@ -971,7 +971,7 @@ Tensor<Index, 2> DataSet::get_selection_batches(const bool& shuffle_batches_inst
 }
 
 
-Tensor<Index, 2> DataSet::get_testing_batches(const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_testing_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
     Tensor<Index, 1> training_indices = get_testing_instances_indices();
 
@@ -1507,24 +1507,6 @@ void DataSet::split_instances_sequential(const type& training_instances_ratio,
 }
 
 
-/// Sets the number of batches.
-
-void DataSet::set_batch_instances_number(const Index& new_batch_instances_number)
-{
-    const Index training_instances_number = get_training_instances_number();
-
-    if(new_batch_instances_number > training_instances_number)
-    {
-        batch_instances_number = training_instances_number;
-
-    }
-    else
-    {
-        batch_instances_number = new_batch_instances_number;
-    }
-}
-
-
 /// Changes instances for selection by instances for testing.
 
 void DataSet::set_selection_to_testing_instances()
@@ -1969,7 +1951,6 @@ Tensor<Index, 1> DataSet::get_unused_columns_indices() const
 
 Tensor<Index, 1> DataSet::get_used_columns_indices() const
 {
-
     const Index variables_number = get_variables_number();
 
     const Index used_variables_number = get_used_variables_number();
@@ -2374,6 +2355,10 @@ Tensor<Index, 1> DataSet::get_unused_variables_indices() const
             unused_index++;
             unused_variable_index++;
         }
+        else
+        {
+            unused_variable_index++;
+        }
     }
 
     return unused_indices;
@@ -2414,6 +2399,10 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
         {
             used_indices(used_index) = i;
             used_index++;
+            used_variable_index++;
+        }
+        else
+        {
             used_variable_index++;
         }
     }
@@ -2460,6 +2449,10 @@ Tensor<Index, 1> DataSet::get_input_variables_indices() const
             input_index++;
             input_variable_index++;
         }
+        else
+        {
+            input_variable_index++;
+        }
     }
 
     return input_variables_indices;
@@ -2500,6 +2493,10 @@ Tensor<Index, 1> DataSet::get_target_variables_indices() const
         {
             target_variables_indices(target_index) = i;
             target_index++;
+            target_variable_index++;
+        }
+        else
+        {
             target_variable_index++;
         }
     }
@@ -4396,6 +4393,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
             Tensor<Index, 1> categories_frequencies(categories_number);
             categories_frequencies.setZero();
+            Tensor<type, 1> centers(categories_number);
 
             for(Index j = 0; j < categories_number; j++)
             {
@@ -4407,10 +4405,13 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
                     }
                 }
 
+                centers(j) = static_cast<type>(j);
+
                 variable_index++;
             }
 
             histograms(i).frequencies = categories_frequencies;
+            histograms(i).centers = centers;
         }
         else if(columns(i).type == Binary)
         {
@@ -4456,23 +4457,28 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
 Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
 {
-    const Index used_columns_number = get_used_columns_number();
-    const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+    Index used_columns_number = get_used_columns_number();
+    const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
 
     Tensor<BoxPlot, 1> box_plots(used_columns_number);
 
-    #pragma omp parallel for shared(box_plots)
+    Index variable_index = 0;
 
-    for(Index i = 0; i < static_cast<Index>(used_columns_number); i++)
+    for(Index i = 0; i < used_columns_number; i++)
     {
-        if(columns(i).type == Numeric)
+        if(columns(i).type == Numeric || columns(i).type == Binary)
         {
-            const Index index = used_columns_indices(i);
-            /*
-                        const Tensor<type, 1> column = get_column_data(static_cast<Index>(index)).to_vector();
+            box_plots(i) = box_plot(data.chip(variable_index, 1), used_instances_indices);
 
-                        box_plots(i) = box_plot(column);
-            */
+            variable_index++;
+        }
+        else if(columns(i).type == Categorical)
+        {
+            variable_index += columns(i).categories.size();
+        }
+        else
+        {
+            variable_index++;
         }
     }
 
@@ -4648,8 +4654,6 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
 
     const Index instances_number = used_instances_indices.size();
 
-    cout << "1" << endl;
-
     // Count used positive instances
 
     Index positive_instances_number = 0;
@@ -4661,9 +4665,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
         if(data(instance_index, target_index) == static_cast<type>(1.0)) positive_instances_number++;
     }
 
-    cout << "2" << endl;
-
-    // Get used positive instances indices
+        // Get used positive instances indices
 
     Tensor<Index, 1> positive_used_instances_indices(positive_instances_number);
     Index positive_instance_index = 0;
@@ -4747,7 +4749,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
 /// Returns a matrix with the data set descriptive statistics.
 /// @param class_index Data set index number to make the descriptive statistics.
 
-Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_classes(const Index& class_index) const
+Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const Index& class_index) const
 {
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
@@ -5067,12 +5069,12 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
             if(input_type == Numeric && target_type == Numeric)
             {
-                correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = linear_correlations(input.chip(0,1), target.chip(0,1));
 
-                const CorrelationResults linear_correlation = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults exponential_correlation = exponential_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults logarithmic_correlation = logarithmic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
-                const CorrelationResults power_correlation = power_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults linear_correlation = linear_correlations(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults exponential_correlation = exponential_correlations(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults logarithmic_correlation = logarithmic_correlations(input.chip(0,1), target.chip(0,1));
+                const CorrelationResults power_correlation = power_correlations(input.chip(0,1), target.chip(0,1));
 
                 CorrelationResults strongest_correlation = linear_correlation;
 
@@ -5084,7 +5086,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Binary && target_type == Binary)
             {
-                correlations(i,j) = linear_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = linear_correlations(input.chip(0,1), target.chip(0,1));
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
@@ -9830,20 +9832,25 @@ void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& i
 
         for(Index i = 0; i < rows_number; i++)
         {
-            instance = instances[j];
+            instance = instances[i];
 
             inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
         }
+    }
 
-//        for(Index j = 0; j < targets_number; j++)
-//        {
-//            variable = targets_pointer(j);
 
-//            targets_2d_pointer(rows_number*j+i) = data_pointer(total_rows*variable+instance);
-//        }
+    for(Index j = 0; j < targets_number; j++)
+    {
+        variable = targets[j];
+
+        for(Index i = 0; i < rows_number; i++)
+        {
+            instance = instances[i];
+
+            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
+        }
     }
 }
-
 
 }
 

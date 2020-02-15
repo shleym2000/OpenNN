@@ -85,20 +85,18 @@ public:
 
        explicit BackPropagation() {}
 
-       explicit BackPropagation(const LossIndex* loss_index_pointer)
+       explicit BackPropagation(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
        {
-           set(loss_index_pointer);
+           set(new_batch_instances_number, new_loss_index_pointer);
        }
 
        virtual ~BackPropagation();
 
-       void set(const LossIndex* loss_index_pointer)
-       {
-           // Data set
+       void set(const Index& new_batch_instances_number, LossIndex* new_loss_index_pointer)
+       {                      
+           batch_instances_number = new_batch_instances_number;
 
-           DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
-
-           const Index batch_instances_number = data_set_pointer->get_batch_instances_number();
+           loss_index_pointer = new_loss_index_pointer;
 
            // Neural network
 
@@ -126,13 +124,7 @@ public:
        {
            cout << "Output gradient:" << endl;
            cout << output_gradient << endl;
-/*
-           for(Index i = 0; i < layers_delta.size(); i++)
-           {
-               cout << "Layers delta " << i << ":" << endl;
-               cout << layers_delta[i] << endl;
-           }
-*/
+
            cout << "Loss:" << endl;
            cout << loss << endl;
 
@@ -140,11 +132,13 @@ public:
            cout << gradient << endl;
        }
 
+       LossIndex* loss_index_pointer = nullptr;
+
+       Index batch_instances_number = 0;
+
        NeuralNetwork::BackPropagation neural_network;
 
        Tensor<type, 2> output_gradient;
-
-//       Tensor<Tensor<type, 1>, 1> layers_error_gradient;
 
        type loss;
 
@@ -275,7 +269,7 @@ public:
 
    virtual void calculate_error(BackPropagation&) const {}
 
-   void calculate_back_propagation(const DataSet::Batch& batch,
+   void back_propagate(const DataSet::Batch& batch,
                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                    BackPropagation& back_propagation) const
    {
@@ -383,17 +377,16 @@ public:
                  return;
             }
 
-             default:
-             {
-                ostringstream buffer;
-
-                buffer << "OpenNN Exception: MeanSquaredError class.\n"
-                       << "void calculate_errors() const method.\n"
-                       << "Unknown device.\n";
-
-                throw logic_error(buffer.str());
-            }
         }
+
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: MeanSquaredError class.\n"
+               << "void calculate_errors() const method.\n"
+               << "Unknown device.\n";
+
+        throw logic_error(buffer.str());
+
    }
 
    void calculate_error_gradient(const DataSet::Batch& batch,
@@ -572,44 +565,30 @@ public:
        return norm(0);
    }
 
-   Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& parameters) const
+   Tensor<type, 1> l1_norm_gradient(const Tensor<type, 1>& parameters) const
    {
        const Index parameters_number = parameters.size();
 
        Tensor<type, 1> gradient(parameters_number);
 
-       const type norm = l2_norm(parameters);
-
-       if(norm == 0.0)
-       {
-           gradient.setConstant(0.0);
-
-           return gradient;
-       }
-       else
-       {
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                gradient.device(*default_device) = parameters/norm;
+                gradient.device(*default_device) = parameters.sign();
 
                 return gradient;
-
-                break;
             }
 
             case Device::EigenSimpleThreadPool:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               gradient.device(*thread_pool_device) = parameters/norm;
+               gradient.device(*thread_pool_device) = parameters.sign();
 
                return gradient;
-
-                break;
             }
 
            case Device::EigenGpu:
@@ -630,8 +609,122 @@ public:
                throw logic_error(buffer.str());
            }
        }
-       }
+
+       return Tensor<type, 1>();
    }
+
+   Tensor<type, 2> l1_norm_hessian(const Tensor<type, 1>& parameters) const
+   {
+       const Index parameters_number = parameters.size();
+
+       Tensor<type, 2> hessian(parameters_number, parameters_number);
+
+           switch(device_pointer->get_type())
+           {
+                case Device::EigenDefault:
+                {
+                    DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                    hessian.device(*default_device) = hessian.setZero();  //<---
+
+                    return hessian;
+
+                }
+
+                case Device::EigenSimpleThreadPool:
+                {
+                   ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                   hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
+
+                   return hessian;
+                }
+
+               case Device::EigenGpu:
+               {
+    //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                    break;
+               }
+
+                default:
+                {
+                   ostringstream buffer;
+
+                   buffer << "OpenNN Exception: Layer class.\n"
+                          << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                          << "Unknown device.\n";
+
+                   throw logic_error(buffer.str());
+               }
+           }
+
+           return Tensor<type, 2>();
+   }
+
+
+   Tensor<type, 1> l2_norm_gradient(const Tensor<type, 1>& parameters) const
+   {
+       const Index parameters_number = parameters.size();
+
+       Tensor<type, 1> gradient(parameters_number);
+
+       const type norm = l2_norm(parameters);
+
+       if(static_cast<Index>(norm) ==  0)
+       {
+           gradient.setZero();
+
+           return gradient;
+       }
+       else
+       {
+       }
+
+
+       switch(device_pointer->get_type())
+       {
+            case Device::EigenDefault:
+            {
+                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                gradient.device(*default_device) = parameters/norm;
+
+                return gradient;
+            }
+
+            case Device::EigenSimpleThreadPool:
+            {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               gradient.device(*thread_pool_device) = parameters/norm;
+
+               return gradient;
+            }
+
+           case Device::EigenGpu:
+           {
+//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                break;
+           }
+
+            default:
+            {
+               ostringstream buffer;
+
+               buffer << "OpenNN Exception: Layer class.\n"
+                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+                      << "Unknown device.\n";
+
+               throw logic_error(buffer.str());
+           }
+       }
+
+
+
+   }
+
 
    Tensor<type, 2> l2_norm_hessian(const Tensor<type, 1>& parameters) const
    {
@@ -641,9 +734,9 @@ public:
 
        const type norm = l2_norm(parameters);
 
-       if(norm == 0.0)
+       if(static_cast<Index>(norm) == 0.0)
        {
-           hessian.setConstant(0.0);
+           hessian.setZero();
 
            return hessian;
        }
@@ -659,7 +752,6 @@ public:
 
                     return hessian;
 
-                    break;
                 }
 
                 case Device::EigenSimpleThreadPool:
@@ -670,7 +762,6 @@ public:
 
                    return hessian;
 
-                    break;
                 }
 
                case Device::EigenGpu:

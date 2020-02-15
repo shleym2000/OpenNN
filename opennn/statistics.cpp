@@ -833,39 +833,29 @@ type median(const Tensor<type, 1>& vector)
 
     // Fix missing values
 
-    Tensor<type, 1> sorted_vector;
+    Index new_size = 0;
 
-    const Index nan_number = count_nan(vector);
-
-    if(nan_number == 0)
+    for(Index i = 0; i < size; i++)
     {
-        Index new_size = size - nan_number;
-
-        for(Index i = 0; i < size; i++)
+        if(!isnan(vector(i)))
         {
-            if(!isnan(vector(i)))
-            {
-                new_size++;
-            }
-        }
-
-        sorted_vector.resize(new_size);
-
-        Index index = 0;
-
-        for(Index i = 0; i < size; i++)
-        {
-            if(!isnan(vector(i)))
-            {
-                sorted_vector(index) = vector(i);
-
-                index++;
-            }
+            new_size++;
         }
     }
-    else
+
+    Tensor<type, 1> sorted_vector;
+    sorted_vector.resize(new_size);
+
+    Index sorted_index = 0;
+
+    for(Index i = 0; i < size; i++)
     {
-        sorted_vector = vector;
+        if(!isnan(vector(i)))
+        {
+            sorted_vector(sorted_index) = vector(i);
+
+            sorted_index++;
+        }
     }
 
     // Calculate median
@@ -874,17 +864,17 @@ type median(const Tensor<type, 1>& vector)
 
     Index median_index;
 
-    if(size % 2 == 0)
+    if(new_size % 2 == 0)
     {
-        median_index = static_cast<Index>(size / 2);
+        median_index = static_cast<Index>(new_size / 2);
 
-        return (sorted_vector[median_index-1] + sorted_vector[median_index]) / static_cast<type>(2.0);
+        return (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
     }
     else
     {
-        median_index = static_cast<Index>(size / 2);
+        median_index = static_cast<Index>(new_size / 2);
 
-        return sorted_vector[median_index];
+        return sorted_vector(median_index);
     }
 }
 
@@ -897,93 +887,184 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
     // Fix missing values
 
-    const Index nan_number = count_nan(vector);
+    Index new_size = 0;
 
-    Tensor<type, 1> sorted_vector;
-
-    if(nan_number == 0)
+    for(Index i = 0; i < size; i++)
     {
-        Index new_size = size - nan_number;
-
-        for(Index i = 0; i < size; i++)
+        if(!isnan(vector(i)))
         {
-            if(!isnan(vector(i)))
-            {
-                new_size++;
-            }
-        }
-
-        sorted_vector.resize(new_size);
-
-        Index index = 0;
-
-        for(Index i = 0; i < size; i++)
-        {
-            if(!isnan(vector(i)))
-            {
-                sorted_vector(index) = vector(i);
-
-                index++;
-            }
+            new_size++;
         }
     }
-    else
+
+    Tensor<type, 1> sorted_vector;
+    sorted_vector.resize(new_size);
+
+    Index sorted_index = 0;
+
+    for(Index i = 0; i < size; i++)
     {
-        sorted_vector = vector;
+        if(!isnan(vector(i)))
+        {
+            sorted_vector(sorted_index) = vector(i);
+
+            sorted_index++;
+        }
     }
 
     // Calculate quartiles
 
-    Tensor<type, 1> first_sorted_vector(size/2);
-    Tensor<type, 1> last_sorted_vector(size/2);
+    Tensor<type, 1> first_sorted_vector(new_size/2);
+    Tensor<type, 1> last_sorted_vector(new_size/2);
 
-    for(Index i = 0; i < size/2 ; i++)
+    for(Index i = 0; i < new_size/2 ; i++)
     {
         first_sorted_vector(i) = sorted_vector(i);
     }
 
-    for(Index i = 0; i < size/2; i++)
+    for(Index i = 0; i < new_size/2; i++)
     {
-        last_sorted_vector(i) = sorted_vector[i + size - size/2];
+        last_sorted_vector(i) = sorted_vector[i + new_size - new_size/2];
     }
 
     Tensor<type, 1> quartiles(3);
 
-    if(size == 1)
+    if(new_size == 1)
     {
-        quartiles[0] = sorted_vector[0];
-        quartiles[1] = sorted_vector[0];
-        quartiles[2] = sorted_vector[0];
+        quartiles(0) = sorted_vector(0);
+        quartiles(1) = sorted_vector(0);
+        quartiles(2) = sorted_vector(0);
     }
-    else if(size == 2)
+    else if(new_size == 2)
     {
-        quartiles[0] = (sorted_vector[0]+sorted_vector[1])/4;
-        quartiles[1] = (sorted_vector[0]+sorted_vector[1])/2;
-        quartiles[2] = (sorted_vector[0]+sorted_vector[1])*3/4;
+        quartiles(0) = (sorted_vector(0)+sorted_vector(1))/4;
+        quartiles(1) = (sorted_vector(0)+sorted_vector(1))/2;
+        quartiles(2) = (sorted_vector(0)+sorted_vector(1))*3/4;
     }
-    else if(size == 3)
+    else if(new_size == 3)
     {
-        quartiles[0] = (sorted_vector[0]+sorted_vector[1])/2;
-        quartiles[1] = sorted_vector[1];
-        quartiles[2] = (sorted_vector[2]+sorted_vector[1])/2;
+        quartiles(0) = (sorted_vector(0)+sorted_vector(1))/2;
+        quartiles(1) = sorted_vector(1);
+        quartiles(2) = (sorted_vector(2)+sorted_vector(1))/2;
     }
-    else if(size % 2 == 0)
+    else if(new_size % 2 == 0)
     {
-        //      quartiles[0] = median(sorted_vector.get_first(size/2));
-        quartiles[0] = median(first_sorted_vector);
-        quartiles[1] = median(sorted_vector);
-        quartiles[2] = median(last_sorted_vector);
-        //      quartiles[2] = median(sorted_vector.get_last(size/2));
+        Index median_index = static_cast<Index>(first_sorted_vector.size() / 2);
+        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
+
+        median_index = static_cast<Index>(new_size / 2);
+        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
+
+        median_index = static_cast<Index>(last_sorted_vector.size() / 2);
+        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
     }
     else
     {
-        quartiles[0] = sorted_vector[size/4];
-        quartiles[1] = sorted_vector[size/2];
-        quartiles[2] = sorted_vector[size*3/4];
+        quartiles(0) = sorted_vector(new_size/4);
+        quartiles(1) = sorted_vector(new_size/2);
+        quartiles(2) = sorted_vector(new_size*3/4);
     }
 
     return quartiles;
 }
+
+
+/// Returns the quartiles of the elements of the vector that correspond to the given indices.
+
+Tensor<type, 1> quartiles(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+{
+    const Index indices_size = indices.dimension(0);
+
+    // Fix missing values
+
+    Index index;
+    Index new_size = 0;
+
+    for(Index i = 0; i < indices_size; i++)
+    {
+        index = indices(i);
+
+        if(!isnan(vector(index)))
+        {
+            new_size++;
+        }
+    }
+
+    Tensor<type, 1> sorted_vector;
+    sorted_vector.resize(new_size);
+
+    Index sorted_index = 0;
+
+    for(Index i = 0; i < indices_size; i++)
+    {
+        index = indices(i);
+
+        if(!isnan(vector(index)))
+        {
+            sorted_vector(sorted_index) = vector(index);
+
+            sorted_index++;
+        }
+    }
+
+    sort(sorted_vector.data(), sorted_vector.data() + sorted_vector.size(), less<type>());
+
+    // Calculate quartiles
+
+    Tensor<type, 1> first_sorted_vector(new_size/2);
+    Tensor<type, 1> last_sorted_vector(new_size/2);
+
+    for(Index i = 0; i < new_size/2 ; i++)
+    {
+        first_sorted_vector(i) = sorted_vector(i);
+    }
+
+    for(Index i = 0; i < new_size/2; i++)
+    {
+        last_sorted_vector(i) = sorted_vector(i + new_size - new_size/2);
+    }
+
+    Tensor<type, 1> quartiles(3);
+
+    if(new_size == 1)
+    {
+        quartiles(0) = sorted_vector(0);
+        quartiles(1) = sorted_vector(0);
+        quartiles(2) = sorted_vector(0);
+    }
+    else if(new_size == 2)
+    {
+        quartiles(0) = (sorted_vector(0)+sorted_vector(1))/4;
+        quartiles(1) = (sorted_vector(0)+sorted_vector(1))/2;
+        quartiles(2) = (sorted_vector(0)+sorted_vector(1))*3/4;
+    }
+    else if(new_size == 3)
+    {
+        quartiles(0) = (sorted_vector(0)+sorted_vector(1))/2;
+        quartiles(1) = sorted_vector(1);
+        quartiles(2) = (sorted_vector(2)+sorted_vector(1))/2;
+    }
+    else if(new_size % 2 == 0)
+    {
+        Index median_index = static_cast<Index>(first_sorted_vector.size() / 2);
+        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
+
+        median_index = static_cast<Index>(new_size / 2);
+        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
+
+        median_index = static_cast<Index>(last_sorted_vector.size() / 2);
+        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
+    }
+    else
+    {
+        quartiles(0) = sorted_vector(new_size/4);
+        quartiles(1) = sorted_vector(new_size/2);
+        quartiles(2) = sorted_vector(new_size*3/4);
+    }
+
+    return quartiles;
+}
+
 
 
 /// Returns the box and whispers for a vector.
@@ -992,15 +1073,34 @@ BoxPlot box_plot(const Tensor<type, 1>& vector)
 {
     BoxPlot boxplot;
 
-
     if(vector.dimension(0) == 0 || vector.dimension(1) == 0) return boxplot;
 
     const Tensor<type, 1> quartiles = OpenNN::quartiles(vector);
 
     boxplot.minimum = minimum(vector);
-    boxplot.first_quartile = quartiles[0];
-    boxplot.median = quartiles[1];
-    boxplot.third_quartile = quartiles[2];
+    boxplot.first_quartile = quartiles(0);
+    boxplot.median = quartiles(1);
+    boxplot.third_quartile = quartiles(2);
+    boxplot.maximum = maximum(vector);
+
+    return boxplot;
+}
+
+
+/// Returns the box and whispers for the elements of the vector that correspond to the given indices.
+
+BoxPlot box_plot(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
+{
+    BoxPlot boxplot;
+
+    if(vector.dimension(0) == 0 || indices.dimension(0) == 0) return boxplot;
+
+    const Tensor<type, 1> quartiles = OpenNN::quartiles(vector, indices);
+
+    boxplot.minimum = minimum(vector);
+    boxplot.first_quartile = quartiles(0);
+    boxplot.median = quartiles(1);
+    boxplot.third_quartile = quartiles(2);
     boxplot.maximum = maximum(vector);
 
     return boxplot;
@@ -1034,6 +1134,8 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
 
 #endif
 
+    const Index size = vector.dimension(0);
+
     Tensor<type, 1> minimums(bins_number);
     Tensor<type, 1> maximums(bins_number);
 
@@ -1041,52 +1143,102 @@ Histogram histogram(const Tensor<type, 1>& vector, const Index &bins_number)
     Tensor<Index, 1> frequencies(bins_number);
     frequencies.setZero();
 
-    const type min = minimum(vector);
-    const type max = maximum(vector);
+    Index unique_values_number = 1;
+    Tensor<type, 1> old_unique_values(1);
+    Tensor<type, 1> unique_values(1);
+    unique_values(0) = vector(0);
+    old_unique_values = unique_values;
 
-    const type length = (max - min) /static_cast<type>(bins_number);
-
-    minimums(0) = min;
-    maximums(0) = min + length;
-    centers(0) = (maximums(0) + minimums(0)) /static_cast<type>(2.0);
-
-    // Calculate bins center
-
-    for(Index i = 1; i < bins_number; i++)
+    for(Index i = 1; i < size; i++)
     {
-        minimums(i) = minimums(i - 1) + length;
-        maximums(i) = maximums(i - 1) + length;
-
-        centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
-    }
-
-    // Calculate bins frequency
-
-    const Index size = vector.dimension(0);
-
-    for(Index i = 0; i < size; i++)
-    {
-        if(isnan(vector(i)))
+        if(std::find(unique_values.data(), unique_values.data()+unique_values.size(), vector(i)) == unique_values.data()+unique_values.size())
         {
-            continue;
+            unique_values_number++;
+
+            unique_values.resize(unique_values_number);
+
+            for(Index j = 0; j < unique_values_number-1; j++) unique_values(j) = old_unique_values(j);
+
+            unique_values(unique_values_number-1) = vector(i);
+
+            old_unique_values = unique_values;
         }
 
-        for(Index j = 0; j < bins_number - 1; j++)
+        if(unique_values_number > bins_number) break;
+    }
+
+    if(unique_values_number <= bins_number)
+    {
+        centers = unique_values;
+        minimums = unique_values;
+        maximums = unique_values;
+
+        frequencies.resize(unique_values_number);
+        frequencies.setZero();
+
+        for(Index i = 0; i < size; i++)
         {
-            if(vector(i) >= minimums(j) && vector(i) < maximums(j))
+            if(isnan(vector(i))) continue;
+
+            for(Index j = 0; j < unique_values_number; j++)
             {
-                frequencies(j)++;
-                break;
+                if(vector(i) == centers(j))
+                {
+                    frequencies(j)++;
+                    break;
+                }
             }
         }
+    }
+    else
+    {
+        const type min = minimum(vector);
+        const type max = maximum(vector);
 
-        if(vector(i) >= minimums(bins_number - 1))
+        const type length = (max - min) /static_cast<type>(bins_number);
+
+        minimums(0) = min;
+        maximums(0) = min + length;
+        centers(0) = (maximums(0) + minimums(0)) /static_cast<type>(2.0);
+
+        // Calculate bins center
+
+        for(Index i = 1; i < bins_number; i++)
         {
-            frequencies(bins_number - 1)++;
+            minimums(i) = minimums(i - 1) + length;
+            maximums(i) = maximums(i - 1) + length;
+
+            centers(i) = (maximums(i) + minimums(i)) /static_cast<type>(2.0);
+        }
+
+        // Calculate bins frequency
+
+        const Index size = vector.dimension(0);
+
+        for(Index i = 0; i < size; i++)
+        {
+            if(isnan(vector(i)))
+            {
+                continue;
+            }
+
+            for(Index j = 0; j < bins_number - 1; j++)
+            {
+                if(vector(i) >= minimums(j) && vector(i) < maximums(j))
+                {
+                    frequencies(j)++;
+                    break;
+                }
+            }
+
+            if(vector(i) >= minimums(bins_number - 1))
+            {
+                frequencies(bins_number - 1)++;
+            }
         }
     }
 
-    Histogram histogram(bins_number);
+    Histogram histogram;
     histogram.centers = centers;
     histogram.minimums = minimums;
     histogram.maximums = maximums;
@@ -1211,6 +1363,7 @@ Histogram histogram_centered(const Tensor<type, 1>& vector, const type& center, 
 
 Histogram histogram(const Tensor<bool, 1>& vector)
 {
+    /*
     Tensor<type, 1> minimums(2);
     minimums.setZero();
     Tensor<type, 1> maximums(2);
@@ -1227,6 +1380,8 @@ Histogram histogram(const Tensor<bool, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
+        if(isnan(vector(i))) continue;
+
         for(Index j = 0; j < 2; j++)
         {
             if(static_cast<Index>(vector(i)) == static_cast<Index>(minimums(j)))
@@ -1241,10 +1396,9 @@ Histogram histogram(const Tensor<bool, 1>& vector)
     histogram.minimums = minimums;
     histogram.maximums = maximums;
     histogram.frequencies = frequencies;
-
+*/
+    Histogram histogram;
     return histogram;
-
-//    return Histogram();
 }
 
 
@@ -1424,7 +1578,7 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     minimums.setConstant(numeric_limits<type>::max());
 
     Tensor<type, 1> maximums(columns_indices_size);
-    maximums.setConstant(-numeric_limits<type>::max());
+    maximums.setConstant(numeric_limits<type>::min());
 
     Tensor<type, 1> sums(columns_indices_size);
     Tensor<type, 1> squared_sums(columns_indices_size);

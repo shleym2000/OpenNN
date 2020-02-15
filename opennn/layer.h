@@ -181,7 +181,7 @@ public:
 
     void set_device_pointer(Device*);
 
-    virtual void insert_parameters(const Index&, const Tensor<type, 1>&) {}
+    virtual void insert_parameters(const Tensor<type, 1>&) {}
 
     virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
 
@@ -195,9 +195,9 @@ public:
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
-    virtual void calculate_forward_propagation(const Tensor<type, 2>&, ForwardPropagation&) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) {}
 
-    virtual void calculate_forward_propagation(const Tensor<type, 2>&, const Tensor<type, 1>, ForwardPropagation&) {}
+    virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) {}
 
     // Deltas
 
@@ -285,4 +285,4 @@ protected:
 
 }
 
-#endif // __LAYER_H
+#endif // LAYER_H

@@ -163,7 +163,7 @@ void LevenbergMarquardtAlgorithmTest::test_calculate_training_loss_gradient()
    terms = mean_squared_error.calculate_training_error_terms(outputs, targets);
 
 //   terms_Jacobian = mse.calculate_error_terms_Jacobian(inputs,
-//                                                       neural_network.calculate_forward_propagation(inputs),
+//                                                       neural_network.forward_propagate(inputs),
 //                                                       mean_squared_error.calculate_output_gradient(outputs,targets)));
 
    gradient = dot(terms_Jacobian.calculate_transpose(), terms);
@@ -323,7 +323,7 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
    type loss;
    type minimum_parameters_increment_norm;
    type loss_goal;
-   type minimum_loss_increase;
+   type minimum_loss_decrease;
    type gradient_norm_goal;
    type gradient_norm = 0;
 
@@ -381,11 +381,11 @@ void LevenbergMarquardtAlgorithmTest::test_perform_training()
 
    neural_network.set_parameters_random(0.0, 1.0e-3);
 
-   minimum_loss_increase = 100.0;
+   minimum_loss_decrease = 100.0;
 
    lma.set_minimum_parameters_increment_norm(0.0);
    lma.set_loss_goal(0.0);
-   lma.set_minimum_loss_decrease(minimum_loss_increase);
+   lma.set_minimum_loss_decrease(minimum_loss_decrease);
    lma.set_gradient_norm_goal(0.0);
    lma.set_maximum_epochs_number(10);
    lma.set_maximum_time(10.0);
