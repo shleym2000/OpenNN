@@ -24,6 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "device.h"
 
 #include "loss_index.h"
 
@@ -31,6 +32,12 @@
 #include "learning_rate_algorithm.h"
 
 #include "tinyxml2.h"
+
+// Eigen Includes
+
+#include "../eigen/unsupported/Eigen/KroneckerProduct"
+
+using Eigen::MatrixXd;
 
 namespace OpenNN
 {
@@ -112,6 +119,8 @@ public:
         Tensor<type, 1> parameters_increment;
 
         // Loss index data
+
+        type old_training_loss = 0;
 
         Tensor<type, 1> old_gradient;
 
@@ -252,8 +261,8 @@ public:
                                                            const Tensor<type, 1>&,
                                                            const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> kronecker_product(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
+   const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    Results perform_training();
 
@@ -337,7 +346,7 @@ public:
                 optimization_data.training_direction,
                 initial_learning_rate);
 
-       type learning_rate = directional_point.first;
+       type learning_rate = directional_point.first; // training rate is always zero
 
        // Reset training direction when training rate is 0
 
@@ -356,13 +365,14 @@ public:
            learning_rate = directional_point.first;
        }
 
+       // training rate is always zero
        optimization_data.parameters += optimization_data.training_direction*learning_rate;
 
-//       parameters_increment_norm = l2_norm(parameters_increment);
+//       parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
        optimization_data.old_parameters = optimization_data.parameters;
 
-//       old_training_loss = training_loss;
+       optimization_data.old_training_loss = back_propagation.loss;
 
 //       old_selection_error = selection_error;
 
