@@ -4571,7 +4571,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
     {
         const Index testing_index = testing_indices(i);
 
-        if(data(testing_index, target_index) == static_cast<type>(0.0))
+        if(data(testing_index, target_index) < numeric_limits<type>::min())
         {
             negatives++;
         }
@@ -4662,7 +4662,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(1.0)) positive_instances_number++;
+        if(abs(data(instance_index, target_index) - 1) < numeric_limits<type>::min()) positive_instances_number++;
     }
 
         // Get used positive instances indices
@@ -4674,7 +4674,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(1.0))
+        if(abs(data(instance_index, target_index) - 1) < numeric_limits<type>::min())
         {
             positive_used_instances_indices(positive_instance_index) = instance_index;
             positive_instance_index++;
@@ -4722,7 +4722,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(0.0)) negative_instances_number++;
+        if(data(instance_index, target_index) < numeric_limits<type>::min()) negative_instances_number++;
     }
 
     // Get used negative instances indices
@@ -4734,7 +4734,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_instanc
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, target_index) == static_cast<type>(0.0))
+        if(data(instance_index, target_index) < numeric_limits<type>::min())
         {
             negative_used_instances_indices(negative_instance_index) = instance_index;
             negative_instance_index++;
@@ -4764,7 +4764,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, class_index) == static_cast<type>(1.0)) class_instances_number++;
+        if(abs(data(instance_index, class_index) - 1) < numeric_limits<type>::min()) class_instances_number++;
     }
 
     // Get used class instances indices
@@ -4777,7 +4777,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_categories(const
     {
         Index instance_index = used_instances_indices(i);
 
-        if(data(instance_index, class_index) == static_cast<type>(1.0))
+        if(abs(data(instance_index, class_index) - 1) < numeric_limits<type>::min())
         {
             class_used_instances_indices(class_instance_index) = instance_index;
             class_instance_index++;
@@ -5069,8 +5069,6 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
             if(input_type == Numeric && target_type == Numeric)
             {
-                correlations(i,j) = linear_correlations(input.chip(0,1), target.chip(0,1));
-
                 const CorrelationResults linear_correlation = linear_correlations(input.chip(0,1), target.chip(0,1));
                 const CorrelationResults exponential_correlation = exponential_correlations(input.chip(0,1), target.chip(0,1));
                 const CorrelationResults logarithmic_correlation = logarithmic_correlations(input.chip(0,1), target.chip(0,1));
@@ -5090,15 +5088,15 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
-                correlations(i,j) = karl_pearson_correlations_missing_values(input, target);
+                correlations(i,j) = karl_pearson_correlation(input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
-                correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = logistic_correlations(input.chip(0,1), target.chip(0,1));
             }
             else if(input_type == Binary && target_type == Numeric)
             {
-                correlations(i,j) = logistic_correlations_missing_values(input.chip(0,1), target.chip(0,1));
+                correlations(i,j) = logistic_correlations(input.chip(0,1), target.chip(0,1));
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
@@ -5233,6 +5231,91 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
         {
             cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
         }*/
+}
+
+
+/// Calculates the regressions between all outputs and all inputs.
+/// It returns a matrix with the data stored in RegressionResults format, where the number of rows is the input number
+/// and number of columns is the target number.
+/// Each element contains the correlation between a single input and a single target.
+
+Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions() const
+{
+    const Index input_columns_number = get_input_columns_number();
+    const Index target_columns_number = get_target_columns_number();
+
+    const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
+    Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
+
+    Tensor<RegressionResults, 2> regressions(input_columns_number, target_columns_number);
+
+#pragma omp parallel for
+
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        const Tensor<type, 2> input = get_column_data(input_columns_indices(i));
+
+        const ColumnType input_type = columns(input_columns_indices(i)).type;
+
+        for(Index j = 0; j < target_columns_number; j++)
+        {
+            const Tensor<type, 2> target = get_column_data(target_columns_indices(j));
+
+            const ColumnType target_type = columns(target_columns_indices(j)).type;
+
+            if(input_type == Numeric && target_type == Numeric)
+            {
+                const RegressionResults linear_regression = OpenNN::linear_regression(input.chip(0,1), target.chip(0,1));
+                const RegressionResults exponential_regression = OpenNN::exponential_regression(input.chip(0,1), target.chip(0,1));
+                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(input.chip(0,1), target.chip(0,1));
+                const RegressionResults power_regression = OpenNN::power_regression(input.chip(0,1), target.chip(0,1));
+
+                RegressionResults strongest_regression = linear_regression;
+
+                if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = exponential_regression;
+                else if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = logarithmic_regression;
+                else if(abs(power_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = power_regression;
+
+                regressions(i,j) = strongest_regression;
+            }
+            else if(input_type == Binary && target_type == Binary)
+            {
+                regressions(i,j) = linear_regression(input.chip(0,1), target.chip(0,1));
+            }
+            else if(input_type == Categorical && target_type == Categorical)
+            {
+//                regressions(i,j) = karl_pearson_correlation(input, target);
+            }
+            else if(input_type == Numeric && target_type == Binary)
+            {
+                regressions(i,j) = logistic_regression(input.chip(0,1), target.chip(0,1));
+            }
+            else if(input_type == Binary && target_type == Numeric)
+            {
+                regressions(i,j) = logistic_regression(input.chip(0,1), target.chip(0,1));
+            }
+            else if(input_type == Categorical && target_type == Numeric)
+            {
+//                regressions(i,j) = one_way_anova_correlations_missing_values(input, target.chip(0,1));
+            }
+            else if(input_type == Numeric && target_type == Categorical)
+            {
+//                regressions(i,j) = one_way_anova_correlations_missing_values(target, input.chip(0,1));
+            }
+            else
+            {
+                ostringstream buffer;
+
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "Tensor<type, 2> calculate_input_target_columns_regressions() const method.\n"
+                       << "Case not found: Column i " << input_type << " and Column j " << target_type << ".\n";
+
+                throw logic_error(buffer.str());
+            }
+        }
+    }
+
+return regressions;
 }
 
 
