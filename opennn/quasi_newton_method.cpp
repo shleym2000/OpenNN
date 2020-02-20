@@ -180,7 +180,7 @@ const type& QuasiNewtonMethod::get_minimum_loss_decrease() const
 
 const type& QuasiNewtonMethod::get_loss_goal() const
 {
-    return loss_goal;
+    return training_loss_goal;
 }
 
 
@@ -346,7 +346,7 @@ void QuasiNewtonMethod::set_default()
     minimum_parameters_increment_norm = 0;
 
     minimum_loss_decrease = 0;
-    loss_goal = -numeric_limits<type>::max();
+    training_loss_goal = 0;
     gradient_norm_goal = 0;
     maximum_selection_error_increases = 1000000;
 
@@ -586,7 +586,7 @@ void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_d
 
 void QuasiNewtonMethod::set_loss_goal(const type& new_loss_goal)
 {
-    loss_goal = new_loss_goal;
+    training_loss_goal = new_loss_goal;
 }
 
 
@@ -761,15 +761,15 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
 {
     // Transform Tensors into Dense matrix
 
-    auto m = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
+    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
 
-    auto m2 = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
+    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
             (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
 
     // Kronecker Product
 
-    auto product = kroneckerProduct(m,m2).eval();
+    auto product = kroneckerProduct(ml,mr).eval();
 
     // Matrix into a Tensor
 
@@ -788,15 +788,15 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 {
     // Transform Tensors into Dense matrix
 
-    auto m = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
+    auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
             (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
 
-    auto m2 = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
+    auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
             (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
 
     // Kronecker Product
 
-    auto product = kroneckerProduct(m,m2).eval();
+    auto product = kroneckerProduct(ml,mr).eval();
 
     // Matrix into a Tensor
 
@@ -1187,7 +1187,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type parameters_norm = 0;
 
-    type parameters_increment_norm = 0;
+//    type parameters_increment_norm = 0;
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -1196,12 +1196,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type training_loss = 0;
     type training_error = 0;
-    type old_training_loss = 0;
+//    type old_training_loss = 0;
 
     type gradient_norm = 0;
 
     type selection_error = numeric_limits<type>::max();
-    type old_selection_error = numeric_limits<type>::max();
+//    type old_selection_error = numeric_limits<type>::max();
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
@@ -1209,7 +1209,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     Tensor<type, 0> training_slope;
 
-    type learning_rate = 0;
+//    type learning_rate = 0;
 
     Tensor<type, 1> minimal_selection_parameters;
 
@@ -1246,21 +1246,23 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         training_loss = training_back_propagation.loss;
 
-        // Optimization data
-
-        update_optimization_data(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
-
-        // Set new parameters
-
-        neural_network_pointer->set_parameters(optimization_data.parameters);
-
-
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(display && gradient_norm >= warning_gradient_norm)
         {
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
         }
+
+        // Optimization data
+
+        update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
+
+        // Set new parameters
+
+        neural_network_pointer->set_parameters(optimization_data.parameters);
+
+        // Selection error
+
 /*
         if(has_selection)
         {
@@ -1291,19 +1293,19 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-       /* if(parameters_increment_norm <= minimum_parameters_increment_norm)
+       if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
                 cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
-                     << "Parameters increment norm: " << parameters_increment_norm << endl;
+                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
             stop_training = true;
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
-        else */if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
+        else if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
         {
             if(display)
             {
@@ -1315,7 +1317,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
-        else if(training_loss <= loss_goal)
+        else if(training_loss <= training_loss_goal)
         {
             if(display)
             {
@@ -1399,7 +1401,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                      << "Training error: " << training_loss <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << learning_rate <<  "\n"
+                     << "Training rate: " << optimization_data.learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection)
@@ -1426,7 +1428,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
         }
 
-
+        optimization_data.old_training_loss = training_loss;
 
         if(stop_training) break;
     }
@@ -1629,7 +1631,7 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << loss_goal;
+        buffer << training_loss_goal;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -1852,7 +1854,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("LossGoal");
 
     buffer.str("");
-    buffer << loss_goal;
+    buffer << training_loss_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1993,7 +1995,7 @@ Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
        labels.push_back("Loss goal");
 
        buffer.str("");
-       buffer << loss_goal;
+       buffer << training_loss_goal;
 
        values.push_back(buffer.str());
 

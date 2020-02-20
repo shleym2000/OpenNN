@@ -23,6 +23,7 @@
 #include "config.h"
 #include "layer.h"
 #include "probabilistic_layer.h"
+#include "opennn_strings.h"
 
 #ifdef __OPENNN_CUDA__
     #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
@@ -142,7 +143,7 @@ public:
 
        for(Index i = 0; i < biases_number; i++)
        {
-           fill_n(combinations.data(), batch_instances_number, biases(i));
+           fill_n(combinations.data()+i*batch_instances_number, batch_instances_number, biases(i));
        }
 
        switch(device_pointer->get_type())
@@ -294,12 +295,10 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
    void forward_propagate(const Tensor<type, 2>& inputs,
-                                      ForwardPropagation& forward_propagation)
-      {
-
+                                      ForwardPropagation& forward_propagation) const
+    {
 #ifdef __OPENNN_DEBUG__
 
-       const Index neurons_number = get_neurons_number();
        const Index inputs_number = get_inputs_number();
 
        if(inputs_number != inputs.dimension(1))
@@ -323,12 +322,10 @@ public:
    }
 
 
-
    void forward_propagate(const Tensor<type, 2>& inputs,
-                                      Tensor<type, 1>& potential_parameters,
-                                      ForwardPropagation& forward_propagation)
+                                      Tensor<type, 1> potential_parameters,
+                                      ForwardPropagation& forward_propagation) const
       {
-
        const Index neurons_number = get_neurons_number();
        const Index inputs_number = get_inputs_number();
 
@@ -347,8 +344,8 @@ public:
 
 #endif
 
-       const TensorMap< Tensor<type, 2> > potential_synaptic_weights(potential_parameters.data(), inputs_number, neurons_number);
-       const TensorMap< Tensor<type, 2> > potential_biases(potential_parameters.data() + neurons_number*inputs_number, neurons_number, 1);
+       const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data(), inputs_number, neurons_number);
+       const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data() + neurons_number*inputs_number, neurons_number, 1);
 
        calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations);
 
@@ -394,8 +391,8 @@ public:
 
        ostringstream buffer;
 
-       buffer << "OpenNN Exception: Layer class.\n"
-              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "void calculate_output_delta(const Tensor<type, 2>& ,const Tensor<type, 2>& ,Tensor<type, 2>& ) const method.\n"
               << "Unknown device.\n";
 
        throw logic_error(buffer.str());
@@ -446,7 +443,7 @@ public:
 
                 hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
 
-                break;
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
@@ -457,7 +454,7 @@ public:
 
                hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 
-                break;
+               return;
             }
 
            case Device::EigenGpu:
@@ -466,18 +463,16 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
+
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "void calculate_hidden_delta_perceptron(Layer* , const Tensor<type, 2>& , const Tensor<type, 2>& , Tensor<type, 2>& ) const method.\n"
+              << "Unknown device.\n";
+
+       throw logic_error(buffer.str());
+
    }
 
 
@@ -487,7 +482,9 @@ public:
                                              const Tensor<type, 2>& next_layer_delta,
                                              Tensor<type, 2>& hidden_delta) const
    {
-//   const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+       const ProbabilisticLayer* next_probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+       const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
 
        switch(device_pointer->get_type())
        {
@@ -495,14 +492,22 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                break;
+                hidden_delta.device(*default_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
+
+                hidden_delta.device(*default_device) = hidden_delta*activations_derivatives;
+
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                break;
+               hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT) ;
+
+               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
+
+               return;
             }
 
            case Device::EigenGpu:
@@ -518,7 +523,8 @@ public:
        ostringstream buffer;
 
        buffer << "OpenNN Exception: Layer class.\n"
-              << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
+              << "void calculate_hidden_delta_probabilistic(Layer* , const Tensor<type, 2>& "
+                 ", const Tensor<type, 2>& , const Tensor<type, 2>& , Tensor<type, 2>& ) const method.\n"
               << "Unknown device.\n";
 
        throw logic_error(buffer.str());
@@ -540,7 +546,7 @@ public:
 
                 back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
 
-                break;
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
@@ -551,7 +557,7 @@ public:
 
                 back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
 
-                break;
+                return;
             }
 
            case Device::EigenGpu:
@@ -560,30 +566,25 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: Layer class.\n"
-                      << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
-//       memcpy(error_gradient.data(), biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
-//       memcpy(error_gradient.data(), synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+       ostringstream buffer;
+
+       buffer << "OpenNN Exception: PerceptronLayer class.\n"
+              << "void calculate_error_gradient(const Tensor<type, 2>& , const Layer::ForwardPropagation&, Layer::BackPropagation& ) const method.\n"
+              << "Unknown device.\n";
+
+       throw logic_error(buffer.str());
    }
+
 
    void insert_parameters(const Tensor<type, 1>& parameters)
    {
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(synaptic_weights.data(), parameters.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-       memcpy(biases.data(), parameters.data() + synaptic_weights.size(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(biases.data(), parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
    }
 
 
@@ -592,9 +593,9 @@ public:
        const Index biases_number = get_biases_number();
        const Index synaptic_weights_number = get_synaptic_weights_number();
 
-       memcpy(gradient.data() + index, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-       memcpy(gradient.data() + back_propagation.synaptic_weights_derivatives.size() + index,
-              back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data() + index,back_propagation.biases_derivatives.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(gradient.data() + index + biases_number, back_propagation.synaptic_weights_derivatives.data(), static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+
    }
 
 
