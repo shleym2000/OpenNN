@@ -27,23 +27,23 @@ using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
 
-using Eigen::Tensor;
-
-
-#define EIGEN_TEST_NO_LONGDOUBLE
-
-#define EIGEN_TEST_NO_COMPLEX
-
-#define EIGEN_TEST_FUNC cxx11_tensor_cuda
-
-#define EIGEN_USE_GPU
-
 int main(void)
 {          
     try
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
+/*
+        DataSet data_set(100, 11);
+
+        data_set.generate_Rosenbrock_data(1400000, 1001);
+
+        data_set.set_separator(DataSet::Comma);
+        data_set.set_data_file_name("D:/rosenbrock_1400000_1000.csv");
+
+        data_set.save_data();
+*/
         Index samples = 20;
         Index variables = 3;
 
@@ -52,12 +52,17 @@ int main(void)
         Device device(Device::EigenSimpleThreadPool);
 
         // Data set
-
+/*
         Tensor<type, 2> data(samples, variables+1);
 
-        data.setRandom();
+        data.setZero();
 
         DataSet data_set(data);
+        */
+
+        DataSet data_set;
+
+        data_set.generate_Rosenbrock_data(samples, variables+1);
 
         data_set.set_device_pointer(&device);
 
@@ -88,7 +93,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::L2);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(30);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
