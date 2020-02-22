@@ -167,39 +167,36 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 
 Tensor<type, 1> PerceptronLayer:: get_parameters() const
 {
-    Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
+//    Eigen::array<Index, 1> one_dim_weight{{synaptic_weights.dimension(0)*synaptic_weights.dimension(1)}};
 
-    Eigen::array<Index, 1> one_dim_bias{biases.dimension(1)};
+//    Eigen::array<Index, 1> one_dim_bias{{biases.dimension(0)*biases.dimension(1)}};
 
-    Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim_weight);
+//    Tensor<type, 1> synaptic_weights_vector = synaptic_weights.reshape(one_dim_weight);
 
-    Tensor<type, 1> biases_vector = biases.reshape(one_dim_bias);
+//    Tensor<type, 1> biases_vector = biases.reshape(one_dim_bias);
 
-    Tensor<type, 1> parameters(synaptic_weights_vector.size() + biases_vector.size());
-
+    Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
+/*
     for(Index i = 0; i < biases_vector.size(); i++)
     {
-        fill_n(parameters.data(), biases_vector.size(), biases_vector(i));
+        fill_n(parameters.data()+i, 1, biases_vector(i));
     }
+
     for(Index i = 0; i < synaptic_weights_vector.size(); i++)
     {
-        fill_n(parameters.data()+ biases_vector.size(), synaptic_weights_vector.size(), synaptic_weights_vector(i));
-    }
-/*
-    Index index = 0;
-
-    for(Index i = 0; i < synaptic_weights_vector.dimension(0); i++)
-    {
-        parameters(i) = synaptic_weights_vector(i);
-
-        index++;
-    }
-
-    for(Index i=0; i< biases_vector.dimension(0); i++)
-    {
-        parameters(i + index) = biases_vector(i);
+        fill_n(parameters.data()+ biases_vector.size() +i, 1, synaptic_weights_vector(i));
     }
 */
+    for(Index i = 0; i < biases.size(); i++)
+    {
+        fill_n(parameters.data()+i, 1, biases(i));
+    }
+
+    for(Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        fill_n(parameters.data()+ biases.size() +i, 1, synaptic_weights(i));
+    }
+
     return parameters;
 }
 
@@ -342,7 +339,7 @@ void PerceptronLayer::set_inputs_number(const Index& new_inputs_number)
 {
     const Index neurons_number = get_neurons_number();
 
-    biases.resize(neurons_number,1);
+    biases.resize(1,neurons_number);
 
     synaptic_weights.resize(new_inputs_number, neurons_number);
 }
@@ -356,7 +353,7 @@ void PerceptronLayer::set_neurons_number(const Index& new_neurons_number)
 {
     const Index inputs_number = get_inputs_number();
 
-    biases.resize(new_neurons_number, 1);
+    biases.resize(1, new_neurons_number);
 
     synaptic_weights.resize(inputs_number, new_neurons_number);
 }
@@ -411,6 +408,7 @@ void PerceptronLayer::set_parameters(const Tensor<type, 1>& new_parameters)
 
     memcpy(biases.data(), new_parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
     memcpy(synaptic_weights.data(), new_parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+
 }
 
 
@@ -500,7 +498,7 @@ void PerceptronLayer::set_display(const bool& new_display)
 /// Initializes the biases of all the perceptrons in the layer of perceptrons with a given value.
 /// @param value Biases initialization value.
 
-void PerceptronLayer::initialize_biases(const type& value)
+void PerceptronLayer::set_biases_constant(const type& value)
 {
     biases.setConstant(value);
 }
@@ -509,7 +507,7 @@ void PerceptronLayer::initialize_biases(const type& value)
 /// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with a given value.
 /// @param value Synaptic weights initialization value.
 
-void PerceptronLayer::initialize_synaptic_weights(const type& value)
+void PerceptronLayer::set_synaptic_weights_constant(const type& value)
 {
     synaptic_weights.setConstant(value);
 }
@@ -517,7 +515,7 @@ void PerceptronLayer::initialize_synaptic_weights(const type& value)
 
 /// Initializes the synaptic weights of all the perceptrons in the layer of perceptrons with glorot uniform distribution.
 
-void PerceptronLayer::initialize_synaptic_weights_glorot_uniform()
+void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 {
     Index fan_in;
     Index fan_out;

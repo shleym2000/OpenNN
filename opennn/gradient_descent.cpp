@@ -232,6 +232,7 @@ void GradientDescent::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 
 void GradientDescent::set_default()
 {
+
     // TRAINING PARAMETERS
 
     warning_parameters_norm = 1.0e6;
@@ -282,7 +283,8 @@ void GradientDescent::set_default()
 /// <li> Training direction norm.
 /// <li> Training rate.
 /// </ul>
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
+/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved,
+/// false otherwise.
 
 void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
 {
@@ -588,7 +590,8 @@ void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation increases.
+/// @param new_maximum_selection_error_increases Maximum number of iterations in which the selection evalutation
+/// increases.
 
 void GradientDescent::set_maximum_selection_error_increases(const Index& new_maximum_selection_error_increases)
 {
@@ -625,7 +628,8 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 
 
 /// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error, false otherwise.
+/// @param new_choose_best_selection True if the final model will be the neural network
+///  with the minimum selection error, false otherwise.
 
 void GradientDescent::set_choose_best_selection(const bool& new_choose_best_selection)
 {
@@ -634,7 +638,8 @@ void GradientDescent::set_choose_best_selection(const bool& new_choose_best_sele
 
 
 /// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account,
+/// false otherwise.
 
 void GradientDescent::set_apply_early_stopping(const bool& new_apply_early_stopping)
 {
@@ -717,7 +722,8 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
     {
         buffer << "OpenNN Exception: GradientDescent class.\n"
                << "Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const method.\n"
-               << "Size of gradient(" << gradient_size << ") is not equal to number of parameters(" << parameters_number << ").\n";
+               << "Size of gradient(" << gradient_size
+               << ") is not equal to number of parameters(" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -756,10 +762,20 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
+    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
+
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+
+    const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+
+    training_batch.fill(training_instances_indeces_vector,
+                        DataSet::tensor_to_vector(inputs_indices),
+                        DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -788,17 +804,14 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     // Learning rate
 
-    const type first_learning_rate = static_cast<type>(0.01);
-
-    type initial_learning_rate = 0;
     type learning_rate = 0;
     type old_learning_rate = 0;
-
-    pair<type,type> directional_point(2, 0.0);
 
     bool stop_training = false;
 
     // Optimization algorithm
+
+    OptimizationData optimization_data(this);
 
     Index selection_error_increases = 0;
 
@@ -822,9 +835,11 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
+
         // Neural network
 
-        parameters_norm = l2_norm(parameters);
+        parameters_norm = l2_norm(optimization_data.parameters);
 
         if(display && parameters_norm >= warning_parameters_norm)
             cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
@@ -845,7 +860,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         if(display && gradient_norm >= warning_gradient_norm)
             cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
-
+/*
         if(has_selection)
         {
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
@@ -864,35 +879,10 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                 minimal_selection_parameters = parameters;
             }
         }
-
+*/
         // Optimization algorithm
 
-        training_direction = calculate_training_direction(training_back_propagation.gradient);
-
-        if(l2_norm(training_direction) < numeric_limits<type>::min())
-            throw logic_error("Training direction is zero");
-
-        training_slope = (training_back_propagation.gradient/gradient_norm).contract(training_direction, AT_B);
-
-        if(training_slope(0) >= static_cast<type>(0.0))
-            throw logic_error("Training slope is equal or greater than zero");
-
-        epoch == 0 ? initial_learning_rate = first_learning_rate : initial_learning_rate = old_learning_rate;
-
-        directional_point = learning_rate_algorithm.calculate_directional_point(
-                                training_batch,
-                                parameters, training_forward_propagation,
-                                training_loss,
-                                training_direction, initial_learning_rate);
-
-        learning_rate = directional_point.first;
-// Not ok , learning rate = 0
-        if(abs(learning_rate) < numeric_limits<type>::min())
-            throw logic_error("Training rate is zero");
-
-        parameters_increment = training_direction*learning_rate;
-
-        parameters_increment_norm = l2_norm(parameters_increment);
+        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         // Elapsed time
 
@@ -907,7 +897,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         // Stopping Criteria
 
-        if(parameters_increment_norm <= minimum_parameters_increment_norm)
+        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
@@ -1007,7 +997,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                      << "Training loss: " << training_loss << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << loss_index_pointer->write_information()
-                     << "Training rate: " << learning_rate << "\n"
+                     << "Training rate: " << optimization_data.learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
                 if(has_selection) cout << "Selection error: " << selection_error << endl;
@@ -1038,7 +1028,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                  << "Training loss: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
-                 << "Training rate: " << learning_rate << "\n"
+                 << "Training rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
             if(has_selection) cout << "Selection error: " << selection_error << endl;
@@ -1046,9 +1036,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         // Set new parameters
 
-        parameters += parameters_increment;
+        optimization_data.parameters += optimization_data.parameters_increment;
 
-        neural_network_pointer->set_parameters(parameters);
+        neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Update stuff
 
@@ -1500,7 +1490,8 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
 }
 
 
-/// Serializes the gradient descent object into a XML document of the TinyXML library without keep the DOM tree in memory.
+/// Serializes the gradient descent object into a XML document of the TinyXML library
+/// without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
 void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
@@ -1651,7 +1642,8 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     // Learning rate algorithm
     {
-        const tinyxml2::XMLElement* learning_rate_algorithm_element = root_element->FirstChildElement("LearningRateAlgorithm");
+        const tinyxml2::XMLElement* learning_rate_algorithm_element
+                = root_element->FirstChildElement("LearningRateAlgorithm");
 
         if(learning_rate_algorithm_element)
         {
@@ -1668,7 +1660,8 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
     // Return minimum selection error neural network
 
-    const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
+    const tinyxml2::XMLElement* choose_best_selection_element
+            = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
 
     if(choose_best_selection_element)
     {

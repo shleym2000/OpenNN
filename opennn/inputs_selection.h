@@ -34,7 +34,8 @@ namespace OpenNN
 ///
 /// Any derived class must implement the perform_inputs_selection() method.
 ///
-/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics." \ref https://www.neuraldesigner.com/blog/model-selection
+/// [1] Neural Designer "Model Selection Algorithms in Predictive Analytics."
+/// \ref https://www.neuraldesigner.com/blog/model-selection
 
 class InputsSelection
 {
@@ -169,8 +170,6 @@ public:
     // Performances calculation methods
 
     Tensor<type, 1> calculate_losses(const Tensor<bool, 1>&);
-
-    Tensor<type, 1> perform_mean_model_evaluation(const Tensor<bool, 1>&);
 
     Tensor<type, 1> get_parameters_inputs(const Tensor<bool, 1>&) const;
 

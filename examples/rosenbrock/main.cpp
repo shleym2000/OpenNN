@@ -37,10 +37,10 @@ int main(void)
 /*
         DataSet data_set(100, 11);
 
-        data_set.generate_Rosenbrock_data(1400000, 1001);
+        data_set.generate_Rosenbrock_data(1800000, 1001);
 
         data_set.set_separator(DataSet::Comma);
-        data_set.set_data_file_name("D:/rosenbrock_1400000_1000.csv");
+        data_set.set_data_file_name("D:/rosenbrock_1800000_1000.csv");
 
         data_set.save_data();
 */
@@ -91,9 +91,9 @@ int main(void)
 
         training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
-        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::L2);
+        training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 

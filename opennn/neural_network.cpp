@@ -952,16 +952,14 @@ Tensor<type, 1> NeuralNetwork::get_parameters() const
 
     for(Index i = 0; i < trainable_layers_number; i++)
     {
+        const Tensor<type, 1> layer_parameters = trainable_layers_pointers(i)->get_parameters();
 
-        const Tensor<type, 1> layer_parameters = trainable_layers_pointers[i]->get_parameters();
-
-        for(Index i = 0; i < layer_parameters.size(); i++)
+        for(Index j = 0; j < layer_parameters.size(); j++)
         {
-            parameters(i + position) = layer_parameters(i);
+            parameters(j + position) = layer_parameters(j);
         }
 
         position += layer_parameters.size();
-
     }
 
     return parameters;
@@ -1039,15 +1037,19 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
+    Index index = 0;
+
     for(Index i = 0; i < trainable_layers_number; i++)
     {
         if(trainable_layers_pointers[i]->get_type() == Layer::Pooling) continue;
 
         Index layer_parameters_number = trainable_layers_pointers(i)->get_parameters_number();
 
-        const TensorMap< Tensor<type, 1> > layer_parameters(new_parameters.data(), layer_parameters_number);
+        const TensorMap< Tensor<type, 1> > layer_parameters(new_parameters.data() + index, layer_parameters_number);
 
-        trainable_layers_pointers(i)->insert_parameters(layer_parameters);
+        trainable_layers_pointers(i)->insert_parameters(layer_parameters, index);
+
+        index += layer_parameters_number;
     }
 }
 
@@ -1682,8 +1684,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    cout << "layers" << endl;
-
     // Outputs
 
     {
@@ -2078,8 +2078,6 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
     {
         new_outputs_number = static_cast<Index>(atoi(outputs_number_element->GetText()));
     }
-
-    cout << "new_outputs_number: " << new_outputs_number << endl;
 
     // Outputs names
 
@@ -2956,18 +2954,18 @@ string NeuralNetwork::write_expression_python() const
         }
     }
 
-    Tensor<PerceptronLayer::ActivationFunction, 1> activations;
+    Tensor<PerceptronLayer::ActivationFunction, 1> activations_2d;
 
     //    const Index layers_number = get_layers_number();
 
     //    for(Index i = 0; i < layers_number; i++)
-    //        activations.push_back(layers_pointers[i].get_activation_function());
+    //        activations_2d.push_back(layers_pointers[i].get_activation_function());
 
     buffer.str("");
 
     buffer << "#!/usr/bin/python\n\n";
     /*
-        if(activations.contains(PerceptronLayer::Threshold))
+        if(activations_2d.contains(PerceptronLayer::Threshold))
         {
             buffer << "def Threshold(x) : \n"
                       "   if x < 0 : \n"
@@ -2976,7 +2974,7 @@ string NeuralNetwork::write_expression_python() const
                       "       return 1\n\n";
         }
 
-        if(activations.contains(PerceptronLayer::SymmetricThreshold))
+        if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
         {
             buffer << "def SymmetricThreshold(x) : \n"
                       "   if x < 0 : \n"
@@ -2985,14 +2983,14 @@ string NeuralNetwork::write_expression_python() const
                       "       return 1\n\n";
         }
 
-        if(activations.contains(PerceptronLayer::Logistic))
+        if(activations_2d.contains(PerceptronLayer::Logistic))
         {
             buffer << "from math import exp\n"
                       "def Logistic(x) : \n"
                       "   return 1/(1+exp(-x)) \n\n";
         }
 
-        if(activations.contains(PerceptronLayer::HyperbolicTangent))
+        if(activations_2d.contains(PerceptronLayer::HyperbolicTangent))
         {
             buffer << "from math import tanh\n\n";
         }
@@ -3343,16 +3341,16 @@ string NeuralNetwork::write_expression_php() const
         }
     }
 
-    Tensor<PerceptronLayer::ActivationFunction, 1> activations;
+    Tensor<PerceptronLayer::ActivationFunction, 1> activations_2d;
 
     //    const Index layers_number = get_layers_number();
 
     //    for(Index i = 0; i < layers_number; i++)
-    //        activations.push_back(layers_pointers[i]->get_activation_function());
+    //        activations_2d.push_back(layers_pointers[i]->get_activation_function());
 
     buffer.str("");
     /*
-        if(activations.contains(PerceptronLayer::Threshold))
+        if(activations_2d.contains(PerceptronLayer::Threshold))
         {
             buffer << "function Threshold($x)\n"
                       "{\n"
@@ -3367,7 +3365,7 @@ string NeuralNetwork::write_expression_php() const
                       "}\n\n";
         }
 
-        if(activations.contains(PerceptronLayer::SymmetricThreshold))
+        if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
         {
             buffer << "function SymmetricThreshold(&x)\n"
                       "{\n"
@@ -3382,7 +3380,7 @@ string NeuralNetwork::write_expression_php() const
                       "}\n\n";
         }
 
-        if(activations.contains(PerceptronLayer::Logistic))
+        if(activations_2d.contains(PerceptronLayer::Logistic))
         {
             buffer << "function Logistic($x)\n"
                       "{\n"
@@ -3661,18 +3659,18 @@ string NeuralNetwork::write_expression_R() const
         }
     }
 
-    Tensor<PerceptronLayer::ActivationFunction, 1> activations;
+    Tensor<PerceptronLayer::ActivationFunction, 1> activations_2d;
 
     //    const Index layers_number = get_layers_number();
 
     //    for(Index i = 0; i < layers_number; i++)
     //	{
-    //        activations.push_back(layers_pointers[i]->get_activation_function());
+    //        activations_2d.push_back(layers_pointers[i]->get_activation_function());
     //	}
 
     buffer.str("");
     /*
-        if(activations.contains(PerceptronLayer::Threshold))
+        if(activations_2d.contains(PerceptronLayer::Threshold))
         {
             buffer << "Threshold <- function(x) { \n"
                       "   if(x < 0)  0 \n"
@@ -3680,7 +3678,7 @@ string NeuralNetwork::write_expression_R() const
                       "}\n\n";
         }
 
-        if(activations.contains(PerceptronLayer::SymmetricThreshold))
+        if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
         {
             buffer << "SymmetricThreshold <- function(x) { \n"
                       "   if(x < 0)  -1 \n"
@@ -3688,7 +3686,7 @@ string NeuralNetwork::write_expression_R() const
                       "}\n\n";
         }
 
-        if(activations.contains(PerceptronLayer::Logistic))
+        if(activations_2d.contains(PerceptronLayer::Logistic))
         {
             buffer << "Logistic <- function(x) { \n"
                       "   1/(1+exp(-x))\n"

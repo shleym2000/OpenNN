@@ -956,18 +956,16 @@ Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_numb
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
     return split_instances(training_indices, batch_instances_number);
-
 }
 
 
 Tensor<Index, 2> DataSet::get_selection_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
 {
-    Tensor<Index, 1> training_indices = get_selection_instances_indices();
+    Tensor<Index, 1> selection_indices = get_selection_instances_indices();
 
-    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+    if(shuffle_batches_instances) std::random_shuffle(selection_indices.data(), selection_indices.data() + selection_indices.size());
 
-    return split_instances(training_indices, batch_instances_number);
-
+    return split_instances(selection_indices, batch_instances_number);
 }
 
 
@@ -978,7 +976,6 @@ Tensor<Index, 2> DataSet::get_testing_batches(const Index& batch_instances_numbe
     if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
 
     return split_instances(training_indices, batch_instances_number);
-
 }
 
 
@@ -2331,13 +2328,16 @@ Index DataSet::get_unused_variables_number() const
 
 Index DataSet::get_variable_index(const string& name) const
 {
-    const Tensor<string, 1> names = get_variables_names();
-    /*
-        const Index index = names.get_first_index(name);
+    const Index variables_number = get_variables_number();
 
-        return index;
-    */
-    return 0;
+    const Tensor<string, 1> variables_names = get_variables_names();
+
+    for(Index i = 0; i < variables_number; i++)
+    {
+        if(variables_names(i) == name) return i;
+    }
+
+    throw exception("Exception: Index DataSet::get_variable_index(const string& name) const");
 }
 
 
@@ -3368,12 +3368,13 @@ Tensor<type, 1> DataSet::get_instance_data(const Index& instance_index, const Te
 
 /// Returns the inputs values of a single instance in the data set.
 /// @param instance_index Index of the instance.
+/// @todo Check, delete method?
 
 Tensor<type, 2> DataSet::get_instance_input_data(const Index & instance_index) const
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return get_subtensor_data(Tensor<Index, 1>({instance_index}), input_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>(instance_index), input_variables_indices);
 }
 
 
@@ -3384,7 +3385,7 @@ Tensor<type, 2> DataSet::get_instance_target_data(const Index & instance_index) 
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
-    return get_subtensor_data(Tensor<Index, 1>({instance_index}), target_variables_indices);
+    return get_subtensor_data(Tensor<Index, 1>(instance_index), target_variables_indices);
 }
 
 
@@ -3397,10 +3398,7 @@ Index DataSet::get_column_index(const string& column_name) const
 
     for(Index i = 0; i < columns_number; i++)
     {
-        if(columns(i).name == column_name)
-        {
-            return i;
-        }
+        if(columns(i).name == column_name) return i;
     }
 
     ostringstream buffer;
@@ -3750,9 +3748,7 @@ void DataSet::set(const Tensor<type, 2>& new_data)
     set(instances_number, variables_number);
 
     data = new_data;
-    /*
-       if(get_header_line()) set_variables_names(data.get_header());
-    */
+
     display = true;
 
     set_default_columns_uses();
@@ -4424,7 +4420,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
             {
                 for(Index k = 0; k < used_instances_number; k++)
                 {
-                    if(data(used_instances_indices(k), variable_index) == 1.0)
+                    if(abs(data(used_instances_indices(k), variable_index) - 1) < numeric_limits<type>::min())
                     {
                         categories_frequencies(j)++;
                     }
@@ -4445,7 +4441,7 @@ Tensor<Histogram, 1> DataSet::calculate_columns_distribution(const Index& bins_n
 
             for(Index j = 0; j < used_instances_number; j++)
             {
-                if(data(used_instances_indices(j), variable_index) == 1.0)
+                if(abs(data(used_instances_indices(j), variable_index) - 1) < numeric_limits<type>::min())
                 {
                     binary_frequencies(0)++;
                 }
@@ -4530,7 +4526,7 @@ Index DataSet::calculate_training_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(data(training_index, target_index) != 1.0)
+        else if(abs(data(training_index, target_index) - 1) < numeric_limits<type>::min())
         {
             ostringstream buffer;
 
@@ -4565,7 +4561,7 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(data(selection_index, target_index) != 1.0)
+        else if(abs(data(selection_index, target_index) - 1) < numeric_limits<type>::min())
         {
             ostringstream buffer;
 
@@ -4600,7 +4596,7 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(data(testing_index, target_index) != static_cast<type>(1.0))
+        else if(abs(data(testing_index, target_index) -1) < numeric_limits<type>::min())
         {
             ostringstream buffer;
 
@@ -4975,7 +4971,7 @@ Tensor<type, 1> DataSet::calculate_variables_means(const Tensor<Index, 1>& varia
     {
         const Index variable_index = variables_indices(i);
 
-        Tensor<type, 1> mean = (data.chip(variable_index,1)).mean();
+        const Tensor<type, 0> mean = data.chip(variable_index,1).mean();
 
         means(i) = mean(0);
     }
@@ -5995,13 +5991,10 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_mean_standard_deviation()
 
 void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    /*
-        Tensor<type, 1> column = data.chip(input_index,1);
-
-        scale_mean_standard_deviation(column, input_statistics);
-
-        data.set_column(input_index, column, "");
-    */
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = static_cast<type>(2)*(data(i, input_index) - input_statistics.mean) / input_statistics.standard_deviation;
+    }
 }
 
 
@@ -6042,13 +6035,10 @@ Descriptives DataSet::scale_input_mean_standard_deviation(const Index& input_ind
 
 void DataSet::scale_input_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
-    /*
-        Tensor<type, 1> column = data.chip(input_index,1);
-
-        scale_standard_deviation(column, input_statistics);
-
-        data.set_column(input_index, column, "");
-    */
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = static_cast<type>(2)*(data(i, input_index)) / input_statistics.standard_deviation;
+    }
 }
 
 
@@ -6131,13 +6121,10 @@ Tensor<Descriptives, 1> DataSet::scale_inputs_minimum_maximum()
 
 void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-    /*
-        Tensor<type, 1> column = data.chip(input_index,1);
-
-        scale_minimum_maximum(column, input_statistics);
-
-        data.set_column(input_index, column, "");
-    */
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        data(i, input_index) = static_cast<type>(2.0)*(data(i, input_index)-input_statistics.minimum)/(input_statistics.maximum-input_statistics.minimum)-static_cast<type>(1.0);
+    }
 }
 
 
@@ -6303,9 +6290,23 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
 void DataSet::scale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    /*
-        scale_columns_mean_standard_deviation(data, targets_descriptives, target_variables_indices);
-    */
+    const Index target_variables_number = target_variables_indices.size();
+
+    Index variable_index;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < target_variables_number; j++)
+        {
+            variable_index = target_variables_indices(j);
+
+            if(!::isnan(data(i,variable_index)))
+            {
+                data(i, variable_index) =
+                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).mean)/(targets_descriptives(j).standard_deviation);
+            }
+        }
+    }
 }
 
 
@@ -6361,8 +6362,23 @@ void DataSet::scale_targets_minimum_maximum(const Tensor<Descriptives, 1>& targe
 #endif
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Index target_variables_number = target_variables_indices.size();
 
-//    scale_columns_minimum_maximum(data, targets_descriptives, target_variables_indices);
+    Index variable_index;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < target_variables_number; j++)
+        {
+            variable_index = target_variables_indices(j);
+
+            if(!::isnan(data(i,variable_index)))
+            {
+                data(i, variable_index) =
+                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).minimum)/(targets_descriptives(j).maximum-targets_descriptives(j).minimum)-static_cast<type>(1.0);
+            }
+        }
+    }
 }
 
 
@@ -6403,9 +6419,23 @@ void DataSet::scale_targets_logarithmic(const Tensor<Descriptives, 1>& targets_d
 #endif
 
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    /*
-        scale_columns_logarithmic(data, targets_descriptives, target_variables_indices);
-    */
+    const Index target_variables_number = target_variables_indices.size();
+
+    Index variable_index;
+
+    for(Index i = 0; i < data.dimension(0); i++)
+    {
+        for(Index j = 0; j < target_variables_number; j++)
+        {
+            variable_index = target_variables_indices(j);
+
+            if(!::isnan(data(i,variable_index)))
+            {
+                data(i, variable_index) =
+                        static_cast<type>(0.5)*(exp(data(i, variable_index)))*(targets_descriptives(j).maximum-targets_descriptives(j).minimum)+ targets_descriptives(j).minimum;
+            }
+        }
+    }
 }
 
 
