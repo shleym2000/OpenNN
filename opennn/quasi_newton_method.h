@@ -107,6 +107,14 @@ public:
 
         void print() const
         {
+            cout << "Training Direction:" << endl;
+            cout << training_direction << endl;
+
+            cout << "Learning rate:" << endl;
+            cout << learning_rate << endl;
+
+            cout << "Parameters:" << endl;
+            cout << parameters << endl;
         }
 
         QuasiNewtonMethod* quasi_newton_method_pointer = nullptr;
@@ -320,7 +328,7 @@ public:
 
        // Calculate training slope
 
-       optimization_data.training_slope = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
 
        // Check for a descent direction
 
@@ -369,6 +377,8 @@ public:
 
        optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
 
+       cout << "optimization_data.learning_rate: " << optimization_data.learning_rate << endl;
+
        optimization_data.parameters += optimization_data.parameters_increment;
 
        optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
@@ -387,8 +397,6 @@ public:
 //       optimization_data.learning_rate = learning_rate;
 
        optimization_data.old_learning_rate = optimization_data.learning_rate;
-
-
    }
 
 

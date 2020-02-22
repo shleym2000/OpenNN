@@ -67,13 +67,15 @@ public:
 
    // loss methods
 
+   /// @todo Check formula
+
    type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
    {
        Tensor<type, 0> minkowski_error;
 
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations;
+       const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
 
        const Tensor<type, 2>& targets = batch.targets_2d;
 
@@ -83,7 +85,7 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                minkowski_error.device(*default_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
+                minkowski_error.device(*default_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
                                                             .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
@@ -93,7 +95,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               minkowski_error.device(*thread_pool_device) = (((outputs - targets).abs().pow(minkowski_parameter)).sum())
+               minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
                                                                 .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
@@ -104,17 +106,6 @@ public:
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
                 break;
-           }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: MinkowskiError class.\n"
-                      << "type calculate_error(const DataSet::Batch& , const NeuralNetwork::ForwardPropagation& ) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
            }
        }
 
@@ -131,8 +122,8 @@ public:
             {
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
-                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
+//                minkowski_error.device(*default_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
+//                                                            .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -141,8 +132,8 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               minkowski_error.device(*thread_pool_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
-                                                               .pow(static_cast<type>(1.0)/minkowski_parameter);
+//               minkowski_error.device(*thread_pool_device) = ((back_propagation.errors.abs().pow(minkowski_parameter)).sum())
+//                                                               .pow(static_cast<type>(1.0)/minkowski_parameter);
 
                 break;
             }
@@ -153,17 +144,6 @@ public:
 
                 break;
            }
-
-            default:
-            {
-               ostringstream buffer;
-
-               buffer << "OpenNN Exception: MinkowskiError class.\n"
-                      << "void calculate_error(BackPropagation& back_propagation) const method.\n"
-                      << "Unknown device.\n";
-
-               throw logic_error(buffer.str());
-           }
        }
 
        back_propagation.loss = minkowski_error(0);
@@ -171,7 +151,8 @@ public:
 
    /// @todo Virtual method not implemented.
 
-   void calculate_output_gradient(const NeuralNetwork::ForwardPropagation& forward_propagation,
+   void calculate_output_gradient(const DataSet::Batch& batch,
+                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                   BackPropagation& back_propagation) const
    {
         #ifdef __OPENNN_DEBUG__
@@ -183,16 +164,42 @@ public:
         const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations
-                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
-*/
+
+//        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
+//                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 Tensor<type, 0> p_norm = back_propagation.errors.abs().pow(minkowski_parameter).sum().pow(1.0/minkowski_parameter);
+
+                 back_propagation.output_gradient.device(*default_device)
+                         = back_propagation.errors.abs().pow(minkowski_parameter-2.0)/p_norm;
+
+                 break;
+             }
+
+             case Device::EigenSimpleThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                 break;
+             }
+
+            case Device::EigenGpu:
+            {
+ //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+                 break;
+            }
+        }
    }
 
    string get_error_type() const;
    string get_error_type_text() const;
-
-   type minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
 
    // Serialization methods
 

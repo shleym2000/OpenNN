@@ -1176,10 +1176,18 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
+    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
+
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+
+    const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+
+    training_batch.fill(training_instances_indeces_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -1201,7 +1209,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     type gradient_norm = 0;
 
     type selection_error = numeric_limits<type>::max();
-//    type old_selection_error = numeric_limits<type>::max();
+    type old_selection_error = numeric_limits<type>::max();
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
 
@@ -1229,6 +1237,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        optimization_data.epoch = epoch;
         // Neural network
 
         parameters_norm = l2_norm(optimization_data.parameters);
@@ -1257,13 +1266,15 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
 
-        // Set new parameters
+        optimization_data.print();
+
+        system("pause");
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Selection error
 
-/*
+
         if(has_selection)
         {
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
@@ -1279,12 +1290,12 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                 minimal_selection_parameters = optimization_data.parameters;
             }
         }
-*/
+
         // Training history
 
-        if(reserve_training_error_history) results.training_error_history[epoch] = training_error;
+        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
 
-        if(reserve_selection_error_history) results.selection_error_history[epoch] = selection_error;
+        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria
 
@@ -1293,7 +1304,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-       if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
+       /*if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
@@ -1317,7 +1328,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MinimumLossDecrease;
         }
-        else if(training_loss <= training_loss_goal)
+        else*/ if(training_loss <= training_loss_goal)
         {
             if(display)
             {
