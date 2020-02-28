@@ -17,7 +17,6 @@ NormalizedSquaredErrorTest::~NormalizedSquaredErrorTest(void)
 {
 }
 
-/*
 void NormalizedSquaredErrorTest::test_constructor(void)
 {
    cout << "test_constructor\n";
@@ -53,7 +52,49 @@ void NormalizedSquaredErrorTest::test_destructor(void)
    cout << "test_destructor\n";
 }
 
+void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient(void)
+{
+   cout << "test_calculate_normalization_coefficient\n";
 
+   NeuralNetwork neural_network;
+   DataSet data_set;
+   NormalizedSquaredError nse(&neural_network, &data_set);
+
+   Index instances_number = 4;
+   Index inputs_number = 4;
+   Index outputs_number = 4;    //targets_number or means_number
+
+   Tensor<type, 1> targets_mean(outputs_number);
+   Tensor<type, 2> targets(instances_number, outputs_number);
+
+   // Test
+
+   data_set.generate_random_data(instances_number, inputs_number+outputs_number);
+
+   Tensor<string, 1> uses(8);
+   uses.setValues({"Input", "Input", "Input", "Input", "Target", "Target", "Target", "Target"});
+
+   data_set.set_columns_uses(uses);
+
+   targets = data_set.get_target_data();
+   targets_mean = data_set.calculate_training_targets_mean();
+
+   Tensor<Index, 1> architecture(2);
+   architecture.setValues({inputs_number, outputs_number});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set_parameters_random();
+
+
+//   data_set.set(instances_number, inputs_number, outputs_number);
+//   data_set.set_data_random();
+
+   type normalization_coefficient = nse.calculate_normalization_coefficient(targets, targets_mean);
+
+   assert_true(normalization_coefficient > 0, LOG);
+}
+
+/*
 void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 {
    cout << "test_calculate_training_error\n";
@@ -101,15 +142,18 @@ void NormalizedSquaredErrorTest::test_calculate_training_error(void)
 
    assert_true(abs(normalized_squared_error.calculate_training_error() - normalized_squared_error.calculate_training_error(parameters)) < 1.0e-03, LOG);
 }
-
+*/
 
 void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 {
    cout << "test_calculate_training_error_gradient\n";
 
+   Device device(Device::EigenSimpleThreadPool);
+
    NeuralNetwork neural_network;
 
    DataSet data_set;
+
 
    NormalizedSquaredError nse(&neural_network, &data_set);
 
@@ -134,27 +178,49 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    // Test trivial
 {
+   data_set.set_device_pointer(&device);
+
    instances_number = 10;
    inputs_number = 1;
    outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
-
    data_set.initialize_data(0.0);
+   data_set.set_training();
+
+   DataSet::Batch batch(instances_number, &data_set);
+
+   const vector<Index> instances_indices_vector = DataSet::tensor_to_vector(data_set.get_training_instances_indices());
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+
+   batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
 
    hidden_perceptron_layer->set(inputs_number, outputs_number);
    neural_network.add_layer(hidden_perceptron_layer);
+
+   neural_network.set_device_pointer(&device);
 
    neural_network.set_parameters_constant(0.0);
 
    nse.set_normalization_coefficient(1.0);
 
+   nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+
+   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
+   LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
+
+   neural_network.forward_propagate(batch, forward_propagation);
+
+   nse.set_device_pointer(&device);
+
+   nse.back_propagate(batch, forward_propagation, training_back_propagation);
+   error_gradient = training_back_propagation.gradient;
+
    numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
 
-   error_gradient = nse.calculate_training_error_gradient();
-
-   assert_true(error_gradient.size() == neural_network.get_parameters_number(), LOG);
-   assert_true(error_gradient == 0.0, LOG);
+   assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
+   assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
 }
 
    neural_network.set();
@@ -162,9 +228,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
    // Test perceptron and probabilistic
 {
    instances_number = 10;
-   inputs_number = 3;
-   outputs_number = 2;
-   hidden_neurons = 2;
+   inputs_number = 5;
+   hidden_neurons = 7;
+   outputs_number = 1;
 
    data_set.set(instances_number, inputs_number, outputs_number);
 
@@ -172,25 +238,47 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    data_set.set_training();
 
+   DataSet::Batch batch(instances_number, &data_set);
+
+   const vector<Index> instances_indices_vector = DataSet::tensor_to_vector(data_set.get_training_instances_indices());
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
+
+   batch.fill(instances_indices_vector, DataSet::tensor_to_vector(input_indices), DataSet::tensor_to_vector(target_indices));
+
    hidden_perceptron_layer->set(inputs_number, hidden_neurons);
    output_perceptron_layer->set(hidden_neurons, outputs_number);
-   probabilistic_layer->set(outputs_number, outputs_number);
+//   probabilistic_layer->set(outputs_number, outputs_number);
 
    neural_network.add_layer(hidden_perceptron_layer);
    neural_network.add_layer(output_perceptron_layer);
-   neural_network.add_layer(probabilistic_layer);
+//   neural_network.add_layer(probabilistic_layer);
+
+   neural_network.set_device_pointer(&device);
 
    neural_network.set_parameters_random();
 
    nse.set_normalization_coefficient();
 
-   error_gradient = nse.calculate_training_error_gradient();
+   NeuralNetwork::ForwardPropagation forward_propagation(instances_number, &neural_network);
+   LossIndex::BackPropagation training_back_propagation(instances_number, &nse);
+
+   neural_network.forward_propagate(batch, forward_propagation);
+
+   nse.set_device_pointer(&device);
+
+   nse.back_propagate(batch, forward_propagation, training_back_propagation);
+   error_gradient = training_back_propagation.gradient;
 
    numerical_error_gradient = nse.calculate_training_error_gradient_numerical_differentiation();
 
-   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
-}
+   const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
+   assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
+
+//   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
+}
+/*
    neural_network.set();
 
    // Test lstm
@@ -326,8 +414,9 @@ void NormalizedSquaredErrorTest::test_calculate_training_error_gradient(void)
 
    assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
 }
+   */
 }
-
+/*
 
 void NormalizedSquaredErrorTest::test_calculate_training_error_terms(void)
 {
@@ -509,12 +598,15 @@ void NormalizedSquaredErrorTest::test_from_XML(void)
 void NormalizedSquaredErrorTest::run_test_case(void)
 {
    cout << "Running normalized squared error test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
    test_destructor();
 
+   test_calculate_normalization_coefficient();
+
+/*
    // Get methods
 
    // Set methods
@@ -522,9 +614,9 @@ void NormalizedSquaredErrorTest::run_test_case(void)
    // Error methods
 
    test_calculate_training_error();
-
+*/
    test_calculate_training_error_gradient();
-
+/*
    // Error terms methods
 
    test_calculate_training_error_terms();

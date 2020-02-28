@@ -89,6 +89,14 @@ type NormalizedSquaredError::get_normalization_coefficient() const
 }
 
 
+/// Returns the selection normalization coefficient.
+
+type NormalizedSquaredError::get_selection_normalization_coefficient() const
+{
+    return selection_normalization_coefficient;
+}
+
+
 /// Sets the normalization coefficient from training instances.
 /// This method calculates the normalization coefficient of the dataset.
 
@@ -96,15 +104,15 @@ void NormalizedSquaredError::set_normalization_coefficient()
 {
     // Data set
 
-    const Tensor<type, 1> training_targets_mean = data_set_pointer->calculate_training_targets_mean();
+    const Tensor<type, 1> targets_mean = data_set_pointer->calculate_used_targets_mean();
 
     //Targets matrix
 
-    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
+    const Tensor<type, 2> targets = data_set_pointer->get_target_data();
 
     //Normalization coefficient
 
-    normalization_coefficient = calculate_normalization_coefficient(targets, training_targets_mean);
+    normalization_coefficient = calculate_normalization_coefficient(targets, targets_mean);
 }
 
 /// Sets the normalization coefficient.
@@ -136,7 +144,6 @@ void NormalizedSquaredError::set_selection_normalization_coefficient()
     // Normalization coefficient
 
     selection_normalization_coefficient = calculate_normalization_coefficient(targets, selection_targets_mean);
-
 }
 
 
@@ -196,12 +203,13 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     type normalization_coefficient = 0;
 
-    for(Index i=0; i < size; i++)
+    for(Index i = 0; i < size; i++)
     {
         Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
 
         normalization_coefficient += norm_1(0);
     }
+
     return normalization_coefficient;
 }
 

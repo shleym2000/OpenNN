@@ -759,22 +759,23 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_inverse_hessian_approximation(
 
 const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & left_matrix, Tensor<type, 1> & right_matrix) const
 {
+//    TensorMap< Tensor<type, 2> > left_matri(left_matrix.data(), left_matrix.dimension(0), 1);
     // Transform Tensors into Dense matrix
 
     auto ml = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor >>
-            (left_matrix.data(),left_matrix.dimension(0),left_matrix.dimension(1));
-
+            (left_matrix.data(),left_matrix.dimension(0), 1);
+cout << "ml" << endl;
     auto mr = Eigen::Map<Eigen::Matrix<type,Eigen::Dynamic,Eigen::Dynamic,Eigen::RowMajor>>
-            (right_matrix.data(),right_matrix.dimension(0),right_matrix.dimension(1));
-
+            (right_matrix.data(),right_matrix.dimension(0), 1);
+cout << "mr" << endl;
     // Kronecker Product
 
     auto product = kroneckerProduct(ml,mr).eval();
-
+cout << "product" << endl;
     // Matrix into a Tensor
 
-    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), product.rows(), product.cols());
-
+    TensorMap< Tensor<type, 2> > direct_matrix(product.data(), left_matrix.size(), left_matrix.size());
+cout << "direct" << endl;
     return direct_matrix;
 }
 
@@ -948,13 +949,6 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_DFP_inverse_hessian(const Tensor<ty
         throw logic_error(buffer.str());
     }
 */
-    // Intentar hacerlo así:
-
-    // Inverse hessian = A
-
-    // Inverse hessian += bT*C
-
-    // Inverse hesains +=
 
     // Dots
 
@@ -1126,23 +1120,33 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
 
     const Tensor<type, 0> parameters_dot_gradient = parameters_difference.contract(gradient_difference, AT_B);
 
+    cout << "1" << endl;
+
     Tensor<type, 1> hessian_dot_gradient = old_inverse_hessian.contract(gradient_difference, A_B);
 
+    cout << "2" << endl;
+
     const Tensor<type, 0> gradient_dot_hessian_dot_gradient = gradient_difference.contract(hessian_dot_gradient, AT_B);
+
+    cout << "3" << endl;
 
     Tensor<type, 1> BFGS = parameters_difference/parameters_dot_gradient(0)
                                - hessian_dot_gradient/gradient_dot_hessian_dot_gradient(0);
 
+    cout << "4" << endl;
+
     // Calculates Approximation
 
     Tensor<type, 2> inverse_hessian_approximation = old_inverse_hessian;
-
+cout << "5" << endl;
+cout << "Parameters difference: " << parameters_difference << endl;
+cout << inverse_hessian_approximation.dimension(0) << endl;
     inverse_hessian_approximation += kronecker_product(parameters_difference, parameters_difference)/parameters_dot_gradient(0); // Ok
-
+cout << "6" << endl;
     inverse_hessian_approximation -= kronecker_product(hessian_dot_gradient, hessian_dot_gradient)/gradient_dot_hessian_dot_gradient(0); // Ok
-
+cout << "7" << endl;
     inverse_hessian_approximation += kronecker_product(BFGS, BFGS)*(gradient_dot_hessian_dot_gradient(0)); // Ok
-
+cout << "8" << endl;
     return inverse_hessian_approximation;
 }
 
@@ -1177,17 +1181,20 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_columns_indices();
-    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_columns_indices();
+    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-    const vector<Index> training_instances_indeces_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
+    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
 
-    training_batch.fill(training_instances_indeces_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
 
     // Neural network
 
@@ -1248,12 +1255,14 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         }
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
         // Loss index
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         training_loss = training_back_propagation.loss;
+        training_error = loss_index_pointer->calculate_error(training_batch, training_forward_propagation);
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1266,14 +1275,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         update_epoch(training_batch,training_forward_propagation,training_back_propagation, optimization_data);
 
-        optimization_data.print();
-
-        system("pause");
-
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
         // Selection error
-
 
         if(has_selection)
         {
@@ -1289,13 +1293,13 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
                 minimal_selection_parameters = optimization_data.parameters;
             }
+
+            if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
         }
 
         // Training history
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
-
-        if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         // Stopping Criteria
 
@@ -1304,31 +1308,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         //parameters_increment_norm = optimization_data.parameters
 
-       /*if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
-                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
-            }
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
-        }
-        else if(epoch != 0 && training_loss - optimization_data.old_training_loss >= minimum_loss_decrease)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss - optimization_data.old_training_loss <<  endl;
-            }
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumLossDecrease;
-        }
-        else*/ if(training_loss <= training_loss_goal)
+        if(training_loss <= training_loss_goal)
         {
             if(display)
             {
@@ -1394,7 +1374,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
-
             results.final_training_error = training_error;
             results.final_selection_error = selection_error;
 
@@ -1409,7 +1388,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_loss <<  "\n"
+                     << "Training error: " << training_error <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << loss_index_pointer->write_information()
                      << "Training rate: " << optimization_data.learning_rate <<  "\n"
@@ -1427,7 +1406,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             cout << "Epoch " << epoch << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training error: " << training_loss << "\n"
+                 << "Training error: " << training_error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << loss_index_pointer->write_information()
                  << "Training rate: " << optimization_data.learning_rate << "\n"

@@ -18,7 +18,17 @@ StatisticsTest::~StatisticsTest()
 {
 }
 
-/*
+
+void StatisticsTest::test_constructor()
+{
+   cout << "test_constructor\n";
+}
+
+void StatisticsTest::test_destructor()
+{
+   cout << "test_destructor\n";
+}
+
 void StatisticsTest::test_set_minimum()
 {
    cout << "test_set_minimum\n";
@@ -26,9 +36,8 @@ void StatisticsTest::test_set_minimum()
    Descriptives descriptives;
    descriptives.set_minimum(5.0);
 
-   assert_true(descriptives.minimum == 5.0, LOG);
+   assert_true(static_cast<Index>(descriptives.minimum) == 5, LOG);
 }
-
 
 void StatisticsTest::test_set_maximum()
 {
@@ -37,9 +46,8 @@ void StatisticsTest::test_set_maximum()
    Descriptives descriptives;
    descriptives.set_maximum(5.0);
 
-   assert_true(descriptives.maximum == 5.0, LOG);
+   assert_true(static_cast<Index>(descriptives.maximum) == 5, LOG);
 }
-
 
 void StatisticsTest::test_set_mean()
 {
@@ -48,9 +56,8 @@ void StatisticsTest::test_set_mean()
    Descriptives descriptives;
    descriptives.set_mean(5.0);
 
-   assert_true(descriptives.mean == 5.0, LOG);
+   assert_true(static_cast<Index>(descriptives.mean) == 5, LOG);
 }
-
 
 void StatisticsTest::test_set_standard_deviation()
 {
@@ -59,109 +66,159 @@ void StatisticsTest::test_set_standard_deviation()
    Descriptives descriptives;
    descriptives.set_standard_deviation(3.0);
 
-   assert_true(descriptives.standard_deviation == 3.0, LOG);
+   assert_true(static_cast<Index>(descriptives.standard_deviation) == 3.0, LOG);
 }
-
 
 void StatisticsTest::test_has_mean_zero_standard_deviation_one()
 {
     cout << "test_set_standard_deviation\n";
 
+    //Test 0
     Descriptives descriptives(-4.0 ,5.0 ,0.0 ,1.0);
-
-    assert_true(descriptives.has_mean_zero_standard_deviation_one(), LOG);
+    assert_true(descriptives.has_mean_zero_standard_deviation_one() == true, LOG);
+    //Test 1
+    Descriptives descriptives_1(-4.0 ,5.0 ,1.0 ,1.0);
+    assert_true(descriptives_1.has_mean_zero_standard_deviation_one() == false, LOG);
+    //Test 2
+    Descriptives descriptives_2(-4.0 ,5.0 ,0.0 ,2.0);
+    assert_true(descriptives_2.has_mean_zero_standard_deviation_one() == false, LOG);
+    //Test 3
+    Descriptives descriptives_3(-4.0 ,5.0 ,2.0 ,2.0);
+    assert_true(descriptives_3.has_mean_zero_standard_deviation_one() == false, LOG);
 }
-
 
 void StatisticsTest::test_has_minimum_minus_one_maximum_one()
 {
     cout << "test_set_has_minimum_minus_one_maximum_one\n";
 
-    Descriptives descriptives(-1.0 ,1.0 ,3.0 ,2.0);
-
-    assert_true(descriptives.has_minimum_minus_one_maximum_one(), LOG);
+    //Test_0
+    Descriptives descriptives(-1.0 ,1.0 ,0.0 ,1.0);
+    assert_true(descriptives.has_minimum_minus_one_maximum_one() == true, LOG);
+    //Test_1
+    Descriptives descriptives_1(-2.0 ,1.0 ,0.0 ,1.0);
+    assert_true(descriptives_1.has_minimum_minus_one_maximum_one() == false, LOG);
+    //Test_2
+    Descriptives descriptives_2(-1.0 ,2.0 ,0.0 ,1.0);
+    assert_true(descriptives_2.has_minimum_minus_one_maximum_one() == false, LOG);
+    //Test_3
+    Descriptives descriptives_3(-2.0 ,2.0 ,0.0 ,1.0);
+    assert_true(descriptives_3.has_minimum_minus_one_maximum_one() == false, LOG);
 }
-
-
-void StatisticsTest::test_constructor()
-{
-   cout << "test_constructor\n";
-}
-
-
-void StatisticsTest::test_destructor()
-{  
-   cout << "test_destructor\n";
-}
-
 
 void StatisticsTest::test_get_bins_number()
 {
     cout << "test_get_bins_number\n";
 
+//  Test 0
+
     Histogram histogram;
 
     assert_true(histogram.get_bins_number() == 0, LOG);
 
-}
+// Test 1
 
+    const Index bins_number_1 = 50;    //Number of beans in the histogram
+
+    Histogram histogram_1(bins_number_1);
+
+    assert_true(histogram_1.get_bins_number() == 50, LOG);
+}
 
 void StatisticsTest::test_count_empty_bins()
 {
     cout << "test_count_empty_bins\n";
 
+    //  Test 0
+
     Histogram histogram;
 
     assert_true(histogram.count_empty_bins() == 0, LOG);
-}
 
+    //  Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({1,0,1,1});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(histogram_1.count_empty_bins() == 1, LOG);
+
+    // Test 2 -> Histogram with all values != 0
+}
 
 void StatisticsTest::test_calculate_minimum_frequency()
 {
     cout << "test_calculate_minimun_frecuency\n";
 
-    Tensor<type, 1> values({1, 2, 3, 4, 5});
-
+    //Test 0
+/*
     Histogram histogram;
 
-    histogram = OpenNN::histogram(values, 5);
+    assert_true(histogram.calculate_minimum_frequency() == 0, LOG);
+*/
+    //Test 1
 
-    assert_true(histogram.calculate_minimum_frequency() == 1, LOG);
+    Tensor<type, 1> centers_1(4);             //Center values for the bins.
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);        //Number of variates in each bin.
+    frecuencies_1.setValues({1,0,1,1});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(histogram_1.calculate_minimum_frequency() == 0, LOG);
 }
-
 
 void StatisticsTest::test_calculate_maximum_frequency()
 {
     cout << "test_calculate_maximum_frequency\n";
 
-    Tensor<type, 1> values({1, 2, 3, 4, 5});
-
+    //Test 0
+/*
     Histogram histogram;
 
-    histogram = OpenNN::histogram(values, 5);
+    assert_true(histogram.calculate_maximum_frequency() == 0, LOG);
+*/
+    //Test 1
 
-    assert_true(histogram.calculate_maximum_frequency() == 1, LOG);
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({1,0,1,1});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(histogram_1.calculate_maximum_frequency() == 1, LOG);
 }
 
-
-void StatisticsTest::test_calculate_most_populated_bin()
+void StatisticsTest::test_calculate_most_populated_bin()  //<-- Calculates de first index ?
 {
     cout << "test_calculate_most_populated_bin\n";
 
-    Tensor<type, 1> values({1, 2, 3, 4, 5, 5, 5, 5});
+    //  Test 0
 
     Histogram histogram;
 
-    histogram = OpenNN::histogram(values, 5);
+    assert_true(histogram.calculate_most_populated_bin() == 0, LOG);
 
-    assert_true(histogram.calculate_most_populated_bin() == 4, LOG);
+    //Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({11,12,13,14});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(histogram_1.calculate_most_populated_bin() == 3, LOG);
 }
-
 
 void StatisticsTest::test_calculate_minimal_centers()
 {
     cout << "test_calculate_minimal_centers\n";
 
+/*
     Histogram histogram;
 
     Tensor<type, 1> vector({1, 1, 1, 1, 1, 2, 2, 6, 4, 8, 1, 4, 7});
@@ -174,14 +231,33 @@ void StatisticsTest::test_calculate_minimal_centers()
     assert_true((histogram.calculate_minimal_centers()[1] - solution[1]) < 1.0e-7, LOG);
     assert_true((histogram.calculate_minimal_centers()[2] - solution[2]) < 1.0e-7, LOG);
     assert_true((histogram.calculate_minimal_centers()[3] - solution[3]) < 1.0e-7, LOG);
+*/
 
+    //  Test 0
+/*
+    Histogram histogram;
+
+    assert_true(static_cast<Index>(histogram.calculate_minimal_centers()(0)) == 0, LOG);
+*/
+    //Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({1,1,2,1});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(0)) == 1, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(1)) == 2, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_minimal_centers()(2)) == 4, LOG);
 }
-
 
 void StatisticsTest::test_calculate_maximal_centers()
 {
     cout << "test_calculate_maximal_centers\n";
 
+/*
     Histogram histogram;
 
     Tensor<type, 1> vector({1, 1, 1, 1, 1, 2, 2, 6, 4, 8, 8, 8, 1, 4, 7});
@@ -191,13 +267,51 @@ void StatisticsTest::test_calculate_maximal_centers()
     Tensor<type, 1> solution({2.75, 3.45, 4.85, 5.55});
 
     assert_true((histogram.calculate_minimal_centers()[0] - 1.35) < 1.0e-7, LOG);
-}
+*/
 
+    //  Test 0
+/*
+    Histogram histogram;
+
+    assert_true(static_cast<Index>(histogram.calculate_maximal_centers()(0)) == 0, LOG);
+*/
+    //Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({1,2,3,4});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({2,2,1,2});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(0)) == 1, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(1)) == 2, LOG);
+    assert_true(static_cast<Index>(histogram_1.calculate_maximal_centers()(2)) == 4, LOG);
+}
 
 void StatisticsTest::test_calculate_bin()
 {
     cout << "test_calculate_bin\n";
 
+    // Test 0
+/*
+    Histogram histogram;
+
+    assert_true(histogram.calculate_bin(0) == 0, LOG);
+*/
+
+    // Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({2,4,6,8});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({0,0,0,0});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(histogram_1.calculate_bin(8) == 3, LOG);
+
+    /*
     Tensor<type, 1> vector;
     Index bin;
     Histogram histogram;
@@ -215,13 +329,31 @@ void StatisticsTest::test_calculate_bin()
     // Test
     bin = histogram.calculate_bin(vector[2]);
     assert_true(bin == 2, LOG);
+*/
 }
-
 
 void StatisticsTest::test_calculate_frequency()
 {
     cout << "test_calculate_frequency\n";
 
+    // Test 0
+/*
+    Histogram histogram;
+
+    assert_true(histogram.calculate_bin(0) == 0, LOG);
+*/
+    // Test 1
+
+    Tensor<type, 1> centers_1(4);
+    centers_1.setValues({2,4,6,8});
+    Tensor<Index, 1> frecuencies_1(4);
+    frecuencies_1.setValues({0,0,3,0});
+
+    Histogram histogram_1(centers_1,frecuencies_1);
+
+    assert_true(histogram_1.calculate_frequency(2) == 0, LOG);
+
+    /*
     Tensor<type, 1> vector;
     Index frequency;
     Histogram histogram;
@@ -232,25 +364,54 @@ void StatisticsTest::test_calculate_frequency()
     frequency = histogram.calculate_frequency(vector[9]);
 
     assert_true(frequency == 1, LOG);
+    */
 }
-
 
 void StatisticsTest::test_minimum()
 {
-
    cout << "test_calculate_minimum\n";
 
-   Tensor<type, 1> vector(3);
-   vector[0] = -1;
-   vector[1] = 0;
-   vector[2] = 1;
+   // Test 0
+/*
+   Tensor<type, 1> vector;
+   assert_true(static_cast<Index>(minimum(vector)) == 0, LOG);
+*/
 
-   Tensor<type, 1> minimun(1);
+   // Test 1 , 2
 
-   assert_true(abs(minimum(vector) - (-1)) < 1.0e-3, LOG);
+   Tensor<type, 1> vector_1(4);
+   vector_1.setValues({2,4,6,8});
+
+   Tensor<type, 1> vector_2(4);
+   vector_2.setValues({-1,4,6,8});
+
+   assert_true(static_cast<Index>(minimum(vector_1)) == 2, LOG);
+   assert_true(static_cast<Index>(minimum(vector_2)) == -1, LOG);
 }
 
+void StatisticsTest::test_maximum()
+{
+   cout << "test_calculate_minimum\n";
 
+   // Test 0
+/*
+   Tensor<type, 1> vector;
+   assert_true(static_cast<Index>(maximum(vector)) == 0, LOG);
+*/
+
+   // Test 1 , 2
+
+   Tensor<type, 1> vector_1(4);
+   vector_1.setValues({2,4,8,8});
+
+   Tensor<type, 1> vector_2(4);
+   vector_2.setValues({-1,-4,-6,-8});
+
+   assert_true(static_cast<Index>(maximum(vector_1)) == 8, LOG);
+   assert_true(static_cast<Index>(maximum(vector_2)) == -1, LOG);
+}
+
+/*
 void StatisticsTest::test_minimum_missing_values()
 {
    cout << "test_minimum_missing_values\n";
@@ -282,8 +443,9 @@ void StatisticsTest::test_minimum_missing_values()
 
    assert_true(abs(minimum_missing_values(vector) - (-1.0)) < 1.0e-3, LOG);
 }
+*/
 
-
+/*
 void StatisticsTest::test_maximum_missing_values()
 {
    cout << "test_maximum_missing_values\n";
@@ -315,12 +477,32 @@ void StatisticsTest::test_maximum_missing_values()
 
    assert_true(abs(maximum_missing_values(vector) - 1.0) < 1.0e-3 , LOG);
 }
-
+*/
 
 void StatisticsTest::test_calculate_mean()
 {
    cout << "test_calculate_mean\n";
 
+   // Test 0
+/*
+   Tensor<type, 2> matrix;
+   assert_true(static_cast<Index>(mean(matrix)(0)) == 0, LOG);
+*/
+   // Test 1 , 2
+/*
+   Tensor<type, 2> matrix_1(3,3);
+   matrix_1.setValues({{0,1,-2},{0,1,8},{0,1,6}});
+
+   cout << matrix_1 << endl;
+   cout << mean(matrix_1)(0) << endl;
+   cout << mean(matrix_1)(1) << endl;
+   cout << mean(matrix_1)(2) << endl;
+
+   assert_true(static_cast<Index>(mean(matrix_1)(0)) == 0, LOG);
+   assert_true(static_cast<Index>(mean(matrix_1)(1)) == 1, LOG);
+   assert_true(static_cast<Index>(mean(matrix_1)(2)) == 6, LOG);
+*/
+   /*
    Tensor<type, 1> vector(1, 1.0);
 
    assert_true(mean(vector) == 1.0, LOG);
@@ -349,13 +531,31 @@ void StatisticsTest::test_calculate_mean()
    vector2[3] = 4.0;
 
    assert_true(abs(mean(vector2) - mean_missing_values(vector1)) < 1.0e-3, LOG);
+   */
 }
-
 
 void StatisticsTest::test_standard_deviation()
 {
    cout << "test_standard_deviation\n";
 
+   // Test 0
+/*
+   Tensor<type, 1> vector;
+   assert_true(static_cast<Index>(standard_deviation(vector)) == 0, LOG);
+*/
+
+   // Test 1 , 2
+
+   Tensor<type, 1> vector_1(4);
+   vector_1.setValues({2,4,8,10});
+
+   Tensor<type, 1> vector_2(4);
+   vector_2.setValues({-11,-11,-11,-11});
+
+   assert_true(static_cast<Index>(standard_deviation(vector_1)) == static_cast<Index>(sqrt(10)), LOG);
+   assert_true(static_cast<Index>(standard_deviation(vector_2)) == 0, LOG);
+
+/*
    Tensor<type, 1> vector;
 
    type standard_deviation;
@@ -374,13 +574,32 @@ void StatisticsTest::test_standard_deviation()
    standard_deviation = OpenNN::standard_deviation(vector);
 
    assert_true(abs(standard_deviation-1.4142) < 1.0e-3, LOG);
-}
+*/
 
+}
 
 void StatisticsTest::test_calculate_median()
 {
     cout << "test_calculate_median\n";
 
+    // Test 0
+ /*
+    Tensor<type, 1> vector;
+    assert_true(static_cast<Index>(median(vector)) == 0, LOG);
+ */
+
+    // Test 1 , 2
+
+    Tensor<type, 1> vector_1(4);
+    vector_1.setValues({2,4,8,10});
+
+    Tensor<type, 1> vector_2(4);
+    vector_2.setValues({-11,-11,-11,-11});
+
+    assert_true(static_cast<Index>(median(vector_1)) == 6, LOG);
+    assert_true(static_cast<Index>(median(vector_2)) == -11, LOG);
+
+    /*
     Tensor<type, 1> vector;
     vector.resize(4);
     vector[0] = 1.0;
@@ -398,9 +617,10 @@ void StatisticsTest::test_calculate_median()
     vector[4] = 5.0;
 
     assert_true(abs(median(vector) - 3.0) < 1.0e-3, LOG);
+    */
 }
 
-
+/*
 void StatisticsTest::test_calculate_median_missing_values()
 {
     cout << "test_calculate_median_missing_values\n";
@@ -426,8 +646,9 @@ void StatisticsTest::test_calculate_median_missing_values()
     assert_true(abs(median_missing_values(vector) - 2.0) < 1.0e-3, LOG);
     assert_true(median_missing_values(matrix) == solution, LOG);
 }
+*/
 
-
+/*
 void  StatisticsTest::test_standard_deviation_missing_values()
 {
     cout << "test_standard_deviation_missing_values\n";
@@ -460,11 +681,30 @@ void  StatisticsTest::test_standard_deviation_missing_values()
 
     assert_true(abs(OpenNN::standard_deviation(vector_1) - OpenNN::standard_deviation_missing_values(vector)) < 1.0e-3 , LOG);
  }
-
+*/
 
 void StatisticsTest::test_variance()
 {
     cout << "test_variance\n";
+
+    // Test 0
+ /*
+    Tensor<type, 1> vector;
+    assert_true(static_cast<Index>(variance(vector)) == 0, LOG);
+ */
+
+    // Test 1 , 2
+
+    Tensor<type, 1> vector_1(4);
+    vector_1.setValues({2,4,8,10});
+
+    Tensor<type, 1> vector_2(4);
+    vector_2.setValues({-11,-11,-11,-11});
+
+//    assert_true(static_cast<Index>(variance(vector_1)) == 10, LOG);
+    assert_true(static_cast<Index>(variance(vector_2)) == 0, LOG);
+
+/*
     Tensor<type, 1> vector;
     vector.resize(1);
     vector[0] = 1;
@@ -476,9 +716,10 @@ void StatisticsTest::test_variance()
     vector[1] = 1.0;
     vector[2] = 2.0;
     assert_true(abs(variance(vector) - 0.333333333) < 1.0e-6, LOG);
+    */
 }
 
-
+/*
 void StatisticsTest::test_calculate_variance_missing_values()
 {
     cout << "test_calculate_variance_missing_values";
@@ -1258,58 +1499,63 @@ void StatisticsTest::test_means_by_categories_missing_values()
 void StatisticsTest::run_test_case()
 {
    cout << "Running descriptives test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
    test_destructor();
 
    // Descriptives
-   test_set_mean();
+
+
    test_set_standard_deviation();
    test_has_mean_zero_standard_deviation_one();
    test_has_minimum_minus_one_maximum_one();
 
+
    // Minimum
-   test_set_minimum();
-   test_minimum();
-   test_minimum_missing_values();
-   test_maximum_matrix();
+     test_set_minimum();
+     test_minimum();
+//   test_minimum_missing_values();
+//   test_maximum_matrix();
 
    // Maximun
-   test_set_maximum();
-   test_maximum_missing_values();
-   test_maximum_matrix();
+     test_set_maximum();
+     test_maximum();
+//   test_maximum_missing_values();
+//   test_maximum_matrix();
+
 
    // Mean
+   test_set_mean();
    test_calculate_mean();
-   test_weighted_mean();
-   test_calculate_mean_missing_values();
+//   test_weighted_mean();
+//   test_calculate_mean_missing_values();
 
    // Mean binary
-   test_means_binary_columns();
-   test_means_binary_columns_missing_values();
+//   test_means_binary_columns();
+//   test_means_binary_columns_missing_values();
 
    // Median
    test_calculate_median();
-   test_calculate_median_missing_values();
+//   test_calculate_median_missing_values();
 
    // Variance
    test_variance();
-   test_calculate_variance_missing_values();
+//   test_calculate_variance_missing_values();
 
    // Assymetry
-   test_calculate_asymmetry();
-   test_calculate_asymmetry_missing_values();
+//   test_calculate_asymmetry();
+//   test_calculate_asymmetry_missing_values();
 
    // Kurtosis
-   test_calculate_kurtosis();
-   test_calculate_kurtosis_missing_values();
+//   test_calculate_kurtosis();
+//   test_calculate_kurtosis_missing_values();
 
    // Standard deviation
    test_standard_deviation();
-   test_standard_deviation_missing_values();
-
+//  test_standard_deviation_missing_values();
+/*
    // Quartiles
    test_quartiles();
    test_calculate_quartiles_missing_values();
@@ -1320,7 +1566,7 @@ void StatisticsTest::run_test_case()
 
    // Descriptives struct
    test_descriptives_missing_values();
-
+*/
    // Histogram
    test_get_bins_number();
    test_count_empty_bins();
@@ -1331,12 +1577,12 @@ void StatisticsTest::run_test_case()
    test_calculate_maximal_centers();
    test_calculate_bin();
    test_calculate_frequency();
-   test_calculate_histogram();
-   test_total_frequencies();
-   test_calculate_histograms();
-   test_calculate_histogram_missing_values();
-   test_histograms_missing_values();
-
+//   test_calculate_histogram();
+//   test_total_frequencies();
+//   test_calculate_histograms();
+//   test_calculate_histogram_missing_values();
+//   test_histograms_missing_values();
+/*
    // Minimal indices
    test_calculate_minimal_index();
    test_calculate_minimal_indices();

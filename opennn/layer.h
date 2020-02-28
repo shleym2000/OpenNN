@@ -27,6 +27,8 @@
 #include "device.h"
 #include "tinyxml2.h"
 
+//Eigen includes
+
 #include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
@@ -82,7 +84,14 @@ public:
 
             activations_2d.resize(batch_instances_number, neurons_number);
 
-            activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+            if(layer_pointer->get_type() == Perceptron)
+            {
+                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+            }
+            else
+            {
+                activations_derivatives_3d.resize(neurons_number, neurons_number, batch_instances_number);
+            }
         }
 
 
@@ -94,8 +103,17 @@ public:
             cout << "Activations: " << endl;
             cout << activations_2d << endl;
 
-            cout << "Activations derivatives: " << endl;
-            cout << activations_derivatives_2d << endl;
+            if(layer_pointer->get_type() == Perceptron)
+            {
+                cout << "Activations derivatives: " << endl;
+                cout << activations_derivatives_2d << endl;
+            }
+            else
+            {
+                cout << "Activations derivatives 3d:" << endl;
+                cout << activations_derivatives_3d << endl;
+            }
+
         }
 
         Index batch_instances_number = 0;
@@ -206,7 +224,7 @@ public:
 
     // Deltas
 
-    virtual void calculate_output_delta(const Tensor<type, 2>&,
+    virtual void calculate_output_delta(ForwardPropagation&,
                                 const Tensor<type, 2>&,
                                 Tensor<type, 2>&) const {}
 

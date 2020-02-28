@@ -331,8 +331,8 @@ public:
 
 #endif
 
-       const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data(), inputs_number, neurons_number);
-       const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data() + neurons_number*inputs_number, neurons_number, 1);
+       const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
+       const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number, inputs_number, neurons_number);
 
        calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
 
@@ -344,38 +344,38 @@ public:
 
    // Delta methods
 
-   void calculate_output_delta(const Tensor<type, 2>& activations_derivatives,
-                               const Tensor<type, 2>& output_gradient,
-                               Tensor<type, 2>& output_delta) const
-   {
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+   void calculate_output_delta(ForwardPropagation& forward_propagation,
+                                  const Tensor<type, 2>& output_gradient,
+                                  Tensor<type, 2>& output_delta) const
+      {
+          switch(device_pointer->get_type())
+          {
+               case Device::EigenDefault:
+               {
+                   DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
-                output_delta.device(*default_device) = activations_derivatives*output_gradient;
+                   output_delta.device(*default_device) = forward_propagation.activations_derivatives_2d*output_gradient;
 
-                return;
-            }
+                   return;
+               }
 
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+               case Device::EigenSimpleThreadPool:
+               {
+                  ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
+                  output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
 
-               return;
-            }
+                  return;
+               }
 
-           case Device::EigenGpu:
-           {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+              case Device::EigenGpu:
+              {
+   //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                break;
-           }
-       }
-   }
+                   break;
+              }
+          }
+      }
 
 
    void calculate_hidden_delta(Layer* next_layer_pointer,
@@ -395,7 +395,10 @@ public:
             break;
 
             case Probabilistic:
-           break;
+
+            calculate_hidden_delta_probabilistic(next_layer_pointer, activations_derivatives, next_layer_delta, hidden_delta);
+
+            break;
 
        default:
 
@@ -447,7 +450,6 @@ public:
 
 
    void calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-                                             const Tensor<type, 2>&,
                                              const Tensor<type, 2>& activations_derivatives,
                                              const Tensor<type, 2>& next_layer_delta,
                                              Tensor<type, 2>& hidden_delta) const
@@ -496,7 +498,6 @@ public:
                                  const Layer::ForwardPropagation&,
                                  Layer::BackPropagation& back_propagation) const
    {
-//       cout << "Delta:" << endl << back_propagation.delta << endl;
        switch(device_pointer->get_type())
        {
             case Device::EigenDefault:

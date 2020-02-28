@@ -122,6 +122,7 @@ bool Descriptives::has_mean_zero_standard_deviation_one()
     {
         return false;
     }
+
 }
 
 
@@ -383,7 +384,7 @@ Index Histogram::calculate_bin(const type&value) const
 }
 
 
-/// Returns the frequency of the bin to which a given value bolongs to.
+/// Returns the frequency of the bin to which a given value belongs to.
 /// @param value Value for which we want to get the frequency.
 
 Index Histogram::calculate_frequency(const type&value) const
