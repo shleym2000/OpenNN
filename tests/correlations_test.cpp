@@ -29,11 +29,11 @@ void CorrelationsTest::test_linear_correlation()
 
     const type solution = 1;
 
-    assert_true(linear_correlation(vector1, vector2) - solution <= 0.000001, LOG);
+    assert_true(linear_correlation(vector1, vector2) - solution <= static_cast<type>(0.000001), LOG);
 
     const Tensor<type, 1> vector3;//({10, 9, 8, 7, 6, 5, 4, 3, 2, 1});
 
-    assert_true(linear_correlation(vector1, vector3) + solution <= 0.000001, LOG);
+    assert_true(linear_correlation(vector1, vector3) + solution <= static_cast<type>(0.000001), LOG);
 
     // General case
 
@@ -48,15 +48,15 @@ void CorrelationsTest::test_linear_correlation()
 
     correlation = linear_correlation(x,y);
 
-    assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
-    assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
     y = -1.0*x;
 
     correlation = linear_correlation(x,y);
-    assert_true(abs(correlation + 1.0) < numeric_limits<type>::min(), LOG);
-    assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -75,20 +75,19 @@ void CorrelationsTest::test_spearman_linear_correlation()
 
     correlation = rank_linear_correlation(x,y);
 
-    assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
-    assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
     y = -1.0*x;
 
-    assert_true(abs(rank_linear_correlation(x,y)) - 1.0 < numeric_limits<type>::min(), LOG);
-    assert_true(abs(correlation) <= 1.0, LOG);
+    assert_true(abs(rank_linear_correlation(x,y)) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
-    y.setConstant(0.1);
+    y.setConstant(static_cast<type>(0.1));
     correlation = rank_linear_correlation(x,y);
-    assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
-    assert_true(abs(correlation) <= 1.0, LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 }
-
 
 void CorrelationsTest::test_linear_correlation_missing_values()
 {
@@ -133,15 +132,15 @@ void CorrelationsTest::test_rank_linear_correlation()
 
     correlation = rank_linear_correlation(x,y);
 
-    assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
 
-    assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
     y = -1.0*x;
 
     correlation = rank_linear_correlation(x,y);
-    assert_true(abs(correlation + 1.0) < numeric_limits<type>::min(), LOG);
-    assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -205,7 +204,7 @@ void CorrelationsTest::test_rank_logistic_correlation()
 
     y.setConstant(0.0);
     correlation = rank_logistic_correlation(x,y);
-    assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 }
 
 
@@ -219,8 +218,8 @@ void CorrelationsTest::test_logistic_error_gradient()
 
     const Tensor<type, 1> error_gradient;// = logistic_error_gradient(0,1,{1, 2, 3, 4, 5, 6}, {0, 0, 0, 1, 1, 1});
 
-    assert_true(abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
-    assert_true(abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
+    assert_true(abs(solution[0] - error_gradient[0]) <= static_cast<type>(0.001), LOG);
+    assert_true(abs(solution[1] - error_gradient[1]) <= static_cast<type>(0.001), LOG);
 }
 
 
@@ -234,8 +233,8 @@ void CorrelationsTest::test_logistic_error_gradient_missing_values()
 
     const Tensor<type, 1> error_gradient;// = logistic_error_gradient_missing_values(0,1,{1, 2, 3, 4, 5, 6, NAN}, {0, 0, 0, 1, 1, 1, 1});
 
-    assert_true(abs(solution[0] - error_gradient[0]) <= 0.001, LOG);
-    assert_true(abs(solution[1] - error_gradient[1]) <= 0.001, LOG);
+    assert_true(abs(solution[0] - error_gradient[0]) <= static_cast<type>(0.001), LOG);
+    assert_true(abs(solution[1] - error_gradient[1]) <= static_cast<type>(0.001), LOG);
 }
 
 
@@ -258,14 +257,14 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 
     correlation = rank_linear_correlation_missing_values(x,y);
 
-    assert_true(abs(correlation - 1.0) < numeric_limits<type>::min(), LOG);
-    assert_true(abs(correlation) <= 1.0, LOG);
+    assert_true(abs(correlation - static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
     y = -1.0*x;
 
     correlation = rank_linear_correlation_missing_values(x, y);
-    assert_true(abs(correlation + 1.0) < numeric_limits<type>::min(), LOG);
-    assert_true(abs(correlation) <= 1.0, LOG);
+    assert_true(abs(correlation + static_cast<type>(1.0)) < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) <= static_cast<type>(1.0), LOG);
 
     //Test missing values
     Tensor<type, 1> vector;
@@ -286,7 +285,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 
     type rank_linear_correlation = rank_linear_correlation_missing_values(vector, target);
 
-    assert_true((rank_linear_correlation - 1.0) < 1.0e-3, LOG );
+    assert_true((rank_linear_correlation - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );
 
     // Test with ties
     Tensor<type, 1> vector_ties;
@@ -307,7 +306,7 @@ void CorrelationsTest::test_rank_linear_correlation_missing_values()
 
     type rank_linear_correlation_ties = rank_linear_correlation_missing_values(vector_ties, target_ties);
 
-    assert_true(abs(rank_linear_correlation_ties - 1.0) < 1.0e-3, LOG );
+    assert_true(abs(rank_linear_correlation_ties - static_cast<type>(1.0)) < static_cast<type>(1.0e-3), LOG );
 }
 
 
@@ -321,7 +320,7 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
     Tensor<type, 1> y;
 
-    type correlation;
+    type correlation = 0.0;
 
     // Test
 
@@ -338,7 +337,7 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
 //    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
-    assert_true(correlation <= 0.95, LOG);
+    assert_true(correlation <= static_cast<type>(0.95), LOG);
 
     // Test
 
@@ -348,7 +347,7 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
 //    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
-    assert_true(correlation >= -0.95, LOG);
+    assert_true(correlation >= static_cast<type>(-0.95), LOG);
 
     // Test
 
@@ -356,7 +355,7 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
 //    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
-    assert_true(abs(correlation) - 1.0 < numeric_limits<type>::min(), LOG);
+    assert_true(abs(correlation) - static_cast<type>(1.0) < numeric_limits<type>::min(), LOG);
 
     // Test
 
@@ -364,7 +363,7 @@ void CorrelationsTest::test_logistic_correlation_missing_values()
 
 //    correlation = logistic_correlation_missing_values(x.to_column_matrix(),y);
 
-    assert_true(correlation < 0.3, LOG);
+    assert_true(correlation < static_cast<type>(0.3), LOG);
 }
 
 
@@ -378,7 +377,7 @@ void CorrelationsTest::test_autocorrelation()
     Tensor<type, 1> correlations;
 
     correlations = autocorrelations(x, size/100);
-    assert_true(minimum(correlations) > 0.9, LOG);
+    assert_true(minimum(correlations) > static_cast<type>(0.9), LOG);
 }
 
 
@@ -414,12 +413,12 @@ void CorrelationsTest::test_logarithmic_correlation()
 
     const type correl = logarithmic_correlation(vector1, vector2) - solution;
 
-    assert_true(correl - solution <= 0.0001, LOG);
+    assert_true(correl - solution <= static_cast<type>(0.0001), LOG);
 
     const Tensor<type, 1> vector_1;//({100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,});
     const Tensor<type, 1> vector_2;//({1002,1002.004321,1002.0086,1002.012837,1002.017033,1002.021189,1002.025306,1002.029384,1002.033424,1002.037426,1002.041393,1002.045323,1002.049218,1002.053078,1002.056905,1002.060698,1002.064458,1002.068186,});
 
-    assert_true(logarithmic_correlation(vector_1, vector_2) - solution <= 0.00001, LOG);
+    assert_true(logarithmic_correlation(vector_1, vector_2) - solution <= static_cast<type>(0.00001), LOG);
 }
 
 
@@ -441,7 +440,7 @@ void CorrelationsTest::test_logarithmic_correlation_missing_values()
 
        for(Index i = 0; i < vector.size(); i++)
        {
-           target[i] = log(1.5*vector[i] + 2);
+           target[i] = log(static_cast<type>(1.5)*vector[i] + 2);
        }
 }
 
@@ -457,11 +456,11 @@ void CorrelationsTest::test_exponential_correlation()
 
     for(Index i = 0; i < size; i++)
     {
-        y[i] = exp(2.5*x[i] + 1.4);
+        y[i] = exp(static_cast<type>(2.5)*x[i] + static_cast<type>(1.4));
     }
 
     type correlation = exponential_correlation(x,y);
-    assert_true(correlation > 0.999999, LOG);
+    assert_true(correlation > static_cast<type>(0.999999), LOG);
 }
 
 
@@ -482,7 +481,7 @@ void CorrelationsTest::test_exponential_correlation_missing_values()
 
        for(Index i = 0; i < vector.size(); i++)
        {
-           target[i] = exp(2.5*vector[i] + 1.4);
+           target[i] = exp(static_cast<type>(2.5)*vector[i] + static_cast<type>(1.4));
        }
 
 //       type exponential_correlation = exponential_correlation_missing_values(vector, target);
@@ -549,9 +548,9 @@ void CorrelationsTest::test_exponential_regression()
 
     RegressionResults er = exponential_regression(vector1,vector2);
 
-    assert_true(er.a - solution1 <= 0.01, LOG);
-    assert_true(er.b - solution2 <= 0.01, LOG);
-    assert_true(er.correlation - solution3 <= 0.1, LOG);
+    assert_true(er.a - solution1 <= static_cast<type>(0.01), LOG);
+    assert_true(er.b - solution2 <= static_cast<type>(0.01), LOG);
+    assert_true(er.correlation - solution3 <= static_cast<type>(0.1), LOG);
 }
 
 
@@ -592,9 +591,9 @@ void CorrelationsTest::test_logarithmic_regression()
 
     RegressionResults lr = logarithmic_regression(vector1,vector2);
 
-    assert_true(lr.a - solution1 <= 0.01, LOG);
-    assert_true(lr.b - solution2 <= 0.01, LOG);
-    assert_true(lr.correlation - solution3 <= 0.01, LOG);
+    assert_true(lr.a - solution1 <= static_cast<type>(0.01), LOG);
+    assert_true(lr.b - solution2 <= static_cast<type>(0.01), LOG);
+    assert_true(lr.correlation - solution3 <= static_cast<type>(0.01), LOG);
 }
 
 
@@ -613,9 +612,9 @@ void CorrelationsTest::test_logarithmic_regression_missing_values()
 
     RegressionResults lr = logarithmic_regression(vector1,vector2);
 
-    assert_true(lr.a - solution1 <= 0.01, LOG);
-    assert_true(lr.b - solution2 <= 0.01, LOG);
-    assert_true(lr.correlation - solution3 <= 0.01, LOG);
+    assert_true(lr.a - solution1 <= static_cast<type>(0.01), LOG);
+    assert_true(lr.b - solution2 <= static_cast<type>(0.01), LOG);
+    assert_true(lr.correlation - solution3 <= static_cast<type>(0.01), LOG);
 }
 
 
@@ -634,9 +633,9 @@ void CorrelationsTest::test_power_regression()
 
     RegressionResults pr = power_regression(vector1,vector2);
 
-    assert_true(pr.a - solution1 <= 0.01, LOG);
-    assert_true(pr.b - solution2 <= 0.01, LOG);
-    assert_true(pr.correlation - solution3 <= 0.01, LOG);
+    assert_true(pr.a - solution1 <= static_cast<type>(0.01), LOG);
+    assert_true(pr.b - solution2 <= static_cast<type>(0.01), LOG);
+    assert_true(pr.correlation - solution3 <= static_cast<type>(0.01), LOG);
 }
 
 
@@ -682,7 +681,7 @@ void CorrelationsTest::test_logistic_regression()
 
     RegressionResults log = logistic_regression(x,y);
 
-    assert_true(abs(log.correlation - 0.95) <= 0.01, LOG);
+    assert_true(abs(log.correlation - static_cast<type>(0.95)) <= static_cast<type>(0.01), LOG);
 }
 
 
@@ -698,7 +697,7 @@ void CorrelationsTest::test_covariance()
 
     type covariance = OpenNN::covariance(x,y);
 
-    assert_true(abs(covariance - 841.6666666666666) < 1.0e-3, LOG);
+    assert_true(abs(covariance - static_cast<type>(841.6666666666666)) < static_cast<type>(1.0e-3), LOG);
     assert_true(covariance < 842, LOG);
 }
 
@@ -716,8 +715,8 @@ void CorrelationsTest::test_covariance_missing_values()
     type covariance = OpenNN::covariance(x,y);
     type covariance_missing_values = OpenNN::covariance_missing_values(x,y);
 
-    assert_true(abs(covariance_missing_values - 841.6666666666666) < 1.0e-3, LOG);
-    assert_true(abs(covariance_missing_values - covariance) < 1.0e-3, LOG);
+    assert_true(abs(covariance_missing_values - static_cast<type>(841.6666666666666)) < static_cast<type>(1.0e-3), LOG);
+    assert_true(abs(covariance_missing_values - covariance) < static_cast<type>(1.0e-3), LOG);
 }
 
 
@@ -811,11 +810,11 @@ void CorrelationsTest::test_chi_square_critical_point()
     cout << "test_chi_square_critical_point\n";
 
     type crit_point;
-    type solution = 14.067;
+    type solution = static_cast<type>(14.067);
 
-    crit_point = chi_square_critical_point(0.05,7) ;
+    crit_point = chi_square_critical_point(static_cast<type>(0.05),7) ;
 
-    assert_true(crit_point - solution <=0.01, LOG);
+    assert_true(crit_point - solution <= static_cast<type>(0.01), LOG);
 }
 
 
@@ -899,7 +898,7 @@ void CorrelationsTest::test_one_way_anova_correlation()
 {
     cout << "test_one_way_anova_correlation\n";
 
-    const type solution = 0.94562;
+    const type solution = static_cast<type>(0.94562);
 
     Tensor<type, 2> matrix(9,3);
     Tensor<type, 2> matrix1(4,2);
@@ -918,7 +917,7 @@ void CorrelationsTest::test_one_way_anova_correlation()
 
     const type num = one_way_anova_correlation(matrix, vector);
 
-    assert_true(abs(solution - num) <= 0.1, LOG);
+    assert_true(abs(solution - num) <= static_cast<type>(0.1), LOG);
 }
 
 
@@ -943,7 +942,7 @@ void CorrelationsTest::test_one_way_anova_correlation_missing_values()
 
     const type correlation = one_way_anova_correlation_missing_values(matrix,vector);
 
-    assert_true(correlation - solution <= 0.001, LOG);
+    assert_true(correlation - solution <= static_cast<type>(0.001), LOG);
 }
 
 
@@ -951,7 +950,7 @@ void CorrelationsTest::test_f_snedecor_critical_point()
 {
     cout << "test_f_snedecor_critical_point\n";
 
-    const type solution = 2.56;
+    const type solution = static_cast<type>(2.56);
 
     Tensor<string, 2> matrix(60,6);
     matrix.setValues({{"50", "65", "72", "46", "38", "29", "70", "85", "72", "40", "57", "59", "49", "47", "30", "62", "62", "60", "19", "28", "56", "62", "55", "40", "20", "59", "64", "61", "28", "47", "29", "41", "60", "57", "61", "38", "20", "23", "38", "31", "27", "16", "27", "18", "22", "12", "24", "11", "18", "30", "22", "26", "31", "11", "15", "12", "31", "36", "16", "13"},
@@ -970,7 +969,7 @@ void CorrelationsTest::test_f_snedecor_critical_point()
 */
     const type num = f_snedecor_critical_point(matrix, static_cast<type>(0.05));
 
-    assert_true(abs(solution - num) <= 0.1, LOG);
+    assert_true(abs(solution - num) <=static_cast<type>(0.1), LOG);
 }
 
 
@@ -995,7 +994,7 @@ void CorrelationsTest::test_f_snedecor_critical_point_missing_values()
 
     const type correlation = f_snedecor_critical_point_missing_values(matrix);
 
-    assert_true(correlation - solution <= 0.001, LOG);
+    assert_true(correlation - solution <= static_cast<type>(0.001), LOG);
 }
 
 

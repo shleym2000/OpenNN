@@ -59,6 +59,7 @@ public:
    // Get methods
 
     type get_normalization_coefficient() const;
+    type get_selection_normalization_coefficient() const;
 
    // Set methods
 
@@ -89,7 +90,7 @@ public:
                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
 
                 sum_squared_error.device(*default_device)
-                        = (forward_propagation.layers[trainable_layers_number-1].activations_2d
+                        = (forward_propagation.layers(trainable_layers_number-1).activations_2d
                         - batch.targets_2d).square().sum();
 
                 break;
@@ -99,7 +100,7 @@ public:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers[trainable_layers_number-1].activations_2d
+               sum_squared_error.device(*thread_pool_device) = (forward_propagation.layers(trainable_layers_number-1).activations_2d
                                                                 - batch.targets_2d).square().sum();
 
                 break;
@@ -113,7 +114,10 @@ public:
            }
        }
 
-       return sum_squared_error(0)/normalization_coefficient;
+       const Index batch_instances_number = batch.get_instances_number();
+       const Index total_instances_number = data_set_pointer->get_instances_number();
+
+       return sum_squared_error(0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
    }
 
    void calculate_error(BackPropagation& back_propagation) const
@@ -148,7 +152,9 @@ public:
            }
        }
 
-       back_propagation.loss = sum_squared_error(0)/normalization_coefficient;
+       const Index total_instances_number = data_set_pointer->get_instances_number();
+
+       back_propagation.loss = sum_squared_error(0)/(static_cast<type>(back_propagation.batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
    }
 
 
@@ -164,7 +170,10 @@ public:
 
         #endif
 
-        const type coefficient = static_cast<type>(2.0)/normalization_coefficient;
+        const Index batch_instances_number = batch.get_instances_number();
+        const Index total_instances_number = data_set_pointer->get_instances_number();
+
+        const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number)*normalization_coefficient);
 
         switch(device_pointer->get_type())
         {

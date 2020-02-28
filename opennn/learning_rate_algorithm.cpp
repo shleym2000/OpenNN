@@ -420,6 +420,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 {
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+    const type regularization_weight = loss_index_pointer->get_regularization_weight();
+
     Triplet triplet;
 
     // Left point
@@ -427,13 +429,14 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     triplet.A.first = 0;
     triplet.A.second = loss;
 
-    /*if((training_direction(0)  || initial_learning_rate) < numeric_limits<type>::min())
+    if(std::all_of(training_direction.data(), training_direction.data()+training_direction.size(), [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); })
+    || (initial_learning_rate - static_cast<type>(0)) < std::numeric_limits<type>::min())
     {
         triplet.U = triplet.A;
         triplet.B = triplet.A;
 
         return triplet;
-    }*/
+    }
 
     Index count = 0;
 
@@ -445,7 +448,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-    triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+    triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
     count++;
 
@@ -455,13 +458,11 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         triplet.B.first *= golden_ratio;
 
-        potential_parameters = parameters;// + training_direction*triplet.B.first;
-
-        potential_parameters += training_direction*triplet.B.first;
+        potential_parameters = parameters + training_direction*triplet.B.first;
 
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-        triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+        triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -472,13 +473,11 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.B.first *= golden_ratio;
 
-            potential_parameters = parameters;// + training_direction*triplet.B.first;
-
-            potential_parameters += training_direction*triplet.B.first;
+            potential_parameters = parameters + training_direction*triplet.B.first;
 
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-            triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+            triplet.B.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             count++;
         }
@@ -491,7 +490,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-        triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+        triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
         count++;
 
@@ -505,7 +504,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             neural_network_pointer->forward_propagate(batch, potential_parameters, forward_propagation);
 
-            triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation);
+            triplet.U.second = loss_index_pointer->calculate_error(batch, forward_propagation) + regularization_weight*loss_index_pointer->calculate_regularization(potential_parameters);
 
             if(triplet.U.first - triplet.A.first <= loss_tolerance)
             {
@@ -689,7 +688,8 @@ pair<type,type> LearningRateAlgorithm:: calculate_golden_section_directional_poi
 
 pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point(
     const DataSet::Batch& batch,
-    const Tensor<type, 1>& parameters, NeuralNetwork::ForwardPropagation& forward_propagation,
+    const Tensor<type, 1>& parameters,
+    NeuralNetwork::ForwardPropagation& forward_propagation,
     const type& loss,
     const Tensor<type, 1>& training_direction,
     const type& initial_learning_rate) const
@@ -788,6 +788,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
     }
     catch(range_error& e) // Interval is of length 0
     {
+        cout << "Interval is of length 0" << endl;
         cerr << e.what() << endl;
 
         pair<type, type> A;
@@ -798,6 +799,7 @@ pair<type, type> LearningRateAlgorithm::calculate_Brent_method_directional_point
     }
     catch(const logic_error& e)
     {
+        cout << "Other exception" << endl;
         cerr << e.what() << endl;
 
         pair<type, type> X;

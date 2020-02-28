@@ -1164,6 +1164,8 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type
 
 void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) const
 {
+    Tensor<type, 2> expression(x.dimension(0), x.dimension(1));
+
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
@@ -1179,7 +1181,11 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) c
     {
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-        y.device(*thread_pool_device) = x.exp().inverse() / (static_cast<type>(1.0) + x.exp().inverse());
+        expression.device(*thread_pool_device) = x.exp().square() / ((static_cast<type>(1.0) + x.exp()).square());
+
+        TensorMap< Tensor<type, 3> > y_1(expression.data(), x.dimension(0), x.dimension(1), 1);
+
+        y = y_1;
 
         break;
     }
@@ -1224,13 +1230,13 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 
 #ifdef __OPENNN_DEBUG__
 
-    if(x.dimension(0) != y.dimension(0))
+    if(x.dimension(0) != y.dimension(2))
     {
         ostringstream buffer;
 
-        buffer << "OpenNN Exception: Functions.\n"
+        buffer << "OpenNN Exception: Layer Class.\n"
                << "void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) method.\n"
-               << "Number of rows in x must be equal to number of rows in d.\n";
+               << "Number of rows in x("<<x.dimension(0)<<") must be equal to number of rows in y("<<y.dimension(2)<<").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1238,31 +1244,44 @@ void Layer::softmax_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) co
 #endif
 
     const Index n = x.dimension(0);
-
     const Index columns_number = x.dimension(1);
 
-    #pragma omp parallel for
+    Tensor<type, 2> softmax_values;
+    softmax_values.resize(n, columns_number);
+
+    softmax(x, softmax_values);
+
+//    Tensor<type, 1> softmax_vector(columns_number);
+
+//    #pragma omp parallel for
 
     for(Index i = 0; i < n; i ++)
     {
-        /*
-                const Tensor<type, 1> softmax_values = softmax(x.get_matrix(0).chip(i, 0));
-
-                for(Index j = 0; j < columns_number; j++)
+//        softmax_vector = softmax_values.chip(i,0);
+        for(Index j = 0; j < columns_number; j++)
+        {
+            for(Index k = 0; k < columns_number; k++)
+            {
+                y(j,k,i) = -softmax_values(i,j) * softmax_values(i,k);
+/*
+                if(j == k)
                 {
-                    for(Index k = 0; k < columns_number; k++)
-                    {
-                        if(j == k)
-                        {
-                            y(j,k,i) = softmax_values[j]*(1.0 - softmax_values[j]);
-                        }
-                        else
-                        {
-                            y(j,k,i) = -softmax_values[j] * softmax_values[k];
-                        }
-                    }
+                    y(j,k,i) = softmax_vector(j)*(1.0 - softmax_vector(j));
                 }
-        */
+                else
+                {
+                    y(j,k,i) = -softmax_vector(j) * softmax_vector(k);
+                }
+*/
+            }
+        }
+    }
+
+//    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        for(Index j = 0; j < columns_number; j++) y(j,j,i) = softmax_values(i,j)*(static_cast<type>(1.0) - softmax_values(i,j));
     }
 }
 
@@ -1349,22 +1368,30 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 }
 
 
-/// @todo Eigen operators no loops
-
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
+    Tensor<type, 0> sum;
+
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
     {
-//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        sum.device(*default_device) = (x.exp()).sum();
+
+        y.device(*default_device) = x.exp() / sum(0);
 
         break;
     }
 
     case Device::EigenSimpleThreadPool:
     {
-//        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        sum.device(*thread_pool_device) = (x.exp()).sum();
+
+        y.device(*thread_pool_device) = x.exp() / sum(0);
 
         break;
     }
@@ -1377,26 +1404,23 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
     }
 
     }
-
-    const Index rows_number = x.dimension(0);
-    const Index columns_number = x.dimension(1);
-
-    #pragma omp parallel for
-
-    for(Index j = 0; j < rows_number; j++)
-    {
-        type sum = 0;
-
-        for(Index i = 0; i < columns_number; i++)
-        {
-            sum += exp(x(j,i));
-        }
-
-        for(Index i = 0; i < columns_number; i++)
-        {
-            y(j,i) = exp(x(j,i)) / sum;
-        }
-    }
 }
 
 }
+
+// OpenNN: Open Neural Networks Library.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
