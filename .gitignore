@@ -16,9 +16,6 @@ pip-selfcheck.json
 .LSOverride
 *.orig
 
-#Blank
-/blank/main.cpp
-
 # Icon must end with two \r
 Icon
 
