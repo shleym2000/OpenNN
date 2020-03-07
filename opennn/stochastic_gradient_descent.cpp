@@ -577,10 +577,18 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
-    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    const Index training_instances_number = training_instances_indices.size();
+
+    Tensor<Index, 1> batch_instances_indices(batch_instances_number);
 
     DataSet::Batch batch(batch_instances_number, data_set_pointer);
+
+    Tensor<Index, 2> training_batches(data_set_pointer->get_training_batches(batch_instances_number, false).dimension(0), batch_instances_number);
+    Tensor<Index, 2> selection_batches(data_set_pointer->get_selection_batches(batch_instances_number, false).dimension(0), batch_instances_number);
+
+    const Index batches_number = training_batches.dimension(0);
+    const Index selection_batches_number = selection_batches.dimension(0);
 
     // Neural network
 
@@ -594,7 +602,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     LossIndex::BackPropagation back_propagation(batch_instances_number, loss_index_pointer);
 
-    type training_loss = 0;
+    type training_loss = numeric_limits<type>::max();
 
     type selection_error = numeric_limits<type>::max();
 
@@ -619,29 +627,21 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= epochs_number-1; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
-        const Tensor<Index, 2> selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
-
-        const Index batches_number = training_batches.dimension(0);
+        training_batches = data_set_pointer->get_training_batches(batch_instances_number, is_forecasting);
 
         training_loss = 0;
-        selection_error = 0;
 
         for(Index iteration = 0; iteration < batches_number; iteration++)
         {
             // Data set
 
-            const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
-
-            batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+            batch.fill(training_batches.chip(iteration,0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
             neural_network_pointer->forward_propagate(batch, forward_propagation);
-
-            //neural_network_pointer->print_summary();
 
             // Loss
 
@@ -660,9 +660,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         training_loss /= static_cast<type>(batches_number);
 
+        selection_error = 0;
+
         if(has_selection)
         {
-            const Index selection_batches_number = selection_batches.dimension(0);
+            selection_batches = data_set_pointer->get_selection_batches(batch_instances_number, is_forecasting);
 
             selection_error = 0;
 
@@ -670,9 +672,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             {
                 // Data set
 
-                const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(selection_batches.chip(iteration, 0));
-
-                batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+                batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
                 // Neural network
 
@@ -701,6 +701,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         // Stopping criteria
 
         time(&current_time);
+
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
         if(training_loss <= training_loss_goal)
@@ -712,9 +713,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             results.stopping_condition = MaximumEpochsNumber;
         }
 
-        if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number-1)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
             stop_training = true;
 
@@ -758,7 +759,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ":\n"
+            cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
                  << "Training loss: " << training_loss << "\n"
                  << "Batch size: " << batch_instances_number << "\n"
                  << loss_index_pointer->write_information()

@@ -55,6 +55,20 @@ struct RegressionResults
 
     virtual ~RegressionResults() {}
 
+    string write_regression_type() const
+    {
+        switch(regression_type)
+        {
+            case Linear: return "Linear";
+            case Logistic: return "Logistic";
+            case Logarithmic: return "Logarithmic";
+            case Exponential: return "Exponential";
+            case Power: return "Power";
+            case KarlPearson: return "KarlPearson";
+            case OneWayAnova: return "OneWayAnova";
+        }
+    }
+
     /// Independent coefficient of the logistic function.
 
     type a = static_cast<type>(NAN);
@@ -85,6 +99,22 @@ struct CorrelationResults
     explicit CorrelationResults(){}
 
     virtual ~CorrelationResults() {}
+
+    string write_correlation_type() const
+    {
+        switch(correlation_type)
+        {
+            case Linear_correlation: return "Linear";
+            case Logistic_correlation: return "Logistic";
+            case Logarithmic_correlation: return "Logarithmic";
+            case Exponential_correlation: return "Exponential";
+            case Power_correlation: return "Power";
+            case KarlPearson_correlation: return "Karl-Pearson";
+            case OneWayAnova_correlation: return "One-way Anova";
+        }
+
+        return "";
+    }
 
     /// Correlation coefficient.
 
@@ -123,6 +153,10 @@ struct CorrelationResults
     // Power
 
     type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+    // Karl Pearson
+
+    type karl_pearson_correlation(const Tensor<type,2>&, const Tensor<type,2>&);
 
     // Time series correlation methods
 
@@ -163,7 +197,7 @@ struct CorrelationResults
 
     CorrelationResults logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults karl_pearson_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&);
+    CorrelationResults karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     CorrelationResults one_way_anova_correlations(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
@@ -185,9 +219,6 @@ struct CorrelationResults
     type chi_square_test(const Tensor<type, 2>&);
 
     type chi_square_critical_point(const type&, const type&);
-
-    type karl_pearson_correlation(const Tensor<string, 1>&, const Tensor<string, 1>&);
-    type karl_pearson_correlations(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     //One way ANOVA
 

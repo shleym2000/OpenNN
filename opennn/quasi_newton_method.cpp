@@ -1178,11 +1178,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
-    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
-
-    training_batch.fill(training_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
-    selection_batch.fill(selection_instances_indices_vector, DataSet::tensor_to_vector(inputs_indices), DataSet::tensor_to_vector(target_indices));
+    training_batch.fill(training_instances_indices, inputs_indices, target_indices);
+    selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
 
     // Neural network
 
@@ -1268,9 +1265,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             selection_error = 0;
 
-            // Neural Network
-            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-
             // Loss Index
             selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
 
@@ -1288,19 +1282,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
         }
 
-        cout << "epoch: " << epoch << endl;
-        cout << "training error: " << training_error << endl;
-
-        cout << "selection error: " << selection_error << endl;
-        cout << "----------------------" << endl;
-
         // Training history
 
         if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
-
-        cout << "history: " << results.training_error_history(0) << endl;
-
-
 
         // Stopping Criteria
 

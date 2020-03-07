@@ -513,18 +513,18 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
 //    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+//    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
-    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
+//    const vector<Index> input_variables_indices_vector = DataSet::tensor_to_vector(input_variables_indices);
+//    const vector<Index> target_variables_indices_vector = DataSet::tensor_to_vector(target_variables_indices);
 
     const bool has_selection = data_set_pointer->has_selection();
 
     DataSet::Batch training_batch(batch_instances_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+    DataSet::Batch selection_batch(batch_instances_number, data_set_pointer);
 
     // Neural network
 
@@ -588,9 +588,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             // Data set
 
-            const vector<Index> batch_indices_vector = DataSet::tensor_to_vector(training_batches.chip(iteration, 0));
-
-            training_batch.fill(batch_indices_vector, input_variables_indices_vector, target_variables_indices_vector);
+            training_batch.fill(training_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
 
             // Neural network
 
@@ -621,7 +619,26 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 //                       selection_forward_propagation.layers[trainable_layers_number].activations_2d,
 //                       selection_batch.targets_2d);
 
-            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+            const Index selection_batches_number = selection_batches.dimension(0);
+
+            selection_error = 0;
+
+            for(Index iteration = 0; iteration < selection_batches_number; iteration++)
+            {
+                // Data set
+
+                selection_batch.fill(selection_batches.chip(iteration, 0), input_variables_indices, target_variables_indices);
+
+                // Neural network
+
+                neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+
+                // Loss index
+
+                selection_error += loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+            }
+
+            selection_error /= static_cast<type>(batches_number);
 
             if(epoch == 0)
             {
@@ -692,7 +709,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-                if(has_selection) cout << "Selection error: " << selection_error << endl;
+                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
             }
 
             results.resize_training_history(1+epoch);
@@ -720,7 +737,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 //                << "Learning rate: " << learning_rate<< "\n"
                   << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
-            if(has_selection) cout << "Selection error: " << selection_error << endl;
+            if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
 
         }
 
