@@ -194,10 +194,11 @@ public:
             {
 //                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                 break;
+                 return;
             }
         }
    }
+
 
    LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
 

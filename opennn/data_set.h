@@ -222,6 +222,7 @@ public:
        }
 
        void fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets);
+       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
        Index instances_number = 0;
 
@@ -599,7 +600,7 @@ public:
 
    // Inputs correlations
 
-   Tensor<type, 2> calculate_inputs_correlations() const;
+   Tensor<type, 2> calculate_input_columns_correlations() const;
 
    void print_inputs_correlations() const;
 

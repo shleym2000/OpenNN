@@ -292,20 +292,20 @@ struct Histogram
      // Minimal indices
      Index minimal_index(const Tensor<type, 1>&);
      Tensor<Index, 1> minimal_indices(const Tensor<type, 1>&, const Index &);
-     Tensor<Index, 1> minimal_indices_omit(const Tensor<type, 2>&, const type&);
      Tensor<Index, 1> minimal_indices(const Tensor<type, 2>&);
 
      // Maximal indices
      Index maximal_index(const Tensor<type, 1>&);
      Tensor<Index, 1> maximal_indices(const Tensor<type, 1>&, const Index &);
      Tensor<Index, 1> maximal_indices(const Tensor<type, 2>&);
-     Tensor<Index, 1> maximal_indices_omit(const Tensor<type, 2>&, const type&);
+     Tensor<Index, 2> maximal_columns_indices(const Tensor<type, 2>&, const Index&);
      Tensor<type, 1> variation_percentage(const Tensor<type, 1>&);
      type column_minimum(const Index&);
      type column_maximum(const Index&);
 
      // Means binary
      Tensor<type, 1> means_binary_column(const Tensor<type, 2>&);
+     Tensor<type, 1> means_binary_columns(const Tensor<type, 2>&);
 
      // Mean weights
      type weighted_mean(const Tensor<type, 1>&, const Tensor<type, 1>&);

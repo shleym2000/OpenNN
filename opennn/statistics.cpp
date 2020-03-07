@@ -1709,6 +1709,11 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     if(columns_indices.dimension(0) == 0)
     {
         used_columns_indices.resize(columns_number);
+
+        for (Index i = 0; i < columns_number; i++)
+        {
+            used_columns_indices(i) = i;
+        }
     }
     else
     {
@@ -1720,6 +1725,11 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     if(rows_indices.dimension(0) == 0)
     {
         used_rows_indices.resize(rows_number);
+
+        for (Index i = 0; i < rows_number; i++)
+        {
+            used_rows_indices(i) = i;
+        }
     }
     else
     {
@@ -1734,15 +1744,15 @@ Tensor<type, 1> columns_minimums(const Tensor<type, 2>& matrix, const Tensor<Ind
     Index row_index;
     Index column_index;
 
-    Tensor<type, 1> column(rows_indices_size);
-
     for(Index j = 0; j < columns_indices_size; j++)
     {
         column_index = used_columns_indices(j);
 
+        Tensor<type, 1> column(rows_indices_size);
+
         for(Index i = 0; i < rows_indices_size; i++)
         {
-            row_index = used_rows_indices(j);
+            row_index = used_rows_indices(i);
 
             column(i) = matrix(row_index,column_index);
         }
@@ -3059,7 +3069,6 @@ if(number > size)
 
 /// Returns the indices of the largest elements in the vector.
 /// @param number Number of maximal indices to be computed.
-/// @todo david
 
 Tensor<Index, 1> maximal_indices(const Tensor<type, 1>& vector, const Index &number)
 {
@@ -3116,37 +3125,11 @@ Tensor<Index, 1> minimal_indices(const Tensor<type, 2>& matrix)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            if(matrix(i,j) < minimum)
+            if(!::isnan(matrix(i,j))  && matrix(i,j) < minimum)
             {
                 minimum = matrix(i,j);
-                minimal_indices[0] = i;
-                minimal_indices[1] = j;
-            }
-        }
-    }
-
-    return minimal_indices;
-}
-
-
-Tensor<Index, 1> minimal_indices_omit(const Tensor<type, 2>& matrix, const type& value_to_omit)
-{
-    const Index rows_number = matrix.dimension(0);
-    const Index columns_number = matrix.dimension(1);
-
-    type minimum = numeric_limits<type>::max();
-
-    Tensor<Index, 1> minimal_indices(2);
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            if(abs(matrix(i,j) - value_to_omit) < numeric_limits<type>::min() && matrix(i,j) < minimum)
-            {
-                minimum = matrix(i,j);
-                minimal_indices[0] = i;
-                minimal_indices[1] = j;
+                minimal_indices(0) = i;
+                minimal_indices(1) = j;
             }
         }
     }
@@ -3170,11 +3153,11 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            if(matrix(i,j) > maximum)
+            if(!::isnan(matrix(i,j)) && matrix(i,j) > maximum)
             {
                 maximum = matrix(i,j);
-                maximal_indices[0] = i;
-                maximal_indices[1] = j;
+                maximal_indices(0) = i;
+                maximal_indices(1) = j;
             }
         }
     }
@@ -3183,30 +3166,44 @@ Tensor<Index, 1> maximal_indices(const Tensor<type, 2>& matrix)
 }
 
 
-Tensor<Index, 1> maximal_indices_omit(const Tensor<type, 2>& matrix, const type& value_to_omit)
+/// Returns a matrix in which each of the columns contain the maximal indices of each of the columns of the
+/// original matrix.
+
+Tensor<Index, 2> maximal_columns_indices(const Tensor<type,2>& matrix, const Index& maximum_number)
 {
     const Index rows_number = matrix.dimension(0);
     const Index columns_number = matrix.dimension(1);
 
-    type maximum = -numeric_limits<type>::max();
+    Tensor<Index, 2> maximal_columns_indices(maximum_number, columns_number);
 
-    Tensor<Index, 1> maximum_indices(2);
+    Tensor<type, 1> columns_minimums = OpenNN::columns_minimums(matrix);
 
-    for(Index i = 0; i < rows_number; i++)
+    for(Index j = 0; j < columns_number; j++)
     {
-        for(Index j = 0; j < columns_number; j++)
+        Tensor<type, 1> column = matrix.chip(j,1);
+
+        for(Index i = 0; i < maximum_number; i++)
         {
-            if(abs(matrix(i,j) - value_to_omit) < numeric_limits<type>::min() && matrix(i,j) > maximum)
+            Index maximal_index = 0;
+            type maximal = column(0);
+
+            for(Index k = 0; k < rows_number; k++)
             {
-                maximum = matrix(i,j);
-                maximum_indices[0] = i;
-                maximum_indices[1] = j;
+                if(column(k) > maximal && !::isnan(column(k)))
+                {
+                    maximal_index = k;
+                    maximal = column(k);
+                }
             }
+
+            column(maximal_index) = columns_minimums(j)-static_cast<type>(1);
+            maximal_columns_indices(i,j) = maximal_index;
         }
     }
 
-    return maximum_indices;
+    return maximal_columns_indices;
 }
+
 
 type strongest(const Tensor<type, 1>& vector)
 {
@@ -3377,75 +3374,79 @@ Tensor<type, 1> means_binary_columns(const Tensor<type, 2>& matrix)
 
 Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 {
-    /*
-      const Index size = vector.dimension(0);
+    const Index size = vector.dimension(0);
 
-      const Tensor<Index, 1> sorted_vector = vector.sort_ascending_indices();
+#ifdef __OPENNN_DEBUG__
+
+    if(size < 10)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: vector Template.\n"
+               << "Tensor<type, 1> percentiles(const Tensor<type, 1>& vector) method.\n"
+               << "Size must be greater than 10.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+      Index new_size = 0;
+
+      for(Index i = 0; i < size; i++)
+      {
+          if(!::isnan(vector(i)))
+          {
+              new_size++;
+          }
+      }
+
+      Index index = 0;
+      Tensor<type, 1> new_vector(new_size);
+
+      for(Index i = 0; i < size; i++)
+      {
+          if(!::isnan(vector(i)))
+          {
+              new_vector(index) = vector(i);
+              index++;
+          }
+      }
+
+      Tensor<type, 1> sorted_vector(new_vector);
+
+      sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
       Tensor<type, 1> percentiles(10);
 
-      if(size % 2 == 0)
+      if(new_size % 2 == 0)
       {
-        percentiles[0] = (sorted_vector[size * 1 / 10] + sorted_vector[size * 1 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[1] = (sorted_vector[size * 2 / 10] + sorted_vector[size * 2 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[2] = (sorted_vector[size * 3 / 10] + sorted_vector[size * 3 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[3] = (sorted_vector[size * 4 / 10] + sorted_vector[size * 4 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[4] = (sorted_vector[size * 5 / 10] + sorted_vector[size * 5 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[5] = (sorted_vector[size * 6 / 10] + sorted_vector[size * 6 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[6] = (sorted_vector[size * 7 / 10] + sorted_vector[size * 7 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[7] = (sorted_vector[size * 8 / 10] + sorted_vector[size * 8 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[8] = (sorted_vector[size * 9 / 10] + sorted_vector[size * 9 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[9] = maximum(vector);
+        percentiles[0] = (sorted_vector[new_size * 1 / 10] + sorted_vector[new_size * 1 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[1] = (sorted_vector[new_size * 2 / 10] + sorted_vector[new_size * 2 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[2] = (sorted_vector[new_size * 3 / 10] + sorted_vector[new_size * 3 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[3] = (sorted_vector[new_size * 4 / 10] + sorted_vector[new_size * 4 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[4] = (sorted_vector[new_size * 5 / 10] + sorted_vector[new_size * 5 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[5] = (sorted_vector[new_size * 6 / 10] + sorted_vector[new_size * 6 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[6] = (sorted_vector[new_size * 7 / 10] + sorted_vector[new_size * 7 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[7] = (sorted_vector[new_size * 8 / 10] + sorted_vector[new_size * 8 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[8] = (sorted_vector[new_size * 9 / 10] + sorted_vector[new_size * 9 / 10 + 1]) /static_cast<type>(2.0);
+        percentiles[9] = maximum(new_vector);
       }
       else
       {
-        percentiles[0] = static_cast<type>(sorted_vector[size * 1 / 10]);
-        percentiles[1] = static_cast<type>(sorted_vector[size * 2 / 10]);
-        percentiles[2] = static_cast<type>(sorted_vector[size * 3 / 10]);
-        percentiles[3] = static_cast<type>(sorted_vector[size * 4 / 10]);
-        percentiles[4] = static_cast<type>(sorted_vector[size * 5 / 10]);
-        percentiles[5] = static_cast<type>(sorted_vector[size * 6 / 10]);
-        percentiles[6] = static_cast<type>(sorted_vector[size * 7 / 10]);
-        percentiles[7] = static_cast<type>(sorted_vector[size * 8 / 10]);
-        percentiles[8] = static_cast<type>(sorted_vector[size * 9 / 10]);
-        percentiles[9] = maximum(vector);
+        percentiles[0] = static_cast<type>(sorted_vector[new_size * 1 / 10]);
+        percentiles[1] = static_cast<type>(sorted_vector[new_size * 2 / 10]);
+        percentiles[2] = static_cast<type>(sorted_vector[new_size * 3 / 10]);
+        percentiles[3] = static_cast<type>(sorted_vector[new_size * 4 / 10]);
+        percentiles[4] = static_cast<type>(sorted_vector[new_size * 5 / 10]);
+        percentiles[5] = static_cast<type>(sorted_vector[new_size * 6 / 10]);
+        percentiles[6] = static_cast<type>(sorted_vector[new_size * 7 / 10]);
+        percentiles[7] = static_cast<type>(sorted_vector[new_size * 8 / 10]);
+        percentiles[8] = static_cast<type>(sorted_vector[new_size * 9 / 10]);
+        percentiles[9] = maximum(new_vector);
       }
 
       return percentiles;
-    */
-    return Tensor<type, 1>();
-}
-
-
-Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>& x)
-{
-    const Index size = x.size();
-
-    Index new_size = 0;
-
-    for(Index i = 0; i < size ; i++)
-    {
-        if(!::isnan(x(i)))
-        {
-            new_size++;
-        }
-    }
-
-    Tensor<type, 1> new_x(new_size);
-
-    Index index = 0;
-
-    for(Index i = 0; i < size ; i++)
-    {
-        if(!::isnan(x(i)))
-        {
-            new_x[index] = x(i);
-
-            index++;
-        }
-    }
-
-    return percentiles(new_x);
 }
 
 

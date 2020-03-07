@@ -34,31 +34,36 @@ int main(void)
         cout << "OpenNN. Rosenbrock Example." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
-/*
-        DataSet data_set(100, 11);
 
-        data_set.generate_Rosenbrock_data(1800000, 1001);
-
-        data_set.set_separator(DataSet::Comma);
-        data_set.set_data_file_name("D:/rosenbrock_1800000_1000.csv");
-
-        data_set.save_data();
-*/
-        Index samples = 20;
-        Index variables = 3;
+        const Index samples = 1000000;
+        const Index variables = 1000;
 
         // Device
 
         Device device(Device::EigenSimpleThreadPool);
 
-        // Data set
+        // Data Set
+
+        // Generate Data and Save
 /*
-        Tensor<type, 2> data(samples, variables+1);
+        DataSet data_set;
 
-        data.setZero();
+        data_set.generate_Rosenbrock_data(samples, variables+1);
 
-        DataSet data_set(data);
-        */
+        data_set.set_separator(DataSet::Comma);
+        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
+*/
+//        data_set.set_separator(DataSet::Comma);
+//        data_set.set_data_file_name("D:/rosenbrock_700000_1000.csv");
+
+//        data_set.save_data();
+
+
+        // Read Data
+
+//        DataSet data_set("D:/rosenbrock_1000000_1000.csv", ',', false);
+
+        // Generate Data
 
         DataSet data_set;
 
@@ -66,8 +71,10 @@ int main(void)
 
         data_set.set_device_pointer(&device);
 
-//        data_set.set_training();
-        data_set.split_instances_random();
+        data_set.set_training();
+
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
         // Neural network
 
@@ -84,6 +91,10 @@ int main(void)
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
         neural_network.set_device_pointer(&device);
 
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
@@ -94,7 +105,7 @@ int main(void)
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(1000);
 
         training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
@@ -103,8 +114,7 @@ int main(void)
         StochasticGradientDescent* stochastic_gradient_descent_pointer
                 = training_strategy.get_stochastic_gradient_descent_pointer();
 
-        stochastic_gradient_descent_pointer->set_batch_instances_number(5);
-        stochastic_gradient_descent_pointer->set_batch_size(5);
+        stochastic_gradient_descent_pointer->set_batch_size(variables);
 
         stochastic_gradient_descent_pointer->perform_training();
 

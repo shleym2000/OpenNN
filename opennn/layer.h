@@ -202,9 +202,7 @@ public:
 
     void set_device_pointer(Device*);
 
-    virtual void insert_parameters(const Tensor<type, 1>&, const Index&) {}
-
-    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) {}
+    virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const {}
 
     // Outputs
 
@@ -295,6 +293,19 @@ protected:
 
     void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
     void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 3>&) const;
+
+    void first_order_hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_hyperbolic_tangent(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_logistic(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_threshold(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_symmetric_threshold(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_rectified_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_scaled_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_soft_plus(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_soft_sign(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void first_order_exponential_linear(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
+
 
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
