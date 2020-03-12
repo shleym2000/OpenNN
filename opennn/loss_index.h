@@ -106,9 +106,7 @@ public:
 
            const Index outputs_number = neural_network_pointer->get_outputs_number();
 
-           // First order loss
-
-           errors.resize(batch_instances_number, outputs_number);
+           // First order los
 
            loss = 0;
 
@@ -122,8 +120,6 @@ public:
 
        void print()
        {
-           cout << "Errors:" << endl;
-           cout << errors << endl;
 
            cout << "Loss:" << endl;
            cout << loss << endl;
@@ -144,8 +140,6 @@ public:
        Tensor<type, 2> output_gradient;
 
        type loss;
-
-       Tensor<type, 2> errors;
 
        Tensor<type, 1> gradient;
    };
@@ -276,7 +270,9 @@ public:
    virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
-   virtual type calculate_error(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&) const = 0;
+   virtual type calculate_error(const DataSet::Batch&,
+                                const NeuralNetwork::ForwardPropagation&,
+                                const BackPropagation& = LossIndex::BackPropagation()) const = 0;
 
    virtual void calculate_error(BackPropagation&) const {}
 
@@ -289,6 +285,7 @@ public:
        neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
 
        return calculate_error(batch, forward_propagation);
+//       return 0;
    }
 
    void back_propagate(const DataSet::Batch& batch,
@@ -297,9 +294,11 @@ public:
    {
        // Loss index
 
-       calculate_errors(batch, forward_propagation, back_propagation);
+//       calculate_errors(batch, forward_propagation, back_propagation);
 
-       calculate_error(back_propagation);
+//       calculate_error(back_propagation);
+
+       back_propagation.loss = calculate_error(batch, forward_propagation, back_propagation);
 
        calculate_output_gradient(batch, forward_propagation, back_propagation);
 
@@ -359,7 +358,7 @@ public:
                                    back_propagation.neural_network.layers(i).delta);
       }
    }
-
+/*
    void calculate_errors(const DataSet::Batch& batch,
                          const NeuralNetwork::ForwardPropagation& forward_propagation,
                          BackPropagation& back_propagation) const
@@ -403,14 +402,12 @@ public:
             }
         }
    }
-
+*/
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
                                  BackPropagation& back_propagation) const
    {
-       const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
        #ifdef __OPENNN_DEBUG__
 
        check();
@@ -418,6 +415,8 @@ public:
        #endif
 
        const Tensor<Layer*, 1> trainable_layers_pointers = neural_network_pointer->get_trainable_layers_pointers();
+
+       const Index trainable_layers_number = trainable_layers_pointers.size();
 
        const Tensor<Index, 1> trainable_layers_parameters_number
                = neural_network_pointer->get_trainable_layers_parameters_numbers();
