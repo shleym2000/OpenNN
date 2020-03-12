@@ -58,7 +58,9 @@ public:
 
    /// @todo Check formula
 
-   type calculate_error(const DataSet::Batch& batch, const NeuralNetwork::ForwardPropagation& forward_propagation) const
+   type calculate_error(const DataSet::Batch& batch,
+                        const NeuralNetwork::ForwardPropagation& forward_propagation,
+                        const LossIndex::BackPropagation& back_propagation) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -138,7 +140,7 @@ public:
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                 back_propagation.output_gradient.device(*thread_pool_device) =
-                    -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
+                        -1.0*(targets/outputs) + (1.0 - targets)/(1.0 - outputs);
 
                 return;
              }
