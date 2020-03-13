@@ -1174,8 +1174,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
@@ -1184,12 +1184,8 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
-//    const vector<Index> training_instances_indices_vector = DataSet::tensor_to_vector(training_instances_indices);
-//    const vector<Index> selection_instances_indices_vector = DataSet::tensor_to_vector(selection_instances_indices);
-
     training_batch.fill(training_instances_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
-
 
     // Neural network
 
@@ -1205,6 +1201,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
     string information;
 
     LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -1231,7 +1228,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -1272,7 +1269,9 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
-            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+
+            selection_error = selection_back_propagation.loss;
 
             if(epoch == 0)
             {
