@@ -762,8 +762,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
 
-    const Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    const Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
+    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
     const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
@@ -832,7 +832,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -864,7 +864,9 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
-            selection_error = loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation);
+            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
+
+            selection_error = selection_back_propagation.loss;
 
             if(epoch == 0)
             {

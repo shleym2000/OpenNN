@@ -56,11 +56,9 @@ public:
 
    // Error methods
 
-   /// @todo Check formula
-
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& back_propagation) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -103,7 +101,9 @@ public:
            }
        }
 
-       return cross_entropy_error;
+       back_propagation.loss = cross_entropy_error;
+
+       return;
   }
 
    // Gradient methods

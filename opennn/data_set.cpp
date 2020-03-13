@@ -949,11 +949,16 @@ const Tensor<DataSet::InstanceUse,1 >& DataSet::get_instances_uses() const
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 /// @todo In forecasting must be false.
 
-Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
+Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_number, const bool& shuffle) const
 {
     Tensor<Index, 1> training_indices = get_training_instances_indices();
 
-    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+    mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+//    if(shuffle) std ::shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+
+//    std::shuffle(training_indices.data(), training_indices.data() + training_indices.size(), rng);
+
 
     return split_instances(training_indices, batch_instances_number);
 }
@@ -2337,7 +2342,7 @@ Index DataSet::get_variable_index(const string& name) const
         if(variables_names(i) == name) return i;
     }
 
-    //hrow exception("Exception: Index DataSet::get_variable_index(const string& name) const");
+//    throw exception("Exception: Index DataSet::get_variable_index(const string& name) const");
 }
 
 
@@ -4685,6 +4690,21 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 }
 
 
+/// Set the variables descriptives member with the descriptives of the variables.
+/// The size of this vector is four. The subvectors are:
+/// <ul>
+/// <li> Minimum.
+/// <li> Maximum.
+/// <li> Mean.
+/// <li> Standard deviation.
+/// </ul>
+
+void DataSet::set_variables_descriptives()
+{
+    variables_descriptives = descriptives(data);
+}
+
+
 /// Returns a vector of vectors containing some basic descriptives of all the variables in the data set.
 /// The size of this vector is four. The subvectors are:
 /// <ul>
@@ -5515,11 +5535,11 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
             }
             else if(type_i == Numeric && type_j == Binary)
             {
-                correlations(i,j) = logistic_correlation(input_i.chip(0,1), input_j.chip(0,1));
+                correlations(i,j) = logistic_correlations(input_i.chip(0,1), input_j.chip(0,1)).correlation;
             }
             else if(type_i == Binary && type_j == Numeric)
             {
-                correlations(i,j) = logistic_correlation(input_j.chip(0,1), input_i.chip(0,1));
+                correlations(i,j) = logistic_correlations(input_j.chip(0,1), input_i.chip(0,1)).correlation;
             }
             else if(type_i == Categorical && type_j == Numeric)
             {
@@ -7011,6 +7031,83 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Descriptives
+
+    file_stream.OpenElement("Descriptives");
+
+    const Index variables_number = get_variables_number();
+
+    // Variables number
+    {
+        file_stream.OpenElement("VariablesNumber");
+
+        buffer.str("");
+        buffer << variables_number;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+    }
+
+    for(Index i = 0; i < variables_number; i++)
+    {
+        file_stream.OpenElement("Descriptive");
+
+        file_stream.PushAttribute("Item", to_string(i+1).c_str());
+
+        // Minimum
+
+        file_stream.OpenElement("Minimum");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).minimum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Minimum
+
+        file_stream.OpenElement("Maximum");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).maximum;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Mean
+
+        file_stream.OpenElement("Mean");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).mean;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Standard deviation
+
+        file_stream.OpenElement("StandardDeviation");
+
+        buffer.str("");
+        buffer << variables_descriptives(i).standard_deviation;
+
+        file_stream.PushText(buffer.str().c_str());
+
+        file_stream.CloseElement();
+
+        // Close descriptive element
+
+        file_stream.CloseElement();
+    }
+
+    // Close descriptives
+
+    file_stream.CloseElement();
+
     // Instances
 
     file_stream.OpenElement("Instances");
@@ -7129,6 +7226,7 @@ void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
             file_stream.CloseElement();
         }
     }
+
     // Missing values
 
     file_stream.CloseElement();
@@ -7524,6 +7622,143 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
                     columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
                 }
+            }
+        }
+    }
+
+    // Descriptives
+
+    const tinyxml2::XMLElement* descriptives_element = data_set_element->FirstChildElement("Descriptives");
+
+    if(!columns_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Descriptives element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    // Variables number
+
+    const tinyxml2::XMLElement* variables_number_element = columns_element->FirstChildElement("VariablesNumber");
+
+    if(!columns_number_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Variables number element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    Index new_variables_number = 0;
+
+    if(variables_number_element->GetText())
+    {
+        new_variables_number = static_cast<Index>(atoi(variables_number_element->GetText()));
+    }
+
+    // Descriptives
+
+    variables_descriptives.resize(new_variables_number);
+
+    start_element = variables_number_element;
+
+    if(new_variables_number > 0)
+    {
+        for(Index i = 0; i < new_variables_number; i++)
+        {
+            const tinyxml2::XMLElement* descriptive_element = start_element->NextSiblingElement("Descriptive");
+            start_element = descriptive_element;
+
+            if(descriptive_element->Attribute("Item") != std::to_string(i+1))
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet:from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Descriptive item number (" << i+1 << ") does not match (" << descriptive_element->Attribute("Item") << ").\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            // Minimum
+
+            const tinyxml2::XMLElement* minimum_element = descriptive_element->FirstChildElement("Minimum");
+
+            if(!minimum_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Minium element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(minimum_element->GetText())
+            {
+                const type new_minimum = static_cast<type>(atof(minimum_element->GetText()));
+
+                variables_descriptives(i).minimum = new_minimum;
+            }
+
+            // Maximum
+
+            const tinyxml2::XMLElement* maximum_element = descriptive_element->FirstChildElement("Maximum");
+
+            if(!maximum_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Maximum element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(maximum_element->GetText())
+            {
+                const type new_maximum = static_cast<type>(atof(maximum_element->GetText()));
+
+                variables_descriptives(i).maximum = new_maximum;
+            }
+
+            // Mean
+
+            const tinyxml2::XMLElement* mean_element = descriptive_element->FirstChildElement("Mean");
+
+            if(!mean_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Mean element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(mean_element->GetText())
+            {
+                const type new_mean = static_cast<type>(atof(mean_element->GetText()));
+
+                variables_descriptives(i).mean = new_mean;
+            }
+
+            // Standard deviation
+
+            const tinyxml2::XMLElement* standard_deviation_element = descriptive_element->FirstChildElement("StandardDeviation");
+
+            if(!standard_deviation_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Standard deviation element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(standard_deviation_element->GetText())
+            {
+                const type new_standard_deviation = static_cast<type>(atof(standard_deviation_element->GetText()));
+
+                variables_descriptives(i).standard_deviation = new_standard_deviation;
             }
         }
     }
@@ -8903,17 +9138,17 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
     */
     data.setRandom();
 
-    type rosenbrock;
+    #pragma omp parallel for
 
     for(Index i = 0; i < instances_number; i++)
     {
-        rosenbrock = 0;
+        type rosenbrock = 0;
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
             rosenbrock +=
-                (1.0 - data(i,j))*(1.0 - data(i,j))
-                + 100.0*(data(i,j+1)-data(i,j)*data(i,j))*
+                (1 - data(i,j))*(1 - data(i,j))
+                + 100*(data(i,j+1)-data(i,j)*data(i,j))*
                 (data(i,j+1)-data(i,j)*data(i,j));
         }
 
@@ -10228,7 +10463,11 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
         batches_number = 1;
         batch_size = instances_number;
     }
-    else batches_number = instances_number / batch_size;
+    else
+    {
+        batches_number = instances_number / batch_size;
+    }
+
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
@@ -10243,54 +10482,15 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
             count++;
         }
     }
+
     return batches;
 }
 
 
-void DataSet::Batch::fill(const vector<Index>& instances, const vector<Index>& inputs, const vector<Index>& targets)
-{
-    const Index rows_number = static_cast<Index>(instances.size());
-    const Index inputs_number = static_cast<Index>(inputs.size());
-    const Index targets_number = static_cast<Index>(targets.size());
-
-    const Tensor<type, 2>& data = data_set_pointer->get_data();
-
-    const Index total_rows = data.dimension(0);
-
-    const type* data_pointer = data.data();
-    type* inputs_2d_pointer = inputs_2d.data();
-    type* targets_2d_pointer = targets_2d.data();
-
-    Index instance = 0;
-    Index variable = 0;
-
-    for(Index j = 0; j < inputs_number; j++)
-    {
-        variable = inputs[static_cast<size_t>(j)];
-
-        for(Index i = 0; i < rows_number; i++)
-        {
-            instance = instances[static_cast<size_t>(i)];
-
-            inputs_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
-        }
-    }
-
-    for(Index j = 0; j < targets_number; j++)
-    {
-        variable = targets[static_cast<size_t>(j)];
-
-        for(Index i = 0; i < rows_number; i++)
-        {
-            instance = instances[static_cast<size_t>(i)];
-
-            targets_2d_pointer[rows_number*j+i] = data_pointer[total_rows*variable+instance];
-        }
-    }
-}
-
 void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
 {
+
+
     const Index rows_number = instances.size();
     const Index inputs_number = inputs.size();
     const Index targets_number = targets.size();
@@ -10308,26 +10508,34 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
 
     Index variable = 0;
 
-    for(Index j = 0; j < inputs_number; j++)
+//    #pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
+
+    for(int j = 0; j < inputs_number; j++)
     {
         variable = inputs[j];
-
         rows_number_j = rows_number*j;
         total_rows_variable = total_rows*variable;
 
-        for(Index i = 0; i < rows_number; i++)
+//        #pragma omp parallel for
+
+        for(int i = 0; i < rows_number; i++)
         {
+            //            inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
             inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }
     }
 
-    for(Index j = 0; j < targets_number; j++)
+    //#pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
+
+    for(int j = 0; j < targets_number; j++)
     {
         variable = targets[j];
         rows_number_j = rows_number*j;
         total_rows_variable = total_rows*variable;
 
-        for(Index i = 0; i < rows_number; i++)
+//        #pragma omp parallel for
+
+        for(int i = 0; i < rows_number; i++)
         {
             targets_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }

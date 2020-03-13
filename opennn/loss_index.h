@@ -120,7 +120,6 @@ public:
 
        void print()
        {
-
            cout << "Loss:" << endl;
            cout << loss << endl;
 
@@ -146,8 +145,6 @@ public:
 
 
    /// This structure contains second order information about the loss function (loss, gradient and Hessian).
-
-   ///
    /// Set of loss value, gradient vector and <i>Hessian</i> matrix of the loss index.
    /// A method returning this structure might be implemented more efficiently than the loss,
    /// gradient and <i>Hessian</i> methods separately.
@@ -163,6 +160,14 @@ public:
            loss = 0;
            gradient = Tensor<type, 1>(parameters_number);
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
+       }
+
+       void sum_hessian_diagonal(const type& value)
+       {
+           const Index parameters_number = gradient.size();
+
+           for(Index i = 0; i < parameters_number; i++)
+               hessian(i,i) += value;
        }
 
        type loss;
@@ -270,11 +275,9 @@ public:
    virtual Tensor<type, 1> calculate_batch_error_terms(const Tensor<Index, 1>&) const {return Tensor<type, 1>();}
    virtual Tensor<type, 2> calculate_batch_error_terms_Jacobian(const Tensor<Index, 1>&) const {return Tensor<type, 2>();}
 
-   virtual type calculate_error(const DataSet::Batch&,
+   virtual void calculate_error(const DataSet::Batch&,
                                 const NeuralNetwork::ForwardPropagation&,
-                                const BackPropagation& = LossIndex::BackPropagation()) const = 0;
-
-   virtual void calculate_error(BackPropagation&) const {}
+                                BackPropagation&) const = 0;
 
    type calculate_error(const DataSet::Batch& batch, Tensor<type, 1>& parameters) const
    {
@@ -284,8 +287,8 @@ public:
 
        neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
 
-       return calculate_error(batch, forward_propagation);
-//       return 0;
+//       return calculate_error(batch, forward_propagation);
+       return 0;
    }
 
    void back_propagate(const DataSet::Batch& batch,
@@ -294,11 +297,7 @@ public:
    {
        // Loss index
 
-//       calculate_errors(batch, forward_propagation, back_propagation);
-
-//       calculate_error(back_propagation);
-
-       back_propagation.loss = calculate_error(batch, forward_propagation, back_propagation);
+       calculate_error(batch, forward_propagation, back_propagation);
 
        calculate_output_gradient(batch, forward_propagation, back_propagation);
 
@@ -318,7 +317,7 @@ public:
        }
    }
 
-   virtual SecondOrderLoss calculate_terms_second_order_loss() const {return SecondOrderLoss();}
+   virtual void calculate_terms_second_order_loss(SecondOrderLoss&) const {}
 
    // Regularization methods
 

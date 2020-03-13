@@ -88,9 +88,9 @@ public:
 
    type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>& ) const;
 
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& ) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
@@ -99,7 +99,9 @@ public:
 
        const Index instances_number = batch.targets_2d.size();
 
-       return error/instances_number;
+       back_propagation.loss = error/instances_number;
+
+       return;
    }
 
    void calculate_output_gradient(const DataSet::Batch& batch,
@@ -160,7 +162,7 @@ public:
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 1>&) const;
    Tensor<type, 1> calculate_training_error_terms(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+   void calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;

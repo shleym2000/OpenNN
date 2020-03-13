@@ -66,9 +66,9 @@ public:
 
    // Error methods
 
-   type calculate_error(const DataSet::Batch& batch,
+   void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        const LossIndex::BackPropagation& ) const
+                        LossIndex::BackPropagation& back_propagation) const
    {
        Tensor<type, 0> sum_squared_error;
 
@@ -91,7 +91,9 @@ public:
 
                 sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
 
-                return sum_squared_error(0)/static_cast<type>(batch_instances_number);
+                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+                return;
             }
 
             case Device::EigenSimpleThreadPool:
@@ -102,18 +104,20 @@ public:
 
                sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
 
-               return sum_squared_error(0)/static_cast<type>(batch_instances_number);
+               back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
+
+               return;
             }
 
            case Device::EigenGpu:
            {
 //                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
 
-                return sum_squared_error(0);
+                return ;
            }
        }
 
-       return 0;
+       return       ;
    }
 
    // Error terms methods
@@ -123,48 +127,6 @@ public:
 
    string get_error_type() const;
    string get_error_type_text() const;
-/*
-   void calculate_error(BackPropagation& back_propagation) const
-   {
-       const Index batch_instances_number = back_propagation.errors.dimension(0);
-
-       Tensor<type, 0> sum_squared_error;
-
-       const Tensor<type, 2>& errors = back_propagation.errors;
-
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                sum_squared_error.device(*default_device) = errors.contract(errors, SSE);
-
-                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
-
-                return;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                sum_squared_error.device(*thread_pool_device) = errors.contract(errors, SSE);
-
-                back_propagation.loss = sum_squared_error(0)/static_cast<type>(batch_instances_number);
-
-                return;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return;
-           }
-       }
-   }
-*/
 
    void calculate_output_gradient(const DataSet::Batch& batch,
                                   const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -221,7 +183,7 @@ public:
    }
 
 
-   LossIndex::SecondOrderLoss calculate_terms_second_order_loss() const;
+   void calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const;
 
    // Serialization methods
 
