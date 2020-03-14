@@ -2342,6 +2342,8 @@ Index DataSet::get_variable_index(const string& name) const
         if(variables_names(i) == name) return i;
     }
 
+    return 0;
+
 //    throw exception("Exception: Index DataSet::get_variable_index(const string& name) const");
 }
 
@@ -4702,6 +4704,89 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 void DataSet::set_variables_descriptives()
 {
     variables_descriptives = descriptives(data);
+}
+
+
+Tensor<Descriptives, 1> DataSet::get_input_variables_descriptives() const
+{
+    const Index input_variables_number = get_input_variables_number();
+
+    Tensor<Descriptives, 1> input_variables_descriptives(input_variables_number);
+
+    Index variable_index = 0;
+    Index input_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).column_use == Input)
+        {
+            if(columns(i).type != Categorical)
+            {
+                input_variables_descriptives(input_index) = variables_descriptives(variable_index);
+
+                variable_index++;
+                input_index++;
+            }
+            else
+            {
+                for(Index j = 0; j < columns(i).get_categories_number(); j++)
+                {
+                    input_variables_descriptives(input_index) = variables_descriptives(variable_index);
+
+                    variable_index++;
+                    input_index++;
+                }
+            }
+        }
+        else
+        {
+            columns(i).type == Categorical ? variable_index += columns(i).get_categories_number() : variable_index++;
+        }
+    }
+
+    return input_variables_descriptives;
+}
+
+
+Tensor<Descriptives, 1> DataSet::get_target_variables_descriptives() const
+{
+    const Index target_variables_number = get_target_variables_number();
+
+    Tensor<Descriptives, 1> target_variables_descriptives(target_variables_number);
+
+    Index variable_index = 0;
+    Index target_index = 0;
+
+    for(Index i = 0; i < columns.size(); i++)
+    {
+        if(columns(i).column_use == Target)
+        {
+            if(columns(i).type != Categorical)
+            {
+                target_variables_descriptives(target_index) = variables_descriptives(variable_index);
+
+                variable_index++;
+                target_index++;
+            }
+            else
+            {
+                for(Index j = 0; j < columns(i).get_categories_number(); j++)
+                {
+                    target_variables_descriptives(target_index) = variables_descriptives(variable_index);
+
+                    variable_index++;
+                    target_index++;
+                }
+            }
+        }
+        else
+        {
+            columns(i).type == Categorical ? variable_index += columns(i).get_categories_number() : variable_index++;
+        }
+    }
+
+    return target_variables_descriptives;
+
 }
 
 
@@ -7641,7 +7726,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
     // Variables number
 
-    const tinyxml2::XMLElement* variables_number_element = columns_element->FirstChildElement("VariablesNumber");
+    const tinyxml2::XMLElement* variables_number_element = descriptives_element->FirstChildElement("VariablesNumber");
 
     if(!columns_number_element)
     {
@@ -10489,13 +10574,14 @@ Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, c
 
 void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets)
 {
+    const Tensor<type, 2>& data = data_set_pointer->get_data();
 
+//    inputs_2d = data_set_pointer->get_subtensor_data(instances, inputs);
+//    targets_2d = data_set_pointer->get_subtensor_data(instances, targets);
 
     const Index rows_number = instances.size();
     const Index inputs_number = inputs.size();
     const Index targets_number = targets.size();
-
-    const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Index total_rows = data.dimension(0);
 
@@ -10508,32 +10594,23 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances, const Tensor<Index,
 
     Index variable = 0;
 
-//    #pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
-
     for(int j = 0; j < inputs_number; j++)
     {
         variable = inputs[j];
         rows_number_j = rows_number*j;
         total_rows_variable = total_rows*variable;
 
-//        #pragma omp parallel for
-
         for(int i = 0; i < rows_number; i++)
         {
-            //            inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
             inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+instances[i]];
         }
     }
-
-    //#pragma omp parallel for private(variable, rows_number_j, total_rows_variable) collapse(2)
 
     for(int j = 0; j < targets_number; j++)
     {
         variable = targets[j];
         rows_number_j = rows_number*j;
         total_rows_variable = total_rows*variable;
-
-//        #pragma omp parallel for
 
         for(int i = 0; i < rows_number; i++)
         {
