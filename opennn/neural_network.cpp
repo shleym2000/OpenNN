@@ -1025,13 +1025,13 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 
     const Index parameters_number = get_parameters_number();
 
-    if(size != parameters_number)
+    if(size < parameters_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void set_parameters(const Tensor<type, 1>&) method.\n"
-               << "Size (" << size << ") must be equal to number of parameters (" << parameters_number << ").\n";
+               << "Size (" << size << ") must be grater or equal to number of parameters (" << parameters_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1510,11 +1510,38 @@ string NeuralNetwork::object_to_string() const
 }
 
 
-///@todo
+///@todo rest of the layers and add layer type to the information vector
+/// For each layer: inputs, neurons, activation function
 
 Tensor<string, 2> NeuralNetwork::get_information() const
 {
-    return Tensor<string, 2>();
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<string, 2> information(trainable_layers_number, 3);
+
+    Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    for(Index i = 0; i < trainable_layers_number; i++)
+    {
+        information(i,0) = std::to_string(trainable_layers_pointers(i)->get_inputs_number());
+        information(i,1) = std::to_string(trainable_layers_pointers(i)->get_neurons_number());
+//        information(i,2) = trainable_layers_pointers(i)->get_type_string();
+
+        const string layer_type = trainable_layers_pointers(i)->get_type_string();
+
+        if(layer_type == "Perceptron")
+        {
+            PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(trainable_layers_pointers(i));
+
+            information(i,2) = perceptron_layer->write_activation_function();
+        }
+        else
+        {
+            //@todo rest of the layers
+        }
+    }
+
+    return information;
 }
 
 
