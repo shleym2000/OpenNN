@@ -208,11 +208,5 @@ Makefile*
 *.qmlproject.user
 *.qmlproject.user.*
 
-# Examples
-*filters
-
-[Ee]xamples/mnist/data/mnist_test.csv
-[Ee]xamples/mnist/data/mnist_train.csv
-
 
 # Created by .ignore support plugin (hsz.mobi)
