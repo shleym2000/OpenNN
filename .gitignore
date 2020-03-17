@@ -208,9 +208,5 @@ Makefile*
 *.qmlproject.user
 *.qmlproject.user.*
 
-# Examples
-*filters
-
-
 
 # Created by .ignore support plugin (hsz.mobi)
