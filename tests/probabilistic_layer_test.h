@@ -43,6 +43,7 @@ public:
    void test_get_biases();
    void test_get_synaptic_weights();
    void test_get_parameters();
+   void test_get_decision_threshold();
 
    // Probabilistic layer
 
@@ -62,11 +63,29 @@ public:
 
    void test_set_default();
 
+   void test_set_biases();
+   void test_set_synaptic_weights();
+   void test_set_parameters();
+   void test_set_decision_threshold();
+
+   //Activation function
+
+
+   void test_write_activation_function();
+   void test_write_activation_function_text();
+
+   void test_set_activation_function();
+
+
    // Display messages
 
    void test_set_display();
 
   // Probabilistic post-processing
+
+   void test_calculate_combinations();
+   void test_calculate_activations();
+   void test_calculate_activation_derivatives();
 
    void test_calculate_outputs();
 
@@ -80,9 +99,6 @@ public:
 
    void test_from_XML();
 
-   // Activations
-
-   void test_calculate_activation_derivatives();
 
 
    // Unit testing methods
