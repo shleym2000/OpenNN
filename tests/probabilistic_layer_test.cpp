@@ -253,6 +253,16 @@ void ProbabilisticLayerTest::test_get_parameters()
    assert_true(abs(new_parameters(7) + 22) < static_cast<type>(1e-5), LOG);
    }
 
+void ProbabilisticLayerTest::test_get_decision_threshold()
+{
+   cout << "test_get_decision_threshold\n";
+
+   ProbabilisticLayer probabilistic_layer;
+   probabilistic_layer.set_decision_threshold(0.5);
+
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
+   }
+
 
 void ProbabilisticLayerTest::test_set()
 {
@@ -262,6 +272,117 @@ void ProbabilisticLayerTest::test_set()
 void ProbabilisticLayerTest::test_set_default()
 {
    cout << "test_set_default\n";
+}
+
+void ProbabilisticLayerTest::test_set_biases()
+{
+
+   cout << "test_set_biases\n";
+
+    ProbabilisticLayer probabilistic_layer;
+
+    Tensor<type, 2> biases(1, 4);
+
+    // Test 0
+    probabilistic_layer.set(1, 4);
+
+    biases.setZero();
+
+    probabilistic_layer.set_biases(biases);
+
+    assert_true(probabilistic_layer.get_biases_number() == 4, LOG);
+
+    assert_true(abs(probabilistic_layer.get_biases()(0)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(probabilistic_layer.get_biases()(3)) < static_cast<type>(1e-5), LOG);
+}
+
+void ProbabilisticLayerTest::test_set_synaptic_weights()
+{
+   cout << "test_set_synaptic_weights\n";
+
+    ProbabilisticLayer probabilistic_layer(1, 2);
+
+    Tensor<type, 2> synaptic_weights(2, 1);
+
+    // Test 0
+    synaptic_weights.setZero();
+
+    probabilistic_layer.set_synaptic_weights(synaptic_weights);
+
+    assert_true(probabilistic_layer.get_synaptic_weights().size() == 2, LOG);
+
+    assert_true(abs(probabilistic_layer.get_synaptic_weights()(0)) < static_cast<type>(1e-5), LOG);
+    assert_true(abs(probabilistic_layer.get_synaptic_weights()(1)) < static_cast<type>(1e-5), LOG);
+}
+
+void ProbabilisticLayerTest::test_set_parameters()
+{
+  cout << "test_set_parameters\n";
+
+    ProbabilisticLayer probabilistic_layer;
+
+    //Test
+    probabilistic_layer.set(1, 2);
+
+    Tensor<type, 1> parameters_2(4);
+
+    parameters_2.setValues({11,12,21,22});
+
+    probabilistic_layer.set_parameters(parameters_2);
+
+    assert_true(probabilistic_layer.get_biases()(0) - parameters_2(0) < static_cast<type>(1e-5), LOG);
+    assert_true(probabilistic_layer.get_synaptic_weights()(0) - parameters_2(2)  < static_cast<type>(1e-5), LOG);
+}
+
+void ProbabilisticLayerTest::test_set_decision_threshold()
+{
+   cout << "test_set_decision_threshold\n";
+
+   ProbabilisticLayer probabilistic_layer;
+   probabilistic_layer.set_decision_threshold(static_cast<type>(0.7));
+
+   assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.7)) < static_cast<type>(1e-5), LOG);
+}
+
+void ProbabilisticLayerTest::test_write_activation_function()
+{
+   cout << "test_write_activation_function\n";
+
+   ProbabilisticLayer probabilistic_layer;
+
+   // Test
+   probabilistic_layer.set();
+
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   assert_true(probabilistic_layer.write_activation_function() == "Softmax", LOG);
+}
+
+void ProbabilisticLayerTest::test_write_activation_function_text()
+{
+    cout << "test_write_activation_function_text\n";
+
+    ProbabilisticLayer probabilistic_layer;
+
+    // Test
+    probabilistic_layer.set();
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+    assert_true(probabilistic_layer.write_activation_function_text() == "softmax", LOG);
+}
+
+void ProbabilisticLayerTest::test_set_activation_function()
+{
+   cout << "test_set_activation_function\n";
+
+   ProbabilisticLayer probabilistic_layer;
+
+   // Test
+
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Softmax, LOG);
+
+   probabilistic_layer.set_activation_function("Softmax");
+   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Softmax, LOG);
 }
 
 void ProbabilisticLayerTest::test_get_display()
@@ -274,6 +395,82 @@ void ProbabilisticLayerTest::test_set_display()
    cout << "test_set_display\n";
 }
 
+//----------------------------------
+
+void ProbabilisticLayerTest::test_calculate_combinations()
+{
+   cout << "test_calculate_combinations\n";
+}
+
+void ProbabilisticLayerTest::test_calculate_activations()
+{
+   cout << "test_calculate_activations\n";
+}
+
+void ProbabilisticLayerTest::test_calculate_activation_derivatives()
+{
+    cout << "test_calculate_activation_derivatives\n";
+
+    ProbabilisticLayer probabilistic_layer;
+
+
+    Tensor<type, 1> parameters(1);
+    Tensor<type, 2> inputs(1,1);
+    Tensor<type, 2> combinations_2d(1,1);
+    Tensor<type, 3> activations_derivatives(1,1,1);
+    Tensor<type, 2> numerical_activation_derivative;
+
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer.set_device_pointer(&device);
+
+    numerical_differentiation_tests = true;
+
+    // Test 1
+
+    probabilistic_layer.set(1,1);
+    probabilistic_layer.set_parameters_constant(1);
+
+    inputs.setConstant(1);
+
+    combinations_2d.setConstant(1);
+
+    activations_derivatives.setZero();
+
+    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
+    probabilistic_layer.calculate_activations_derivatives(combinations_2d,activations_derivatives);
+
+
+       cout << combinations_2d << endl;
+       cout << "------------" << endl;
+       cout << activations_derivatives << endl;
+       cout << "------------" << endl;
+       cout << "------------" << endl;
+
+
+//       assert_true(abs(derivatives(0,0) - 0.25) < numeric_limits<type>::min(), LOG);
+
+    // Test numerical differentiation
+
+    if(numerical_differentiation_tests)
+    {
+       probabilistic_layer.set(2, 4);
+
+       combinations_2d.resize(1,4);
+       combinations_2d.setConstant(1.0);
+
+       probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+
+//       activations_derivatives = probabilistic_layer.calculate_activations_derivatives(combinations_2d);
+
+//       numerical_differentiation.calculate_derivatives(probabilistic_layer,
+//                                                       &ProbabilisticLayer::calculate_activations,
+//                                                       combinations_2d);
+
+//       assert_true((absolute_value(activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
+    }
+}
+
+//----------------------------------
 
 void ProbabilisticLayerTest::test_calculate_outputs()
 {
@@ -434,69 +631,6 @@ void ProbabilisticLayerTest::test_from_XML()
 }
 */
 
-void ProbabilisticLayerTest::test_calculate_activation_derivatives()
-{
-    cout << "test_calculate_activation_derivatives\n";
-
-    ProbabilisticLayer probabilistic_layer;
-
-
-    Tensor<type, 1> parameters(1);
-    Tensor<type, 2> inputs(1,1);
-    Tensor<type, 2> combinations_2d(1,1);
-    Tensor<type, 3> activations_derivatives(1,1,1);
-    Tensor<type, 2> numerical_activation_derivative;
-
-    Device device(Device::EigenSimpleThreadPool);
-    probabilistic_layer.set_device_pointer(&device);
-
-    numerical_differentiation_tests = true;
-
-    // Test 1
-
-    probabilistic_layer.set(1,1);
-    probabilistic_layer.set_parameters_constant(1);
-
-    inputs.setConstant(1);
-
-    combinations_2d.setConstant(1);
-
-    activations_derivatives.setZero();
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
-    probabilistic_layer.calculate_activations_derivatives(combinations_2d,activations_derivatives);
-
-
-       cout << combinations_2d << endl;
-       cout << "------------" << endl;
-       cout << activations_derivatives << endl;
-       cout << "------------" << endl;
-       cout << "------------" << endl;
-
-
-//       assert_true(abs(derivatives(0,0) - 0.25) < numeric_limits<type>::min(), LOG);
-
-    // Test numerical differentiation
-
-    if(numerical_differentiation_tests)
-    {
-       probabilistic_layer.set(2, 4);
-
-       combinations_2d.resize(1,4);
-       combinations_2d.setConstant(1.0);
-
-       probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-
-//       activations_derivatives = probabilistic_layer.calculate_activations_derivatives(combinations_2d);
-
-//       numerical_differentiation.calculate_derivatives(probabilistic_layer,
-//                                                       &ProbabilisticLayer::calculate_activations,
-//                                                       combinations_2d);
-
-//       assert_true((absolute_value(activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
-    }
-}
-
 
 void ProbabilisticLayerTest::run_test_case()
 {
@@ -517,6 +651,7 @@ void ProbabilisticLayerTest::run_test_case()
    test_get_biases();
    test_get_synaptic_weights();
    test_get_parameters();
+   test_get_decision_threshold();
 
    // Layer architecture
 
@@ -533,11 +668,28 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_set_default();
 
+   test_set_biases();
+   test_set_synaptic_weights();
+   test_set_parameters();
+   test_set_decision_threshold();
+
+   //Activation function
+
+   test_write_activation_function();
+   test_write_activation_function_text();
+
+   test_set_activation_function();
+
+
    // Display messages
 
    test_set_display();
 
    // Probabilistic post-processing
+
+   test_calculate_combinations();
+   test_calculate_activations();
+   test_calculate_activation_derivatives()      ;
 
    test_calculate_outputs();
 
@@ -546,10 +698,6 @@ void ProbabilisticLayerTest::run_test_case()
 //   test_to_XML();
 
 //   test_from_XML();
-
-   // Activation derivatives
-
-   test_calculate_activation_derivatives();
 
    cout << "End of probabilistic layer test case.\n";
 }
