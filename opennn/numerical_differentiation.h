@@ -353,6 +353,75 @@ public:
    }
 
 
+   template<class T>
+   Tensor<type, 2> calculate_forward_differences_derivatives(const T& t, void(T::*f)(const Tensor<type, 2>&, Tensor<type, 2>&) const, const Index& dummy, const Tensor<type, 2>& x) const
+   {
+     const Index rn = x.dimension(0);
+     const Index cn = x.dimension(1);
+
+     const Tensor<type, 2> h = calculate_h(x);
+
+     const Tensor<type, 2> x_forward = x + h;
+
+     Tensor<type, 2> y_forward(rn,cn);
+     (t.*f)(x_forward,y_forward);
+
+     Tensor<type, 2> y(rn,cn);
+     (t.*f)(x,y);
+
+     const Tensor<type, 2> d = (y_forward - y)/h;
+
+     return d;
+   }
+
+   template<class T>
+   Tensor<type, 2> calculate_central_differences_derivatives(const T& t, void(T::*f)(const Tensor<type, 2>&, Tensor<type, 2>&) const, const Index& dummy, const Tensor<type, 2>& x) const
+   { 
+      const Index rn = x.dimension(0);
+      const Index cn = x.dimension(1);
+
+      const Tensor<type, 2> h = calculate_h(x);
+
+      const Tensor<type, 2> x_forward = x + h;
+      const Tensor<type, 2> x_backward = x - h;
+
+      Tensor<type, 2> y_forward(rn,cn);
+      (t.*f)(x_forward, y_forward);
+      Tensor<type, 2> y_backward(rn,cn);
+      (t.*f)(x_backward, y_backward);
+
+      const Tensor<type, 2> d = (y_forward - y_backward)/(static_cast<type>(2.0)*h);
+
+      return d;
+   }
+
+   /// Returns the derivatives of a vector function according to the numerical differentiation method to be used.
+   /// The function to be differentiated is of the following form: Tensor<type, 1> f(const Index&, const Tensor<type, 1>&) const.
+   /// @param t : Object constructor containing the member method to differentiate.
+   /// @param f: Pointer to the member method.
+   /// @param dummy: Dummy integer for the method prototype.
+   /// @param x: Input vector.
+
+   template<class T>
+   Tensor<type, 2> calculate_derivatives(const T& t, void(T::*f)(const Tensor<type, 2>&, Tensor<type, 2>&) const, const Index& dummy, const Tensor<type, 2>& x) const
+   {
+      switch(numerical_differentiation_method)
+      {
+         case ForwardDifferences:
+         {
+            return calculate_forward_differences_derivatives(t, f, dummy, x);
+         }
+
+         case CentralDifferences:
+         {
+           return calculate_central_differences_derivatives(t, f, dummy, x);
+         }
+      }
+
+      return Tensor<type, 2>();
+   }
+
+
    /// Returns the second derivative of a function using the forward differences method. 
    /// @param t : Object constructor containing the member method to differentiate.  
    /// @param f: Pointer to the member method.

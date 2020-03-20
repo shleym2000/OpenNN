@@ -667,7 +667,7 @@ void Layer::exponential_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) con
 }
 
 
-void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
+void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) const
 {
     switch(device_pointer->get_type())
     {
@@ -685,397 +685,6 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) c
         ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
         y.device(*thread_pool_device) = x.exp().inverse() / (static_cast<type>(1.0) + x.exp().inverse());
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
-{
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.setZero();
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-//        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.setZero();
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
-{
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.setZero();
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-//        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.setZero();
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>& y) const
-{
-    y.setConstant(1.0);
-}
-
-
-void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.device(*default_device) = 1 - x.tanh().square();
-
-        return;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.device(*thread_pool_device) = 1 - x.tanh().square();
-
-        return;
-    }
-
-    case Device::EigenGpu:
-    {
-        return;
-    }
-
-    }
-}
-
-
-void Layer::rectified_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    Tensor<type, 2> ones(x.dimension(0), x.dimension(1));
-
-    Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
-
-    ones.setConstant(1);
-
-    zeros.setConstant(0);
-
-    const Tensor<bool, 2> if_sentence = x < x.constant(0);
-
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.device(*default_device) = if_sentence.select(zeros, ones);
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.device(*thread_pool_device) = if_sentence.select(zeros, ones);
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    const type lambda = static_cast<type>(1.0507);
-
-    const type alpha = static_cast<type>(1.67326);
-
-    const Tensor<bool, 2> if_sentence = x < x.constant(0);
-
-    Tensor<type,2> ones(x.dimension(0), x.dimension(1));
-
-    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
-
-    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
-
-    ones.setConstant(1);
-
-    f_1 = lambda*alpha*x.exp();
-
-    f_2 = ones*lambda;
-
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.device(*default_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::soft_plus_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.device(*default_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + x.exp().inverse());
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.device(*thread_pool_device) = static_cast<type>(1.0) / (static_cast<type>(1.0) + x.exp().inverse());
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::soft_sign_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    const Tensor<bool, 2> if_sentence = x < x.constant(0);
-
-    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
-
-    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
-
-    f_1 = static_cast<type>(1.0) / (static_cast<type>(1.0) - x).pow(2);
-
-    f_2 = static_cast<type>(1.0) / (static_cast<type>(1.0) + x).pow(2);
-
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.device(*default_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-//        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-//        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-
-        break;
-    }
-    }
-
-    const Index n = x.size();
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < n; i++)
-    {
-        x(i) < static_cast<type>(-2.5) || x(i) > static_cast<type>(2.5) ? y(i) = 0.0 : y(i) = static_cast<type>(0.2);
-    }
-}
-
-
-void Layer::exponential_linear_derivatives(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
-{
-    const type alpha = 1.0;
-
-    const Tensor<bool, 2> if_sentence = x < x.constant(0);
-
-    Tensor<type, 2> ones (x.dimension(0), x.dimension(1));
-
-    ones.setConstant(1);
-
-    Tensor<type, 2> f_1(x.dimension(0), x.dimension(1));
-
-    Tensor<type, 2> f_2(x.dimension(0), x.dimension(1));
-
-    f_1 = alpha * x.exp();
-
-    f_2 = ones;
-
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.device(*default_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-
-        break;
-    }
-
-    case Device::EigenGpu:
-    {
-//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-        break;
-    }
-    }
-}
-
-
-void Layer::logistic_derivatives(const Tensor<type, 2>& x, Tensor<type, 3>& y) const
-{
-    Tensor<type, 2> expression(x.dimension(0), x.dimension(1));
-
-    switch(device_pointer->get_type())
-    {
-    case Device::EigenDefault:
-    {
-        DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-        y.device(*default_device) = x.exp().inverse() / ((static_cast<type>(1.0) + x.exp().inverse()).square());
-
-        break;
-    }
-
-    case Device::EigenSimpleThreadPool:
-    {
-        ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-        expression.device(*thread_pool_device) = x.exp().inverse() / ((static_cast<type>(1.0) + x.exp().inverse()).square());
-
-        TensorMap< Tensor<type, 3> > y_1(expression.data(), x.dimension(0), x.dimension(1), 1);
-
-        y = y_1;
 
         break;
     }
@@ -1310,7 +919,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 }
 
 
-void Layer::derivatives_hard_sigmoid(const Tensor<type, 2>& combinations,
+void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
                                      Tensor<type, 2>& activations,
                                      Tensor<type, 2>& activations_derivatives) const
 {
@@ -1397,7 +1006,7 @@ void Layer::derivatives_hard_sigmoid(const Tensor<type, 2>& combinations,
 
 }
 
-void Layer::derivatives_hyperbolic_tangent(const Tensor<type, 2>& combinations,
+void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
                                            Tensor<type, 2>& activations,
                                            Tensor<type, 2>& activations_derivatives) const
 {
@@ -1437,7 +1046,7 @@ void Layer::derivatives_hyperbolic_tangent(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_logistic(const Tensor<type, 2>& combinations,
+void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
                                  Tensor<type, 2>& activations,
                                  Tensor<type, 2>& activations_derivatives) const
 {
@@ -1484,7 +1093,119 @@ void Layer::derivatives_logistic(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_linear(const Tensor<type, 2>& combinations,
+void Layer::softmax_derivatives(const Tensor<type, 2>& combinations,
+                                 Tensor<type, 2>& activations,
+                                 Tensor<type, 2>& activations_derivatives) const
+{
+    Tensor<type, 0> sum;
+
+    if(/* DISABLES CODE */ (false))
+    {
+    switch(device_pointer->get_type())
+    {
+    case Device::EigenDefault:
+    {
+   /*     DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+        // Activations
+
+        sum.device(*default_device) = combinations.exp().sum();
+
+        activations.device(*default_device) = combinations.exp() / sum(0);
+
+        // Activations Derivatives
+
+        activations_derivatives.device(*default_device) = activations;
+*/
+        return;
+    }
+
+    case Device::EigenSimpleThreadPool:
+    {
+ /*       ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+        // Activations
+
+        sum.device(*default_device) = combinations.exp().sum();
+
+        activations.device(*default_device) = combinations.exp() / sum(0);
+
+        // Activations Derivatives
+
+        activations_derivatives.device(*thread_pool_device) = activations;
+*/
+        return;
+    }
+
+    case Device::EigenGpu:
+    {
+//        GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+        return;
+    }
+    }
+    }
+
+    activations.setConstant(1);
+
+    //---------------------------
+    const Index n = combinations.dimension(0);
+    const Index columns_number = combinations.dimension(1);
+
+    Tensor<type, 2> jacobian(columns_number, columns_number);
+
+
+
+    activations_derivatives.setConstant(2);
+
+
+/*
+   const Index n = combinations.dimension(0);
+    const Index columns_number = combinations.dimension(1);
+
+    Tensor<type, 2> softmax_values(n, columns_number);
+
+    softmax(combinations, softmax_values);
+//    Tensor<type, 1> softmax_vector(columns_number);
+
+//    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i ++)
+    {
+//        softmax_vector = softmax_values.chip(i,0);
+        for(Index j = 0; j < columns_number; j++)
+        {
+            for(Index k = 0; k < columns_number; k++)
+            {
+                activations_derivatives(j,k,i) = -softmax_values(i,j) * softmax_values(i,k);
+
+              //  if(j == k)
+             //   {
+             //       y(j,k,i) = softmax_vector(j)*(1.0 - softmax_vector(j));
+           //     }
+         //       else
+         //       {
+         //           y(j,k,i) = -softmax_vector(j) * softmax_vector(k);
+         //       }
+
+            }
+        }
+    }
+
+//    #pragma omp parallel for
+
+    for(Index i = 0; i < n; i++)
+    {
+        for(Index j = 0; j < columns_number; j++) activations_derivatives(j,j,i) = softmax_values(i,j)*(static_cast<type>(1.0) - softmax_values(i,j));
+    }
+*/
+
+    return;
+}
+
+
+
+void Layer::linear_derivatives(const Tensor<type, 2>& combinations,
                                Tensor<type, 2>& activations,
                                Tensor<type, 2>& activations_derivatives) const
 {
@@ -1494,7 +1215,7 @@ void Layer::derivatives_linear(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_threshold(const Tensor<type, 2>& combinations,
+void Layer::threshold_derivatives(const Tensor<type, 2>& combinations,
                                   Tensor<type, 2>& activations,
                                   Tensor<type, 2>& activations_derivatives) const
 {
@@ -1558,7 +1279,7 @@ void Layer::derivatives_threshold(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_symmetric_threshold(const Tensor<type, 2>& combinations,
+void Layer::symmetric_threshold_derivatives(const Tensor<type, 2>& combinations,
                                             Tensor<type, 2>& activations,
                                             Tensor<type, 2>& activations_derivatives) const
 {
@@ -1617,7 +1338,7 @@ void Layer::derivatives_symmetric_threshold(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_rectified_linear(const Tensor<type, 2>& combinations,
+void Layer::rectified_linear_derivatives(const Tensor<type, 2>& combinations,
                                          Tensor<type, 2>& activations,
                                          Tensor<type, 2>& activations_derivatives) const
 {
@@ -1680,7 +1401,7 @@ void Layer::derivatives_rectified_linear(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_scaled_exponential_linear(const Tensor<type, 2>& combinations,
+void Layer::scaled_exponential_linear_derivatives(const Tensor<type, 2>& combinations,
                                                   Tensor<type, 2>& activations,
                                                   Tensor<type, 2>& activations_derivatives) const
 {
@@ -1764,7 +1485,7 @@ void Layer::derivatives_scaled_exponential_linear(const Tensor<type, 2>& combina
 }
 
 
-void Layer::derivatives_soft_plus(const Tensor<type, 2>& combinations,
+void Layer::soft_plus_derivatives(const Tensor<type, 2>& combinations,
                                   Tensor<type, 2>& activations,
                                   Tensor<type, 2>& activations_derivatives) const
 {
@@ -1811,7 +1532,7 @@ void Layer::derivatives_soft_plus(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_soft_sign(const Tensor<type, 2>& combinations,
+void Layer::soft_sign_derivatives(const Tensor<type, 2>& combinations,
                                   Tensor<type, 2>& activations,
                                   Tensor<type, 2>& activations_derivatives) const
 {
@@ -1885,7 +1606,7 @@ void Layer::derivatives_soft_sign(const Tensor<type, 2>& combinations,
 }
 
 
-void Layer::derivatives_exponential_linear(const Tensor<type, 2>& combinations,
+void Layer::exponential_linear_derivatives(const Tensor<type, 2>& combinations,
                                            Tensor<type, 2>& activations,
                                            Tensor<type, 2>& activations_derivatives) const
 {
