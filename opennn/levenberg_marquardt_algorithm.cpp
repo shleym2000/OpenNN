@@ -770,7 +770,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
 
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
     NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
@@ -827,11 +827,11 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         // Neural Network
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-
+cout << "1" << endl;
         // Loss index
 
         loss_index_pointer->calculate_terms_second_order_loss(training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss);
-
+cout << "2" << endl;
         training_loss = terms_second_order_loss.loss;
 
         gradient_norm = l2_norm(terms_second_order_loss.gradient);
@@ -847,7 +847,15 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1.)*terms_second_order_loss.gradient);
 
-             const type new_loss = 0;// = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
+//             const type new_loss = 0;// = loss_index_pointer->calculate_training_loss(parameters+parameters_increment);
+//             const type new_loss = loss_index_pointer->calculate_error(training_batch, new_parameters);
+             Tensor<type, 1> new_parameters = parameters + parameters_increment;
+cout << "3" << endl;
+             neural_network_pointer->forward_propagate(training_batch, new_parameters, training_forward_propagation);
+
+             loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
+
+             const type new_loss = training_back_propagation.loss;
 
              if(new_loss <= training_loss) // succesfull step
              {
@@ -872,7 +880,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         parameters_increment_norm = l2_norm(parameters_increment);
 
-        if(epoch == 0)
+        if(epoch == 1)
         {
             training_loss_decrease = 0;
         }
@@ -888,23 +896,23 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
           loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
           selection_error = selection_back_propagation.loss;
-        }
 
-        if(epoch == 0)
-        {
-            minimum_selection_error = selection_error;
+          if(epoch == 1)
+          {
+              minimum_selection_error = selection_error;
 
-            minimal_selection_parameters = neural_network_pointer->get_parameters();
-        }
-        else if(epoch != 0 && selection_error > old_selection_error)
-        {
-            selection_failures++;
-        }
-        else if(selection_error <= minimum_selection_error)
-        {
-            minimum_selection_error = selection_error;
+              minimal_selection_parameters = neural_network_pointer->get_parameters();
+          }
+          else if(epoch != 0 && selection_error > old_selection_error)
+          {
+              selection_failures++;
+          }
+          else if(selection_error <= minimum_selection_error)
+          {
+              minimum_selection_error = selection_error;
 
-            minimal_selection_parameters = neural_network_pointer->get_parameters();
+              minimal_selection_parameters = neural_network_pointer->get_parameters();
+          }
         }
 
         // Elapsed time
@@ -926,13 +934,13 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         // Stopping Criteria
 
-        parameters_increment_norm = 0;
+//        parameters_increment_norm = 0;
 
         if(parameters_increment_norm <= minimum_parameters_increment_norm)
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
+                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached("<< minimum_parameters_increment_norm<<").\n"
                      << "Parameters increment norm: " << parameters_increment_norm << endl;
             }
 
@@ -950,7 +958,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        else if(epoch != 0 && training_loss_decrease >= minimum_loss_decrease)
+        else if(epoch != 1 && training_loss_decrease >= minimum_loss_decrease)
         {
             if(display)
             {
@@ -1006,7 +1014,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 0 && epoch % save_period == 0)
+        if(epoch != 1 && epoch % save_period == 0)
         {
             neural_network_pointer->save(neural_network_file_name);
         }

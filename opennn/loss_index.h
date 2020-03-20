@@ -290,11 +290,17 @@ public:
    {
        const Index instances_number = batch.get_instances_number();
 
+       // Neural Network
+
        NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
 
        neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
 
-//       return calculate_error(batch, forward_propagation);
+       // Loss Index
+
+//       calculate_error(batch, forward_propagation, back_propagation);
+
+//       return back_propagation.loss;
        return 0;
    }
 
@@ -334,19 +340,21 @@ public:
        // First Order
 
        calculate_error(batch, forward_propagation, back_propagation);
+
        calculate_output_gradient(batch, forward_propagation, back_propagation);
+
        calculate_layers_delta(forward_propagation, back_propagation);
 
        // Second Order
-
+cout << "First Order" << endl;
        calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
-
+cout << "terms" << endl;
        calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
-
+cout <<"jacobian" << endl;
        calculate_hessian_approximation(second_order_loss);
-
+cout << "Second" << endl;
        // Loss
-cout << "Losss" << back_propagation.loss << endl;
+
        second_order_loss.loss = back_propagation.loss;
 
        // Regularization
@@ -389,7 +397,7 @@ cout << "Losss" << back_propagation.loss << endl;
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
-        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+//        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
         // Hidden layers
 
