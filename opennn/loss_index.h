@@ -120,6 +120,9 @@ public:
 
        void print()
        {
+           cout << "Error:" << endl;
+           cout << error << endl;
+
            cout << "Loss:" << endl;
            cout << loss << endl;
 
@@ -138,6 +141,8 @@ public:
 
        Tensor<type, 2> output_gradient;
 
+       type error;
+
        type loss;
 
        Tensor<type, 1> gradient;
@@ -155,10 +160,11 @@ public:
 
        SecondOrderLoss() {}
 
-       SecondOrderLoss(const Index& parameters_number)
+       SecondOrderLoss(const Index& parameters_number, const Index& instances_number)
        {
-           loss = 0;
+           loss = 0;           
            gradient = Tensor<type, 1>(parameters_number);
+           error_Jacobian = Tensor<type, 2>(instances_number, parameters_number);
            hessian = Tensor<type, 2>(parameters_number, parameters_number);
        }
 
@@ -172,6 +178,7 @@ public:
 
        type loss;
        Tensor<type, 1> gradient;
+       Tensor<type, 2> error_Jacobian;
        Tensor<type, 2> hessian;
    };
 
@@ -292,8 +299,8 @@ public:
    }
 
    void back_propagate(const DataSet::Batch& batch,
-                                   NeuralNetwork::ForwardPropagation& forward_propagation,
-                                   BackPropagation& back_propagation) const
+                       NeuralNetwork::ForwardPropagation& forward_propagation,
+                       BackPropagation& back_propagation) const
    {
        // Loss index
 
@@ -311,13 +318,52 @@ public:
        {
            const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-           back_propagation.loss += regularization_weight*calculate_regularization(parameters);
+           back_propagation.loss = back_propagation.error + regularization_weight*calculate_regularization(parameters);
 
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
        }
    }
 
-   virtual void calculate_terms_second_order_loss(SecondOrderLoss&) const {}
+   // Second Order loss
+
+   void calculate_terms_second_order_loss(const DataSet::Batch& batch,
+                                          NeuralNetwork::ForwardPropagation& forward_propagation,
+                                          BackPropagation& back_propagation,
+                                          SecondOrderLoss& second_order_loss) const
+   {
+       // First Order
+
+       calculate_error(batch, forward_propagation, back_propagation);
+       calculate_output_gradient(batch, forward_propagation, back_propagation);
+       calculate_layers_delta(forward_propagation, back_propagation);
+
+       // Second Order
+
+       calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
+
+       calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
+
+       calculate_hessian_approximation(second_order_loss);
+
+       // Loss
+cout << "Losss" << back_propagation.loss << endl;
+       second_order_loss.loss = back_propagation.loss;
+
+       // Regularization
+
+       if(regularization_method != RegularizationMethod::NoRegularization)
+       {
+           const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+           second_order_loss.loss += regularization_weight*calculate_regularization(parameters);
+           second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
+           second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
+       }
+   }
+
+   virtual void calculate_Jacobian_gradient(const DataSet::Batch&, const NeuralNetwork::ForwardPropagation&, SecondOrderLoss&) const {}
+
+   virtual void calculate_hessian_approximation(SecondOrderLoss&) const {}
 
    // Regularization methods
 
@@ -343,6 +389,8 @@ public:
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
 
+        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
+
         // Hidden layers
 
       for(Index i = static_cast<Index>(trainable_layers_number)-2; i >= 0; i--)
@@ -357,51 +405,6 @@ public:
                                    back_propagation.neural_network.layers(i).delta);
       }
    }
-/*
-   void calculate_errors(const DataSet::Batch& batch,
-                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                         BackPropagation& back_propagation) const
-   {
-        #ifdef __OPENNN_DEBUG__
-
-        check();
-
-        #endif
-
-        const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-        const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-        const Tensor<type, 2>& targets = batch.targets_2d;
-
-        switch(device_pointer->get_type())
-        {
-             case Device::EigenDefault:
-             {
-                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                 back_propagation.errors.device(*default_device) = outputs - targets;
-
-                 return;
-             }
-
-             case Device::EigenSimpleThreadPool:
-             {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                back_propagation.errors.device(*thread_pool_device) = outputs - targets;
-
-                return;
-             }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
-        }
-   }
-*/
 
    void calculate_error_gradient(const DataSet::Batch& batch,
                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -448,9 +451,10 @@ public:
 
    Tensor<type, 2> calculate_layer_error_terms_Jacobian(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_error_terms_Jacobian(const Tensor<type, 2>&,
-                                                  const Tensor<Layer::ForwardPropagation, 1>&,
-                                                  const Tensor<Tensor<type, 2>, 1>&) const;
+   void calculate_error_terms_Jacobian(const DataSet::Batch&,
+                                       const NeuralNetwork::ForwardPropagation&,
+                                       const BackPropagation&,
+                                       SecondOrderLoss&) const;
 
    // Serialization methods
 
@@ -744,6 +748,7 @@ protected:
    bool display = true;
 
    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
+   const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 };

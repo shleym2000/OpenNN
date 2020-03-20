@@ -126,7 +126,7 @@ public:
        const Index batch_instances_number = batch.get_instances_number();
        const Index total_instances_number = data_set_pointer->get_instances_number();
 
-       back_propagation.loss = sum_squared_error(0)/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
+       back_propagation.error = sum_squared_error(0)/((static_cast<type>(batch_instances_number)/static_cast<type>(total_instances_number))*normalization_coefficient);
 
        return;
    }
@@ -195,7 +195,7 @@ public:
 
    // Squared errors methods
 
-   void calculate_terms_second_order_loss(LossIndex::SecondOrderLoss&) const;
+   void calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;
