@@ -193,14 +193,16 @@ public:
         #endif
 
         const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
 
         const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
         const Tensor<type, 2>& targets = batch.targets_2d;
 
         Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
-        Tensor<type, 2> expression(outputs.dimension(0), outputs.dimension(1));
 
         const Index instances_number = data_set_pointer->get_training_instances_number();
+
+        Tensor<type, 2> expression(parameters_number, 1);
 
         const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
 
@@ -212,7 +214,7 @@ public:
 
                  errors.device(*default_device) = (outputs - targets).square();
 
-                 second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, AT_B);
+                 second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, A_B).eval();
 
                  second_order_loss.gradient.device(*default_device) = second_order_loss.gradient*coefficient;
 
@@ -225,14 +227,11 @@ public:
 
                 errors.device(*thread_pool_device) = (outputs - targets).square();
 
-//                second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B);
-
-//                second_order_loss.gradient.device(*thread_pool_device) = coefficient*second_order_loss.gradient;
-                expression.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, A_B);
+                expression.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
 
                 expression.device(*thread_pool_device) = coefficient*expression;
 
-                memcpy(second_order_loss.gradient.data(), expression.data(), static_cast<size_t>(expression.size())*sizeof(type));
+                memcpy(second_order_loss.gradient.data(), expression.data(), static_cast<size_t>(parameters_number)*sizeof(type));
 
                 return;
              }
@@ -254,7 +253,10 @@ public:
 
         #endif
 
+        const Index parameters_number = neural_network_pointer->get_parameters_number();
         const Index instances_number = data_set_pointer->get_training_instances_number();
+
+        Tensor<type, 2> dot(parameters_number, parameters_number);
 
         const type coefficient = (static_cast<type>(2.0)/static_cast<type>(instances_number));
 
@@ -275,9 +277,9 @@ public:
              {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
-                second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+                dot.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
 
-                second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
+                second_order_loss.hessian.device(*thread_pool_device) = coefficient*dot;
 
                 return;
              }
