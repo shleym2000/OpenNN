@@ -222,9 +222,61 @@ public:
            cout << targets_2d << endl;
        }
 
-       void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
+       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
-       void fill(const Tensor<Index, 1>&, Tensor<type, 2, RowMajor>&, Tensor<type, 2, RowMajor>&);
+       Index instances_number = 0;
+
+       DataSet* data_set_pointer = nullptr;
+
+       Tensor<type, 2> inputs_2d;
+       Tensor<type, 2> targets_2d;
+   };
+
+   struct MiniBatch
+   {
+       /// Default constructor.
+
+       MiniBatch() {}
+
+       MiniBatch(const Index& new_instances_number, DataSet* new_data_set_pointer)
+       {
+           instances_number = new_instances_number;
+
+           data_set_pointer = new_data_set_pointer;
+
+           const Index input_variables_number = data_set_pointer->get_input_variables_number();
+           const Index target_variables_number = data_set_pointer->get_target_variables_number();
+
+           const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+           const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
+
+           inputs_2d = Tensor<type, 2>(instances_number, input_variables_number);
+           targets_2d = Tensor<type, 2>(instances_number, target_variables_number);
+       }
+
+       /// Destructor.
+
+       virtual ~MiniBatch() {}
+
+       Index get_instances_number() const
+       {
+           return instances_number;
+       }
+
+       void get_mini_batch(const Batch& batch, const Index& batch_size);
+
+       void print()
+       {
+           cout << "Batch structure" << endl;
+
+           cout << "Inputs:" << endl;
+           cout << inputs_2d << endl;
+
+           cout << "Targets:" << endl;
+           cout << targets_2d << endl;
+       }
+
+//       void fill(const Tensor<Index, 1>& instances, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
        Index instances_number = 0;
 
@@ -323,9 +375,7 @@ public:
 
    // Batches get methods
 
-   Tensor<Index, 2> get_training_batches(const Index&, const bool&) const;
-   Tensor<Index, 2> get_selection_batches(const Index&, const bool&) const;
-   Tensor<Index, 2> get_testing_batches(const Index&, const bool&) const;
+   Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&) const;
 
    // Data get methods
 
@@ -345,9 +395,6 @@ public:
 
    Tensor<type, 2> get_training_input_data() const;
    Tensor<type, 2> get_training_target_data() const;
-
-   Tensor<type, 2, RowMajor> get_training_input_data_row_major() const;
-   Tensor<type, 2, RowMajor> get_training_target_data_row_major() const;
 
    Tensor<type, 2> get_selection_input_data() const;
    Tensor<type, 2> get_selection_target_data() const;
@@ -373,7 +420,6 @@ public:
    Tensor<Tensor<string, 1>, 1> get_data_file_preview() const;
 
    Tensor<type, 2> get_subtensor_data(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
-   Tensor<type, 2, RowMajor> get_subtensor_data_row_major(const Tensor<Index, 1>&, const Tensor<Index, 1>&) const;
 
    // Members get methods
 

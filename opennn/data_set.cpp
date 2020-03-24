@@ -949,38 +949,79 @@ const Tensor<DataSet::InstanceUse,1 >& DataSet::get_instances_uses() const
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
 /// @todo In forecasting must be false.
 
-Tensor<Index, 2> DataSet::get_training_batches(const Index& batch_instances_number, const bool& shuffle) const
+Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
+                                      const Index& batch_instances_number,
+                                      const bool& shuffle) const
 {
-    Tensor<Index, 1> training_indices = get_training_instances_indices();
+//    if(!shuffle) return split_instances(training_indices, batch_instances_number);
 
-    mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+    const Index instances_number = instances_indices.size();
 
-//    if(shuffle) std ::shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+    Index buffer_size = batch_instances_number;
+    Index batches_number;
+    Index batch_size = batch_instances_number;
 
-//    std::shuffle(training_indices.data(), training_indices.data() + training_indices.size(), rng);
+    if(instances_number < batch_size)
+    {
+        batches_number = 1;
+        batch_size = instances_number;
+    }
+    else
+    {
+        batches_number = instances_number / batch_size;
+    }
 
+    Tensor<Index, 2> batches(batches_number, batch_size);
 
-    return split_instances(training_indices, batch_instances_number);
-}
+    Tensor<Index, 1> buffer(buffer_size);
+    for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
 
+    Index next_index = 0;
+    Index random_index = 0;
 
-Tensor<Index, 2> DataSet::get_selection_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
-{
-    Tensor<Index, 1> selection_indices = get_selection_instances_indices();
+    for(Index i = 0; i < batches_number; i++)
+    {
+        if(i == batches_number-1)
+        {
 
-    if(shuffle_batches_instances) std::random_shuffle(selection_indices.data(), selection_indices.data() + selection_indices.size());
+            if(batch_size == buffer_size)
+            {
+                for(Index j = 0; j < batch_size;j++)
+                {
+//                    batches(i,j) = buffer(j);
+                }
+            }
+            else
+            {
+                for(Index j = 0; j < buffer_size; j++)
+                {
+//                    batches(i,j) = buffer(j);
+                }
 
-    return split_instances(selection_indices, batch_instances_number);
-}
+                for(Index j = buffer_size; j < batch_size; j++)
+                {
+//                    batches(i,j) = rest_data(next_index);
 
+                    next_index++;
+                }
+            }
 
-Tensor<Index, 2> DataSet::get_testing_batches(const Index& batch_instances_number, const bool& shuffle_batches_instances) const
-{
-    Tensor<Index, 1> training_indices = get_testing_instances_indices();
+            break;
+        }
 
-    if(shuffle_batches_instances) std::random_shuffle(training_indices.data(), training_indices.data() + training_indices.size());
+        for(Index j = 0; j < batch_size; j++)
+        {
+            random_index = static_cast<Index>(rand()%buffer_size);
 
-    return split_instances(training_indices, batch_instances_number);
+            batches(i, j) = buffer(random_index);
+
+            buffer(random_index) = instances_indices(next_index);
+
+            next_index++;
+        }
+    }
+
+    return batches;
 }
 
 
@@ -3248,35 +3289,6 @@ Tensor<type, 2> DataSet::get_training_target_data() const
 }
 
 
-
-/// Returns a matrix with training instances and input variables.
-/// The number of rows is the number of training
-/// The number of columns is the number of input variables.
-
-Tensor<type, 2, RowMajor> DataSet::get_training_input_data_row_major() const
-{
-    const Tensor<Index, 1> training_indices = get_training_instances_indices();
-
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    return get_subtensor_data_row_major(training_indices, input_variables_indices);
-}
-
-
-/// Returns a tensor with training instances and target variables.
-/// The number of rows is the number of training
-/// The number of columns is the number of target variables.
-
-Tensor<type, 2, RowMajor> DataSet::get_training_target_data_row_major() const
-{
-    const Tensor<Index, 1> training_indices = get_training_instances_indices();
-
-    const Tensor<Index, 1>& target_variables_indices = get_target_variables_indices();
-
-    return get_subtensor_data_row_major(training_indices, target_variables_indices);
-}
-
-
 /// Returns a tensor with selection instances and input variables.
 /// The number of rows is the number of selection
 /// The number of columns is the number of input variables.
@@ -3779,32 +3791,6 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
     const Index columns_number = columns_indices.size();
 
     Tensor<type, 2> subtensor(rows_indices.size(), columns_indices.size());
-
-    Index row_index;
-    Index column_index;
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        row_index = rows_indices(i);
-
-        for(Index j = 0; j < columns_number; j++)
-        {
-            column_index = columns_indices(j);
-
-            subtensor(i, j) = data(row_index, column_index);
-        }
-    }
-
-    return subtensor;
-}
-
-
-Tensor<type, 2, RowMajor> DataSet::get_subtensor_data_row_major(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
-{
-    const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
-
-    Tensor<type, 2, RowMajor> subtensor(rows_indices.size(), columns_indices.size());
 
     Index row_index;
     Index column_index;
@@ -10676,9 +10662,6 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances,
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
-//    inputs_2d = data_set_pointer->get_subtensor_data(instances, inputs);
-//    targets_2d = data_set_pointer->get_subtensor_data(instances, targets);
-
     const Index rows_number = instances.size();
     const Index inputs_number = inputs.size();
     const Index targets_number = targets.size();
@@ -10718,26 +10701,6 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& instances,
         }
     }
 }
-
-
-void DataSet::Batch::fill(const Tensor<Index, 1>& instances_indices,
-          Tensor<type, 2, RowMajor>& input_data, Tensor<type, 2, RowMajor>& tarjet_data)
-{
-    const Index batch_instances_number = instances_indices.size();
-
-    const Index inputs_number = data_set_pointer->get_input_variables_number();
-    const Index targets_number = data_set_pointer->get_target_variables_number();
-
-    Tensor<type, 2, RowMajor> inputs(batch_instances_number, inputs_number);
-    Tensor<type, 2, RowMajor> targets(batch_instances_number, targets_number);
-
-    for(Index i = 0; i < batch_instances_number; i++)
-    {
-
-    }
-
-}
-
 
 }
 
