@@ -290,17 +290,11 @@ public:
    {
        const Index instances_number = batch.get_instances_number();
 
-       // Neural Network
-
        NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
 
        neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
 
-       // Loss Index
-
-//       calculate_error(batch, forward_propagation, back_propagation);
-
-//       return back_propagation.loss;
+//       return calculate_error(batch, forward_propagation);
        return 0;
    }
 
@@ -324,18 +318,9 @@ public:
        {
            const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
-           cout << "Training error: " << back_propagation.error << endl;
-           cout << "regularization_weight: " << regularization_weight << endl;
-           cout << "Parameters: " << calculate_regularization(parameters) << endl;
-
            back_propagation.loss = back_propagation.error + regularization_weight*calculate_regularization(parameters);
-           cout << "Training loss: " << back_propagation.loss << endl;
 
            back_propagation.gradient += regularization_weight*calculate_regularization_gradient(parameters);
-       }
-       else
-       {
-           back_propagation.loss = back_propagation.error;
        }
    }
 
@@ -405,6 +390,8 @@ public:
         ->calculate_output_delta(forward_propagation.layers(trainable_layers_number-1),
                                  back_propagation.output_gradient,
                                  back_propagation.neural_network.layers(trainable_layers_number-1).delta);
+
+//        cout << "Output_delta: " << back_propagation.neural_network.layers(trainable_layers_number-1).delta << endl;
 
         // Hidden layers
 
