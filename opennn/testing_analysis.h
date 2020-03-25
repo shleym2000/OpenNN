@@ -164,14 +164,14 @@ public:
    Tensor<type, 3> calculate_error_data() const;
    Tensor<type, 2> calculate_percentage_error_data() const;
 
-   Tensor<Descriptives, 1> calculate_absolute_errors_statistics() const;
-   Tensor<Descriptives, 1> calculate_absolute_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<Descriptives, 1> calculate_absolute_errors_descriptives() const;
+   Tensor<Descriptives, 1> calculate_absolute_errors_descriptives(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<Descriptives, 1> calculate_percentage_errors_statistics() const;
-   Tensor<Descriptives, 1> calculate_percentage_errors_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<Descriptives, 1> calculate_percentage_errors_descriptives() const;
+   Tensor<Descriptives, 1> calculate_percentage_errors_descriptives(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<Tensor<Descriptives, 1>, 1> calculate_error_data_statistics() const;
-   void print_error_data_statistics() const;
+   Tensor<Tensor<Descriptives, 1>, 1> calculate_error_data_descriptives() const;
+   void print_error_data_descriptives() const;
 
 //   Tensor<Tensor<type, 2>, 1> calculate_error_data_statistics_matrices() const;
 
@@ -195,9 +195,10 @@ public:
    Tensor<type, 1> calculate_binary_classification_testing_errors() const;
    Tensor<type, 1> calculate_multiple_classification_testing_errors() const;
 
-   type calculate_testing_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_testing_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
-   type calculate_testing_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
+   type calculate_normalized_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_cross_entropy_error(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   type calculate_weighted_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 1>& = Tensor<type, 1>()) const;
+   type calculate_Minkowski_error(const Tensor<type, 2>&, const Tensor<type, 2>&, const type = 1.5) const;
 
    // Linear regression analysis methods
 

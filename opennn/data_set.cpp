@@ -951,13 +951,14 @@ const Tensor<DataSet::InstanceUse,1 >& DataSet::get_instances_uses() const
 
 Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
                                       const Index& batch_instances_number,
-                                      const bool& shuffle) const
+                                      const bool& shuffle,
+                                      const Index& new_buffer_size) const
 {
-//    if(!shuffle) return split_instances(training_indices, batch_instances_number);
+    if(!shuffle) return split_instances(instances_indices, batch_instances_number);
 
     const Index instances_number = instances_indices.size();
 
-    Index buffer_size = batch_instances_number;
+    Index buffer_size = new_buffer_size;
     Index batches_number;
     Index batch_size = batch_instances_number;
 
@@ -965,10 +966,37 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
     {
         batches_number = 1;
         batch_size = instances_number;
+        buffer_size = batch_size;
+
+        Tensor<Index, 2> batches(batches_number, batch_size);
+
+        Tensor<Index, 1> indices_copy(instances_indices);
+
+        // Shuffle
+
+        random_shuffle(indices_copy.data(), indices_copy.data() + indices_copy.size());
+
+//        for(Index i = 0; i < batch_size; i++)
+//        {
+//            const Index random_index = static_cast<Index>(rand()% batch_size);
+
+//            indices_copy(i), indices_copy(random_index) = indices_copy(i), indices_copy(random_index);
+//        }
+
+        for(Index i = 0; i < batch_size; i++)
+            batches(0,i) = indices_copy(i);
+
+        return batches;
+
     }
     else
     {
         batches_number = instances_number / batch_size;
+    }
+
+    if(instances_number <= buffer_size)
+    {
+        buffer_size = instances_number / 2;
     }
 
     Tensor<Index, 2> batches(batches_number, batch_size);
@@ -976,31 +1004,34 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
     Tensor<Index, 1> buffer(buffer_size);
     for(Index i = 0; i < buffer_size; i++) buffer(i) = i;
 
-    Index next_index = 0;
+    Index next_index = buffer_size;
     Index random_index = 0;
+
+    // Main Loop
 
     for(Index i = 0; i < batches_number; i++)
     {
+        // Last batch
+
         if(i == batches_number-1)
         {
-
-            if(batch_size == buffer_size)
+            if(batch_size <= buffer_size)
             {
                 for(Index j = 0; j < batch_size;j++)
                 {
-//                    batches(i,j) = buffer(j);
+                    batches(i,j) = buffer(j);
                 }
             }
             else
             {
                 for(Index j = 0; j < buffer_size; j++)
                 {
-//                    batches(i,j) = buffer(j);
+                    batches(i,j) = buffer(j);
                 }
 
                 for(Index j = buffer_size; j < batch_size; j++)
                 {
-//                    batches(i,j) = rest_data(next_index);
+                    batches(i,j) = instances_indices(next_index);
 
                     next_index++;
                 }
@@ -1008,6 +1039,8 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
 
             break;
         }
+
+        // Shuffle batches
 
         for(Index j = 0; j < batch_size; j++)
         {
@@ -10619,7 +10652,7 @@ void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
 }
 
 
-Tensor<Index, 2> DataSet::split_instances(Tensor<Index, 1>& instances_indices, const Index & new_batch_size) const
+Tensor<Index, 2> DataSet::split_instances(const Tensor<Index, 1>& instances_indices, const Index & new_batch_size) const
 {
     const Index instances_number = instances_indices.dimension(0);
 
