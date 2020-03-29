@@ -455,6 +455,9 @@ Tensor<type, 3> TestingAnalysis::calculate_error_data() const
     const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
     const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
+    cout << "ouputs_minimum: " << outputs_minimum << endl;
+    cout << "ouputs_maximum: " << outputs_maximum << endl;
+
     // Error data
 
     Tensor<type, 3> error_data(testing_instances_number, 3, outputs_number);
@@ -536,19 +539,19 @@ Tensor<type, 2> TestingAnalysis::calculate_percentage_error_data() const
        const Tensor<type, 1>& outputs_minimum = unscaling_layer_pointer->get_minimums();
        const Tensor<type, 1>& outputs_maximum = unscaling_layer_pointer->get_maximums();
 
-       const Index outputs_number = unscaling_layer_pointer->get_neurons_number();
+       const Index outputs_number = neural_network_pointer->get_outputs_number();
 
        // Error data
 
        Tensor<type, 2> error_data(testing_instances_number, outputs_number);
 
-       Tensor<type, 2> difference_absolute_value = (targets - outputs).abs();
+       Tensor<type, 2> difference_value = (targets - outputs)/*.abs()*/;
 
        for(Index i = 0; i < testing_instances_number; i++)
        {
            for(Index j = 0; j < outputs_number; j++)
            {
-               error_data(i,j) = (difference_absolute_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
+               error_data(i,j) = (difference_value(i,j)*static_cast<type>(100.0))/abs(outputs_maximum(j)-outputs_minimum(j));
            }
        }
 
@@ -684,13 +687,13 @@ Tensor<Histogram, 1> TestingAnalysis::calculate_error_data_histograms(const Inde
 {
     const Tensor<type, 2> error_data = calculate_percentage_error_data();
 
-    const Index outputs_number = error_data.size();
+    const Index outputs_number = error_data.dimension(1);
 
     Tensor<Histogram, 1> histograms(outputs_number);
 
     for(Index i = 0; i < outputs_number; i++)
     {
-        histograms[i] = histogram_centered(error_data.chip(0,i), 0.0, bins_number);
+        histograms(i) = histogram_centered(error_data.chip(i,1), 0.0, bins_number);
     }
 
     return histograms;
@@ -1789,8 +1792,8 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 {
     const Tensor<Index, 1> positives_negatives_rate = calculate_positives_negatives_rate(targets, outputs);
 
-    const Index total_positives = positives_negatives_rate[0];
-    const Index total_negatives = positives_negatives_rate[1];
+    const Index total_positives = positives_negatives_rate(0);
+    const Index total_negatives = positives_negatives_rate(1);
 
     if(total_positives == 0)
     {
@@ -1832,28 +1835,46 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         step_size = 1;
     }
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
-
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    if(targets.dimension(1) != 1)
     {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
+               << "Number of of target variables ("<< targets.dimension(1) <<") must be one.\n";
+
+        throw logic_error(buffer.str());
     }
 
-    // Sort by ascending values
+    if(outputs.dimension(1) != 1)
+    {
+        ostringstream buffer;
 
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
+        buffer << "OpenNN Exception: TestingAnalysis class.\n"
+               << "Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>&, const Tensor<type, 2>&) const.\n"
+               << "Number of of output variables ("<< targets.dimension(1) <<") must be one.\n";
 
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
-    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
+        throw logic_error(buffer.str());
+    }
+
+    // Sort by ascending values of outputs vector
+
+    Tensor<Index, 1> sorted_indices(outputs.dimension(0));
+    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+
+    Tensor<type, 1> sorted_targets(testing_instances_number);
+    Tensor<type, 1> sorted_outputs(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
+    {
+        sorted_targets(i) = targets(sorted_indices(i),0);
+        sorted_outputs(i) = outputs(sorted_indices(i),0);
+    }
 
     Tensor<type, 2> roc_curve(points_number+1, 3);
     roc_curve.setZero();
-
-    const Index step_s = step_size;
 
      #pragma omp parallel for schedule(dynamic)
 
@@ -1862,17 +1883,17 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         Index positives = 0;
         Index negatives = 0;
 
-        const Index current_index = i*step_s;
+        const Index current_index = i*step_size;
 
-        const type threshold = sorted_outputs(current_index, 0);
+        const type threshold = sorted_outputs(current_index);
 
         for(Index j = 0; j < static_cast<Index>(current_index); j++)
         {
-             if(sorted_outputs(j,0) < threshold && static_cast<double>(sorted_targets(j,0)) == 1.0)
+             if(sorted_outputs(j) < threshold && static_cast<double>(sorted_targets(j)) == 1.0)
              {
                  positives++;
              }
-             if(sorted_outputs(j,0) < threshold && sorted_targets(j,0) < numeric_limits<type>::min())
+             if(sorted_outputs(j) < threshold && sorted_targets(j) < numeric_limits<type>::min())
              {
                  negatives++;
              }
@@ -2142,22 +2163,11 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
         step_size = 1;
     }
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
+    // Sort by ascending values of outputs vector
 
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
-    {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
-    }
+    Tensor<type, 1> sorted_outputs = outputs.chip(0,1);
 
-    // Sort by ascending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_outputs(targets_outputs.data()+targets.size(), outputs.dimension(0), outputs.dimension(1));
+    stable_sort(sorted_outputs.data(), sorted_outputs.data()+sorted_outputs.size(), less<type>());
 
     type threshold = 0;
     type optimal_threshold = 0.5;
@@ -2171,9 +2181,9 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
     {
         current_index = i*step_size;
 
-        threshold = sorted_outputs(current_index, 0);
+        threshold = sorted_outputs(current_index);
 
-        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - 1.0)*(roc_curve(i,1) - 1.0));
+        distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - static_cast<type>(1))*(roc_curve(i,1) - static_cast<type>(1)));
 
         if(distance < minimun_distance)
         {
@@ -2184,7 +2194,6 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
     }
 
     return optimal_threshold;
-
 }
 
 
@@ -2278,24 +2287,21 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
         throw logic_error(buffer.str());
     }
 
-    const Index rows_number = targets.dimension(0);
+    const Index testing_instances_number = targets.dimension(0);
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
+    // Sort by ascending values of outputs vector
 
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    Tensor<Index, 1> sorted_indices(outputs.dimension(0));
+    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+
+    Tensor<type, 1> sorted_targets(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
     {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
+        sorted_targets(i) = targets(sorted_indices(i),0);
     }
-
-    // Sort by ascending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), less<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
 
     const Index points_number = 21;
     const type percentage_increment = static_cast<type>(0.05);
@@ -2317,11 +2323,11 @@ Tensor<type, 2> TestingAnalysis::calculate_cumulative_gain(const Tensor<type, 2>
 
         positives = 0;
 
-        maximum_index = static_cast<Index>(percentage*rows_number);
+        maximum_index = static_cast<Index>(percentage*testing_instances_number);
 
         for(Index j = 0; j < maximum_index; j++)
         {
-            if(static_cast<double>(sorted_targets(j, 0)) == 1.0)
+            if(static_cast<double>(sorted_targets(j)) == 1.0)
             {
                  positives++;
             }
@@ -2355,24 +2361,21 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
         throw logic_error(buffer.str());
     }
 
-    const Index rows_number = targets.dimension(0);
+    const Index testing_instances_number = targets.dimension(0);
 
-    Tensor<type, 2> targets_outputs(targets.dimension(0), targets.dimension(1)+outputs.dimension(1));
+    // Sort by ascending values of outputs vector
 
-    for(Index i = 0; i < targets.dimension(1)+outputs.dimension(1); i++)
+    Tensor<Index, 1> sorted_indices(outputs.dimension(0));
+    std::iota(sorted_indices.data(), sorted_indices.data() + sorted_indices.size(), 0);
+
+    stable_sort(sorted_indices.data(), sorted_indices.data()+sorted_indices.size(), [outputs](Index i1, Index i2) {return outputs(i1,0) < outputs(i2,0);});
+
+    Tensor<type, 1> sorted_targets(testing_instances_number);
+
+    for(Index i = 0; i < testing_instances_number; i++)
     {
-        for(Index j = 0; j < targets.dimension(0); j++)
-        {
-            if(i < targets.dimension(1)) targets_outputs(j,i) = targets(j,i);
-            else targets_outputs(j,i) = outputs(j,i);
-        }
+        sorted_targets(i) = targets(sorted_indices(i),0);
     }
-
-    // Sort by descending values
-
-    sort(targets_outputs.data(), targets_outputs.data()+targets.size(), greater<type>());
-
-    const TensorMap< Tensor<type, 2> > sorted_targets(targets_outputs.data(), targets.dimension(0), targets.dimension(1));
 
     const Index points_number = 21;
     const type percentage_increment = static_cast<type>(0.05);
@@ -2394,11 +2397,11 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
 
         negatives = 0;
 
-        maximum_index = static_cast<Index>(percentage*rows_number);
+        maximum_index = static_cast<Index>(percentage*testing_instances_number);
 
         for(Index j = 0; j < maximum_index; j++)
         {
-            if(sorted_targets(j, 0) < numeric_limits<type>::min())
+            if(sorted_targets(j) < numeric_limits<type>::min())
             {
                  negatives++;
             }
@@ -2410,7 +2413,6 @@ Tensor<type, 2> TestingAnalysis::calculate_negative_cumulative_gain(const Tensor
     }
 
     return negative_cumulative_gain;
-
 }
 
 
@@ -2614,8 +2616,8 @@ Tensor<type, 1> TestingAnalysis::calculate_maximum_gain(const Tensor<type, 2>& p
         if(positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > maximum_gain[1]
                 && positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1) > static_cast<type>(0.0))
         {
-            maximum_gain[1] = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
-            maximum_gain[0] = percentage;
+            maximum_gain(1) = positive_cumulative_gain(i+1,1)-negative_cumulative_gain(i+1,1);
+            maximum_gain(0) = percentage;
         }
     }
 
