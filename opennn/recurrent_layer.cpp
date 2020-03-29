@@ -80,7 +80,7 @@ Index RecurrentLayer::get_neurons_number() const
 
 /// Returns the hidden states of the layer.
 
-Tensor<type, 2> RecurrentLayer::get_hidden_states() const
+Tensor<type, 1> RecurrentLayer::get_hidden_states() const
 {
     return hidden_states;
 }
@@ -341,7 +341,7 @@ void RecurrentLayer::set(const Index& new_inputs_number, const Index& new_neuron
 
     recurrent_weights.resize(new_neurons_number, new_neurons_number);
 
-    hidden_states.resize(1, new_neurons_number); // memory
+    hidden_states.resize(new_neurons_number); // memory
 
     hidden_states.setConstant(0.0);
 
@@ -644,7 +644,7 @@ void RecurrentLayer::set_parameters_random()
     recurrent_weights.setRandom();
 }
 
-
+/*
 Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs) const
 {
 #ifdef __OPENNN_DEBUG__
@@ -669,9 +669,9 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
     return inputs.contract(input_weights, A_B) + biases.chip(0,0) + hidden_states.contract(recurrent_weights, A_B);
 
 //    return inputs_dot_inputs_weights + biases.chip(0,0) + hidden_states_dot_recurrent_weights;
-    /*
-        return dot(inputs, input_weights) + biases + dot(hidden_states, recurrent_weights);
-    */
+
+//        return dot(inputs, input_weights) + biases + dot(hidden_states, recurrent_weights);
+
 }
 
 
@@ -704,7 +704,7 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
-/*
+
         const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
         const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs);
@@ -714,10 +714,10 @@ Tensor<type, 2> RecurrentLayer::calculate_combinations(const Tensor<type, 2>& in
         hidden_states = activations_2d;
 
         outputs.set_row(i, combinations_2d);
-*/
+
     }
 
-    return outputs;
+//    return outputs;
 
     return Tensor<type, 2>();
 }
@@ -758,9 +758,9 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
     const Tensor<type, 2> new_biases = get_biases(parameters);
 
     return inputs.contract(new_input_weights, A_B) + new_biases.chip(0,0) + hidden_states.contract(new_recurrent_weights, A_B);
-    /*
+
         return dot(inputs, new_input_weights) + new_biases + dot(hidden_states,new_recurent_weights);
-    */
+
 }
 
 
@@ -837,12 +837,12 @@ Tensor<type, 1> RecurrentLayer::calculate_combinations(const Tensor<type, 1>& in
     Tensor<type, 1> combinations_2d(get_neurons_number());
 
     combinations_2d = inputs.contract(new_input_weights, A_B) + new_biases.chip(0,0) + hidden_states.contract(new_recurrent_weights, A_B);
-    /*
-        combinations_2d = dot(inputs, new_input_weights) + new_biases + dot(hidden_states, new_recurrent_weights);
-    */
+
+//        combinations_2d = dot(inputs, new_input_weights) + new_biases + dot(hidden_states, new_recurrent_weights);
+
     return combinations_2d ;
 }
-
+*/
 /*
 Tensor<type, 1> RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_2d) const
 {
@@ -979,11 +979,11 @@ Tensor<type, 2> RecurrentLayer::calculate_activations_derivatives(const Tensor<t
     return Tensor<type, 2> ();
 }
 */
-void RecurrentLayer::update_hidden_states(const Tensor<type, 2>& inputs)
+void RecurrentLayer::update_hidden_states(const Tensor<type, 1>& inputs)
 {
-    Tensor<type, 2> combinations_2d(inputs.dimension(0), inputs.dimension(1));
+    Tensor<type, 1> combinations_2d(inputs.dimension(0));
 
-    calculate_combinations(inputs, combinations_2d);
+    calculate_combinations(inputs, input_weights, biases, recurrent_weights, combinations_2d);
 
     calculate_activations(combinations_2d, hidden_states);
 
@@ -1016,20 +1016,23 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
     Tensor<type, 2> outputs(instances_number, neurons_number);
 
+    Tensor<type, 1> current_outputs(neurons_number);
+
     for(Index i = 0; i < instances_number; i++)
     {
         if(i%timesteps == 0) hidden_states.setZero();
-/*
+
         const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-        const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs);
+        calculate_combinations(current_inputs, input_weights, biases, recurrent_weights, current_outputs);
 
-        const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
+        calculate_activations(current_outputs, current_outputs);
 
-        outputs.set_row(i, activations_2d);
+//        outputs.set_row(i, activations_2d);
+        for(Index j = 0; j < neurons_number; j++)
+            outputs(i,j) = current_outputs(j);
 
-        hidden_states = activations_2d;
-*/
+        hidden_states = current_outputs;
     }
 
     return outputs;
@@ -1070,32 +1073,38 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
     const Index instances_number = inputs.dimension(0);
 
     const Index neurons_number = get_neurons_number();
-    /*
-        Tensor<type, 2> outputs(Tensor<Index, 1>({instances_number, neurons_number}));
 
-        for(Index i = 0; i < instances_number; i++)
-        {
-            if(i%timesteps == 0) hidden_states.setZero();
+    const Tensor<type, 2> input_weights = get_input_weights(parameters);
+    const Tensor<type, 2> biases = get_biases(parameters);
+    const Tensor<type, 2> recurrent_weights = get_recurrent_weights(parameters);
 
-            const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
+    Tensor<type, 2> outputs(instances_number, neurons_number);
 
-            const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs, parameters);
+    Tensor<type, 1> current_outputs(neurons_number);
 
-            const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
+    for(Index i = 0; i < instances_number; i++)
+    {
+        if(i%timesteps == 0) hidden_states.setZero();
 
-            hidden_states = activations_2d;
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-            outputs.set_row(i, activations_2d);
-          }
+        calculate_combinations(current_inputs, input_weights, biases, recurrent_weights, current_outputs);
 
-        return outputs;
-    */
-    return Tensor<type, 2>();
+        calculate_activations(current_outputs, current_outputs);
+
+        hidden_states = current_outputs;
+
+//        outputs.set_row(i, activations_1d);
+        for(Index j = 0; j < neurons_number; j++)
+            outputs(i,j) = current_outputs(j);
+      }
+
+    return outputs;
 }
 
 
 Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
-        const Tensor<type, 1>& new_biases,
+        const Tensor<type, 2>& new_biases,
         const Tensor<type, 2>& new_input_weights,
         const Tensor<type, 2>& new_recurrent_weights)
 {
@@ -1166,27 +1175,29 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs,
 #endif
 
     const Index instances_number = inputs.dimension(0);
-    /*
-        Tensor<type, 2> outputs(Tensor<Index, 1>({instances_number, neurons_number}));
 
-        for(Index i = 0; i < instances_number; i++)
-        {
-            if(i%timesteps == 0) hidden_states.setZero();
+    Tensor<type, 2> outputs(instances_number, neurons_number);
 
-            const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
+    Tensor<type, 1> current_outputs(neurons_number);
 
-            const Tensor<type, 1> combinations_2d = calculate_combinations(current_inputs, new_biases, new_input_weights, new_recurrent_weights);
+    for(Index i = 0; i < instances_number; i++)
+    {
+        if(i%timesteps == 0) hidden_states.setZero();
 
-            const Tensor<type, 1> activations_2d = calculate_activations(combinations_2d);
+        const Tensor<type, 1> current_inputs = inputs.chip(i, 0);
 
-            hidden_states = activations_2d;
+        calculate_combinations(current_inputs, new_input_weights, new_biases, new_recurrent_weights, current_outputs);
 
-            outputs.set_row(i, activations_2d);
-          }
+        calculate_activations(current_outputs, current_outputs);
 
-        return outputs;
-    */
-    return Tensor<type, 2>();
+        hidden_states = current_outputs;
+
+//        outputs.set_row(i, activations_2d);
+        for(Index j = 0; j < neurons_number; j++)
+            outputs(i,j) = current_outputs(j);
+      }
+
+    return outputs;
 }
 
 
@@ -1197,24 +1208,65 @@ Tensor<type, 2> RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer
 {
 
     const Type layer_type = next_layer_pointer->get_type();
-    /*
-        Tensor<type, 2> synaptic_weights_transpose;
 
-        if(layer_type == Perceptron)
+    const Index neurons_number = next_layer_pointer->get_neurons_number();
+    const Index inputs_number = next_layer_pointer->get_inputs_number();
+
+    Tensor<type, 2> synaptic_weights(inputs_number, neurons_number);
+
+    if(layer_type == Perceptron)
+    {
+        const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
+
+        synaptic_weights= perceptron_layer->get_synaptic_weights();
+    }
+    else if(layer_type == Probabilistic)
+    {
+        const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+
+        synaptic_weights = probabilistic_layer->get_synaptic_weights();
+    }
+
+    Tensor<type, 2> hidden_delta(next_layer_delta.dimension(0), synaptic_weights.dimension(1));
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             hidden_delta.device(*default_device) = next_layer_delta.contract(synaptic_weights, A_BT);
+
+             hidden_delta.device(*default_device) = activations_derivatives*hidden_delta;
+
+             return hidden_delta;
+
+//             return activations_derivatives*next_layer_delta.contract(synaptic_weights, A_BT);
+
+//             return;
+         }
+
+         case Device::EigenSimpleThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(synaptic_weights, A_BT);
+
+            hidden_delta.device(*thread_pool_device) = activations_derivatives*hidden_delta;
+
+            return hidden_delta;
+
+//            return activations_derivatives*next_layer_delta.contract(synaptic_weights, A_BT);
+
+//            return;
+         }
+
+        case Device::EigenGpu:
         {
-            const PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
-
-            synaptic_weights_transpose = perceptron_layer->get_synaptic_weights_transpose();
+             return Tensor<type, 2>();
         }
-        else if(layer_type == Probabilistic)
-        {
-            const ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
+    }
 
-            synaptic_weights_transpose = probabilistic_layer->get_synaptic_weights_transpose();
-        }
-
-        return activations_derivatives*dot(next_layer_delta, synaptic_weights_transpose);
-    */
     return Tensor<type, 2>();
 }
 
@@ -1296,38 +1348,40 @@ Tensor<type, 1> RecurrentLayer::calculate_input_weights_error_gradient(const Ten
     for(Index instance = 0; instance < instances_number; instance++)
     {
         const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
-        /*
-                const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
 
-                if(instance%timesteps == 0)
-                {
-                    combinations_weights_derivatives.setZero();
-                }
-                else
-                {
-                    const Tensor<type, 1> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
+        const Tensor<type, 1> current_layer_deltas = deltas.chip(instance, 0);//get_row(instance).to_column_matrix();
 
-                    combinations_weights_derivatives = dot(combinations_weights_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
-                }
+        if(instance%timesteps == 0)
+        {
+            combinations_weights_derivatives.setZero();
+        }
+        else
+        {
+            const Tensor<type, 1> previous_activation_derivatives = layers.activations_derivatives_2d.chip(instance-1, 0);//.get_row(instance-1);
 
-                column_index = 0;
+//            combinations_weights_derivatives = dot(combinations_weights_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
+            combinations_weights_derivatives = (multiply_rows(combinations_weights_derivatives, previous_activation_derivatives)).contract(recurrent_weights,A_B);
+        }
+
+        column_index = 0;
+        input_index = 0;
+
+        for(Index i = 0; i < parameters_number; i++)
+        {
+            combinations_weights_derivatives(i, column_index) += current_inputs(input_index);
+
+            input_index++;
+
+            if(input_index == inputs_number)
+            {
                 input_index = 0;
+                column_index++;
+            }
+        }
 
-                for(Index i = 0; i < parameters_number; i++)
-                {
-                    combinations_weights_derivatives(i, column_index) += current_inputs[input_index];
+//        input_weights_gradient += dot(combinations_weights_derivatives, current_layer_deltas).to_vector();
+        input_weights_gradient += combinations_weights_derivatives.contract(current_layer_deltas, A_BT);
 
-                    input_index++;
-
-                    if(input_index == inputs_number)
-                    {
-                        input_index = 0;
-                        column_index++;
-                    }
-                }
-
-                input_weights_gradient += dot(combinations_weights_derivatives, current_layer_deltas).to_vector();
-        */
     }
 
     return input_weights_gradient;
@@ -1348,43 +1402,45 @@ Tensor<type, 1> RecurrentLayer::calculate_recurrent_weights_error_gradient(const
     Tensor<type, 2> combinations_recurrent_weights_derivatives(parameters_number, neurons_number);
 
     Tensor<type, 1> recurrent_weights_gradient(parameters_number);
-    /*
-        for(Index instance = 0; instance < instances_number-1; instance++)
+
+    for(Index instance = 0; instance < instances_number-1; instance++)
+    {
+        Tensor<type, 1> current_activations = forward_propagation.activations_2d.chip(instance, 0);
+
+        const Tensor<type, 1> next_layer_deltas = deltas.chip(instance+1,0);//get_row(instance+1).to_column_matrix();
+
+        if((instance+1)%timesteps == 0)
         {
-            Tensor<type, 1> current_activations = forward_propagation.activations_2d.chip(instance, 0);
+            combinations_recurrent_weights_derivatives.setZero();
+        }
+        else
+        {
+            const Tensor<type, 1> activation_derivatives = forward_propagation.activations_derivatives_2d.chip(instance, 0);
 
-            const Tensor<type, 2> next_layer_deltas = deltas.get_row(instance+1).to_column_matrix();
+//            combinations_recurrent_weights_derivatives = dot(combinations_recurrent_weights_derivatives.multiply_rows(activation_derivatives), recurrent_weights);
+            combinations_recurrent_weights_derivatives = (multiply_rows(combinations_recurrent_weights_derivatives, activation_derivatives)).contract(recurrent_weights,A_B);
 
-            if((instance+1)%timesteps == 0)
+            Index column_index = 0;
+            Index activation_index = 0;
+
+            for(Index i = 0; i < parameters_number; i++)
             {
-                combinations_recurrent_weights_derivatives.setZero();
-            }
-            else
-            {
-                const Tensor<type, 1> activation_derivatives = forward_propagation.activations_derivatives.chip(instance, 0);
+                combinations_recurrent_weights_derivatives(i, column_index) += current_activations(activation_index);
 
-                combinations_recurrent_weights_derivatives = dot(combinations_recurrent_weights_derivatives.multiply_rows(activation_derivatives), recurrent_weights);
+                activation_index++;
 
-                Index column_index = 0;
-                Index activation_index = 0;
-
-                for(Index i = 0; i < parameters_number; i++)
+                if(activation_index == neurons_number)
                 {
-                    combinations_recurrent_weights_derivatives(i, column_index) += current_activations[activation_index];
-
-                    activation_index++;
-
-                    if(activation_index == neurons_number)
-                    {
-                        activation_index = 0;
-                        column_index++;
-                    }
+                    activation_index = 0;
+                    column_index++;
                 }
             }
-
-            recurrent_weights_gradient += dot(combinations_recurrent_weights_derivatives, next_layer_deltas).to_vector();
         }
-    */
+
+//        recurrent_weights_gradient += dot(combinations_recurrent_weights_derivatives, next_layer_deltas).to_vector();
+        recurrent_weights_gradient += combinations_recurrent_weights_derivatives.contract(next_layer_deltas, A_BT);
+    }
+
     return recurrent_weights_gradient;
 }
 
@@ -1404,32 +1460,54 @@ Tensor<type, 1> RecurrentLayer::calculate_biases_error_gradient(const Tensor<typ
     Tensor<type, 2> combinations_biases_derivatives(biases_number, neurons_number);
 
     Tensor<type, 1> biases_gradient(biases_number);
-    /*
-        for(Index instance = 0; instance < instances_number; instance++)
+    biases_gradient.setZero();
+
+    for(Index instance = 0; instance < instances_number; instance++)
+    {
+        const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
+
+        const Tensor<type, 1> current_layer_deltas = deltas.chip(instance,0);//.get_row(instance).to_column_matrix();
+
+        if(instance%timesteps == 0)
         {
-            const Tensor<type, 1> current_inputs = inputs.chip(instance, 0);
-
-            const Tensor<type, 2> current_layer_deltas = deltas.get_row(instance).to_column_matrix();
-
-            if(instance%timesteps == 0)
-            {
-                combinations_biases_derivatives.setZero();
-            }
-            else
-            {
-                const Tensor<type, 1> previous_activation_derivatives = layers.activations_derivatives.get_row(instance-1);
-
-                combinations_biases_derivatives = dot(combinations_biases_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
-            }
-
-            combinations_biases_derivatives.sum_diagonal(1.0);
-
-            biases_gradient += dot(combinations_biases_derivatives, current_layer_deltas).to_vector();
+            combinations_biases_derivatives.setZero();
         }
-    */
+        else
+        {
+            const Tensor<type, 1> previous_activation_derivatives = layers.activations_derivatives_2d.chip(instance-1,0);//get_row(instance-1);
+
+//            combinations_biases_derivatives = dot(combinations_biases_derivatives.multiply_rows(previous_activation_derivatives), recurrent_weights);
+              combinations_biases_derivatives = (multiply_rows(combinations_biases_derivatives,previous_activation_derivatives)).contract(recurrent_weights, A_B);
+        }
+
+//        combinations_biases_derivatives.sum_diagonal(1.0);
+        for(Index i = 0; i < biases_number; i++)
+            combinations_biases_derivatives(i,i) += static_cast<type>(1.0);
+
+//        biases_gradient += dot(combinations_biases_derivatives, current_layer_deltas).to_vector();
+        biases_gradient += combinations_biases_derivatives.contract(current_layer_deltas, A_BT);
+    }
+
     return biases_gradient;
 }
 
+Tensor<type, 2> RecurrentLayer::multiply_rows(const Tensor<type, 2>& matrix, const Tensor<type, 1>& vector) const
+{
+    const Index columns_number = matrix.dimension(1);
+    const Index rows_number = matrix.dimension(0);
+
+    Tensor<type, 2> new_matrix(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+           new_matrix(i,j) = matrix(i,j) * vector(j);
+        }
+    }
+
+    return new_matrix;
+}
 
 
 /// Returns a string with the expression of the inputs-outputs relationship of the layer.

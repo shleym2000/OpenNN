@@ -962,29 +962,24 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
     Index batches_number;
     Index batch_size = batch_instances_number;
 
+    // Check batch size and instances number
+
     if(instances_number < batch_size)
     {
         batches_number = 1;
         batch_size = instances_number;
         buffer_size = batch_size;
 
-        Tensor<Index, 2> batches(batches_number, batch_size);
+        Tensor<Index,1> instances_copy(instances_indices);
 
-        Tensor<Index, 1> indices_copy(instances_indices);
+        Tensor<Index, 2> batches(batches_number, batch_size);
 
         // Shuffle
 
-        random_shuffle(indices_copy.data(), indices_copy.data() + indices_copy.size());
-
-//        for(Index i = 0; i < batch_size; i++)
-//        {
-//            const Index random_index = static_cast<Index>(rand()% batch_size);
-
-//            indices_copy(i), indices_copy(random_index) = indices_copy(i), indices_copy(random_index);
-//        }
+        random_shuffle(instances_copy.data(), instances_copy.data() + instances_copy.size());
 
         for(Index i = 0; i < batch_size; i++)
-            batches(0,i) = indices_copy(i);
+            batches(0,i) = instances_copy(i);
 
         return batches;
 
@@ -994,10 +989,6 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
         batches_number = instances_number / batch_size;
     }
 
-    if(instances_number <= buffer_size)
-    {
-        buffer_size = instances_number / 2;
-    }
 
     Tensor<Index, 2> batches(batches_number, batch_size);
 
@@ -1007,54 +998,108 @@ Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& instances_indices,
     Index next_index = buffer_size;
     Index random_index = 0;
 
-    // Main Loop
+    // Heuristic cases for batch shuffling
 
-    for(Index i = 0; i < batches_number; i++)
+    if(batch_size < buffer_size)
     {
-        // Last batch
+        Index diff = buffer_size/ batch_size;
 
-        if(i == batches_number-1)
+        // Main Loop
+
+        for(Index i = 0; i < batches_number; i++)
         {
-            if(batch_size <= buffer_size)
+            // Last batch
+
+            if(i == batches_number-diff)
             {
-                for(Index j = 0; j < batch_size;j++)
+                Index buffer_index = 0;
+
+                for(Index k = batches_number-diff; k < batches_number; k++)
                 {
-                    batches(i,j) = buffer(j);
-                }
-            }
-            else
-            {
-                for(Index j = 0; j < buffer_size; j++)
-                {
-                    batches(i,j) = buffer(j);
+                    for(Index j = 0; j < batch_size; j++)
+                    {
+                        batches(k,j) = buffer(buffer_index);
+
+                        buffer_index++;
+                    }
                 }
 
-                for(Index j = buffer_size; j < batch_size; j++)
-                {
-                    batches(i,j) = instances_indices(next_index);
-
-                    next_index++;
-                }
+                break;
             }
 
-            break;
+            // Shuffle batches
+
+            for(Index j = 0; j < batch_size; j++)
+            {
+                random_index = static_cast<Index>(rand()%buffer_size);
+
+                batches(i, j) = buffer(random_index);
+
+                buffer(random_index) = instances_indices(next_index);
+
+                next_index++;
+            }
         }
 
-        // Shuffle batches
+        return batches;
+    }
+    else // buffer_size <= batch_size
+    {
 
-        for(Index j = 0; j < batch_size; j++)
+        // Main Loop
+
+        for(Index i = 0; i < batches_number; i++)
         {
-            random_index = static_cast<Index>(rand()%buffer_size);
+            // Last batch
 
-            batches(i, j) = buffer(random_index);
+            if(i == batches_number-1)
+            {
+                random_shuffle(buffer.data(), buffer.data() +  buffer.size());
 
-            buffer(random_index) = instances_indices(next_index);
+                if(batch_size <= buffer_size)
+                {
+                    for(Index j = 0; j < batch_size;j++)
+                    {
+                        batches(i,j) = buffer(j);
+                    }
+                }
+                else //buffer_size < batch_size
+                {
+                    for(Index j = 0; j < buffer_size; j++)
+                    {
+                        batches(i,j) = buffer(j);
+                    }
 
-            next_index++;
+                    for(Index j = buffer_size; j < batch_size; j++)
+                    {
+                        batches(i,j) = instances_indices(next_index);
+
+                        next_index++;
+                    }
+                }
+
+                break;
+            }
+
+            // Shuffle batches
+
+            for(Index j = 0; j < batch_size; j++)
+            {
+                random_index = static_cast<Index>(rand()%buffer_size);
+
+                batches(i, j) = buffer(random_index);
+
+                buffer(random_index) = instances_indices(next_index);
+
+                next_index++;
+
+            }
         }
+
+        return batches;
     }
 
-    return batches;
+    return Tensor<Index, 2>();
 }
 
 
@@ -2475,8 +2520,6 @@ Tensor<Index, 1> DataSet::get_used_variables_indices() const
 {
     const Index used_number = get_used_variables_number();
 
-    const Tensor<Index, 1> unused_columns_indices = get_used_columns_indices();
-
     Tensor<Index, 1> used_indices(used_number);
 
     Index used_index = 0;
@@ -3818,25 +3861,25 @@ Tensor<Tensor<string, 1>, 1> DataSet::get_data_file_preview() const
 }
 
 
-Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & columns_indices) const
+Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indices, const Tensor<Index, 1> & variables_indices) const
 {
     const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
+    const Index variables_number = variables_indices.size();
 
-    Tensor<type, 2> subtensor(rows_indices.size(), columns_indices.size());
+    Tensor<type, 2> subtensor(rows_indices.size(), variables_indices.size());
 
     Index row_index;
-    Index column_index;
+    Index variable_index;
 
     for(Index i = 0; i < rows_number; i++)
     {
         row_index = rows_indices(i);
 
-        for(Index j = 0; j < columns_number; j++)
+        for(Index j = 0; j < variables_number; j++)
         {
-            column_index = columns_indices(j);
+            variable_index = variables_indices(j);
 
-            subtensor(i, j) = data(row_index, column_index);
+            subtensor(i, j) = data(row_index, variable_index);
         }
     }
 
@@ -4727,7 +4770,7 @@ Index DataSet::calculate_selection_negatives(const Index& target_index) const
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_selection_negatives(const Index&) const method.\n"
+                   << "Index calculate_testing_negatives(const Index&) const method.\n"
                    << "Selection instance is neither a positive nor a negative: " << data(selection_index, target_index) << endl;
 
             throw logic_error(buffer.str());
@@ -4757,16 +4800,16 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
         {
             negatives++;
         }
-        else if(abs(data(testing_index, target_index) -1) < numeric_limits<type>::min())
+        /*else if(abs(data(testing_index, target_index) - 1) < static_cast<type>(1.0e-3))
         {
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class.\n"
-                   << "Index calculate_selection_negatives(const Index&) const method.\n"
+                   << "Index calculate_testing_negatives(const Index&) const method.\n"
                    << "Testing instance is neither a positive nor a negative: " << data(testing_index, target_index) << endl;
 
             throw logic_error(buffer.str());
-        }
+        }*/
     }
 
     return negatives;
@@ -8620,52 +8663,52 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
     Tensor<Index, 1> class_distribution;
-    /*
-       if(targets_number == 1) // Two classes
-       {
-          class_distribution.resize(2, 0);
 
-          Index target_index = target_variables_indices(0);
+    if(targets_number == 1) // Two classes
+    {
+        class_distribution = Tensor<Index, 1>(2);
 
-          Index positives = 0;
-          Index negatives = 0;
+        Index target_index = target_variables_indices(0);
 
-          for(Index instance_index = 0; instance_index < static_cast<Index>(instances_number); instance_index++)
-          {
-              if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
-              {
-                  if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
-                  {
-                      negatives++;
-                  }
-                  else
-                  {
-                      positives++;
-                  }
-              }
-          }
+        Index positives = 0;
+        Index negatives = 0;
 
-          class_distribution(0) = negatives;
-          class_distribution(1) = positives;
-       }
-       else // More than two classes
-       {
-          class_distribution.resize(targets_number, 0);
+        for(Index instance_index = 0; instance_index < static_cast<Index>(instances_number); instance_index++)
+        {
+            if(!::isnan(data(static_cast<Index>(instance_index),target_index)))
+            {
+                if(data(static_cast<Index>(instance_index),target_index) < static_cast<type>(0.5))
+                {
+                    negatives++;
+                }
+                else
+                {
+                    positives++;
+                }
+            }
+        }
 
-          for(Index i = 0; i < instances_number; i++)
-          {
-              if(get_instance_use(i) != UnusedInstance)
-              {
-                 for(Index j = 0; j < targets_number; j++)
-                 {
-                     if(data(i,target_variables_indices(j)) == static_cast<type>(NAN)) continue;
+        class_distribution(0) = negatives;
+        class_distribution(1) = positives;
+    }
+    else // More than two classes
+    {
+        class_distribution = Tensor<Index, 1>(targets_number);
 
-                     if(data(i,target_variables_indices(j)) > 0.5) class_distribution(j)++;
-                 }
-              }
-          }
-       }
-    */
+        for(Index i = 0; i < instances_number; i++)
+        {
+            if(get_instance_use(i) != UnusedInstance)
+            {
+                for(Index j = 0; j < targets_number; j++)
+                {
+                    if(data(i,target_variables_indices(j)) == static_cast<type>(NAN)) continue;
+
+                    if(data(i,target_variables_indices(j)) > 0.5) class_distribution(j)++;
+                }
+            }
+        }
+    }
+
     return class_distribution;
 }
 

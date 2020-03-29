@@ -82,10 +82,18 @@ public:
 
             combinations_2d.resize(batch_instances_number, neurons_number);
 
-            activations_2d.resize(batch_instances_number, neurons_number);
+//            activations_2d.resize(batch_instances_number, neurons_number);
 
             if(layer_pointer->get_type() == Perceptron)
             {
+                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
+            }
+            else if(layer_pointer->get_type() == Recurrent && layer_pointer->get_type() == LongShortTermMemory)
+            {
+                combinations_1d.resize(neurons_number);
+
+                activations_1d.resize(neurons_number);
+
                 activations_derivatives_2d.resize(batch_instances_number, neurons_number);
             }
             else
@@ -119,6 +127,9 @@ public:
         Index batch_instances_number = 0;
 
         Layer* layer_pointer;
+
+        Tensor<type, 1> combinations_1d;
+        Tensor<type, 1> activations_1d;
 
         Tensor<type, 2> combinations_2d;
         Tensor<type, 2> activations_2d;
@@ -263,6 +274,25 @@ protected:
     /// Layer type object.
 
     Type layer_type = Perceptron;
+
+    // activations 1d (Time Series)
+
+    void hard_sigmoid(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void hyperbolic_tangent(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void logistic(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void linear(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void binary(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const {}
+
+    // activations 2d
 
     void hard_sigmoid(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void hyperbolic_tangent(const Tensor<type, 2>&, Tensor<type, 2>&) const;

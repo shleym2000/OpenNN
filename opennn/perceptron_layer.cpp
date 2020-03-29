@@ -72,7 +72,6 @@ Tensor<Index, 1> PerceptronLayer::get_input_variables_dimensions() const
 Index PerceptronLayer::get_inputs_number() const
 {
     return synaptic_weights.dimension(0);
-
 }
 
 
@@ -293,7 +292,7 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
     synaptic_weights.setRandom();
 
     activation_function = new_activation_function;
-
+cout << "end" << endl;
     set_default();
 }
 
