@@ -869,7 +869,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
         y.device(*default_device) = x.exp() / sum(0);
 
-        break;
+        return;
     }
 
     case Device::EigenSimpleThreadPool:
@@ -880,7 +880,7 @@ void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
         y.device(*thread_pool_device) = x.exp() / sum(0);
 
-        break;
+        return;
     }
 
     case Device::EigenGpu:
@@ -1127,7 +1127,6 @@ void Layer::threshold_derivatives(const Tensor<type, 2>& combinations,
         // Activations Derivatives
 
         activations_derivatives.setZero();
-
 
         break;
     }
