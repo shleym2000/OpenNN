@@ -1,4 +1,4 @@
-    //   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
 //   P E R C E P T R O N   L A Y E R   C L A S S
@@ -668,17 +668,21 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
-        /*
-               buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
+
+      Tensor<type, 1> s_w_column =  synaptic_weights.chip(j,1);
+
+      cout << s_w_column  << endl;
+
+/*               buffer << outputs_names[j] << " = " << write_activation_function_expression() << " (" << biases[j] << "+";
 
                for(Index i = 0; i < inputs_names.size() - 1; i++)
                {
 
-                   buffer << " (" << inputs_names[i] << "*" << synaptic_weights.get_column(j)(i) << ")+";
+                   buffer << " (" << inputs_names[i] << "*" << s_w_column(i) << ")+";
                }
 
-               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights.get_column(j)[inputs_names.size() - 1] << "));\n";
-        */
+               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << s_w_column[inputs_names.size() - 1] << "));\n";
+*/
     }
 
     return buffer.str();

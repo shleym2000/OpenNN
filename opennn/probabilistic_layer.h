@@ -151,7 +151,7 @@ public:
                 break;
             }
 
-            case Device::EigenSimpleThreadPool:
+            case Device::EigenThreadPool:
             {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -304,7 +304,7 @@ public:
                return;
            }
 
-           case Device::EigenSimpleThreadPool:
+           case Device::EigenThreadPool:
            {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -325,11 +325,11 @@ public:
        {
 
            Tensor<type, 3> activations_derivatives = forward_propagation.activations_derivatives_3d;
-
+/*
            cout << "Activations derivatives: " << activations_derivatives << endl;
 
            cout << "output_gradient: " << output_gradient << endl;
-
+*/
            const Index items_number = output_gradient.dimension(1);
 
            const Index rows_number = activations_derivatives.dimension(0);
@@ -390,7 +390,7 @@ public:
                return;
            }
 
-           case Device::EigenSimpleThreadPool:
+           case Device::EigenThreadPool:
            {
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
@@ -424,6 +424,7 @@ public:
        }
    }
 
+
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
                                  Layer::BackPropagation& back_propagation) const
@@ -441,7 +442,7 @@ public:
                 return;
             }
 
-            case Device::EigenSimpleThreadPool:
+            case Device::EigenThreadPool:
             {
                 ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 

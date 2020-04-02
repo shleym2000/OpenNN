@@ -84,11 +84,11 @@ public:
 
             activations_2d.resize(batch_instances_number, neurons_number);
 
-            if(layer_pointer->get_type() == Perceptron)
+            if(layer_pointer->get_type() == Perceptron) // Perceptron
             {
                 activations_derivatives_2d.resize(batch_instances_number, neurons_number);
             }
-            else if(layer_pointer->get_type() == Recurrent && layer_pointer->get_type() == LongShortTermMemory)
+            else if(layer_pointer->get_type() == Recurrent ) // Recurrent
             {
                 combinations_1d.resize(neurons_number);
 
@@ -96,7 +96,15 @@ public:
 
                 activations_derivatives_2d.resize(batch_instances_number, neurons_number);
             }
-            else
+            else if(layer_pointer->get_type() == LongShortTermMemory) // LSTM
+            {
+                combinations_1d.resize(neurons_number);
+
+                activations_1d.resize(neurons_number);
+
+                activations_derivatives_3d.resize(batch_instances_number, neurons_number, 5); // LSTM
+            }
+            else // Probabilistic
             {
                 activations_derivatives_3d.resize(neurons_number, neurons_number, batch_instances_number);
             }
@@ -291,6 +299,18 @@ protected:
     void softmax(const Tensor<type,1>&, Tensor<type,1>&) const {}
     void binary(const Tensor<type,1>&, Tensor<type,1>&) const {}
     void competitive(const Tensor<type,1>&, Tensor<type,1>&) const {}
+
+    void hard_sigmoid_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void hyperbolic_tangent_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void logistic_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void threshold_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void symmetric_threshold_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void rectified_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void scaled_exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void soft_plus_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void soft_sign_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
+    void exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
 
     // activations 2d
 
