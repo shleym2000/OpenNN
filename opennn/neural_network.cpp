@@ -653,6 +653,14 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 }
 
 
+/// Sets a new neural network with a given convolutional neural network architecture (CNN).
+/// It also sets the rest of members to their default values.
+/// @param input_variables_dimensions Define the dimensions of the input varibales.
+/// @param blocks_number Number of blocks.
+/// @param filters_dimensions Architecture of the neural network.
+/// @param outputs_number Architecture of the neural network.
+/// @todo
+
 void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
                         const Index& blocks_number,
                         const Tensor<Index, 1>& filters_dimensions,
@@ -724,11 +732,17 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
 }
 
 
+/// Sets the names of inputs in neural network
+/// @param new_inputs_names Tensor with the new names of inputs.
+
 void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
 {
     inputs_names = new_inputs_names;
 }
 
+
+/// Sets the names of outputs in neural network.
+/// @param new_outputs_names Tensor with the new names of outputs.
 
 void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names)
 {
@@ -1241,6 +1255,64 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
     parameters = parameters + perturbation;
 
     set_parameters(parameters);
+}
+
+
+/// Calculates the forward propagation in the neural network.
+/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+
+void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+                                   ForwardPropagation& forward_propagation) const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+
+    for(Index i = 1; i < trainable_layers_number; i++)
+    {
+         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                     forward_propagation.layers(i));
+    }
+}
+
+
+
+/// Calculates the forward propagation in the neural network.
+/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param paramters Parameters of neural network.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+
+void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+                                   Tensor<type, 1>& parameters,
+                                   ForwardPropagation& forward_propagation) const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
+
+    const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
+
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+
+    Index index = parameters_number;
+
+    for(Index i = 1; i < trainable_layers_number; i++)
+    {
+        const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+        const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
+         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                     potential_parameters,
+                                                                     forward_propagation.layers(i));
+
+         index += parameters_number;
+    }
 }
 
 
