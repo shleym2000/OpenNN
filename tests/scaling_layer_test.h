@@ -49,20 +49,13 @@ public:
 
    // Statistics
 
-   void test_get_means();
-   void test_get_mean();
-
-   void test_get_standard_deviations();
-   void test_get_standard_deviation();
-
-   void test_get_minimums();
-   void test_get_minimum();
-
-   void test_get_maximums();
-   void test_get_maximum();
-
    void test_get_descriptives();
    void test_get_descriptives_matrix();
+
+   void test_get_minimums();
+   void test_get_maximums();
+   void test_get_means();
+   void test_get_standard_deviations();
 
    // Variables scaling and unscaling
 
@@ -121,16 +114,9 @@ public:
 
    // Input variables descriptives
 
-   void test_set_means();
    void test_set_mean();
-
-   void test_set_standard_deviations();
    void test_set_standard_deviation();
-
-   void test_set_minimums();
    void test_set_minimum();
-
-   void test_set_maximums();
    void test_set_maximum();
 
    void test_set_statistics();
@@ -146,14 +132,14 @@ public:
 
    // Input range
 
+   void test_is_empty();
+
    void test_check_range();
 
    // Scaling 
 
    void test_calculate_outputs();
-
    void test_calculate_minimum_maximum_output();
-
    void test_calculate_mean_standard_deviation_output();
 
    // XML expression methods
