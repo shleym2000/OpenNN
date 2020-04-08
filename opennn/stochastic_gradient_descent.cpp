@@ -641,6 +641,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         training_error = 0;
         training_loss = 0;
 
+        optimization_data.iteration = 0;
+
         for(Index iteration = 0; iteration < training_batches_number; iteration++)
         {
             // Data set
@@ -703,14 +705,14 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        if(training_loss <= training_loss_goal)
+        /*if(training_loss <= training_loss_goal)
         {
             if(display) cout << "Epoch " << epoch << ": Training loss goal reached.\n";
 
             stop_training = true;
 
             results.stopping_condition = LossGoal;
-        }
+        }*/
 
         if(epoch == maximum_epochs_number)
         {
@@ -770,7 +772,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         old_selection_error = selection_back_propagation.error;
 
         if(stop_training) break;
-
     }
 
     if(has_selection && choose_best_selection)
