@@ -101,13 +101,6 @@ public:
 
                 break;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
 
        back_propagation.error = sum_squared_error(0);
@@ -159,13 +152,6 @@ public:
 
                 return;
              }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 break;
-            }
         }
    }
 
@@ -218,13 +204,6 @@ public:
 
                return;
             }
-
-           case Device::EigenGpu:
-           {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return;
-           }
        }
   }
 
@@ -261,13 +240,6 @@ public:
 
                 return;
              }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
         }
    }
 
@@ -291,6 +263,11 @@ private:
    // Squared errors methods
 
    Tensor<type, 1> calculate_squared_errors() const;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/sum_squared_error_cuda.h"
+#endif
+
 };
 
 }

@@ -109,12 +109,6 @@ public:
                return;
             }
 
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return ;
-           }
        }
 
        return       ;
@@ -226,13 +220,6 @@ public:
 
                return;
             }
-
-           case Device::EigenGpu:
-           {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                return;
-           }
        }
   }
 
@@ -271,13 +258,6 @@ public:
 
                 return;
              }
-
-            case Device::EigenGpu:
-            {
-//                 GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                 return;
-            }
         }
    }
 
@@ -288,6 +268,11 @@ public:
    tinyxml2::XMLDocument* to_XML() const;   
 
    void write_XML(tinyxml2::XMLPrinter &) const;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
+#endif
+
 };
 
 }

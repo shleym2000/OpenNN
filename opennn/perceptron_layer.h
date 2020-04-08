@@ -25,11 +25,6 @@
 #include "probabilistic_layer.h"
 #include "opennn_strings.h"
 
-#ifdef __OPENNN_CUDA__
-    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
-    #include "cuda_runtime_api.h"
-#endif
-
 namespace OpenNN
 {
 
@@ -166,17 +161,6 @@ public:
 
                 return;
             }
-
-           case Device::EigenGpu:
-           {
-#ifdef EIGEN_USE_GPU
-                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                //combinations_2d.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
-#endif
-
-                return;
-           }
        }
    }
 
@@ -379,11 +363,6 @@ public:
 
                   return;
                }
-
-              case Device::EigenGpu:
-              {
-                   break;
-              }
           }
       }
 
@@ -576,7 +555,7 @@ protected:
 
    bool display;
 
-#ifdef __OPENNN_CUDA__
+#ifdef OPENNN_CUDA
     #include "../../artelnics/opennn_cuda/opennn_cuda/perceptron_layer_cuda.h"
 #endif
 
