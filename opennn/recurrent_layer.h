@@ -232,11 +232,6 @@ public:
 
                 return;
             }
-
-           case Device::EigenGpu:
-           {
-                return;
-           }
        }
    }
 
@@ -480,6 +475,11 @@ protected:
    /// Display messages to screen.
 
    bool display;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/recurrent_layer_cuda.h"
+#endif
+
 };
 
 }

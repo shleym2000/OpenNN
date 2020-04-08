@@ -159,19 +159,6 @@ public:
 
                 break;
             }
-
-
-           case Device::EigenGpu:
-           {
-#ifdef EIGEN_USE_GPU
-
-                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                //combinations_2d.device(*gpu_device) = inputs.contract(synaptic_weights, product_dimensions);
-#endif
-
-                break;
-           }
        }
    }
 
@@ -501,6 +488,11 @@ protected:
    /// Display messages to screen.
 
    bool display;
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/probabilistic_layer_cuda.h"
+#endif
+
 };
 
 }

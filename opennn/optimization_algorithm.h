@@ -276,17 +276,14 @@ protected:
 
                 break;
             }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
        }
 
        return norm(0);
    }
+
+#ifdef OPENNN_CUDA
+    #include "../../artelnics/opennn_cuda/opennn_cuda/optimization_algorithm_cuda.h"
+#endif
 
 };
 
