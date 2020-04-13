@@ -893,6 +893,10 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
                                      Tensor<type, 2>& activations,
                                      Tensor<type, 2>& activations_derivatives) const
 {
+    const Tensor<bool, 2> if_sentence = combinations < combinations.constant(-2.5);
+    const Tensor<bool, 2> elif_sentence = combinations > combinations.constant(2.5);
+    const Tensor<bool, 2> if_sentence_2 = combinations < combinations.constant(-2.5) || combinations > combinations.constant(2.5);
+
     switch(device_pointer->get_type())
     {
     case Device::EigenDefault:
@@ -901,12 +905,8 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
 
         // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(-2.5);
-
         Tensor<type, 2> f1(combinations.dimension(0), combinations.dimension(1));
         f1.setZero();
-
-        const Tensor<bool, 2> elif_sentence = combinations > combinations.constant(2.5);
 
         Tensor<type, 2> f2(combinations.dimension(0), combinations.dimension(1));
         f2.setConstant(1);
@@ -917,8 +917,6 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
         activations.device(*default_device) = if_sentence.select(f1, elif_sentence.select(f2, f3));
 
         // Activations Derivatives
-
-        const Tensor<bool, 2> if_sentence_2 = combinations < combinations.constant(-2.5) || combinations > combinations.constant(2.5);
 
         Tensor<type, 2> f4(combinations.dimension(0), combinations.dimension(1));
         f4.setConstant(0.0);
@@ -937,12 +935,8 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
 
         // Activations
 
-        const Tensor<bool, 2> if_sentence = combinations < combinations.constant(-2.5);
-
         Tensor<type, 2> f1(combinations.dimension(0), combinations.dimension(1));
         f1.setZero();
-
-        const Tensor<bool, 2> elif_sentence = combinations > combinations.constant(2.5);
 
         Tensor<type, 2> f2(combinations.dimension(0), combinations.dimension(1));
         f2.setConstant(1);
@@ -953,8 +947,6 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
         activations.device(*thread_pool_device) = if_sentence.select(f1, elif_sentence.select(f2, f3));
 
         // Activations Derivatives
-
-        const Tensor<bool, 2> if_sentence_2 = combinations < combinations.constant(-2.5) || combinations > combinations.constant(2.5);
 
         Tensor<type, 2> f4(combinations.dimension(0), combinations.dimension(1));
         f4.setConstant(0.0);
@@ -967,8 +959,6 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 2>& combinations,
         return;
     }
     }
-
-
 }
 
 void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
@@ -994,15 +984,14 @@ void Layer::hyperbolic_tangent_derivatives(const Tensor<type, 2>& combinations,
 
         activations.device(*thread_pool_device) = combinations.tanh();
 
-        activations_derivatives.setConstant(1);
+        activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
 
-        //        activations_derivatives.device(*thread_pool_device) = 1 - activations.square();
-        activations_derivatives.device(*thread_pool_device) -= activations.square();
+        //activations_derivatives.setConstant(1);
+        //activations_derivatives.device(*thread_pool_device) -= activations.square();
 
         return;
     }
     }
-
 }
 
 
@@ -1491,6 +1480,8 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
 
         activations.device(*default_device) = (1 + combinations.exp().inverse()).inverse();
 
+        cout << "activations: " << activations << endl;
+
         // Activations Derivatives
 
         Index dim = combinations.dimension(1);
@@ -1503,6 +1494,8 @@ void Layer::logistic_derivatives(const Tensor<type, 2>& combinations,
         ad_3d.chip(0,0) = ad_2d;
 
         activations_derivatives.device(*default_device) = ad_3d;
+
+        cout << "activations derivatives: " << activations_derivatives << endl;
 
         return;
     }
