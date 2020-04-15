@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "loss_index.h"
+#include "device.h"
 
 namespace OpenNN
 {
@@ -531,6 +532,51 @@ type LossIndex::calculate_training_loss(const Tensor<type, 1>& direction, const 
 }
 */
 
+
+// Second Order loss
+
+/// This method calculates the second order loss.
+/// It is used for optimization of parameters during training.
+/// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
+
+void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
+                                       NeuralNetwork::ForwardPropagation& forward_propagation,
+                                       BackPropagation& back_propagation,
+                                       SecondOrderLoss& second_order_loss) const
+{
+    // First Order
+
+    calculate_error(batch, forward_propagation, back_propagation);
+
+    calculate_output_gradient(batch, forward_propagation, back_propagation);
+
+    calculate_layers_delta(forward_propagation, back_propagation);
+
+    // Second Order
+
+    calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
+
+    calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
+
+    calculate_hessian_approximation(second_order_loss);
+
+    // Loss
+
+    second_order_loss.loss = back_propagation.error;
+
+    // Regularization
+
+    if(regularization_method != RegularizationMethod::NoRegularization)
+    {
+        const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+        second_order_loss.loss += regularization_weight*calculate_regularization(parameters);
+        second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
+        second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
+    }
+}
+
+
 /// Returns a string with the default type of error term, "USER_PERFORMANCE_TERM".
 
 string LossIndex::get_error_type() const
@@ -805,7 +851,7 @@ LossIndex::BackPropagation::~BackPropagation()
 }
 
 
-Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
+Tensor<type, 1> LossIndex:: calculate_training_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
 {
     const Index instances_number = data_set_pointer->get_training_instances_number();
 
@@ -820,7 +866,6 @@ Tensor<type, 1> LossIndex::calculate_training_error_gradient_numerical_different
     NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
 
     BackPropagation back_propagation(instances_number, loss_index_pointer);
-
 
     const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
 
@@ -898,6 +943,206 @@ Tensor<type, 2> LossIndex::kronecker_product(const Tensor<type, 1> & tensor, con
     }
 
     return direct;
+}
+
+
+type LossIndex::l2_norm(const Tensor<type, 1>& parameters) const
+{
+    Tensor<type, 0> norm;
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             norm.device(*default_device) = parameters.square().sum().sqrt();
+
+             break;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            norm.device(*thread_pool_device) = parameters.square().sum().sqrt();
+
+             break;
+         }
+    }
+
+    return norm(0);
+}
+
+type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
+{
+    Tensor<type, 0> norm;
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             norm.device(*default_device) = parameters.abs().sum();
+
+             break;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            norm.device(*thread_pool_device) = parameters.abs().sum();
+
+             break;
+         }
+    }
+
+    return norm(0);
+}
+
+Tensor<type, 1> LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters) const
+{
+    const Index parameters_number = parameters.size();
+
+    Tensor<type, 1> gradient(parameters_number);
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             gradient.device(*default_device) = parameters.sign();
+
+             return gradient;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            gradient.device(*thread_pool_device) = parameters.sign();
+
+            return gradient;
+         }
+    }
+
+    return Tensor<type, 1>();
+}
+
+
+Tensor<type, 2> LossIndex::l1_norm_hessian(const Tensor<type, 1>& parameters) const
+{
+    const Index parameters_number = parameters.size();
+
+    Tensor<type, 2> hessian(parameters_number, parameters_number);
+
+        switch(device_pointer->get_type())
+        {
+             case Device::EigenDefault:
+             {
+                 DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+                 hessian.device(*default_device) = hessian.setZero();  //<---
+
+                 return hessian;
+
+             }
+
+             case Device::EigenThreadPool:
+             {
+                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+                hessian.device(*thread_pool_device) =  hessian.setZero();  //<---
+
+                return hessian;
+             }
+        }
+
+        return Tensor<type, 2>();
+}
+
+
+Tensor<type, 1> LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters) const
+{
+    const Index parameters_number = parameters.size();
+
+    Tensor<type, 1> gradient(parameters_number);
+
+    const type norm = l2_norm(parameters);
+
+    if(static_cast<Index>(norm) ==  0)
+    {
+        gradient.setZero();
+
+        return gradient;
+    }
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             gradient.device(*default_device) = parameters/norm;
+
+             return gradient;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            gradient.device(*thread_pool_device) = parameters/norm;
+
+            return gradient;
+         }
+    }
+
+    return Tensor<type, 1>();
+}
+
+
+Tensor<type, 2> LossIndex::l2_norm_hessian(const Tensor<type, 1>& parameters) const
+{
+    const Index parameters_number = parameters.size();
+
+    Tensor<type, 2> hessian(parameters_number, parameters_number);
+
+    const type norm = l2_norm(parameters);
+
+    if(static_cast<Index>(norm) == 0.0)
+    {
+        hessian.setZero();
+
+        return hessian;
+    }
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             hessian.device(*default_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
+
+             return hessian;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            hessian.device(*thread_pool_device) = kronecker_product(parameters, parameters)/(norm*norm*norm);
+
+            return hessian;
+
+         }
+    }
+
+    return Tensor<type, 2>();
 }
 
 }

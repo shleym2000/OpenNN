@@ -235,6 +235,7 @@ public:
                                           const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
+    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) {}
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
@@ -289,16 +290,16 @@ protected:
     void hyperbolic_tangent(const Tensor<type,1>&, Tensor<type,1>&) const;
     void logistic(const Tensor<type,1>&, Tensor<type,1>&) const;
     void linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void binary(const Tensor<type,1>&, Tensor<type,1>&) const {}
-    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void binary(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const;
 
     void hard_sigmoid_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}
     void hyperbolic_tangent_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const {}

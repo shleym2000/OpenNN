@@ -125,42 +125,29 @@ public:
 
    void set_parameters_random();
 
+   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
+   {
+       const Index biases_number = get_biases_number();
+       const Index synaptic_weights_number = get_synaptic_weights_number();
+
+       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
+       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
+   }
+
    // Combinations
 
    void calculate_combinations(const Tensor<type, 2>& inputs,
                                const Tensor<type, 2>& biases,
                                const Tensor<type, 2>& synaptic_weights,
-                               Tensor<type, 2>& combinations_2d) const
-   {
-       const Index batch_instances_number = inputs.dimension(0);
-       const Index biases_number = get_neurons_number();
+                               Tensor<type, 2>& combinations_2d) const;
 
-       for(Index i = 0; i < biases_number; i++)
-       {
-           fill_n(combinations_2d.data()+i*batch_instances_number, batch_instances_number, biases(i));
-       }
+   // Activations
 
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+   void calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const;
 
-                combinations_2d.device(*default_device) += inputs.contract(synaptic_weights, A_B);
-
-                break;
-            }
-
-            case Device::EigenThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
-
-                break;
-            }
-       }
-   }
+   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
+                                          Tensor<type, 2>& activations,
+                                          Tensor<type, 3>& activations_derivatives) const;
 
    // Outputs
 
@@ -171,104 +158,59 @@ public:
                           ForwardPropagation& forward_propagation) const
    {
 
-       cout << "Forward_propagate" << endl;
+       cout << "FORWARD PROPAGATE PROBABILISTIC ---------------------------------------" << endl;
 
        calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
-       calculate_activations(forward_propagation.combinations_2d, forward_propagation.activations_2d);
+       cout << "Combinations: " << forward_propagation.combinations_2d << endl;
 
-       calculate_activations_derivatives(forward_propagation.combinations_2d, forward_propagation.activations_2d, forward_propagation.activations_derivatives_3d);
+       calculate_activations_derivatives(forward_propagation.combinations_2d,
+                                         forward_propagation.activations_2d,
+                                         forward_propagation.activations_derivatives_3d);
+
+       cout << "Activations: " << forward_propagation.combinations_2d << endl;
+
+       cout << "------------------------------------------------------------------------" << endl;
+
    }
 
-   // Activations
 
-   void calculate_activations(const Tensor<type, 2>& combinations_2d, Tensor<type, 2>& activations_2d) const
-   {
-        #ifdef __OPENNN_DEBUG__
+   void forward_propagate(const Tensor<type, 2>& inputs,
+                                      Tensor<type, 1> potential_parameters,
+                                      ForwardPropagation& forward_propagation) const
+      {
+       const Index neurons_number = get_neurons_number();
+       const Index inputs_number = get_inputs_number();
 
-        const Index dimensions_number = combinations_2d.rank();
+#ifdef __OPENNN_DEBUG__
 
-        if(dimensions_number != 2)
-        {
+       if(inputs_number != inputs.dimension(1))
+       {
            ostringstream buffer;
 
            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                  << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                  << "Dimensions of combinations_2d (" << dimensions_number << ") must be 2.\n";
+                  << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
+                  << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
+                  << inputs_number << ").\n";
 
            throw logic_error(buffer.str());
-        }
-
-        const Index neurons_number = get_neurons_number();
-
-        const Index combinations_columns_number = combinations_2d.dimension(1);
-
-        if(combinations_columns_number != neurons_number)
-        {
-           ostringstream buffer;
-
-           buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                  << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                  << "Number of combinations_2d columns (" << combinations_columns_number << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-           throw logic_error(buffer.str());
-        }
-
-        #endif
-
-        switch(activation_function)
-        {
-            case Binary: binary(combinations_2d, activations_2d); return;
-
-            case Logistic: logistic(combinations_2d, activations_2d); return;
-
-            case Competitive: competitive(combinations_2d, activations_2d); return;
-
-            case Softmax: softmax(combinations_2d, activations_2d); return;
-        }
-
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-               << "void calculate_activations(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-               << "Unknown probabilistic method.\n";
-
-        throw logic_error(buffer.str());
-   }
-
-   void calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
-                                          Tensor<type, 2>& activations,
-                                          Tensor<type, 3>& activations_derivatives) const
-   {
-        #ifdef __OPENNN_DEBUG__
-
-        const Index neurons_number = get_neurons_number();
-
-        const Index combinations_columns_number = combinations_2d.dimension(1);
-
-        if(combinations_columns_number != neurons_number)
-        {
-           ostringstream buffer;
-
-           buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
-                  << "void calculate_activations_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const method.\n"
-                  << "Number of combinations_2d columns (" << combinations_columns_number
-                  << ") must be equal to number of neurons (" << neurons_number << ").\n";
-
-           throw logic_error(buffer.str());
-        }
-
-        #endif
-
-        switch(activation_function)
-        {
-
-            case Logistic: logistic_derivatives(combinations_2d, activations, activations_derivatives); return;
-
-            case Softmax: softmax_derivatives(combinations_2d, activations, activations_derivatives); return;
-
        }
+
+#endif
+
+       const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
+
+       const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
+                                                                   inputs_number, neurons_number);
+
+       calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
+
+       calculate_activations_derivatives(forward_propagation.combinations_2d,
+                                         forward_propagation.activations_2d,
+                                         forward_propagation.activations_derivatives_3d);
    }
+
+
 
 
    void calculate_output_delta(ForwardPropagation& forward_propagation,
@@ -289,7 +231,9 @@ public:
 
            TensorMap< Tensor<type, 2> > activations_derivatives(forward_propagation.activations_derivatives_3d.data(), batch_instances_number, neurons_number);
 
-           cout << "Activations derivativeS: " << activations_derivatives << endl;
+           cout << "Activations derivative: " << activations_derivatives << endl;
+
+           cout << "output gradient: " << output_gradient << endl;
 
            switch(device_pointer->get_type())
            {
@@ -309,6 +253,8 @@ public:
                    output_delta.device(*thread_pool_device) = activations_derivatives*output_gradient;
 
                    cout << "output delta: " << output_delta << endl;
+
+                   cout << "Output delta diemsions: " << output_delta.dimensions().size() << endl;
 
                    return;
                }
@@ -406,61 +352,13 @@ public:
    }
 
 
+   // Gradient methods
+
    void calculate_error_gradient(const Tensor<type, 2>& inputs,
                                  const Layer::ForwardPropagation&,
-                                 Layer::BackPropagation& back_propagation) const
-   {
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+                                 Layer::BackPropagation& back_propagation) const;
 
-                back_propagation.biases_derivatives.device(*default_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-                back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
-
-                return;
-            }
-
-            case Device::EigenThreadPool:
-            {
-                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-                back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-                back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
-
-                return;
-            }
-       }
-   }
-
-
-   void insert_parameters(const Tensor<type, 1>& parameters, const Index& )
-   {
-       const Index biases_number = get_biases_number();
-       const Index synaptic_weights_number = get_synaptic_weights_number();
-
-       memcpy(biases.data() , parameters.data(), static_cast<size_t>(biases_number)*sizeof(type));
-       memcpy(synaptic_weights.data(), parameters.data() + biases_number, static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-   }
-
-   // calculate error gradient
-
-   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
-   {
-       const Index biases_number = get_biases_number();
-       const Index synaptic_weights_number = get_synaptic_weights_number();
-
-       memcpy(gradient.data() + index,
-              back_propagation.biases_derivatives.data(),
-              static_cast<size_t>(biases_number)*sizeof(type));
-
-       memcpy(gradient.data() + index + biases_number,
-              back_propagation.synaptic_weights_derivatives.data(),
-              static_cast<size_t>(synaptic_weights_number)*sizeof(type));
-   }
+   void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
    // Expression methods
 

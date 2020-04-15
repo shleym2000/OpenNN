@@ -728,6 +728,7 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
     layers_pointers = other_neural_network.layers_pointers;
 
     display = other_neural_network.display;
+
 }
 
 
@@ -1090,15 +1091,13 @@ Index NeuralNetwork::get_layers_number() const
 
 Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
-
-    Tensor<Index, 1> layers_neurons_number;
-    /*
+    Tensor<Index, 1> layers_neurons_number(layers_pointers.size());
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
-        layers_neurons_number.push_back(layers_pointers[i]->get_neurons_number());
+        layers_neurons_number(i) = layers_pointers[i]->get_neurons_number();
     }
-    */
+
     return layers_neurons_number;
 }
 
@@ -1276,7 +1275,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
                                                                      forward_propagation.layers(i));
     }
 }
-
 
 
 /// Calculates the forward propagation in the neural network.
