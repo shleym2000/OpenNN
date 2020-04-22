@@ -549,6 +549,39 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 }
 
 
+void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
+                      OptimizationData& optimization_data)
+{
+    const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
+
+    optimization_data.parameters_increment = back_propagation.gradient*(-learning_rate);
+
+    if(momentum > 0 && !nesterov)
+    {
+        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+
+        optimization_data.parameters += optimization_data.parameters_increment;
+    }
+    else if(momentum > 0 && nesterov)
+    {
+        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+
+        optimization_data.nesterov_increment
+                = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+
+        optimization_data.parameters += optimization_data.nesterov_increment;
+    }
+    else
+    {
+        optimization_data.parameters += optimization_data.parameters_increment;
+    }
+
+    optimization_data.last_parameters_increment = optimization_data.parameters_increment;
+
+    optimization_data.iteration++;
+}
+
+
 /// Trains a neural network with an associated loss index,
 /// according to the stochastic gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -708,7 +741,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         /*if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Training loss goal reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Training loss goal reached.\n";
 
             stop_training = true;
 
@@ -717,7 +750,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
             stop_training = true;
 
@@ -726,7 +759,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         else if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
 
             stop_training = true;
 
@@ -761,7 +794,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << "/"<<maximum_epochs_number << ":\n"
+            cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
                  << "Training error: " << training_error << "\n"
                  << "Batch size: " << batch_instances_number << "\n"
                  << loss_index_pointer->write_information()
@@ -796,7 +829,7 @@ void StochasticGradientDescent::perform_training_void()
 
 string StochasticGradientDescent::write_optimization_algorithm_type() const
 {
-    return "GRADIENT_DESCENT";
+    return "STOCHASTIC_GRADIENT_DESCENT";
 }
 
 
@@ -804,120 +837,84 @@ string StochasticGradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 {
-    /*
-        ostringstream buffer;
+    Tensor<string, 2> labels_values(9, 2);
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+    // Initial learning rate
 
-       // Minimum parameters increment norm
+    labels_values(0,0) = "Inital learning rate";
 
-       labels.push_back("Minimum parameters increment norm");
+    labels_values(0,1) = std::to_string(initial_learning_rate);
 
-       buffer.str("");
-       buffer << minimum_parameters_increment_norm;
+    // Initial decay
 
-       values.push_back(buffer.str());
+    labels_values(1,0) = "Inital decay";
 
-       // Minimum loss decrease
+    labels_values(1,1) = std::to_string(initial_decay);
 
-       labels.push_back("Minimum loss decrease");
+    // Momentum
 
-       buffer.str("");
-       buffer << minimum_loss_decrease;
+    labels_values(2,0) = "Apply momentum";
 
-       values.push_back(buffer.str());
+    if(momentum > 0)
+    {
+        labels_values(2,1) = "true";
+    }
+    else
+    {
+        labels_values(2,1) = "false";
+    }
 
-       // Loss goal
+    // Training loss goal
 
-       labels.push_back(" Loss goal");
+    labels_values(3,0) = "Training loss goal";
 
-       buffer.str("");
-       buffer << training_loss_goal;
+    labels_values(3,1) = std::to_string(training_loss_goal);
 
-       values.push_back(buffer.str());
+    // Maximum epochs number
 
-       // Gradient norm goal
+    labels_values(4,0) = "Maximum epochs number";
 
-       labels.push_back("Gradient norm goal");
+    labels_values(4,1) = std::to_string(maximum_epochs_number);
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+    // Maximum time
 
-       values.push_back(buffer.str());
+    labels_values(5,0) = "Maximum time";
 
-       // Maximum selection error increases
+    labels_values(5,1) = std::to_string(maximum_time);
 
-       labels.push_back("Maximum selection error increases");
+    // Batch instances number
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+    labels_values(6,0) = "Batch instances number";
 
-       values.push_back(buffer.str());
+    labels_values(6,1) = std::to_string(batch_instances_number);
 
-       // Maximum iterations number
+    // Reserve training error history
 
-       labels.push_back("Maximum iterations number");
+    labels_values(7,0) = "Reserve training error history";
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    if(reserve_training_error_history)
+    {
+        labels_values(7,1) = "true";
+    }
+    else
+    {
+        labels_values(7,1) = "false";
+    }
 
-       values.push_back(buffer.str());
+    // Reserve selection error history
 
-       // Maximum time
+    labels_values(8,0) = "Reserve selection error history";
 
-       labels.push_back("Maximum time");
+    if(reserve_training_error_history)
+    {
+        labels_values(8,1) = "true";
+    }
+    else
+    {
+        labels_values(8,1) = "false";
+    }
 
-       buffer.str("");
-       buffer << maximum_time;
-
-       values.push_back(buffer.str());
-
-       // Reserve training error history
-
-       labels.push_back("Reserve training error history");
-
-       buffer.str("");
-
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       // Reserve selection error history
-
-       labels.push_back("Reserve selection error history");
-
-       buffer.str("");
-
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
-
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
-
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+    return labels_values;
 }
 
 

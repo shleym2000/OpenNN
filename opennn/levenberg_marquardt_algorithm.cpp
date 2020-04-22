@@ -940,7 +940,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
+                cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n"
                      << "Parameters increment norm: " << parameters_increment_norm << endl;
             }
 
@@ -951,7 +951,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
 
             stop_training = true;
 
@@ -962,7 +962,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                      << "Loss decrease: " << training_loss_decrease << endl;
             }
 
@@ -973,7 +973,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached." << endl;
+            if(display) cout << "Epoch " << epoch+1 << ": Gradient norm goal reached." << endl;
 
             stop_training = true;
 
@@ -984,7 +984,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
                      << "Selection loss increases: "<< selection_failures << endl;
             }
 
@@ -995,7 +995,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         else if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached." << endl;
+            if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached." << endl;
 
             stop_training = true;
 
@@ -1006,7 +1006,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum training time reached." << endl;
+                cout << "Epoch " << epoch+1 << ": Maximum training time reached." << endl;
             }
 
             stop_training = true;
@@ -1054,7 +1054,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
+            cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training loss: " << training_loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
@@ -1127,129 +1127,83 @@ string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 
 Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 {
-    ostringstream buffer;
+    Tensor<string, 2> labels_values(10,2);
 
-    Tensor<string, 1> labels;
-    Tensor<string, 1> values;
-    /*
-        // Damping parameter factor
+    // Damping parameter factor
 
-        labels.push_back("Damping parameter factor");
+    labels_values(0,0) = "Damping parameter factor";
 
-        buffer.str("");
-        buffer << damping_parameter_factor;
+    labels_values(0,1) = std::to_string(damping_parameter_factor);
 
-        values.push_back(buffer.str());
+    // Minimum parameters increment norm
 
-       // Minimum parameters increment norm
+    labels_values(1,0) = "Minimum parameters increment norm";
 
-       labels.push_back("Minimum parameters increment norm");
+    labels_values(1,1) = std::to_string(minimum_parameters_increment_norm);
 
-       buffer.str("");
-       buffer << minimum_parameters_increment_norm;
+    // Minimum loss decrease
 
-       values.push_back(buffer.str());
+    labels_values(2,0) = "Minimum loss decrease";
 
-       // Minimum loss decrease
+    labels_values(2,1) = std::to_string(minimum_loss_decrease);
 
-       labels.push_back("Minimum loss decrease");
+    // Loss goal
 
-       buffer.str("");
-       buffer << minimum_loss_decrease;
+    labels_values(3,0) = "Loss goal";
 
-       values.push_back(buffer.str());
+    labels_values(3,1) = std::to_string(training_loss_goal);
 
-       // Loss goal
+    // Gradient norm goal
 
-       labels.push_back("Loss goal");
+    labels_values(4,0) = "Gradient norm goal";
 
-       buffer.str("");
-       buffer << training_loss_goal;
+    labels_values(4,1) = std::to_string(gradient_norm_goal);
 
-       values.push_back(buffer.str());
+    // Maximum selection error increases
 
-       // Gradient norm goal
+    labels_values(5,0) = "Maximum selection error increases";
 
-       labels.push_back("Gradient norm goal");
+    labels_values(5,1) = std::to_string(maximum_selection_error_increases);
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+    // Maximum iterations number
 
-       values.push_back(buffer.str());
+    labels_values(6,0) = "Maximum iterations number";
 
-       // Maximum selection error increases
+    labels_values(6,1) = std::to_string(maximum_epochs_number);
 
-       labels.push_back("Maximum selection error increases");
+    // Maximum time
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+    labels_values(7,0) = "Maximum time";
 
-       values.push_back(buffer.str());
+    labels_values(7,1) = std::to_string(maximum_time);
 
-       // Maximum iterations number
+    // Reserve training error history
 
-       labels.push_back("Maximum iterations number");
+    labels_values(8,0) = "Reserve training error history";
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    if(reserve_training_error_history)
+    {
+        labels_values(8,1) = "true";
+    }
+    else
+    {
+        labels_values(8,1) = "false";
+    }
 
-       values.push_back(buffer.str());
+    // Reserve selection error history
 
-       // Maximum time
+    labels_values(9,0) = "Reserve selection error history";
 
-       labels.push_back("Maximum time");
+    if(reserve_selection_error_history)
+    {
+        labels_values(9,1) = "true";
+    }
+    else
+    {
+        labels_values(9,1) = "false";
+    }
 
-       buffer.str("");
-       buffer << maximum_time;
-
-       values.push_back(buffer.str());
-
-       // Reserve training error history
-
-       labels.push_back("Reserve training error history");
-
-       buffer.str("");
-
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       // Reserve selection error history
-
-       labels.push_back("Reserve selection error history");
-
-       buffer.str("");
-
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
-
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
-
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+    return labels_values;
 }
 
 

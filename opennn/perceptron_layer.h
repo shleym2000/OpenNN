@@ -207,7 +207,10 @@ public:
        const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
                                                                    inputs_number, neurons_number);
 
-       calculate_combinations(inputs, potential_biases, potential_synaptic_weights, forward_propagation.combinations_2d);
+       calculate_combinations(inputs,
+                              potential_biases,
+                              potential_synaptic_weights,
+                              forward_propagation.combinations_2d);
 
        calculate_activations_derivatives(forward_propagation.combinations_2d,
                                          forward_propagation.activations_2d,
@@ -264,12 +267,6 @@ public:
                ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
 
                hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-
-               cout << "Hidden delta 1: " << hidden_delta << endl;
-
-               cout << "Activations derivatives: " << activations_derivatives << endl;
-
-
 
 //               hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
 

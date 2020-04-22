@@ -1138,6 +1138,103 @@ Tensor<type, 2> QuasiNewtonMethod::calculate_BFGS_inverse_hessian(
     return inverse_hessian_approximation;
 }
 
+void QuasiNewtonMethod::update_epoch(
+        const DataSet::Batch& batch,
+        NeuralNetwork::ForwardPropagation& forward_propagation,
+        const LossIndex::BackPropagation& back_propagation,
+        OptimizationData& optimization_data)
+{
+    const Index parameters_number = optimization_data.parameters.dimension(0);
+
+    if(optimization_data.epoch == 0
+    || l2_norm(optimization_data.old_parameters - optimization_data.parameters) < numeric_limits<type>::min()
+    || l2_norm(optimization_data.old_gradient - back_propagation.gradient) < numeric_limits<type>::min())
+    {
+        optimization_data.inverse_hessian.setZero();
+
+        for(Index i = 0; i < parameters_number; i++) optimization_data.inverse_hessian(i,i) = 1.0;
+    }
+    else
+    {
+        optimization_data.inverse_hessian = calculate_inverse_hessian_approximation(
+                              optimization_data.old_parameters,
+                              optimization_data.parameters,
+                              optimization_data.old_gradient,
+                              back_propagation.gradient,
+                              optimization_data.old_inverse_hessian);
+    }
+
+    // Optimization algorithm
+
+    optimization_data.training_direction = optimization_data.inverse_hessian.contract(back_propagation.gradient, A_B);
+
+    optimization_data.training_direction = -normalized(optimization_data.training_direction);
+
+    // Calculate training slope
+
+    optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+
+    // Check for a descent direction
+
+    if(optimization_data.training_slope(0) >= 0)
+    {
+        //cout << "Training slope is greater than zero." << endl;
+
+        optimization_data.training_direction = -normalized(back_propagation.gradient);
+    }
+
+    // Get initial training rate
+
+    type initial_learning_rate;
+
+    optimization_data.epoch == 0
+            ? initial_learning_rate = first_learning_rate
+            : initial_learning_rate = optimization_data.old_learning_rate;
+
+    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+             batch,
+             optimization_data.parameters,
+             forward_propagation,
+             back_propagation.loss,
+             optimization_data.training_direction,
+             initial_learning_rate);
+
+    optimization_data.learning_rate = directional_point.first;
+
+    // Reset training direction when training rate is 0
+
+    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+    {
+        optimization_data.training_direction = back_propagation.gradient;
+
+        optimization_data.training_direction = (-1)*normalized(optimization_data.training_direction);
+
+        directional_point = learning_rate_algorithm.calculate_directional_point(batch,
+                            optimization_data.parameters, forward_propagation,
+                            back_propagation.loss,
+                            optimization_data.training_direction,
+                            first_learning_rate);
+
+        optimization_data.learning_rate = directional_point.first;
+    }
+
+    optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
+
+    optimization_data.old_parameters = optimization_data.parameters;
+
+    optimization_data.parameters += optimization_data.parameters_increment;
+
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+    optimization_data.old_gradient = back_propagation.gradient;
+
+    optimization_data.old_inverse_hessian = optimization_data.inverse_hessian;
+
+    optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+    optimization_data.old_training_loss = back_propagation.loss;
+}
+
 
 /// Trains a neural network with an associated loss index according to the quasi-Newton method.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
@@ -1229,11 +1326,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        cout << "Before backpropagation" << endl;
-
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        cout << "After backpropagation" << endl;
 
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
@@ -1285,7 +1378,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-               cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
+               cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n"
                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
             }
 
@@ -1298,7 +1391,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-               cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+               cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                     << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss <<  endl;
             }
 
@@ -1310,7 +1403,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Loss goal reached.\n";
+                cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
             }
 
             stop_training = true;
@@ -1321,7 +1414,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Iteration " << epoch << ": Gradient norm goal reached.\n";
+                cout << "Iteration " << epoch+1 << ": Gradient norm goal reached.\n";
             }
 
             stop_training = true;
@@ -1332,7 +1425,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
                      << "Selection loss increases: "<< selection_failures << endl;
             }
 
@@ -1344,7 +1437,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
             }
 
             stop_training = true;
@@ -1355,7 +1448,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
             }
 
             stop_training = true;
@@ -1402,7 +1495,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
+            cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
@@ -1930,144 +2023,99 @@ string QuasiNewtonMethod::object_to_string() const
 
 Tensor<string, 2> QuasiNewtonMethod::to_string_matrix() const
 {
-    ostringstream buffer;
-
-    Tensor<string, 1> labels;
-    Tensor<string, 1> values;
+    Tensor<string, 2> labels_values(12, 2);
 
     // Inverse hessian approximation method
-    /*
-        labels.push_back("Inverse hessian approximation method");
 
-        const string inverse_hessian_approximation_method_string = write_inverse_hessian_approximation_method();
+    labels_values(0,0) = "Inverse hessian approximation method";
 
-        values.push_back(inverse_hessian_approximation_method_string);
+    const string inverse_hessian_approximation_method_string = write_inverse_hessian_approximation_method();
 
-       // Training rate method
+    labels_values(0,1) = inverse_hessian_approximation_method_string;
 
-       labels.push_back("Training rate method");
+    // Learning rate method
 
-       const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
+    labels_values(1,0) = "Learning rate method";
 
-       values.push_back(learning_rate_method);
+    const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
 
-       // Loss tolerance
+    labels_values(1,1) = "learning_rate_method";
 
-       labels.push_back("Loss tolerance");
+    // Loss tolerance
 
-       buffer.str("");
-       buffer << learning_rate_algorithm.get_loss_tolerance();
+    labels_values(2,0) = "Learning rate tolerance";
 
-       values.push_back(buffer.str());
+    labels_values(2,1) = std::to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
-       // Minimum parameters increment norm
+    // Minimum parameters increment norm
 
-       labels.push_back("Minimum parameters increment norm");
+    labels_values(3,0) = "Minimum parameters increment norm";
 
-       buffer.str("");
-       buffer << minimum_parameters_increment_norm;
+    labels_values(3,1) = std::to_string(minimum_parameters_increment_norm);
 
-       values.push_back(buffer.str());
+    // Minimum loss decrease
 
-       // Minimum loss decrease
+    labels_values(4,0) = "Minimum loss decrease";
 
-       labels.push_back("Minimum loss decrease");
+    labels_values(4,1) = std::to_string(minimum_loss_decrease);
 
-       buffer.str("");
-       buffer << minimum_loss_decrease;
+    // Loss goal
 
-       values.push_back(buffer.str());
+    labels_values(5,0) = "Loss goal";
 
-       // Loss goal
+    labels_values(5,1) = std::to_string(training_loss_goal);
 
-       labels.push_back("Loss goal");
+    // Gradient norm goal
 
-       buffer.str("");
-       buffer << training_loss_goal;
+    labels_values(6,0) = "Gradient norm goal";
 
-       values.push_back(buffer.str());
+    labels_values(6,1) = std::to_string(gradient_norm_goal);
 
-       // Gradient norm goal
+    // Maximum selection error increases
 
-       labels.push_back("Gradient norm goal");
+    labels_values(7,0) = "Maximum selection error increases";
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+    labels_values(7,1) = std::to_string(maximum_selection_error_increases);
 
-       values.push_back(buffer.str());
+    // Maximum epochs number
 
-       // Maximum selection error increases
+    labels_values(8,0) = "Maximum epochs number";
 
-       labels.push_back("Maximum selection error increases");
+    labels_values(8,1) = std::to_string(maximum_epochs_number);
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+    // Maximum time
 
-       values.push_back(buffer.str());
+    labels_values(9,0) = "Maximum time";
 
-       // Maximum iterations number
+    labels_values(9,1) = std::to_string(maximum_time);
 
-       labels.push_back("Maximum iterations number");
+    // Reserve training error history
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    labels_values(10,0) = "Reserve training error history";
 
-       values.push_back(buffer.str());
+    if(reserve_training_error_history)
+    {
+        labels_values(10,1) = "true";
+    }
+    else
+    {
+        labels_values(10,1) = "false";
+    }
 
-       // Maximum time
+    // Reserve selection error history
 
-       labels.push_back("Maximum time");
+    labels_values(11,0) = "Reserve selection error history";
 
-       buffer.str("");
-       buffer << maximum_time;
+    if(reserve_selection_error_history)
+    {
+        labels_values(11,1) = "true";
+    }
+    else
+    {
+        labels_values(11,1) = "false";
+    }
 
-       values.push_back(buffer.str());
-
-       // Reserve training error history
-
-       labels.push_back("Reserve training error history");
-
-       buffer.str("");
-
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       // Reserve selection error history
-
-       labels.push_back("Reserve selection error history");
-
-       buffer.str("");
-
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
-
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
-
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+    return labels_values;
 }
 
 
