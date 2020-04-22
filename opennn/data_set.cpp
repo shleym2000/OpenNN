@@ -1632,9 +1632,7 @@ void DataSet::split_instances_sequential(const type& training_instances_ratio,
 
 void DataSet::set_selection_to_testing_instances()
 {
-    /*
-        instances_uses.replace_value(Selection, Testing);
-    */
+    std::replace(instances_uses.data(), instances_uses.data() + instances_uses.size(), Selection, Testing);
 }
 
 
@@ -1642,9 +1640,7 @@ void DataSet::set_selection_to_testing_instances()
 
 void DataSet::set_testing_to_selection_instances()
 {
-    /*
-        instances_uses.replace_value(Testing, Selection);
-    */
+    std::replace(instances_uses.data(), instances_uses.data() + instances_uses.size(), Testing, Selection);
 }
 
 
@@ -2948,34 +2944,63 @@ void DataSet::set_columns_number(const Index& new_variables_number)
 
 void DataSet::set_binary_simple_columns()
 {
-    Tensor<type, 1> values;
-
     bool is_binary = true;
 
-    for(Index column_index = 0; column_index < data.dimension(1); column_index++)
+    Index variable_index = 0;
+
+    Index different_values = 0;
+
+    for(Index column_index = 0; column_index < columns.size(); column_index++)
     {
-        is_binary = true;
-        /*
-                values.clear();
+        if(columns(column_index).type == Numeric)
+        {
+            Tensor<type, 1> values(3);
+            values.setRandom();
+            different_values = 0;
+            is_binary = true;
 
-                for(Index row_index = 0; row_index < data.dimension(0); row_index++)
+            for(Index row_index = 0; row_index < data.dimension(0); row_index++)
+            {
+                if(!::isnan(data(row_index, variable_index))
+                && data(row_index, variable_index) != values(0)
+                && data(row_index, variable_index) != values(1))
                 {
-                    if(std::find(values.begin(), values.end(), data(row_index, column_index)) == values.end()
-                    && !::isnan(data(row_index, column_index)))
-                    {
-                        values.push_back(data(row_index, column_index));
-                    }
+                    values(different_values) = data(row_index, column_index);
 
-                    if(values.size() > 2)
-                    {
-                        is_binary = false;
-                        break;
-                    }
-
+                    different_values++;
                 }
 
-                if(is_binary) columns(column_index).type = Binary;
-        */
+                if(different_values > 2)
+                {
+                    is_binary = false;
+                    break;
+                }
+            }
+
+            if(is_binary)
+            {
+                columns(column_index).type = Binary;
+
+                columns(column_index).categories.resize(2);
+                columns(column_index).categories(0) = "Class_" + std::to_string(values(0));
+                columns(column_index).categories(1) = "Class_" + std::to_string(values(1));
+
+                const VariableUse column_use = columns(column_index).column_use;
+                columns(column_index).categories_uses.resize(2);
+                columns(column_index).categories_uses(0) = column_use;
+                columns(column_index).categories_uses(1) = column_use;
+            }
+
+            variable_index++;
+        }
+        else if(columns(column_index).type == Categorical)
+        {
+            variable_index += columns(column_index).get_categories_number();
+        }
+        else
+        {
+            variable_index++;
+        }
     }
 }
 
@@ -3047,6 +3072,24 @@ bool DataSet::is_empty() const
     }
 
     return false;
+}
+
+
+/// Returns true if any value is less or equal than a given value, and false otherwise.
+
+bool DataSet::is_less_than(const Tensor<type, 1>& column, const type& value) const
+{
+    Tensor<bool, 1> if_sentence = column <= column.constant(value);
+
+    Tensor<bool, 1> sentence(column.size());
+    sentence.setConstant(true);
+
+    Tensor<bool, 1> else_sentence(column.size());
+    else_sentence.setConstant(false);
+
+    Tensor<bool, 0> is_less = (if_sentence.select(sentence, else_sentence)).any();
+
+    return is_less(0);
 }
 
 
@@ -3235,16 +3278,18 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
 
 Tensor<type, 2> DataSet::get_training_data() const
 {
-    /*
-       const Index variables_number = get_variables_number();
 
-       Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
+//       const Index variables_number = get_variables_number();
+
+//       Tensor<Index, 1> variables_indices(0, 1, variables_number-1);
+
+       Tensor<Index, 1> variables_indices = get_used_variables_indices();
 
        const Tensor<Index, 1> training_indices = get_training_instances_indices();
 
        return get_subtensor_data(training_indices, variables_indices);
-       */
-    return Tensor<type,2>();
+
+//    return Tensor<type,2>();
 }
 
 
@@ -3643,6 +3688,17 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
 }
 
 
+/// Returns the data from the data set column with a given index,
+/// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
+/// @param column_index Index of the column.
+/// @param rows_indices Rows of the indices.
+
+Tensor<type, 2> DataSet::get_column_data(const Index& column_index, Tensor<Index, 1>& rows_indices) const
+{
+    return get_subtensor_data(rows_indices, get_variable_indices(column_index));
+}
+
+
 /// Returns the data from the data set column with a given name,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
 /// @param column_name Name of the column.
@@ -3870,6 +3926,8 @@ Tensor<type, 2> DataSet::get_subtensor_data(const Tensor<Index, 1> & rows_indice
 
     Index row_index;
     Index variable_index;
+
+    const Tensor<type, 2>& data = get_data();
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -4358,6 +4416,8 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
 #endif
 
+    Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+
     Tensor<string, 1> constant_columns(0);
 
     Index variable_index = 0;
@@ -4374,7 +4434,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
                 for(Index j = 0; j < categories_number; j++)
                 {
-                    const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1));
+                    const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1), used_instances_indices);
 
                     if((column_standard_deviation - 0) > std::numeric_limits<type>::min())
                     {
@@ -4389,7 +4449,9 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
             }
             else
             {
-                const type column_standard_deviation = standard_deviation(data.chip(variable_index,1));
+                const type column_standard_deviation = standard_deviation(data.chip(variable_index,1), used_instances_indices);
+
+                cout << "column " << i << ": " << column_standard_deviation << endl;
 
                 if((column_standard_deviation - 0) < std::numeric_limits<type>::min())
                 {
@@ -5266,6 +5328,13 @@ Tensor<type, 1> DataSet::calculate_target_variables_maximums() const
     return columns_maximums(data, get_used_instances_indices(), get_target_variables_indices());
 }
 
+
+/// Returns a vector containing the maximum of the used variables.
+
+Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
+{
+    return columns_minimums(data, get_used_instances_indices(), get_used_variables_indices());
+}
 
 /// Returns a vector containing the means of a set of given variables.
 /// @param variables_indices Indices of the variables.
@@ -9559,25 +9628,26 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
     filtered_indices.setZero();
 
     const Tensor<Index, 1> used_instances_indices = get_used_instances_indices();
+    const Index used_instances_number = used_instances_indices.size();
 
-    for(Index j = 0; j < used_variables_number; j++)
+    Index instance_index = 0;
+
+    for(Index i = 0; i < used_variables_number; i++)
     {
-        const Index current_variable_index = used_variables_indices(j);
+        const Index variable_index = used_variables_indices(i);
 
-        const Tensor<Index, 1> current_instances_indices = used_instances_indices;
-
-        const Index current_instances_number = current_instances_indices.size();
-
-        for(Index i = 0; i < current_instances_number; i++)
+        for(Index j = 0; j < used_instances_number; j++)
         {
-            const Index current_instance_index = current_instances_indices(i);
+            instance_index = used_instances_indices(j);
 
-            if(data(current_instance_index,current_variable_index) < minimums(j)
-                    || data(current_instance_index,current_variable_index) > maximums(j))
+            if(get_instance_use(instance_index) == UnusedInstance) continue;
+
+            if(data(instance_index,variable_index) < minimums(i)
+                    || data(instance_index,variable_index) > maximums(i))
             {
-                filtered_indices(current_instance_index) = 1.0;
+                filtered_indices(instance_index) = 1.0;
 
-                set_instance_use(current_instance_index, UnusedInstance);
+                set_instance_use(instance_index, UnusedInstance);
             }
         }
     }

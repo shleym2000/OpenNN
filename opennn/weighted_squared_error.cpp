@@ -336,6 +336,152 @@ type WeightedSquaredError::weighted_sum_squared_error(const Tensor<type, 2> & x,
 }
 
 
+void WeightedSquaredError::calculate_error(const DataSet::Batch& batch,
+                     const NeuralNetwork::ForwardPropagation& forward_propagation,
+                     LossIndex::BackPropagation& back_propagation) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const type error = weighted_sum_squared_error(forward_propagation.layers[trainable_layers_number-1].activations_2d,
+                                                                 batch.targets_2d);
+
+    const Index instances_number = batch.targets_2d.size();
+
+    back_propagation.error = error/instances_number;
+
+    return;
+}
+
+
+// Gradient methods
+
+void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch,
+                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+                               BackPropagation& back_propagation) const
+{
+     #ifdef __OPENNN_DEBUG__
+
+     check();
+
+     #endif
+
+     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+     const Tensor<type, 2>& targets = batch.targets_2d;
+
+     Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
+
+     switch(device_pointer->get_type())
+     {
+          case Device::EigenDefault:
+          {
+              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+              errors.device(*default_device) = outputs - targets;
+
+              back_propagation.output_gradient.device(*default_device) = errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+
+              return;
+          }
+
+          case Device::EigenThreadPool:
+          {
+             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             errors.device(*thread_pool_device) = outputs - targets;
+
+             back_propagation.output_gradient.device(*thread_pool_device) =errors*((1.0-targets)*(static_cast<type>(-1.0))*negatives_weight + targets*positives_weight);
+
+             return;
+          }
+     }
+}
+
+void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
+                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                    LossIndex::SecondOrderLoss& second_order_loss) const
+   {
+    #ifdef __OPENNN_DEBUG__
+
+    check();
+
+    #endif
+
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+
+    Tensor<type, 1> errors = calculate_training_error_terms(outputs, targets); //@todo, change
+
+    const type coefficient = (static_cast<type>(2.0)/training_normalization_coefficient);
+
+    switch(device_pointer->get_type())
+    {
+         case Device::EigenDefault:
+         {
+             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+             second_order_loss.gradient.device(*default_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
+
+             second_order_loss.gradient.device(*default_device) = second_order_loss.gradient*coefficient;
+
+             return;
+         }
+
+         case Device::EigenThreadPool:
+         {
+            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+            second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(errors, AT_B).eval();
+
+            second_order_loss.gradient.device(*thread_pool_device) = second_order_loss.gradient*coefficient;
+
+            return;
+         }
+    }
+}
+
+// Hessian method
+
+void WeightedSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
+{
+     #ifdef __OPENNN_DEBUG__
+
+     check();
+
+     #endif
+
+     const type coefficient = (static_cast<type>(2.0)/training_normalization_coefficient);
+
+     switch(device_pointer->get_type())
+     {
+          case Device::EigenDefault:
+          {
+              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+              second_order_loss.hessian.device(*default_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+
+              second_order_loss.hessian.device(*default_device) = coefficient*second_order_loss.hessian;
+
+              return;
+          }
+
+          case Device::EigenThreadPool:
+          {
+             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+             second_order_loss.hessian.device(*thread_pool_device) = second_order_loss.error_Jacobian.contract(second_order_loss.error_Jacobian, AT_B);
+
+             second_order_loss.hessian.device(*thread_pool_device) = coefficient*second_order_loss.hessian;
+
+             return;
+          }
+     }
+}
+
+
 /// Returns loss vector of the error terms function for the weighted squared error.
 /// It uses the error back-propagation method.
 /// @param outputs Output data.
@@ -366,114 +512,6 @@ Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tenso
     Tensor<type, 1> weighted_error = ((if_sentence.select(f_1, f_2)).sum(rows_sum).square()).sqrt();
 
     return weighted_error;
-}
-
-
-/// Returns loss vector of the error terms function for the weighted squared error for a given set of parameters.
-/// It uses the error back-propagation method.
-/// @param parameters Parameters of the neural network
-
-Tensor<type, 1> WeightedSquaredError::calculate_training_error_terms(const Tensor<type, 1>& parameters) const
-{
-    // Control sentence
-
-#ifdef __OPENNN_DEBUG__
-
-    check();
-
-#endif
-
-    const Tensor<type, 2> inputs = data_set_pointer->get_training_input_data();
-
-    const Tensor<type, 2> targets = data_set_pointer->get_training_target_data();
-
-    const Tensor<type, 2> outputs = neural_network_pointer->calculate_trainable_outputs(inputs, parameters);
-    /*
-        return weighted_error_rows(outputs, targets, positives_weight, negatives_weight);
-    */
-    return Tensor<type, 1>();
-
-}
-
-
-/// This method calculates the second order loss.
-/// It is used for optimization of parameters during training.
-/// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
-
-void WeightedSquaredError::calculate_terms_second_order_loss(const DataSet::Batch& batch, NeuralNetwork::ForwardPropagation& forward_propagation,  LossIndex::BackPropagation& back_propagation, LossIndex::SecondOrderLoss&) const
-{
-#ifdef __OPENNN_DEBUG__
-
-    check();
-
-#endif
-
-    // Neural network
-
-    const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-    bool is_forecasting = false;
-
-    if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer()) is_forecasting = true;
-
-    // Data set
-
-//    SecondOrderLoss terms_second_order_loss(parameters_number);
-/*
-    const Tensor<Index, 2> training_batches = data_set_pointer->get_training_batches(!is_forecasting);
-
-    const Index batches_number = training_batches.size();
-
-    // Eigen stuff
-
-    #pragma omp parallel for
-
-    for(Index i = 0; i < batches_number; i++)
-    {
-        const Tensor<type, 2> inputs = data_set_pointer->get_input_data(training_batches.chip(i,0));
-        const Tensor<type, 2> targets = data_set_pointer->get_target_data(training_batches.chip(i,0));
-
-                const Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network_pointer->forward_propagate(inputs);
-
-                const Tensor<type, 1> error_terms
-                        = calculate_training_error_terms(forward_propagation[layers_number-1].activations_2d, targets);
-
-                const Tensor<type, 2> output_gradient = (forward_propagation[layers_number-1].activations_2d - targets).divide(error_terms, 0);
-
-                const Tensor<Tensor<type, 2>, 1> layers_delta = calculate_layers_delta(forward_propagation, output_gradient);
-
-                const Tensor<type, 2> error_terms_Jacobian = calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
-
-        //        const Tensor<type, 2> error_terms_Jacobian_transpose = error_terms_Jacobian.calculate_transpose();
-
-                const Tensor<type, 0> loss = error_terms.contract(error_terms, product_vector_vector);//dot(error_terms, error_terms);
-
-                const Tensor<type, 1> gradient = error_terms_Jacobian.contract(error_terms, product_matrix_transpose_vector);//dot(error_terms_Jacobian_transpose, error_terms);
-
-                Tensor<type, 2> hessian_approximation = error_terms_Jacobian.contract(error_terms_Jacobian, product_matrix_transpose_matrix);
-                //hessian_approximation.dot(error_terms_Jacobian_transpose, error_terms_Jacobian);
-
-                  #pragma omp critical
-                {
-                    terms_second_order_loss.loss += loss(0);
-                    terms_second_order_loss.gradient += gradient;
-                    terms_second_order_loss.hessian += hessian_approximation;
-                }        
-    }
-
-    terms_second_order_loss.loss /= training_normalization_coefficient;
-    terms_second_order_loss.gradient = (static_cast<type>(2.0)/training_normalization_coefficient)*terms_second_order_loss.gradient;
-    terms_second_order_loss.hessian = (static_cast<type>(2.0)/training_normalization_coefficient)*terms_second_order_loss.hessian;
-
-    if(regularization_method != RegularizationMethod::NoRegularization)
-    {
-//        terms_second_order_loss.loss += calculate_regularization();
-//        terms_second_order_loss.gradient += calculate_regularization_gradient();
-//        terms_second_order_loss.hessian += calculate_regularization_hessian();
-    }
-*/
 }
 
 

@@ -736,6 +736,62 @@ Tensor<type, 1> GradientDescent::calculate_training_direction(const Tensor<type,
 }
 
 
+void GradientDescent::update_epoch(
+        const DataSet::Batch& batch,
+        NeuralNetwork::ForwardPropagation& forward_propagation,
+        const LossIndex::BackPropagation& back_propagation,
+        OptimizationData& optimization_data)
+{
+
+    optimization_data.training_direction = calculate_training_direction(back_propagation.gradient);
+
+    if(l2_norm(optimization_data.training_direction) < numeric_limits<type>::min())
+        throw logic_error("Training direction is zero");
+
+    // Training slope
+
+    optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+
+    if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
+        throw logic_error("Training slope is equal or greater than zero");
+
+    // Get initial learning_rate
+
+    type initial_learning_rate = 0;
+
+    optimization_data.epoch == 0
+            ? initial_learning_rate = first_learning_rate
+            : initial_learning_rate = optimization_data.old_learning_rate;
+
+    pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+                            batch,
+                            optimization_data.parameters,
+                            forward_propagation,
+                            back_propagation.loss,
+                            optimization_data.training_direction,
+                            initial_learning_rate);
+
+    optimization_data.learning_rate = directional_point.first;
+
+    if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+        throw logic_error("Training rate is zero");
+
+    optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
+
+    optimization_data.old_parameters = optimization_data.parameters;
+
+    optimization_data.parameters += optimization_data.parameters_increment;
+
+    optimization_data.old_gradient = back_propagation.gradient;
+
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+    optimization_data.old_learning_rate = optimization_data.learning_rate;
+
+    optimization_data.old_training_loss = back_propagation.loss;
+}
+
+
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -890,7 +946,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n";
+                cout << "Epoch " << epoch+1 << ": Minimum parameters increment norm reached.\n";
                 cout << "Parameters increment norm: " << parameters_increment_norm << endl;
             }
 
@@ -903,7 +959,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
+                cout << "Epoch " << epoch+1 << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
                      << "Loss decrease: " << training_loss_decrease << endl;
             }
 
@@ -916,7 +972,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Loss goal reached.\n";
+                cout << "Epoch " << epoch+1 << ": Loss goal reached.\n";
             }
 
             stop_training = true;
@@ -928,7 +984,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
+                cout << "Epoch " << epoch+1 << ": Maximum selection error increases reached.\n"
                      << "Selection error increases: " << selection_error_increases << endl;
             }
 
@@ -941,7 +997,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
+                cout << "Epoch " << epoch+1 << ": Gradient norm goal reached.\n";
             }
 
             stop_training = true;
@@ -953,7 +1009,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
             }
 
             stop_training = true;
@@ -965,7 +1021,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+                cout << "Epoch " << epoch+1 << ": Maximum training time reached.\n";
             }
 
             stop_training = true;
@@ -1012,7 +1068,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         }
         else if(display && epoch % display_period == 0)
         {
-            cout << "Epoch " << epoch << ";\n"
+            cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
@@ -1055,139 +1111,91 @@ string GradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
-    /*
-        ostringstream buffer;
+    Tensor<string, 2> labels_values(11, 2);
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+    // Training rate method
 
-       // Training rate method
+    labels_values(0,0) = "Learning rate method";
 
-       labels.push_back("Training rate method");
+    const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
 
-       const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
+    labels_values(0,1) = learning_rate_method;
 
-       values.push_back(learning_rate_method);
+    // Loss tolerance
 
-       // Loss tolerance
+    labels_values(1,0) = "Learning rate tolerance";
 
-       labels.push_back("Loss tolerance");
+    labels_values(1,1) = std::to_string(learning_rate_algorithm.get_learning_rate_tolerance());
 
-       buffer.str("");
-       buffer << learning_rate_algorithm.get_loss_tolerance();
+    // Minimum parameters increment norm
 
-       values.push_back(buffer.str());
+    labels_values(2,0) = "Minimum parameters increment norm";
 
-       // Minimum parameters increment norm
+    labels_values(2,1) = std::to_string(minimum_parameters_increment_norm);
 
-       labels.push_back("Minimum parameters increment norm");
+    // Minimum loss decrease
 
-       buffer.str("");
-       buffer << minimum_parameters_increment_norm;
+    labels_values(3,0) = "Minimum loss decrease";
 
-       values.push_back(buffer.str());
+    labels_values(3,1) = std::to_string(minimum_loss_decrease);
 
-       // Minimum loss decrease
+    // Loss goal
 
-       labels.push_back("Minimum loss decrease");
+    labels_values(4,0) = "Loss goal";
 
-       buffer.str("");
-       buffer << minimum_loss_decrease;
+    labels_values(4,1) = std::to_string(training_loss_goal);
 
-       values.push_back(buffer.str());
+    // Gradient norm goal
 
-       // Loss goal
+    labels_values(5,0) = "Gradient norm goal";
 
-       labels.push_back("Loss goal");
+    labels_values(5,1) = std::to_string(gradient_norm_goal);
 
-       buffer.str("");
-       buffer << training_loss_goal;
+    // Maximum selection error increases
 
-       values.push_back(buffer.str());
+    labels_values(6,0) = "Maximum selection error increases";
 
-       // Gradient norm goal
+    labels_values(6,1) = std::to_string(maximum_selection_error_increases);
 
-       labels.push_back("Gradient norm goal");
+    // Maximum epochs number
 
-       buffer.str("");
-       buffer << gradient_norm_goal;
+    labels_values(7,0) = "Maximum epochs number";
 
-       values.push_back(buffer.str());
+    labels_values(7,1) = std::to_string(maximum_epochs_number);
 
-       // Maximum selection error increases
+    // Maximum time
 
-       labels.push_back("Maximum selection error increases");
+    labels_values(8,0) = "Maximum time";
 
-       buffer.str("");
-       buffer << maximum_selection_error_increases;
+    labels_values(8,1) = std::to_string(maximum_time);
 
-       values.push_back(buffer.str());
+    // Reserve training error history
 
-       // Maximum iterations number
+    labels_values(9,0) = "Reserve training error history";
 
-       labels.push_back("Maximum epochs number");
+    if(reserve_training_error_history)
+    {
+        labels_values(9,1) = "true";
+    }
+    else
+    {
+        labels_values(9,1) = "false";
+    }
 
-       buffer.str("");
-       buffer << maximum_epochs_number;
+    // Reserve selection error history
 
-       values.push_back(buffer.str());
+    labels_values(10,0) = "Reserve selection error history";
 
-       // Maximum time
+    if(reserve_selection_error_history)
+    {
+        labels_values(10,1) = "true";
+    }
+    else
+    {
+        labels_values(10,1) = "false";
+    }
 
-       labels.push_back("Maximum time");
-
-       buffer.str("");
-       buffer << maximum_time;
-
-       values.push_back(buffer.str());
-
-
-       // Reserve training error history
-
-       labels.push_back("Reserve training error history");
-
-       buffer.str("");
-
-       if(reserve_training_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-       // Reserve selection error history
-
-       labels.push_back("Reserve selection error history");
-
-       buffer.str("");
-
-       if(reserve_selection_error_history)
-       {
-           buffer << "true";
-       }
-       else
-       {
-           buffer << "false";
-       }
-
-       values.push_back(buffer.str());
-
-
-       const Index rows_number = labels.size();
-       const Index columns_number = 2;
-
-       Tensor<string, 2> string_matrix(rows_number, columns_number);
-
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
-
-        return string_matrix;
-    */
-    return Tensor<string, 2>();
+    return labels_values;
 }
 
 

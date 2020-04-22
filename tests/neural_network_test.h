@@ -38,17 +38,25 @@ public:
 
    void test_assignment_operator();
 
-  // Parameters methods
-
-   void test_get_parameters_number();
-   void test_get_parameters();   
-
-   void test_get_trainable_layers_parameters_number();
-   void test_get_trainable_layers_parameters();
-
    // Display messages
 
    void test_get_display();
+
+   // Appending layers
+
+   void test_add_layer();
+   void check_layer_type();
+
+   // Get methods
+
+   void test_has_methods();
+
+   void test_get_inputs();
+   void test_get_outputs();
+
+   void test_get_trainable_layers();
+   void test_get_layers_type_pointers();
+   void test_get_layer_pointer();
 
    // Set methods
 
@@ -57,7 +65,18 @@ public:
    void test_set_names();
    void test_set_number();
 
+   void test_set_pointers();
+
    void test_set_default();
+
+   // Layers
+
+   void test_get_layers_number();
+
+   // Architecture
+
+   void test_inputs_outputs_number();
+   void test_get_architecture();
 
    // Architecture
 
@@ -65,26 +84,38 @@ public:
 
    // Parameters
 
+   // Parameters methods
+
+   void test_get_parameters();
+   void test_get_trainable_layers_parameters();
+
    void test_set_parameters();
-
-   // Display messages
-
-   void test_set_display_inputs_warning();
-   void test_set_display();
 
    // Parameters initialization methods
 
    void test_set_parameters_constant();
    void test_set_parameters_random();
 
-   // Parameters norm 
+   // Display messages
+
+   void test_set_display_inputs_warning();
+   void test_set_display();
+
+   // Parameters norm / descriptives / histogram
 
    void test_calculate_parameters_norm();
+   void test_calculate_parameters_descriptives();
+   void test_calculate_parameters_histogram();
+
+   void test_perturbate_parameters();
 
    // Output 
 
    void test_calculate_trainable_outputs();
    void test_calculate_outputs();
+
+   void test_calculate_directional_inputs();
+   void test_calculate_outputs_histograms();
 
    // Expression methods
 
@@ -92,8 +123,6 @@ public:
 
    void test_write_expression();
    void test_save_expression();
-
-   void test_add_layer();
 
    // Serialization methods
 

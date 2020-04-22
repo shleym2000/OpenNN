@@ -728,6 +728,7 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
     layers_pointers = other_neural_network.layers_pointers;
 
     display = other_neural_network.display;
+
 }
 
 
@@ -1090,15 +1091,13 @@ Index NeuralNetwork::get_layers_number() const
 
 Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
-
-    Tensor<Index, 1> layers_neurons_number;
-    /*
+    Tensor<Index, 1> layers_neurons_number(layers_pointers.size());
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
-        layers_neurons_number.push_back(layers_pointers[i]->get_neurons_number());
+        layers_neurons_number(i) = layers_pointers[i]->get_neurons_number();
     }
-    */
+
     return layers_neurons_number;
 }
 
@@ -1278,7 +1277,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
 }
 
 
-
 /// Calculates the forward propagation in the neural network.
 /// @param batch Batch of data set that contains the inputs and targets to be trained.
 /// @param paramters Parameters of neural network.
@@ -1371,7 +1369,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
     }
-
     return outputs;
 }
 
@@ -1417,8 +1414,6 @@ Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-
-    cout << outputs.size() << endl;
 
     for(Index i = 1; i < trainable_layers_number; i++)
     {
@@ -1580,7 +1575,7 @@ Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& po
 
 Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
 {
-    const Tensor<type, 2> outputs = calculate_outputs(inputs);
+    Tensor<type, 2> outputs = calculate_outputs(inputs);
 
     return histograms(outputs, bins_number);
 }
@@ -1867,8 +1862,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
             inputs_from_XML(inputs_document);
         }
     }
-
-    cout << "inputs" << endl;
 
     // Layers
 
