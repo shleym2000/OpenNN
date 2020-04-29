@@ -198,7 +198,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     type optimum_training_error = numeric_limits<type>::max();
     type optimum_selection_error = numeric_limits<type>::max();
-    type previus_selection_error = numeric_limits<type>::max();
+    type previus_selection_error = numeric_limits< type>::max();
 
     // Data set
 
@@ -445,6 +445,8 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     neural_network_pointer->set_inputs_number(optimal_inputs_number);
 
     neural_network_pointer->set_parameters(optimal_parameters);
+
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     if(display)
     {
