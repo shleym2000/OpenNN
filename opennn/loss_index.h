@@ -306,17 +306,11 @@ public:
 
        calculate_error(batch, forward_propagation, back_propagation);
 
-       cout << "error: " << back_propagation.error << endl;
-
        calculate_output_gradient(batch, forward_propagation, back_propagation);
-
-       cout << "output error gradient: " << back_propagation.output_gradient(0) << endl;
 
        calculate_layers_delta(forward_propagation, back_propagation);
 
        calculate_error_gradient(batch, forward_propagation, back_propagation);
-
-       cout << "gradient: " << back_propagation.gradient(0) << endl;
 
        // Regularization
 
@@ -495,7 +489,7 @@ protected:
    const Eigen::array<IndexPair<Index>, 2> SSE = {IndexPair<Index>(0, 0), IndexPair<Index>(1, 1)};
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/loss_index_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/loss_index_cuda.h"
 #endif
 
 
