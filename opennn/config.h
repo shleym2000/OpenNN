@@ -25,6 +25,22 @@
 #endif
 
 
+#pragma warning(push, 0)
+#include "tinyxml2.h"
+#pragma warning(pop)
+
+
+#pragma warning(push, 0)
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
+#pragma warning(pop)
+
+
+//#define OPENNN_MKL
+
+#ifdef OPENNN_MKL
+#include "mkl.h"
+#endif
 //#define EIGEN_USE_BLAS
 
 //#define EIGEN_TEST_NO_LONGDOUBLE

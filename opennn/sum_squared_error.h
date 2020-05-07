@@ -25,8 +25,6 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 
@@ -102,6 +100,9 @@ private:
     #include "../../opennn-cuda/opennn_cuda/sum_squared_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/sum_squared_error_mkl.h"
+#endif
 };
 
 }

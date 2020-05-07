@@ -25,7 +25,6 @@
 #include "config.h"
 #include "loss_index.h"
 
-#include "tinyxml2.h"
 
 using namespace std;
 using namespace Eigen;
@@ -89,9 +88,17 @@ public:
 
        void resize_training_history(const Index&);
 
-       /// Resizes the training and selection error history keeping the values.
+       /// Resizes selection history variables.
 
-       void resize_error_history(const Index&);
+       void resize_selection_history(const Index&);
+
+       /// Resizes the training error history keeping the values.
+
+       void resize_training_error_history(const Index&);
+
+       /// Resizes the selection error history keeping the values.
+
+       void resize_selection_error_history(const Index&);
 
        /// Writes final results of the training.
 /*

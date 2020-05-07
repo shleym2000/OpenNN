@@ -23,7 +23,6 @@
 #include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-#include "tinyxml2.h"
 #include "device.h"
 
 namespace OpenNN
@@ -146,6 +145,9 @@ private:
     #include "../../opennn-cuda/opennn_cuda/weighted_squared_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/weighted_squared_error_mkl.h"
+#endif
 };
 
 }

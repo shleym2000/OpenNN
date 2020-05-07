@@ -21,8 +21,6 @@
 #include "data_set.h"
 #include "config.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 
@@ -80,6 +78,9 @@ public:
     #include "../../opennn-cuda/opennn_cuda/cross_entropy_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/cross_entropy_error_mkl.h"
+#endif
 };
 
 }

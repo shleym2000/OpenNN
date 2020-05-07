@@ -1269,6 +1269,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     const bool has_selection = data_set_pointer->has_selection();
 
+    if(has_selection) results.resize_selection_history(maximum_epochs_number);
+
     DataSet::Batch training_batch(training_instances_number, data_set_pointer);
     DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
 
@@ -1474,7 +1476,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.epochs_number = epoch;
 
-            results.resize_error_history(epoch+1);
+            results.resize_training_error_history(epoch+1);
+            if(has_selection) results.resize_selection_error_history(epoch+1);
 
             if(display)
             {
@@ -1493,7 +1496,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             break;
         }
-        else if(display && epoch % display_period == 0)
+        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
         {
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"

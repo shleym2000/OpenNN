@@ -25,11 +25,6 @@
 
 #include "config.h"
 #include "device.h"
-#include "tinyxml2.h"
-
-//Eigen includes
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -235,7 +230,6 @@ public:
                                           const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
-//    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) {}
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
@@ -355,6 +349,10 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
+#endif
+
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/layer_mkl.h"
 #endif
 
 };

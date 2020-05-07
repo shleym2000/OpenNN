@@ -34,7 +34,6 @@
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -365,6 +364,9 @@ protected:
     #include "../../opennn-cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/neural_network_mkl.h"
+#endif
 };
 
 }

@@ -22,7 +22,6 @@
 #include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -95,6 +94,9 @@ private:
     #include "../../opennn-cuda/opennn_cuda/minkowski_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/minkowski_error_mkl.h"
+#endif
 };
 
 }

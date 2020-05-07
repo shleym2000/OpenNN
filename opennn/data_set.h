@@ -35,11 +35,6 @@
 #include "statistics.h"
 #include "correlations.h"
 #include "opennn_strings.h"
-#include "tinyxml2.h"
-
-// Eigen includes
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -409,6 +404,7 @@ public:
    // Columns set methods
 
    void set_default_columns_uses();
+   void set_default_classification_columns_uses();
 
    void set_default_columns_names();
 
@@ -427,6 +423,11 @@ public:
    void set_columns_number(const Index&);
 
    void set_binary_simple_columns();
+
+   // Columns check methods
+
+   Index count_binary_columns() const;
+   Index count_categorical_columns() const;
 
    // Variables set methods
 
@@ -481,6 +482,7 @@ public:
 
    bool has_data() const;
 
+   bool has_binary_columns() const;
    bool has_categorical_columns() const;
    bool has_time_columns() const;
 

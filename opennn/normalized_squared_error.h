@@ -23,7 +23,6 @@
 #include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -120,6 +119,9 @@ private:
 #endif
 
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/normalized_squared_error_mkl.h"
+#endif
 };
 
 }
