@@ -53,20 +53,20 @@ class QuasiNewtonMethod : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct QNMOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
+        explicit QNMOptimizationData()
         {
         }
 
-        explicit OptimizationData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
+        explicit QNMOptimizationData(QuasiNewtonMethod* new_quasi_newton_method_pointer)
         {
             set(new_quasi_newton_method_pointer);
         }
 
-        virtual ~OptimizationData() {}
+        virtual ~QNMOptimizationData() {}
 
         void set(QuasiNewtonMethod* new_quasi_newton_method_pointer)
         {
@@ -85,12 +85,17 @@ public:
 
             old_parameters.resize(parameters_number);
 
+            parameters_difference.resize(parameters_number);
+
+            potential_parameters.resize(parameters_number);
             parameters_increment.resize(parameters_number);
 
             // Loss index data
 
             old_gradient.resize(parameters_number);
             old_gradient.setZero();
+
+            gradient_difference.resize(parameters_number);
 
             inverse_hessian.resize(parameters_number, parameters_number);
             inverse_hessian.setZero();
@@ -119,8 +124,8 @@ public:
 
         // Neural network data
 
-        Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
+        Tensor<type, 1> parameters_difference;
 
         Tensor<type, 1> parameters_increment;
 
@@ -131,6 +136,7 @@ public:
         type old_training_loss = 0;
 
         Tensor<type, 1> old_gradient;
+        Tensor<type, 1> gradient_difference;
 
         Tensor<type, 2> inverse_hessian;
         Tensor<type, 2> old_inverse_hessian;
@@ -138,8 +144,6 @@ public:
         // Optimization algorithm data
 
         Index epoch = 0;
-
-        Tensor<type, 1> training_direction;
 
         Tensor<type, 0> training_slope;
 
@@ -208,6 +212,8 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
+   void set_thread_pool_device(ThreadPoolDevice*);
+
    void set_inverse_hessian_approximation_method(const InverseHessianApproximationMethod&);
    void set_inverse_hessian_approximation_method(const string&);
 
@@ -251,23 +257,12 @@ public:
 
    // Training methods
 
-   Tensor<type, 2> calculate_DFP_inverse_hessian(const Tensor<type, 1>&,
-                                                 const Tensor<type, 1>&,
-                                                 const Tensor<type, 1>&,
-                                                 const Tensor<type, 1>&,
-                                                 const Tensor<type, 2>&) const;
+   void calculate_DFP_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
-   Tensor<type, 2> calculate_BFGS_inverse_hessian(const Tensor<type, 1>&,
-                                                  const Tensor<type, 1>&,
-                                                  const Tensor<type, 1>&,
-                                                  const Tensor<type, 1>&,
-                                                  const Tensor<type, 2>&) const;
+   void calculate_BFGS_inverse_hessian(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
-   Tensor<type, 2> calculate_inverse_hessian_approximation(const Tensor<type, 1>&,
-                                                           const Tensor<type, 1>&,
-                                                           const Tensor<type, 1>&,
-                                                           const Tensor<type, 1>&,
-                                                           const Tensor<type, 2>&) const;
+   void initialize_inverse_hessian_approximation(QNMOptimizationData&) const;
+   void calculate_inverse_hessian_approximation(const LossIndex::BackPropagation&, QNMOptimizationData&) const;
 
    const Tensor<type, 2> kronecker_product(Tensor<type, 2>&, Tensor<type, 2>&) const;
    const Tensor<type, 2> kronecker_product(Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -275,8 +270,8 @@ public:
    void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
-           const LossIndex::BackPropagation& back_propagation,
-           OptimizationData& optimization_data);
+           LossIndex::BackPropagation& back_propagation,
+           QNMOptimizationData& optimization_data);
 
    Results perform_training();
 

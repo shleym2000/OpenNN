@@ -56,6 +56,39 @@ public:
     enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
 
+    struct OptimizationData
+    {
+        explicit OptimizationData()
+        {
+        }
+
+        virtual ~OptimizationData()
+        {
+        }
+
+        void print() const
+        {
+            cout << "Parameters:" << endl;
+            cout << parameters << endl;
+
+            cout << "Potential parameters:" << endl;
+            cout << potential_parameters << endl;
+
+            cout << "Training direction:" << endl;
+            cout << training_direction << endl;
+
+            cout << "Initial learning rate:" << endl;
+            cout << initial_learning_rate << endl;
+        }
+
+        Tensor<type, 1> parameters;
+        Tensor<type, 1> potential_parameters;
+        Tensor<type, 1> training_direction;
+        type initial_learning_rate = 0;
+
+
+    };
+
    /// This structure contains the optimization algorithm results.    
 
    struct Results
@@ -178,7 +211,7 @@ public:
 
    virtual void set_default();
 
-   void set_device_pointer(Device*);
+   virtual void set_thread_pool_device(ThreadPoolDevice*);
 
    virtual void set_loss_index_pointer(LossIndex*);
 
@@ -218,7 +251,7 @@ public:
 
 protected:
 
-   Device* device_pointer;
+   ThreadPoolDevice* thread_pool_device;
 
    /// Pointer to a loss index for a neural network object.
 
@@ -250,13 +283,11 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-   Tensor<type, 1> normalized(const Tensor<type, 1>& tensor) const
-   {
+   void normalized(Tensor<type, 1>& tensor) const
+   {      
        const type norm = l2_norm(tensor);
 
-       const Tensor<type, 1> new_tensor = tensor/norm;
-
-       return new_tensor;
+       tensor.device(*thread_pool_device) = tensor/norm;
    }
 
 
@@ -264,28 +295,21 @@ protected:
    {
        Tensor<type, 0> norm;
 
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                norm.device(*default_device) = tensor.square().sum().sqrt();
-
-                break;
-            }
-
-            case Device::EigenThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
-
-                break;
-            }
-       }
+       norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
 
        return norm(0);
+   }
+
+   bool is_zero(const Tensor<type, 1>& tensor) const
+   {
+       const Index size = tensor.size();
+
+       for(Index i = 0; i < size; i++)
+       {
+           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
+       }
+
+       return true;
    }
 
 #ifdef OPENNN_CUDA

@@ -48,20 +48,20 @@ class GradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct GDOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
+        explicit GDOptimizationData()
         {
         }
 
-        explicit OptimizationData(GradientDescent* new_gradient_descent_pointer)
+        explicit GDOptimizationData(GradientDescent* new_gradient_descent_pointer)
         {
             set(new_gradient_descent_pointer);
         }
 
-        virtual ~OptimizationData() {}
+        virtual ~GDOptimizationData() {}
 
         void set(GradientDescent* new_gradient_descent_pointer)
         {
@@ -79,6 +79,7 @@ public:
             parameters = neural_network_pointer->get_parameters();
 
             old_parameters.resize(parameters_number);
+            potential_parameters.resize(parameters_number);
 
             parameters_increment.resize(parameters_number);
 
@@ -108,7 +109,6 @@ public:
 
         // Neural network data
 
-        Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
 
         Tensor<type, 1> parameters_increment;
@@ -127,8 +127,6 @@ public:
         // Optimization algorithm data
 
         Index epoch = 0;
-
-        Tensor<type, 1> training_direction;
 
         Tensor<type, 0> training_slope;
 
@@ -192,6 +190,8 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
+   void set_thread_pool_device(ThreadPoolDevice*);
+
    // Training parameters
 
    void set_warning_parameters_norm(const type&);
@@ -229,13 +229,13 @@ public:
 
    // Training methods
 
-   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const;
+   void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
-           const LossIndex::BackPropagation& back_propagation,
-           OptimizationData& optimization_data);
+           LossIndex::BackPropagation& back_propagation,
+           GDOptimizationData& optimization_data);
 
    Results perform_training();
 
