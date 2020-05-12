@@ -395,7 +395,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         {
             const string new_categories = categories_element->GetText();
 
-            categories = get_tokens(new_categories, ' ');
+            categories = get_tokens(new_categories, ';');
         }
 
         // Categories uses
@@ -415,7 +415,7 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         {
             const string new_categories_uses = categories_uses_element->GetText();
 
-            set_categories_uses(get_tokens(new_categories_uses, ' '));
+            set_categories_uses(get_tokens(new_categories_uses, ';'));
         }
     }
 }
@@ -489,7 +489,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             if(i != categories.size()-1)
             {
-                file_stream.PushText(" ");
+                file_stream.PushText(";");
             }
         }
 
@@ -520,7 +520,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             if(i != categories_uses.size()-1)
             {
-                file_stream.PushText(" ");
+                file_stream.PushText(";");
             }
         }
 
@@ -534,7 +534,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
             file_stream.OpenElement("Categories");
             file_stream.PushText(categories(0).c_str());
-            file_stream.PushText(" ");
+            file_stream.PushText(";");
             file_stream.PushText(categories(1).c_str());
             file_stream.CloseElement();
 
@@ -559,7 +559,7 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
                 file_stream.PushText("Unused");
             }
 
-            file_stream.PushText(" ");
+            file_stream.PushText(";");
 
             if(categories_uses(1) == Input)
             {
@@ -3024,7 +3024,7 @@ void DataSet::set_binary_simple_columns()
         if(columns(column_index).type == Numeric)
         {
             Tensor<type, 1> values(3);
-            values.setRandom();
+            values.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
             different_values = 0;
             is_binary = true;
 
@@ -4530,7 +4530,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
                 {
                     const type column_standard_deviation = standard_deviation(data.chip(variable_index+j,1), used_instances_indices);
 
-                    if((column_standard_deviation - 0) > std::numeric_limits<type>::min())
+                    if((column_standard_deviation - 0) > numeric_limits<type>::min())
                     {
                         is_constant = false;
                         break;
@@ -4547,7 +4547,7 @@ Tensor<string, 1> DataSet::unuse_constant_columns()
 
                 cout << "column " << i << ": " << column_standard_deviation << endl;
 
-                if((column_standard_deviation - 0) < std::numeric_limits<type>::min())
+                if((column_standard_deviation - 0) < numeric_limits<type>::min())
                 {
                     columns(i).set_use(UnusedVariable);
 
@@ -4840,12 +4840,18 @@ Tensor<BoxPlot, 1> DataSet::calculate_columns_box_plots() const
     Index used_column_index = 0;
     Index variable_index = 0;
 
+    cout << "Row 0:_ " << data.chip(0,0) << endl;
+
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).type == Numeric || columns(i).type == Binary)
         {
             if(columns(i).column_use != UnusedVariable)
             {
+                cout << "Variable index: " << get_variable_indices(i) << endl;
+
+                cout << "data: " << data(0, get_variable_indices(i)(0)) << endl;
+
                 box_plots(used_column_index) = box_plot(data.chip(variable_index, 1), used_instances_indices);
 
                 used_column_index++;
@@ -5814,22 +5820,31 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
 
     for(Index i = 0; i < input_columns_number; i++)
     {
-        const Tensor<type, 2> input = get_column_data(input_columns_indices(i));
+        cout << endl;
+
+        Tensor<type, 2> input = get_column_data(input_columns_indices(i));
 
         const ColumnType input_type = columns(input_columns_indices(i)).type;
 
+        cout << "Calculating " << columns(input_columns_indices(i)).name;
+
         for(Index j = 0; j < target_columns_number; j++)
         {
-            const Tensor<type, 2> target = get_column_data(target_columns_indices(j));
+            Tensor<type, 2> target = get_column_data(target_columns_indices(j));
 
             const ColumnType target_type = columns(target_columns_indices(j)).type;
 
+            cout << " - " << columns(target_columns_indices(j)).name << " regressions. \n" ;
+
             if(input_type == Numeric && target_type == Numeric)
             {
-                const RegressionResults linear_regression = OpenNN::linear_regression(input.chip(0,1), target.chip(0,1));
-                const RegressionResults exponential_regression = OpenNN::exponential_regression(input.chip(0,1), target.chip(0,1));
-                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(input.chip(0,1), target.chip(0,1));
-                const RegressionResults power_regression = OpenNN::power_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                const RegressionResults linear_regression = OpenNN::linear_regression(input_column, target_column);
+                const RegressionResults exponential_regression = OpenNN::exponential_regression(input_column, target_column);
+                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(input_column, target_column);
+                const RegressionResults power_regression = OpenNN::power_regression(input_column, target_column);
 
                 RegressionResults strongest_regression = linear_regression;
 
@@ -5843,7 +5858,10 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
             }
             else if(input_type == Binary && target_type == Binary)
             {
-                regressions(input_variable_index,target_variable_index) = linear_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                regressions(input_variable_index,target_variable_index) = linear_regression(input_column, target_column);
 
                 target_variable_index++;
             }
@@ -5854,13 +5872,19 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
             }
             else if(input_type == Numeric && target_type == Binary)
             {
-                regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
 
                 target_variable_index++;
             }
             else if(input_type == Binary && target_type == Numeric)
             {
-                regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(0,1));
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
+
+                regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
 
                 target_variable_index++;
             }
@@ -5872,18 +5896,26 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_variables_regressio
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+
                 for(Index k = 0; k < target.dimension(1); k++)
                 {
-                    regressions(input_variable_index,target_variable_index) = logistic_regression(input.chip(0,1), target.chip(k,1));
+                    const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(static_cast<unsigned>(k)));
+
+                    regressions(input_variable_index,target_variable_index) = logistic_regression(input_column, target_column);
 
                     target_variable_index++;
                 }
             }
             else if(input_type == Binary && target_type == Categorical)
             {
+                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
+
                 for(Index k = 0; k < target.dimension(1); k++)
                 {
-                    regressions(input_variable_index,target_variable_index) = linear_regression(input.chip(0,1), target.chip(k,1));
+                    const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(static_cast<unsigned>(k)));
+
+                    regressions(input_variable_index,target_variable_index) = linear_regression(input_column, target_column);
 
                     target_variable_index++;
                 }
@@ -7190,7 +7222,7 @@ void DataSet::initialize_data(const type& new_value)
 
 void DataSet::set_data_random()
 {
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 
@@ -7329,8 +7361,6 @@ tinyxml2::XMLDocument* DataSet::to_XML() const
 
 void DataSet::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
-    // @todo inputs_dimensions, targets_dimensions
-
     ostringstream buffer;
 
     file_stream.OpenElement("DataSet");
@@ -8045,7 +8075,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories = categories_element->GetText();
 
-                    columns(i).categories = get_tokens(new_categories, ' ');
+                    columns(i).categories = get_tokens(new_categories, ';');
                 }
 
                 // Categories uses
@@ -8065,7 +8095,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 {
                     const string new_categories_uses = categories_uses_element->GetText();
 
-                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ' '));
+                    columns(i).set_categories_uses(get_tokens(new_categories_uses, ';'));
                 }
             }
         }
@@ -9521,7 +9551,7 @@ void DataSet::generate_random_data(const Index& instances_number, const Index& v
 {
     set(instances_number, variables_number);
 
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
     /*
         data.setRandom(0.0, 1.0);
     */
@@ -9558,7 +9588,7 @@ void DataSet::generate_paraboloid_data(const Index& instances_number, const Inde
 
     set(instances_number, variables_number);
 
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -9585,7 +9615,7 @@ void DataSet::generate_Rosenbrock_data(const Index& instances_number, const Inde
     /*
         data.setRandom(-2.048, 2.048);
     */
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     #pragma omp parallel for
 
@@ -9633,7 +9663,7 @@ void DataSet::generate_sum_data(const Index& instances_number, const Index& vari
 {
     set(instances_number,variables_number);
 
-    data.setRandom();
+    data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     for(Index i = 0; i < instances_number; i++)
     {
@@ -9692,7 +9722,7 @@ void DataSet::generate_data_multiple_classification(const Index& instances_numbe
 {
     Tensor<type, 2> new_data(instances_number, inputs_number);
 
-    new_data.setRandom();
+    new_data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     Tensor<type, 2> targets(instances_number, outputs_number);
 
@@ -10186,12 +10216,14 @@ void DataSet::read_csv_1()
     for(Index i = 0; i < columns_number; i++)
     {
         if((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
+        || (is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+        || (is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
             columns(i).type = Numeric;
         }
         else if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label))
+             || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+             || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
         {
             columns(i).type = DateTime;
         }
@@ -10459,8 +10491,8 @@ void DataSet::read_csv_2_complete()
         if(static_cast<unsigned>(tokens_count) != columns_number)
         {
             const string message =
-//                    "Instance " + to_string(lines_count+1) + " error:\n"
-//                    "Size of tokens (" + string::number(tokens_count) + ") is not equal to number of columns (" + string::number(totalColumnsNumber) + ").\n"
+                "Instance " + to_string(lines_count+1) + " error:\n"
+                "Size of tokens (" + to_string(tokens_count) + ") is not equal to number of columns (" + to_string(columns_number) + ").\n"
                 "Please check the format of the data file.";
 
             throw logic_error(message);

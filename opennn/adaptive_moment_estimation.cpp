@@ -221,7 +221,7 @@ void AdaptiveMomentEstimation::set_default()
 /// <li> Selection loss.
 /// <li> Training direction.
 /// <li> Training direction norm.
-/// <li> Training rate.
+/// <li> Learning rate.
 /// </ul>
 /// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
 
@@ -482,7 +482,7 @@ void AdaptiveMomentEstimation::set_display_period(const Index& new_display_perio
 
         buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
                << "void set_display_period(const type&) method.\n"
-               << "First training rate must be greater than 0.\n";
+               << "First learning rate must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }

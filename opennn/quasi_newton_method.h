@@ -106,6 +106,9 @@ public:
             // Optimization algorithm data
 
             training_direction.resize(parameters_number);
+
+            old_inverse_hessian_dot_gradient_difference.resize(parameters_number);
+
         }
 
         void print() const
@@ -140,6 +143,8 @@ public:
 
         Tensor<type, 2> inverse_hessian;
         Tensor<type, 2> old_inverse_hessian;
+
+        Tensor<type, 1> old_inverse_hessian_dot_gradient_difference;
 
         // Optimization algorithm data
 
@@ -295,12 +300,12 @@ public:
 
 private: 
 
-   /// Training rate algorithm object. 
+   /// Learning rate algorithm object.
    /// It is used to calculate the step for the quasi-Newton training direction.
 
    LearningRateAlgorithm learning_rate_algorithm;
 
-   /// Variable containing the actual method used to obtain a suitable training rate. 
+   /// Variable containing the actual method used to obtain a suitable learning rate.
 
    InverseHessianApproximationMethod inverse_hessian_approximation_method;
 
@@ -314,7 +319,7 @@ private:
 
    type warning_gradient_norm;
 
-   /// Training rate value at wich a warning message is written to the screen.
+   /// Learning rate value at wich a warning message is written to the screen.
 
    type warning_learning_rate;
 
@@ -326,7 +331,7 @@ private:
 
    type error_gradient_norm;
 
-   /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
+   /// Learning rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
 
    type error_learning_rate;
 

@@ -33,13 +33,15 @@ int main(void)
     {
         cout << "OpenNN. Rosenbrock Example." << endl;
 
+
+
         const int n = omp_get_max_threads();
         NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
         ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
         // Data Set
 
-        const Index samples = 10000;
+        const Index samples = 1000;
         const Index variables = 10;
 
         DataSet data_set;
@@ -56,6 +58,13 @@ int main(void)
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
+
+//        cout << data_set.get_input_data() << endl;
+        cout << data_set.get_target_data() << endl;
+
+//        targets_descriptives(0).print();
+
+        system("pause");
 
         // Neural network
 
@@ -82,15 +91,15 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+        training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
         training_strategy.set_thread_pool_device(thread_pool_device);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_quasi_Newton_method_pointer()->set_thread_pool_device(thread_pool_device);
+//        training_strategy.get_quasi_Newton_method_pointer()->set_thread_pool_device(thread_pool_device);
 
-//        training_strategy.get_gradient_descent_pointer()->set_display_period(10);
+        training_strategy.get_gradient_descent_pointer()->set_display_period(10);
 
 //        StochasticGradientDescent* stochastic_gradient_descent_pointer
 //                = training_strategy.get_stochastic_gradient_descent_pointer();
@@ -101,7 +110,7 @@ int main(void)
 
         training_strategy.perform_training();
 
-        cout << "End" << endl;
+        cout << "End Rosenbrock" << endl;
 
         return 0;
 
