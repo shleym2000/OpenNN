@@ -1346,19 +1346,19 @@ type TestingAnalysis::calculate_normalized_squared_error(const Tensor<type, 2>& 
 
     const Tensor<type, 1> targets_mean = mean(targets);
 
-    Tensor<type, 0> normalization_coefficient;
-    normalization_coefficient.setZero();
-
     Tensor<type, 0> sum_squared_error = (outputs - targets).square().sum();
 
-//#pragma omp parallel for reduction(+: normalization_coefficient)
+    type normalization_coefficient = 0;
 
+#pragma omp parallel for reduction(+: normalization_coefficient)
     for(Index i = 0; i < instances_number; i++)
     {
-        normalization_coefficient += (targets.chip(i,0)-targets_mean).square().sum();
+        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+
+        normalization_coefficient += norm_1(0);
     }
 
-    return sum_squared_error()/normalization_coefficient();
+    return sum_squared_error()/normalization_coefficient;
 }
 
 
@@ -1496,9 +1496,11 @@ type TestingAnalysis::calculate_Minkowski_error(const Tensor<type, 2>& targets, 
 /// @param outputs Testing output data.
 /// @param decision_threshold Decision threshold.
 
-Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const type& decision_threshold) const
+Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(const Tensor<type, 2>& targets,
+                                                                            const Tensor<type, 2>& outputs,
+                                                                            const type& decision_threshold) const
 {
-    const Index rows_number = targets.dimension(0);
+    const Index testing_instances_number = targets.dimension(0);
 
     Tensor<Index, 2> confusion(2, 2);
 
@@ -1507,9 +1509,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     Index false_positive = 0;
     Index true_negative = 0;
 
-    for(Index i = 0; i < rows_number; i++)
+    type target = 0;
+    type output = 0;
+
+    for(Index i = 0; i < testing_instances_number; i++)
     {
-        if(static_cast<Index>(decision_threshold) == static_cast<Index>(0.0) && static_cast<Index>(targets(i,0)) == static_cast<Index>(0.0) )
+        target = targets(i,0);
+        output = outputs(i,0);
+/*
+        if(static_cast<Index>(decision_threshold) == 0 && static_cast<Index>(target) == 0 )
         {
             false_positive++;
         }
@@ -1517,21 +1525,33 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         {
             true_positive++;
         }
-        else if(targets(i,0) >= decision_threshold && outputs(i,0) >= decision_threshold)
+        else
+*/
+        if(target >= decision_threshold && output >= decision_threshold)
         {
             true_positive++;
         }
-        else if(targets(i,0) >= decision_threshold && outputs(i,0) < decision_threshold)
+        else if(target >= decision_threshold && output < decision_threshold)
         {
             false_negative++;
         }
-        else if(targets(i,0) < decision_threshold && outputs(i,0) >= decision_threshold)
+        else if(target < decision_threshold && output >= decision_threshold)
         {
             false_positive++;
         }
-        else if(targets(i,0) < decision_threshold && outputs(i,0) < decision_threshold)
+        else if(target < decision_threshold && output < decision_threshold)
         {
             true_negative++;
+        }
+        else
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: TestingAnalysis class.\n"
+                   << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
+                   << "Unknown case.\n";
+
+            throw logic_error(buffer.str());
         }
     }
 
@@ -1540,15 +1560,15 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
     confusion(1,0) = false_positive;
     confusion(1,1) = true_negative;
 
-    const Tensor<Index, 0> confusion_sum = confusion.sum();
+    const Index confusion_sum = true_positive + false_negative + false_positive + true_negative;
 
-    if(confusion_sum() != rows_number)
+    if(confusion_sum != testing_instances_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TestingAnalysis class.\n"
                << "Tensor<Index, 2> calculate_confusion_binary_classification(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const method.\n"
-               << "Number of elements in confusion matrix (" << confusion.sum() << ") must be equal to number of testing instances (" << rows_number << ").\n";
+               << "Number of elements in confusion matrix (" << confusion_sum << ") must be equal to number of testing instances (" << testing_instances_number << ").\n";
 
         throw logic_error(buffer.str());
     }
@@ -1745,11 +1765,19 @@ TestingAnalysis::RocAnalysisResults TestingAnalysis::perform_roc_analysis() cons
 
     RocAnalysisResults roc_analysis_results;
 
+    cout << "Calculating ROC curve..." << endl;
+
     roc_analysis_results.roc_curve = calculate_roc_curve(targets, outputs);
 
-    roc_analysis_results.area_under_curve = calculate_area_under_curve(targets, outputs);
+    cout << "Calculating area under curve..." << endl;
+
+    roc_analysis_results.area_under_curve = calculate_area_under_curve(roc_analysis_results.roc_curve);
+
+    cout << "Calculating confidence limits..." << endl;
 
     roc_analysis_results.confidence_limit = calculate_area_under_curve_confidence_limit(targets, outputs, roc_analysis_results.area_under_curve);
+
+    cout << "Calculating optimal threshold..." << endl;
 
     roc_analysis_results.optimal_threshold = calculate_optimal_threshold(targets, outputs, roc_analysis_results.roc_curve);
 
@@ -1815,7 +1843,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
         throw logic_error(buffer.str());
     }
 
-    const Index maximum_points_number = 101;
+    const Index maximum_points_number = 501;
 
     Index step_size;
 
@@ -1910,7 +1938,7 @@ Tensor<type, 2> TestingAnalysis::calculate_roc_curve(const Tensor<type, 2>& targ
 }
 
 
-/// Returns the area under a ROC curve.
+/// Returns the area under a ROC curve using Wilcoxon parameter test.
 /// @param targets Testing target data.
 /// @param outputs Testing output data.
 
@@ -1968,6 +1996,22 @@ type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& targets,
     area_under_curve = static_cast<type>(sum)/static_cast<type>(total_positives*total_negatives);
 
     return area_under_curve;
+}
+
+
+/// Returns the area under a ROC curve using trapezoidal integration.
+/// @param roc_curve ROC curve.
+
+type TestingAnalysis::calculate_area_under_curve(const Tensor<type, 2>& roc_curve) const
+{
+    type area_under_curve = 0;
+
+    for(Index i = 1; i < roc_curve.dimension(0); i++)
+    {
+        area_under_curve += (roc_curve(i,0)-roc_curve(i-1,0))*(roc_curve(i,1)+roc_curve(i-1,1));
+    }
+
+    return area_under_curve/2;
 }
 
 
@@ -2141,51 +2185,20 @@ type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets
 
 type TestingAnalysis::calculate_optimal_threshold(const Tensor<type, 2>& targets, const Tensor<type, 2>& outputs, const Tensor<type, 2>& roc_curve) const
 {
-    const Index maximum_points_number = 1000;
+    const Index points_number = roc_curve.dimension(0);
 
-    Index step_size;
-
-    const Index testing_instances_number = targets.dimension(0);
-    Index points_number;
-
-    if(testing_instances_number > maximum_points_number)
-    {
-        step_size = testing_instances_number/maximum_points_number;
-
-        points_number = testing_instances_number/step_size;
-    }
-    else
-    {
-        points_number = testing_instances_number;
-
-        step_size = 1;
-    }
-
-    // Sort by ascending values of outputs vector
-
-    Tensor<type, 1> sorted_outputs = outputs.chip(0,1);
-
-    stable_sort(sorted_outputs.data(), sorted_outputs.data()+sorted_outputs.size(), less<type>());
-
-    type threshold = 0;
     type optimal_threshold = 0.5;
 
     type minimun_distance = numeric_limits<type>::max();
     type distance;
 
-    Index current_index;
-
     for(Index i = 0; i < points_number; i++)
     {
-        current_index = i*step_size;
-
-        threshold = sorted_outputs(current_index);
-
         distance = sqrt(roc_curve(i,0)*roc_curve(i,0) + (roc_curve(i,1) - static_cast<type>(1))*(roc_curve(i,1) - static_cast<type>(1)));
 
         if(distance < minimun_distance)
         {
-            optimal_threshold = threshold;
+            optimal_threshold = roc_curve(i,2);
 
             minimun_distance = distance;
         }
@@ -2261,7 +2274,6 @@ Tensor<type, 2> TestingAnalysis::perform_cumulative_gain_analysis() const
     const Tensor<type, 2> cumulative_gain = calculate_cumulative_gain(targets, outputs);
 
     return cumulative_gain;
-
 }
 
 

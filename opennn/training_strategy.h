@@ -39,9 +39,6 @@
 #include "stochastic_gradient_descent.h"
 #include "adaptive_moment_estimation.h"
 
-#include "tinyxml2.h"
-
-//Eigen Includes
 
 namespace OpenNN
 {
@@ -143,7 +140,7 @@ public:
    void set();
    void set_default();
 
-   void set_device_pointer(Device*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    void set_loss_index_pointer(LossIndex*);
 
@@ -255,7 +252,11 @@ private:
     bool display;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/training_strategy_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"
+#endif
+
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/training_strategy_mkl.h"
 #endif
 
 };

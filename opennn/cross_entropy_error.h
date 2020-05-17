@@ -21,8 +21,6 @@
 #include "data_set.h"
 #include "config.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 
@@ -77,9 +75,12 @@ public:
    void write_XML(tinyxml2::XMLPrinter&) const;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/cross_entropy_error_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/cross_entropy_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/cross_entropy_error_mkl.h"
+#endif
 };
 
 }

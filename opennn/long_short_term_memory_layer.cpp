@@ -1073,20 +1073,20 @@ void LongShortTermMemoryLayer::set_parameters_constant(const type& value)
 
 void LongShortTermMemoryLayer::set_parameters_random()
 {
-    forget_biases.setRandom();
-    input_biases.setRandom();
-    state_biases.setRandom();
-    output_biases.setRandom();
+    forget_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    state_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    output_biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    forget_weights.setRandom();
-    input_weights.setRandom();
-    state_weights.setRandom();
-    output_weights.setRandom();
+    forget_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    state_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    output_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    forget_recurrent_weights.setRandom();
-    input_recurrent_weights.setRandom();
-    state_recurrent_weights.setRandom();
-    output_recurrent_weights.setRandom();
+    forget_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    input_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    state_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    output_recurrent_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 
@@ -1113,37 +1113,12 @@ void LongShortTermMemoryLayer::calculate_forget_combinations(const Tensor<type, 
 
 #endif
 
+    forget_combinations_1d.device(*thread_pool_device) = inputs.contract(forget_weights, AT_B).eval();
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    forget_combinations_1d.device(*thread_pool_device) += forget_biases;
 
-             forget_combinations_1d.device(*default_device) = inputs.contract(forget_weights, AT_B).eval();
+    forget_combinations_1d.device(*thread_pool_device) += hidden_states.contract(forget_recurrent_weights, AT_B).eval();
 
-             forget_combinations_1d.device(*default_device) += forget_biases;
-
-             forget_combinations_1d.device(*default_device) += hidden_states.contract(forget_recurrent_weights, AT_B).eval();
-
-             return;
-
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            forget_combinations_1d.device(*thread_pool_device) = inputs.contract(forget_weights, AT_B).eval();
-
-            forget_combinations_1d.device(*thread_pool_device) += forget_biases;
-
-            forget_combinations_1d.device(*thread_pool_device) += hidden_states.contract(forget_recurrent_weights, AT_B).eval();
-
-            return;
-
-         }
-    }
 }
 
 
@@ -1170,34 +1145,12 @@ void LongShortTermMemoryLayer::calculate_input_combinations(const Tensor<type, 1
 
 #endif
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    input_combinations_1d.device(*thread_pool_device) = inputs.contract(input_weights, AT_B).eval();
 
-             input_combinations_1d.device(*default_device) = inputs.contract(input_weights, AT_B).eval();
+    input_combinations_1d.device(*thread_pool_device) += input_biases;
 
-             input_combinations_1d.device(*default_device) += input_biases;
+    input_combinations_1d.device(*thread_pool_device) += hidden_states.contract(input_recurrent_weights, AT_B).eval();
 
-             input_combinations_1d.device(*default_device) += hidden_states.contract(input_recurrent_weights, AT_B).eval();
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            input_combinations_1d.device(*thread_pool_device) = inputs.contract(input_weights, AT_B).eval();
-
-            input_combinations_1d.device(*thread_pool_device) += input_biases;
-
-            input_combinations_1d.device(*thread_pool_device) += hidden_states.contract(input_recurrent_weights, AT_B).eval();
-
-            return;
-         }
-    }
 }
 
 
@@ -1224,35 +1177,12 @@ void LongShortTermMemoryLayer::calculate_state_combinations(const Tensor<type, 1
 
 #endif
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    state_combinations_1d.device(*thread_pool_device) = inputs.contract(state_weights, AT_B).eval();
 
-             state_combinations_1d.device(*default_device) = inputs.contract(state_weights, AT_B).eval();
+    state_combinations_1d.device(*thread_pool_device) += state_biases;
 
-             state_combinations_1d.device(*default_device) += state_biases;
+    state_combinations_1d.device(*thread_pool_device) += hidden_states.contract(state_recurrent_weights, AT_B).eval();
 
-             state_combinations_1d.device(*default_device) += hidden_states.contract(state_recurrent_weights, AT_B).eval();
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            state_combinations_1d.device(*thread_pool_device) = inputs.contract(state_weights, AT_B).eval();
-
-            state_combinations_1d.device(*thread_pool_device) += state_biases;
-
-            state_combinations_1d.device(*thread_pool_device) += hidden_states.contract(state_recurrent_weights, AT_B).eval();
-
-             return;
-         }
-
-    }
 }
 
 
@@ -1280,35 +1210,12 @@ void LongShortTermMemoryLayer::calculate_output_combinations(const Tensor<type, 
 
 #endif
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    output_combinations_1d.device(*thread_pool_device) = inputs.contract(output_weights, AT_B).eval();
 
-             output_combinations_1d.device(*default_device) = inputs.contract(output_weights, AT_B).eval();
+    output_combinations_1d.device(*thread_pool_device) += output_biases;
 
-             output_combinations_1d.device(*default_device) += output_biases;
+    output_combinations_1d.device(*thread_pool_device) += hidden_states.contract(output_recurrent_weights, AT_B).eval();
 
-             output_combinations_1d.device(*default_device) += hidden_states.contract(output_recurrent_weights, AT_B).eval();
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            output_combinations_1d.device(*thread_pool_device) = inputs.contract(output_weights, AT_B).eval();
-
-            output_combinations_1d.device(*thread_pool_device) += output_biases;
-
-            output_combinations_1d.device(*thread_pool_device) += hidden_states.contract(output_recurrent_weights, AT_B).eval();
-
-             return;
-         }
-
-    }
 }
 
 
@@ -2314,34 +2221,9 @@ Tensor<type, 2> LongShortTermMemoryLayer::calculate_hidden_delta(Layer* next_lay
 
     Tensor<type, 2> hidden_delta(next_layer_delta.dimension(0), synaptic_weights.dimension(1));
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(synaptic_weights, A_BT);
 
-             hidden_delta.device(*default_device) = next_layer_delta.contract(synaptic_weights, A_BT);
-
-             return hidden_delta;
-
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(synaptic_weights, A_BT);
-
-            return hidden_delta;
-
-         }
-
-    }
-
-//    return dot(next_layer_delta, synaptic_weights_transpose);
-//    return next_layer_delta.contract(synaptic_weights, A_BT);
-
-    return Tensor<type, 2>();
+    return hidden_delta;
 }
 
 

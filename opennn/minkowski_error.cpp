@@ -135,38 +135,21 @@ void MinkowskiError::calculate_error(const DataSet::Batch& batch,
 
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
 
     Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    errors.device(*thread_pool_device) = outputs - targets;
 
-             minkowski_error.device(*default_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
-                                                         .pow(static_cast<type>(1.0)/minkowski_parameter);
+    minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
+                                                     .pow(static_cast<type>(1.0)/minkowski_parameter);
 
-             break;
-         }
+    const Index training_instances_number = data_set_pointer->get_training_instances_number();
 
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
-                                                             .pow(static_cast<type>(1.0)/minkowski_parameter);
-
-             break;
-         }
-    }
-
-    back_propagation.error = minkowski_error(0);
-
-    return;
+    back_propagation.error = minkowski_error(0) /static_cast<type>(training_instances_number);
 }
+
 
 void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
                                const NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -190,42 +173,15 @@ void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
 //        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
 //                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_instances_number);
 
-     switch(device_pointer->get_type())
-     {
-          case Device::EigenDefault:
-          {
-              DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+     errors.device(*thread_pool_device) = outputs - targets;
 
-              errors.device(*default_device) = outputs - targets;
+     const Tensor<type, 0> p_norm_derivative = (errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
 
-              const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
+     back_propagation.output_gradient.device(*thread_pool_device)
+             = errors*(errors.abs().pow(minkowski_parameter-2));
 
-              back_propagation.output_gradient.device(*default_device)
-                      = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
-
-              back_propagation.output_gradient.device(*default_device) =
-                      back_propagation.output_gradient/static_cast<type>(training_instances_number);
-
-              return;
-          }
-
-          case Device::EigenThreadPool:
-          {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             errors.device(*thread_pool_device) = outputs - targets;
-
-             const Tensor<type, 0> p_norm = errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter);
-
-             back_propagation.output_gradient.device(*thread_pool_device)
-                     = (errors.abs().pow(minkowski_parameter-2))/(p_norm.pow(minkowski_parameter-1));
-
-             back_propagation.output_gradient.device(*thread_pool_device) =
-                     back_propagation.output_gradient/static_cast<type>(training_instances_number);
-
-              return;
-          }
-     }
+     back_propagation.output_gradient.device(*thread_pool_device) =
+             back_propagation.output_gradient/(static_cast<type>(training_instances_number)*(p_norm_derivative()));
 }
 
 

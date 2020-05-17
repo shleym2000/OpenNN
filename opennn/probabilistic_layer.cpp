@@ -315,11 +315,11 @@ void ProbabilisticLayer::set(const Index& new_inputs_number, const Index& new_ne
 {
     biases.resize(1, new_neurons_number);
 
-    biases.setRandom();
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     synaptic_weights.resize(new_inputs_number, new_neurons_number);
 
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
     set_default();
 }
@@ -593,7 +593,7 @@ void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
 
 void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum, const type& maximum)
 {
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 
@@ -613,9 +613,9 @@ void ProbabilisticLayer::set_parameters_constant(const type& value)
 
 void ProbabilisticLayer::set_parameters_random()
 {
-    biases.setRandom();
+    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    synaptic_weights.setRandom();
+    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
 
@@ -632,26 +632,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
         fill_n(combinations_2d.data()+i*batch_instances_number, batch_instances_number, biases(i));
     }
 
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-             combinations_2d.device(*default_device) += inputs.contract(synaptic_weights, A_B);
-
-             break;
-         }
-
-         case Device::EigenThreadPool:
-         {
-            ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-            combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
-
-             break;
-         }
-    }
+    combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
 }
 
 
@@ -789,30 +770,9 @@ void ProbabilisticLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                               const Layer::ForwardPropagation&,
                               Layer::BackPropagation& back_propagation) const
 {
-    switch(device_pointer->get_type())
-    {
-         case Device::EigenDefault:
-         {
-             DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+    back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
 
-             back_propagation.biases_derivatives.device(*default_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-             back_propagation.synaptic_weights_derivatives.device(*default_device) = inputs.contract(back_propagation.delta, AT_B);
-
-             return;
-         }
-
-         case Device::EigenThreadPool:
-         {
-             ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-             back_propagation.biases_derivatives.device(*thread_pool_device) = back_propagation.delta.sum(Eigen::array<Index, 1>({0}));
-
-             back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
-
-             return;
-         }
-    }
+    back_propagation.synaptic_weights_derivatives.device(*thread_pool_device) = inputs.contract(back_propagation.delta, AT_B);
 }
 
 
@@ -1135,14 +1095,14 @@ string ProbabilisticLayer::write_binary_expression(const Tensor<string, 1>& inpu
 /// @param inputs_names Names of inputs to the probabilistic layer.
 /// @param outputs_names Names of outputs to the probabilistic layer.
 
-string ProbabilisticLayer::write_probability_expression(const Tensor<string, 1>& inputs_names,
+string ProbabilisticLayer::write_logistic_expression(const Tensor<string, 1>& inputs_names,
         const Tensor<string, 1>& outputs_names) const
 {
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
-        buffer << outputs_names(j) << " = probability(" << inputs_names(j) << ");\n";
+        buffer << outputs_names(j) << " = logistic(" << inputs_names(j) << ");\n";
     }
     return buffer.str();
 }
@@ -1211,7 +1171,7 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
         return write_binary_expression(inputs_names, outputs_names);
 
     case Logistic:
-        return write_probability_expression(inputs_names, outputs_names);
+        return write_logistic_expression(inputs_names, outputs_names);
 
     case Competitive:
         return write_competitive_expression(inputs_names, outputs_names);

@@ -207,7 +207,7 @@ void AdaptiveMomentEstimation::set_default()
     // UTILITIES
 
     display = true;
-    display_period = 1;
+    display_period = 5;
 }
 
 
@@ -221,7 +221,7 @@ void AdaptiveMomentEstimation::set_default()
 /// <li> Selection loss.
 /// <li> Training direction.
 /// <li> Training direction norm.
-/// <li> Training rate.
+/// <li> Learning rate.
 /// </ul>
 /// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
 
@@ -482,7 +482,7 @@ void AdaptiveMomentEstimation::set_display_period(const Index& new_display_perio
 
         buffer << "OpenNN Exception: AdaptiveMomentEstimation class.\n"
                << "void set_display_period(const type&) method.\n"
-               << "First training rate must be greater than 0.\n";
+               << "First learning rate must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -562,6 +562,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
     type elapsed_time = 0;
 
     results.resize_training_history(maximum_epochs_number + 1);
+    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
 
     OptimizationData optimization_data(this);
 
@@ -580,8 +581,6 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
                                                                                          is_forecasting);
 
         const Index batches_number = training_batches.dimension(0);
-
-        cout << "Batches number: " << batches_number << endl;
 
         parameters_norm = l2_norm(optimization_data.parameters);
 
@@ -700,7 +699,9 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
                 if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl<<endl;
             }
-            results.resize_error_history(1+epoch);
+
+            results.resize_training_error_history(epoch+1);
+            if(has_selection) results.resize_selection_error_history(epoch+1);
 
             results.final_parameters = optimization_data.parameters;
 
@@ -716,7 +717,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             break;
         }
-        else if(display && epoch % display_period == 0)
+        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
         {
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Training error: " << training_error << "\n"
@@ -1294,18 +1295,21 @@ void AdaptiveMomentEstimation::set_batch_instances_number(const Index& new_batch
 void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
                               OptimizationData& optimization_data)
 {
+
+
+
     const type learning_rate =
             initial_learning_rate*
             sqrt(1 - pow(beta_2, static_cast<type>(optimization_data.iteration)))/
             (1 - pow(beta_1, static_cast<type>(optimization_data.iteration)));
 
-    optimization_data.gradient_exponential_decay
+    optimization_data.gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.last_gradient_exponential_decay*beta_1
             + back_propagation.gradient*(1 - beta_1);
 
     optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
 
-    optimization_data.square_gradient_exponential_decay
+    optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
             = optimization_data.last_square_gradient_exponential_decay*beta_2
             + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
 
@@ -1313,7 +1317,7 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation
 
     // Update parameters
 
-    optimization_data.parameters -=
+    optimization_data.parameters.device(*thread_pool_device) -=
             optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
 }
 

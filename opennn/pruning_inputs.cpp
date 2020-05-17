@@ -270,9 +270,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     // Model selection
 
-    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
+    if(used_columns_number < maximum_iterations_number) maximum_iterations_number = used_columns_number;
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
     {
         OptimizationAlgorithm::Results training_results;
 
@@ -283,7 +283,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         Index column_index;
         string column_name;
 
-        if(epoch == 0)
+        if(iteration == 0)
         {
             training_results = training_strategy_pointer->perform_training();
 
@@ -293,15 +293,13 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         }
         else
         {
-            column_index = correlations_ascending_indices[epoch-1];
+            column_index = correlations_ascending_indices[iteration-1];
 
             column_name = used_columns_names[column_index];
 
             data_set_pointer->set_column_use(column_name, DataSet::UnusedVariable);
 
             current_columns_indices = delete_result(column_index, current_columns_indices);
-
-//            current_columns_indices.push_back(column_index);
 
             const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
@@ -321,7 +319,7 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
         if(display)
         {
-            cout << endl << "Trial number: " << epoch << endl;
+            cout << endl << "Trial number: " << iteration << endl;
             cout << "Training error: " << current_training_error << endl;
             cout << "Selection error: " << current_selection_error << endl;
             cout << "Stopping condition: " << training_results.write_stopping_condition() << endl << endl;
@@ -340,6 +338,16 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
         }
 
         previus_selection_error = current_selection_error;
+
+        if(reserve_training_error_data)
+        {
+            results->training_error_data = insert_result(current_training_error, results->training_error_data);
+        }
+
+        if(reserve_selection_error_data)
+        {
+            results->selection_error_data = insert_result(current_selection_error, results->selection_error_data);
+        }
 
         time(&current_time);
 
@@ -363,11 +371,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(epoch >= maximum_epochs_number)
+        else if(iteration >= maximum_iterations_number)
         {
             end_algorithm = true;
 
-            if(display) cout << "Maximum number of epochs reached." << endl;
+            if(display) cout << "Maximum number of iterations reached." << endl;
 
             results->stopping_condition = InputsSelection::MaximumIterations;
         }
@@ -399,9 +407,9 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
         if(display)
         {
-            cout << "Iteration: " << epoch << endl;
+            cout << "Iteration: " << iteration << endl;
 
-            if(end_algorithm == false && epoch != 0) cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
+            if(end_algorithm == false && iteration != 0) cout << "Pruning input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
             cout << "Current inputs: " <<  data_set_pointer->get_input_variables_names().cast<string>() << endl;
             cout << "Number of inputs: " << current_columns_indices.size() << endl;
@@ -412,17 +420,20 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
             cout << endl;
         }
 
-        if(end_algorithm == true) break;
+        if(end_algorithm == true)
+        {
+            // Save results
+
+            results->optimal_inputs_indices = optimal_columns_indices;
+            results->final_selection_error = optimum_selection_error;
+            results->final_training_error = optimum_training_error;
+            results->iterations_number = iteration+1;
+            results->elapsed_time = elapsed_time;
+            results->minimal_parameters = optimal_parameters;
+
+            break;
+        }
     }
-
-    // Save results
-
-    results->optimal_inputs_indices = optimal_columns_indices;
-    results->final_selection_error = optimum_selection_error;
-    results->final_training_error = optimum_training_error;
-//    results->iterations_number = iteration;
-    results->elapsed_time = elapsed_time;
-    results->minimal_parameters = optimal_parameters;
 
     // Set Data set stuff
 
@@ -430,11 +441,11 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
 
     const Index optimal_inputs_number = optimal_columns_indices.size();
 
-    for(Index i = 0; i< optimal_inputs_number; i++)
+    for(Index i = 0; i < optimal_inputs_number; i++)
     {
         Index optimal_input_index = optimal_columns_indices[i];
 
-        data_set_pointer->set_column_use(optimal_input_index,DataSet::Input);
+        data_set_pointer->set_column_use(optimal_input_index, DataSet::Input);
     }
 
     data_set_pointer->set_input_variables_dimensions({optimal_inputs_number});
@@ -444,6 +455,8 @@ PruningInputs::PruningInputsResults* PruningInputs::perform_inputs_selection()
     neural_network_pointer->set_inputs_number(optimal_inputs_number);
 
     neural_network_pointer->set_parameters(optimal_parameters);
+
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     if(display)
     {
@@ -730,7 +743,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << maximum_epochs_number;
+        buffer << maximum_iterations_number;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -754,7 +767,7 @@ tinyxml2::XMLDocument* PruningInputs::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << reserve_error_data;
+        buffer << reserve_training_error_data;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -916,7 +929,7 @@ void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumEpochsNumber");
 
     buffer.str("");
-    buffer << maximum_epochs_number;
+    buffer << maximum_iterations_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -938,7 +951,7 @@ void PruningInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveTrainingErrorHistory");
 
     buffer.str("");
-    buffer << reserve_error_data;
+    buffer << reserve_training_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1024,11 +1037,11 @@ void PruningInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_error_data = element->GetText();
+            const string new_reserve_training_error_data = element->GetText();
 
             try
             {
-                set_reserve_error_data(new_reserve_error_data != "0");
+                set_reserve_training_error_data(new_reserve_training_error_data != "0");
             }
             catch(const logic_error& e)
             {

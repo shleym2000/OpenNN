@@ -23,7 +23,6 @@
 #include "config.h"
 #include "loss_index.h"
 #include "data_set.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -66,6 +65,9 @@ public:
 
    // Error methods
 
+   float calculate_error(const DataSet& data_set_pointer,
+                        const NeuralNetwork& neural_network_pointer) const;
+
    void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;
@@ -99,9 +101,12 @@ public:
    string get_error_type_text() const;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/mean_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/mean_squared_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/mean_squared_error_mkl.h"
+#endif
 };
 
 }

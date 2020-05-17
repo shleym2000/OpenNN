@@ -287,9 +287,12 @@ private:
    Index batch_instances_number = 1000;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/stochastic_gradient_descent_mkl.h"
+#endif
 };
 
 }

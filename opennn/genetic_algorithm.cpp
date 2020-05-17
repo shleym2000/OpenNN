@@ -266,7 +266,7 @@ void GeneticAlgorithm::set_default()
     if(training_strategy_pointer == nullptr
             || !training_strategy_pointer->has_neural_network())
     {
-        maximum_epochs_number = 100;
+        maximum_iterations_number = 100;
 
         mutation_rate = 0.5;
 
@@ -275,7 +275,7 @@ void GeneticAlgorithm::set_default()
     else
     {
         inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        maximum_epochs_number = static_cast<Index>(max(100.,inputs_number*5.));
+        maximum_iterations_number = static_cast<Index>(max(100.,inputs_number*5.));
 
         mutation_rate = static_cast<type>(1.0/inputs_number);
 
@@ -1133,7 +1133,6 @@ void GeneticAlgorithm::evaluate_population()
     }
 
     calculate_fitness();
-
 }
 
 
@@ -1244,9 +1243,15 @@ void GeneticAlgorithm::evolve_population()
 
     perform_selection();
 
+    cout << "perform selection" << endl;
+
     perform_crossover();
 
+    cout << "perform crossover" << endl;
+
     perform_mutation();
+
+    cout << "perform mutation" << endl;
 
     for(Index i = 0; i < population.dimension(0); i++)
     {
@@ -1330,15 +1335,15 @@ void GeneticAlgorithm::perform_selection()
 
         selected_population[selected_index] = true;
 
-        vector<bool> selected_inputs = tensor_to_vector(population.chip(selected_index, 0));
-        population_vector_copy.push_back(selected_inputs);
+        population_vector_copy.push_back(tensor_to_vector(population.chip(selected_index, 0)));
 
         fitness_copy[selected_index] = -1;
     }
 
     // Natural selection
 
-    while(static_cast<Index>(population_vector_copy.size()) < elitism_size && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
+    while(static_cast<Index>(population_vector_copy.size()) < elitism_size
+       && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
     {
         selected_index = maximal_index(fitness_copy);
 
@@ -1399,7 +1404,7 @@ void GeneticAlgorithm::perform_selection()
             random_loops++;
         }
     }
-
+cout << "wheel" << endl;
     population_copy.resize(static_cast<Index>(population_vector_copy.size()), static_cast<Index>(population_vector_copy[0].size()));
 
     population.setZero();
@@ -1882,8 +1887,6 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     bool end_algortihm = false;
 
-    Index iterations = 0;
-
     Index index = 0;
 
     time_t beginning_time, current_time;
@@ -1909,14 +1912,22 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     initialize_population();
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {cout << "1" << endl;
-        if(epoch != 0)
+    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
+    {
+        cout << "iteration: " << iteration << endl;
+
+        if(iteration != 0)
         {
+            cout << "Before evolve" << endl;
+
             evolve_population();
+
+            cout << "Evolve" << endl;
         }
 
         evaluate_population();
+
+        cout << "Evaluate" << endl;
 
         minimal_index = get_optimal_individual_index();
 
@@ -1949,34 +1960,43 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             optimal_inputs = current_inputs;
             optimum_training_error = current_training_error;
             optimum_selection_error = current_selection_error;
-            optimal_generation = epoch;
+            optimal_generation = iteration;
             optimal_parameters = current_parameters;
         }
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-/*
         if(reserve_generation_mean)
         {
-            results->generation_mean_history.push_back(current_mean);
+            results->generation_selection_error_mean_history
+                    = insert_result(current_mean(), results->generation_selection_error_mean_history);
         }
 
         if(reserve_generation_standard_deviation)
         {
-            results->generation_standard_deviation_history.push_back(current_standard_deviation);
+//            results->generation_standard_deviation_history.push_back(current_standard_deviation);
+
+            results->generation_selection_error_standard_deviation_history
+                    = insert_result(current_standard_deviation, results->generation_selection_error_standard_deviation_history);
         }
 
         if(reserve_generation_minimum_selection)
         {
-            results->generation_minimum_selection_history.push_back(current_selection_error);
+//            results->generation_minimum_selection_history.push_back(current_selection_error);
+
+            results->generation_minimum_selection_error_history
+                    = insert_result(current_selection_error, results->generation_minimum_selection_error_history);
         }
 
         if(reserve_generation_optimum_loss)
         {
-            results->generation_optimum_loss_history.push_back(current_training_error);
+//            results->generation_optimum_loss_history.push_back(current_training_error);
+
+            results->generation_optimum_training_error_history
+                    = insert_result(current_training_error, results->generation_optimum_training_error_history);
         }
-*/
+
         // Stopping criteria
 
         if(elapsed_time >= maximum_time)
@@ -2001,13 +2021,13 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(epoch >= maximum_epochs_number-1)
+        else if(iteration >= maximum_iterations_number-1)
         {
             end_algortihm = true;
 
             if(display)
             {
-                cout << "Maximum number of epochs reached." << endl;
+                cout << "Maximum number of iterations reached." << endl;
             }
 
             results->stopping_condition = InputsSelection::MaximumIterations;
@@ -2019,11 +2039,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             if(current_inputs[j] == false)
             {
-                current_uses[index] = DataSet::UnusedVariable;
+                current_uses(index) = DataSet::UnusedVariable;
             }
             else
             {
-                current_uses[index] = DataSet::Input;
+                current_uses(index) = DataSet::Input;
             }
         }
 
@@ -2034,7 +2054,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         if(display)
         {
-            cout << "Generation: " << epoch+1 << endl;
+            cout << "Generation: " << iteration+1 << endl;
             cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>()
                  << " " << endl;
             cout << "Generation optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
@@ -2047,17 +2067,21 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             cout << endl;
         }
 
-        if(end_algortihm == true) break;
+        if(end_algortihm == true)
+        {
+            // Save results
+
+            results->optimal_inputs = optimal_inputs;
+            results->final_selection_error = optimum_selection_error;
+            results->final_training_error = optimum_training_error;
+            results->iterations_number = iteration+1;
+            results->elapsed_time = elapsed_time;
+            results->minimal_parameters = optimal_parameters;
+
+            break;
+        }
     }
 
-    // Save results
-
-    results->optimal_inputs = optimal_inputs;
-    results->final_selection_error = optimum_selection_error;
-    results->final_training_error = optimum_training_error;
-    results->iterations_number = iterations;
-    results->elapsed_time = elapsed_time;
-    results->minimal_parameters = optimal_parameters;
 
     Index original_index;
 
@@ -2068,11 +2092,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         original_index = get_input_index(original_uses, i);
         if(optimal_inputs[i] == 1)
         {
-            optimal_uses[original_index] = DataSet::Input;
+            optimal_uses(original_index) = DataSet::Input;
         }
         else
         {
-            optimal_uses[original_index] = DataSet::UnusedVariable;
+            optimal_uses(original_index) = DataSet::UnusedVariable;
         }
     }
 
@@ -2080,15 +2104,27 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     data_set_pointer->set_columns_uses(optimal_uses);
 
+    cout << "data set results" << endl;
+
     // Set Neural network results
 
     neural_network_pointer->set_inputs_number(optimal_inputs);
 
+    cout << "inputs number" << endl;
+
     neural_network_pointer->set_parameters(optimal_parameters);
+
+    cout << "set parameters" << endl;
+
+    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+
+        cout << "inputs names" << endl;
 
     time(&current_time);
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
+
+        cout << "time" << endl;
 
     if(display)
     {
@@ -2490,7 +2526,7 @@ tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
         root_element->LinkEndChild(element);
 
         buffer.str("");
-        buffer << maximum_epochs_number;
+        buffer << maximum_iterations_number;
 
         text = document->NewText(buffer.str().c_str());
         element->LinkEndChild(text);
@@ -2783,7 +2819,7 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumGenerationsNumber");
 
     buffer.str("");
-    buffer << maximum_epochs_number;
+    buffer << maximum_iterations_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -3174,11 +3210,11 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_error_data = element->GetText();
+            const string new_reserve_training_error_data = element->GetText();
 
             try
             {
-                set_reserve_error_data(new_reserve_error_data != "0");
+                set_reserve_training_error_data(new_reserve_training_error_data != "0");
             }
             catch(const logic_error& e)
             {

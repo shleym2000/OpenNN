@@ -34,7 +34,6 @@
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -79,6 +78,8 @@ public:
 
        ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
+           if(new_batch_instances_number == 0) return;
+
            batch_instances_number = new_batch_instances_number;
 
            neural_network_pointer = new_neural_network_pointer;
@@ -235,7 +236,7 @@ public:
 
    virtual void set_default();
 
-   void set_device_pointer(Device*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    void set_layers_pointers(Tensor<Layer*, 1>&);
 
@@ -257,6 +258,9 @@ public:
 
    Index get_inputs_number() const;
    Index get_outputs_number() const;
+
+   Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
+   Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
 
    Tensor<Index, 1> get_architecture() const;
 
@@ -362,9 +366,12 @@ protected:
    bool display = true;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/neural_network_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/neural_network_mkl.h"
+#endif
 };
 
 }

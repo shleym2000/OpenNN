@@ -195,6 +195,7 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
 bool is_numeric_string(const string& str)
 {
+    /*
     std::istringstream iss(str.data());
 
     type dTestSink;
@@ -219,10 +220,10 @@ bool is_numeric_string(const string& str)
     {
         return false;
     }
+    */
 
-//    return std::all_of(str.begin(), str.end(), is_digit_string);
-
-//    return iss.rdbuf()->in_avail() == 0;
+    return !str.empty() && std::find_if(str.begin(),
+        str.end(), [](unsigned char c) { return (!std::isdigit(c) && c != '-' && c != '.' && c != 'e'); }) == str.end();
 }
 
 

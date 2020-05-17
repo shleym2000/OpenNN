@@ -31,15 +31,9 @@
 // OpenNN includes
 
 #include "config.h"
-#include "device.h"
 #include "statistics.h"
 #include "correlations.h"
 #include "opennn_strings.h"
-#include "tinyxml2.h"
-
-// Eigen includes
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -378,7 +372,7 @@ public:
 
    void set_default();
 
-   void set_device_pointer(Device*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    // Instances set methods
 
@@ -409,6 +403,7 @@ public:
    // Columns set methods
 
    void set_default_columns_uses();
+   void set_default_classification_columns_uses();
 
    void set_default_columns_names();
 
@@ -427,6 +422,11 @@ public:
    void set_columns_number(const Index&);
 
    void set_binary_simple_columns();
+
+   // Columns check methods
+
+   Index count_binary_columns() const;
+   Index count_categorical_columns() const;
 
    // Variables set methods
 
@@ -481,6 +481,7 @@ public:
 
    bool has_data() const;
 
+   bool has_binary_columns() const;
    bool has_categorical_columns() const;
    bool has_time_columns() const;
 
@@ -778,7 +779,7 @@ public:
 
 private:
 
-   Device* device_pointer = nullptr;
+   ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Data file name.
 
@@ -869,7 +870,7 @@ private:
    Tensor<Descriptives, 1> variables_descriptives;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/data_set_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
 #endif
 
 };

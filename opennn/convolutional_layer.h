@@ -25,8 +25,6 @@
 #include "layer.h"
 #include "config.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 
@@ -213,7 +211,7 @@ protected:
    ActivationFunction activation_function = RectifiedLinear;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/convolutional_layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/convolutional_layer_cuda.h"
 #endif
 
 

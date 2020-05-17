@@ -25,8 +25,6 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 
@@ -61,7 +59,7 @@ public:
 
    SumSquaredError(const SumSquaredError&);
 
-   virtual ~SumSquaredError();    
+   virtual ~SumSquaredError();
 
    // Error methods
 
@@ -99,9 +97,12 @@ private:
    Tensor<type, 1> calculate_squared_errors() const;
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/sum_squared_error_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/sum_squared_error_cuda.h"
 #endif
 
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/sum_squared_error_mkl.h"
+#endif
 };
 
 }

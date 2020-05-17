@@ -25,11 +25,6 @@
 
 #include "config.h"
 #include "device.h"
-#include "tinyxml2.h"
-
-//Eigen includes
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -219,7 +214,7 @@ public:
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
-    void set_device_pointer(Device*);
+    void set_thread_pool_device(ThreadPoolDevice*);
 
     virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const {}
 
@@ -235,7 +230,6 @@ public:
                                           const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) const {}
-//    virtual void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) {}
     virtual void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const {}
 
     virtual void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>, ForwardPropagation&) const {}
@@ -276,9 +270,13 @@ public:
 
     virtual void write_XML(tinyxml2::XMLPrinter&) const {}
 
+    // Expression methods
+
+    virtual string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
 protected:
 
-    Device* device_pointer = nullptr;
+    ThreadPoolDevice* thread_pool_device = nullptr;
 
     /// Layer type object.
 
@@ -350,7 +348,11 @@ protected:
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA
-    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
+    #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
+#endif
+
+#ifdef OPENNN_MKL
+    #include "../opennn_mkl/layer_mkl.h"
 #endif
 
 };

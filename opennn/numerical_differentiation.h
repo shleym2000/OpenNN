@@ -20,9 +20,6 @@
 // OpenNN includes
 
 #include "config.h"
-#include "tinyxml2.h"
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -2560,6 +2557,8 @@ public:
 
       return Tensor<type, 2>();
    }
+
+
 
    template<class T>
    Tensor<type, 2> calculate_forward_differences_Jacobiannn(const T& t, void(T::*f)(const Tensor<type, 2>&, Tensor<type, 2>&) const, const Tensor<type, 2>& x) const

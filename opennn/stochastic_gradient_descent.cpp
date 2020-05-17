@@ -538,7 +538,7 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 
         buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
                << "void set_display_period(const type&) method.\n"
-               << "First training rate must be greater than 0.\n";
+               << "First learning rate must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -552,33 +552,38 @@ void StochasticGradientDescent::set_display_period(const Index& new_display_peri
 void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
                       OptimizationData& optimization_data)
 {
+
+
+/*
     const type learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay);
 
-    optimization_data.parameters_increment = back_propagation.gradient*(-learning_rate);
+    optimization_data.parameters_increment.device(*thread_pool_device) = back_propagation.gradient*(-learning_rate);
 
-    if(momentum > 0 && !nesterov)
+    if(momentum > 0)
     {
-        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+        optimization_data.parameters_increment.device(*thread_pool_device) += momentum*optimization_data.last_parameters_increment;
 
-        optimization_data.parameters += optimization_data.parameters_increment;
-    }
-    else if(momentum > 0 && nesterov)
-    {
-        optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+        if(!nesterov)
+        {
+            optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+        }
+        else
+        {
+            optimization_data.nesterov_increment.device(*thread_pool_device)
+                    = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
 
-        optimization_data.nesterov_increment
-                = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
-
-        optimization_data.parameters += optimization_data.nesterov_increment;
+            optimization_data.parameters.device(*thread_pool_device) += optimization_data.nesterov_increment;
+        }
     }
     else
     {
-        optimization_data.parameters += optimization_data.parameters_increment;
+        optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
     }
 
     optimization_data.last_parameters_increment = optimization_data.parameters_increment;
 
     optimization_data.iteration++;
+*/
 }
 
 
@@ -619,7 +624,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     DataSet::Batch batch(batch_instances_number, data_set_pointer);
 
-    const Index training_batches_number = batch_instances_number > training_instances_number ? 1 : training_instances_number/batch_instances_number;
+    const Index training_batches_number
+            = batch_instances_number > training_instances_number
+            ? 1 : training_instances_number/batch_instances_number;
 
     Tensor<Index, 2> training_batches(training_batches_number, batch_instances_number);
 
@@ -650,7 +657,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     OptimizationData optimization_data(this);
 
-    Tensor<type, 1> minimal_selection_parameters(parameters_number);
+    Tensor<type, 1> minimal_selection_parameters;
     type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
@@ -660,6 +667,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     type elapsed_time = 0;
 
     results.resize_training_history(maximum_epochs_number + 1);
+    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
 
     bool shuffle = false;
 
@@ -783,7 +791,9 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
                 if(has_selection) cout << "Selection error: " << selection_back_propagation.error << endl << endl;
             }
 
-            results.resize_error_history(1 + epoch);
+            results.resize_training_error_history(epoch+1);
+            if(has_selection) results.resize_selection_error_history(epoch+1);
+
             results.final_parameters = optimization_data.parameters;
             results.final_training_error = training_error;
             results.final_selection_error = selection_back_propagation.error;
@@ -792,7 +802,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             break;
         }
-        else if(display && epoch % display_period == 0)
+        else if((display && epoch == 0) || (display && (epoch+1) % display_period == 0))
         {
             cout << "Epoch " << epoch+1 << "/"<<maximum_epochs_number << ":\n"
                  << "Training error: " << training_error << "\n"

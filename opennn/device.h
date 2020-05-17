@@ -11,9 +11,6 @@
 
 #include "config.h"
 
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
-#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
-
 using namespace Eigen;
 
 namespace OpenNN {
@@ -56,7 +53,9 @@ class Device
                     simple_thread_pool = new NonBlockingThreadPool(n);
                     #pragma warning(pop)
 
+
                     thread_pool_device = new ThreadPoolDevice(simple_thread_pool, n);
+
                 }
                 break;
             }
