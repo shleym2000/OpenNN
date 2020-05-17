@@ -69,17 +69,17 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
             && abs(s_yy() - 0) < numeric_limits<type>::epsilon()
             && abs(s_xy() - 0) < numeric_limits<type>::epsilon())
     {
-        linear_correlation = 1.0;
+        linear_correlation = 0.0;
     }
     else
     {
         const type numerator = (x_size * s_xy() - s_x() * s_y());
 
-        const type radicand = (x_size * s_xx() - s_x() * s_x()) *(n * s_yy() - s_y() * s_y());
+        const type radicand = (x_size * s_xx() - s_x() * s_x()) *(x_size * s_yy() - s_y() * s_y());
 
         if(radicand <= static_cast<type>(0.0))
         {
-            return 1.0;
+            return 0.0;
         }
 
         const type denominator = sqrt(radicand);
@@ -374,7 +374,7 @@ type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
 
             for(Index k = 0; k < new_size; k ++)
             {
-                if(abs(new_x(k,i) + new_y(k,j) - static_cast<type>(2.0)) <= static_cast<type>(0.0001))
+                if(fabsf(new_x(k,i) + new_y(k,j) - static_cast<type>(2.0)) <= static_cast<type>(1.0e-4))
                 {
                     count ++;
 
@@ -384,6 +384,8 @@ type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
         }
     }
 
+    cout << "contingencytable: " << contingency_table << endl;
+
     Index k;
 
     if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
@@ -391,7 +393,15 @@ type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
 
     const type chi_squared = chi_square_test(contingency_table.cast<type>());
 
+    cout << "chi_squared: " << chi_squared << endl;
+
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
+
+    cout << "Sum: " << contingency_table_sum() << endl;
+
+    cout << "k: " << k << endl;
+
+    cout << "Value: " << sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0))) << endl;
 
     return sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 }
@@ -1037,9 +1047,9 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
     CorrelationResults logarithmic_correlation;
 
-    logarithmic_correlation.correlation_type = Logarithmic_correlation;
-
     logarithmic_correlation.correlation = OpenNN::logarithmic_correlation(x, y);
+
+    logarithmic_correlation.correlation_type = Logarithmic_correlation;
 
     return logarithmic_correlation;
 }
@@ -1074,9 +1084,9 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     CorrelationResults exponential_correlation;
 
-    exponential_correlation.correlation_type = Exponential_correlation;
-
     exponential_correlation.correlation = OpenNN::exponential_correlation(x, y);
+
+    exponential_correlation.correlation_type = Exponential_correlation;
 
     return exponential_correlation;
 }
@@ -1111,9 +1121,9 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
 
     CorrelationResults power_correlation;
 
-    power_correlation.correlation_type = Power_correlation;
-
     power_correlation.correlation = OpenNN::power_correlation(x, y);
+
+    power_correlation.correlation_type = Power_correlation;
 
     return power_correlation;
 }
@@ -2027,7 +2037,6 @@ type one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type,
     const Tensor<type, 0> total_average = vector.sum() / n;
 
     type total_sum_of_squares = 0;
-    type treatment_sum_of_squares = 0;
 
     const Eigen::array<int, 1> columns = {Eigen::array<int, 1>({0})};
     const Tensor<type, 1> number_elements = matrix.sum(columns);
@@ -2050,6 +2059,8 @@ type one_way_anova_correlation(const Tensor<type, 2>& matrix, const Tensor<type,
         total_sum_of_squares += pow(vector[i] - total_average(0),2);
 
     }
+
+    type treatment_sum_of_squares = 0;
 
     for(Index i = 0; i < matrix.dimension(1); i ++)
     {
