@@ -93,6 +93,17 @@ void Layer::set_parameters_random()
     throw logic_error(buffer.str());
 }
 
+void Layer::set_synaptic_weights_constant_glorot_uniform()
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Layer class.\n"
+           << "set_synaptic_weights_constant_glorot_uniform() method.\n"
+           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
+
+    throw logic_error(buffer.str());
+}
+
 
 void Layer::set_parameters(const Tensor<type, 1>&, const Index&)
 {
@@ -196,6 +207,17 @@ Index Layer::get_neurons_number() const
 
     buffer << "OpenNN Exception: Layer class.\n"
            << "get_neurons_number() const method.\n"
+           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
+
+    throw logic_error(buffer.str());
+}
+
+Index Layer::get_synaptic_weights_number() const
+{
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: Layer class.\n"
+           << "get_synaptic_weight_number() const method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());

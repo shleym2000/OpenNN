@@ -207,6 +207,8 @@ public:
 
     virtual void set_parameters_random();
 
+    virtual void set_synaptic_weights_constant_glorot_uniform();
+
     // Architecture
 
     virtual Tensor<type, 1> get_parameters() const;
@@ -252,6 +254,8 @@ public:
 
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
+    virtual Index get_synaptic_weights_number() const;
+
 
     virtual void set_inputs_number(const Index&);
     virtual void set_neurons_number(const Index&);
