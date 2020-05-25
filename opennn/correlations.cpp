@@ -6,8 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#include "config.h"
-#include "device.h"
 #include "correlations.h"
 
 namespace OpenNN
@@ -17,12 +15,9 @@ namespace OpenNN
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type linear_correlation(const ThreadPoolDevice* thread_pool_device,
+                        const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
@@ -103,7 +98,7 @@ type linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-type rank_linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -123,7 +118,7 @@ type rank_linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
     const Tensor<type, 1> ranks_x = less_rank_with_ties(x);
     const Tensor<type, 1> ranks_y = less_rank_with_ties(y);
 
-    return linear_correlation(ranks_x, ranks_y);
+    return linear_correlation(thread_pool_device, ranks_x, ranks_y);
 
 }
 
@@ -134,14 +129,15 @@ type rank_linear_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 /// @param y Vector for computing the linear correlation with the x vector.
 /// @param missing Vector with the missing instances idices.
 
-type rank_linear_correlation_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type rank_linear_correlation_missing_values(const ThreadPoolDevice* thread_pool_device,
+                                            const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1> new_x = filter_vectors.first;
     const Tensor<type, 1> new_y = filter_vectors.second;
 
-    return rank_linear_correlation(new_x, new_y);
+    return rank_linear_correlation(thread_pool_device, new_x, new_y);
 }
 
 
@@ -150,7 +146,7 @@ type rank_linear_correlation_missing_values(const Tensor<type, 1>& x, const Tens
 /// @param y Vector containing the target values.
 /// @param missing Vector with the missing instances indices.
 
-type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -174,7 +170,7 @@ type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
         if(!::isnan(y(i)) && y(i) <= 0) return NAN;
     }
 
-    return linear_correlation(x, y.log());
+    return linear_correlation(thread_pool_device, x, y.log());
 }
 
 
@@ -182,7 +178,8 @@ type exponential_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 /// @param x Vector containing the input values.
 /// @param y Vector containing the target values.
 
-type logarithmic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
+                             const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -206,7 +203,7 @@ type logarithmic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
         if(!::isnan(x(i)) && x(i) <= 0) return NAN;
     }
 
-    return linear_correlation(x.log(), y);
+    return linear_correlation(thread_pool_device, x.log(), y);
 }
 
 
@@ -216,11 +213,11 @@ type logarithmic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
 
-type rank_logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type rank_logistic_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     const Tensor<type, 1> x_new = less_rank_with_ties(x);
 
-    return logistic_correlations(x_new, y).correlation;
+    return logistic_correlations(thread_pool_device, x_new, y).correlation;
 }
 
 
@@ -228,7 +225,7 @@ type rank_logistic_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& 
 /// @param x Vector of the independent variable
 /// @param y Vector of the dependent variable
 
-type power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -253,7 +250,7 @@ type power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
         if(!::isnan(y(i)) && y(i) <= 0) return NAN;
     }
 
-    return linear_correlation(x.log(), y.log());
+    return linear_correlation(thread_pool_device, x.log(), y.log());
 }
 
 
@@ -261,7 +258,7 @@ type power_correlation(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 /// @param x Matrix of the variable X.
 /// @param y Matrix of the variable Y.
 
-type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
+type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>& x, const Tensor<type,2>& y)
 {
 #ifdef  __OPENNN_DEBUG__
 
@@ -384,8 +381,6 @@ type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
         }
     }
 
-    cout << "contingencytable: " << contingency_table << endl;
-
     Index k;
 
     if(x.dimension(1) <= y.dimension(1)) k = x.dimension(1);
@@ -393,15 +388,7 @@ type karl_pearson_correlation(const Tensor<type,2>& x, const Tensor<type,2>& y)
 
     const type chi_squared = chi_square_test(contingency_table.cast<type>());
 
-    cout << "chi_squared: " << chi_squared << endl;
-
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
-
-    cout << "Sum: " << contingency_table_sum() << endl;
-
-    cout << "k: " << k << endl;
-
-    cout << "Value: " << sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0))) << endl;
 
     return sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 }
@@ -885,7 +872,7 @@ RegressionResults power_regression(const Tensor<type, 1>& x, const Tensor<type, 
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -901,10 +888,6 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
     }
 
 #endif
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     // Filter missing values
 
@@ -977,7 +960,7 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 
     const Tensor<type, 1> logistic_y = logistic(regression_results.a,regression_results.b, scaled_x);
 
-    regression_results.correlation = linear_correlation(logistic_y, new_y);
+    regression_results.correlation = linear_correlation(thread_pool_device, logistic_y, new_y);
 
     if(regression_results.b < 0) regression_results.correlation *= (-1);
 
@@ -991,7 +974,7 @@ RegressionResults logistic_regression(const Tensor<type, 1>& x, const Tensor<typ
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
     Index n = y.size();
 
@@ -1057,7 +1040,8 @@ CorrelationResults linear_correlations(const Tensor<type, 1>& x, const Tensor<ty
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+CorrelationResults logarithmic_correlations(const ThreadPoolDevice* thread_pool_device,
+                                            const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1080,7 +1064,7 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 
     CorrelationResults logarithmic_correlation;
 
-    logarithmic_correlation.correlation = OpenNN::logarithmic_correlation(x, y);
+    logarithmic_correlation.correlation = OpenNN::logarithmic_correlation(thread_pool_device, x, y);
 
     logarithmic_correlation.correlation_type = Logarithmic_correlation;
 
@@ -1092,7 +1076,8 @@ CorrelationResults logarithmic_correlations(const Tensor<type, 1>& x, const Tens
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+CorrelationResults exponential_correlations(const ThreadPoolDevice* thread_pool_device,
+                                            const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 
 #ifdef __OPENNN_DEBUG__
@@ -1117,7 +1102,7 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 
     CorrelationResults exponential_correlation;
 
-    exponential_correlation.correlation = OpenNN::exponential_correlation(x, y);
+    exponential_correlation.correlation = OpenNN::exponential_correlation(thread_pool_device, x, y);
 
     exponential_correlation.correlation_type = Exponential_correlation;
 
@@ -1129,7 +1114,8 @@ CorrelationResults exponential_correlations(const Tensor<type, 1>& x, const Tens
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+CorrelationResults power_correlations(const ThreadPoolDevice* thread_pool_device,
+                                      const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1154,7 +1140,7 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
 
     CorrelationResults power_correlation;
 
-    power_correlation.correlation = OpenNN::power_correlation(x, y);
+    power_correlation.correlation = OpenNN::power_correlation(thread_pool_device, x, y);
 
     power_correlation.correlation_type = Power_correlation;
 
@@ -1166,7 +1152,8 @@ CorrelationResults power_correlations(const Tensor<type, 1>& x, const Tensor<typ
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_device,
+                                         const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1182,10 +1169,6 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
     }
 
 #endif
-
-    const int n = omp_get_max_threads();
-    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-    ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     // Filter missing values
 
@@ -1253,7 +1236,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 
     const Tensor<type, 1> logistic_y = logistic(coefficients(0), coefficients(1), scaled_x);
 
-    logistic_correlations.correlation = linear_correlation(logistic_y, new_y);
+    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y, new_y);
 
     if(coefficients(1) < 0) logistic_correlations.correlation *= (-1);
 
@@ -1263,9 +1246,7 @@ CorrelationResults logistic_correlations(const Tensor<type, 1>& x, const Tensor<
 }
 
 
-
-
-CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 1>& y)
 {
 
 #ifdef __OPENNN_DEBUG__
@@ -1364,7 +1345,7 @@ CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, cons
 
     const Tensor<type, 2> logistic_y = logistic(bias, weights, scaled_x);
 
-    logistic_correlations.correlation = linear_correlation(logistic_y.chip(0,1), scaled_y.chip(0,1));
+    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1));
 
     logistic_correlations.correlation_type = Logistic_correlation;
 
@@ -1377,7 +1358,7 @@ CorrelationResults multiple_logistic_correlations(const Tensor<type, 2>& x, cons
 /// @param x Matrix of the variable X.
 /// @param y Matrix of the variable Y.
 
-CorrelationResults karl_pearson_correlations(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
 #ifdef  __OPENNN_DEBUG__
 
