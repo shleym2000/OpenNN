@@ -943,8 +943,8 @@ void QuasiNewtonMethod::update_epoch(
     {
         cout << optimization_data.epoch << endl;
 
-        if(is_zero(optimization_data.parameters_difference)) cout << "parameters_difference is zero" << endl;
-        if(is_zero(optimization_data.gradient_difference)) cout << "gradient_difference is zero" << endl;
+        if(is_zero(optimization_data.parameters_difference)) cout << "parameters_difference" << endl;
+        if(is_zero(optimization_data.gradient_difference)) cout << "gradient_difference" << endl;
 
         initialize_inverse_hessian_approximation(optimization_data);
     }
@@ -974,8 +974,10 @@ void QuasiNewtonMethod::update_epoch(
 
     // Get initial learning rate
 
+    optimization_data.initial_learning_rate = 0;
+
     optimization_data.epoch == 0
-            ? optimization_data.old_learning_rate = optimization_data.initial_learning_rate = first_learning_rate
+            ? optimization_data.initial_learning_rate = first_learning_rate
             : optimization_data.initial_learning_rate = optimization_data.old_learning_rate;
 
     pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
@@ -1005,10 +1007,7 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
 
-    // Assign some definitely high number when there is no previous epoch to compare to
-    optimization_data.epoch == 0
-        ? optimization_data.parameters_increment_norm = first_learning_rate
-        : optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
     optimization_data.old_parameters = optimization_data.parameters;
 
