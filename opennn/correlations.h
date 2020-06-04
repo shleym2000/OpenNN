@@ -155,7 +155,7 @@ struct CorrelationResults
     type logistic(const type&, const type&, const type&);
     Tensor<type, 1> logistic(const type&, const type&, const Tensor<type, 1>&);
 
-    Tensor<type, 2> logistic(const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
+    Tensor<type, 2> logistic(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     type logistic_error(const type&, const type&, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -163,13 +163,13 @@ struct CorrelationResults
 
     // Regression methods
 
-    RegressionResults linear_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    RegressionResults linear_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults logarithmic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    RegressionResults logarithmic_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults exponential_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    RegressionResults exponential_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    RegressionResults power_regression(const Tensor<type, 1>&, const Tensor<type, 1>&);
+    RegressionResults power_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     RegressionResults logistic_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 

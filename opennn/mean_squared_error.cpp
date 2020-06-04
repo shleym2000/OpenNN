@@ -116,6 +116,7 @@ void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const
 {
+
     Tensor<type, 0> sum_squared_error;
 
     const Index batch_instances_number = batch.inputs_2d.dimension(0);
@@ -208,7 +209,7 @@ void MeanSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 
 // Hessian approximation
 
-void MeanSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
+void MeanSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndex::SecondOrderLoss& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -281,15 +282,13 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("Error");
-
-    file_stream.PushAttribute("Type", "MEAN_SQUARED_ERROR");
+    file_stream.OpenElement("MeanSquaredError");
 
     file_stream.CloseElement();
 
     // Regularization
 
-    write_regularization_XML(file_stream);
+//    write_regularization_XML(file_stream);
 }
 
 }

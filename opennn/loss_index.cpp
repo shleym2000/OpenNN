@@ -427,27 +427,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 #endif
 
     const Index layers_number = neural_network_pointer->get_trainable_layers_number();
-/*
-#ifdef __OPENNN_DEBUG__
 
-    // Hidden errors size
-
-    const Index layers_delta_size = layers_delta.size();
-
-    if(layers_delta_size != layers_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: LossIndex class.\n"
-               << "Tensor<type, 2> calculate_layers_error_Jacobian() method.\n"
-               << "Size of layers delta("<< layers_delta_size << ") must be equal to number of layers("
-               << layers_number << ").\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-*/
     const Index parameters_number = neural_network_pointer->get_parameters_number();
     const Index instances_number = data_set_pointer->get_training_instances_number();
 
@@ -459,7 +439,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
     Index index = 0;
 
-    Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
+    const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
 
     memcpy(error_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
@@ -474,9 +454,9 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
         index += layers_parameters_number[i]*instances_number;
     }
+
     second_order_loss.error_Jacobian = error_Jacobian;
 }
-
 
 /// Calculates the <i>Jacobian</i> matrix of the error terms of the layer.
 /// Returns the Jacobian of the error terms function, according to the objective type used in the loss index expression.
@@ -489,13 +469,19 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
 Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas, const Tensor<type, 2>& layer_inputs) const
 {
+    cout << "------------------------------" << endl;
     const Index instances_number = layer_inputs.dimension(0);
     const Index inputs_number = layer_inputs.dimension(1);
     const Index neurons_number = layer_deltas.dimension(1);
 
+    cout << "Instances_number: " << instances_number << endl;
+    cout << "Inputs_number: " << inputs_number << endl;
+    cout << "Neurons_number: " << neurons_number << endl;
+
     const Index synaptic_weights_number = neurons_number*inputs_number;
 
     Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
+    layer_error_Jacobian.setConstant(1);
 
     Index parameter;
 
@@ -518,19 +504,12 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
         }
     }
 
+    cout << "------------------------------" << endl;
+
+    system("pause");
+
     return layer_error_Jacobian;
 }
-
-
-/// Returns the value of the loss function at some step along some direction.
-/*
-type LossIndex::calculate_training_loss(const Tensor<type, 1>& direction, const type& rate) const
-{
-    const Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
-
-    return calculate_training_loss(parameters + direction*rate);
-}
-*/
 
 
 void LossIndex::back_propagate(const DataSet::Batch& batch,
@@ -564,8 +543,6 @@ void LossIndex::back_propagate(const DataSet::Batch& batch,
 }
 
 
-// Second Order loss
-
 /// This method calculates the second order loss.
 /// It is used for optimization of parameters during training.
 /// Returns a second order terms loss structure, which contains the values and the Hessian of the error terms function.
@@ -577,8 +554,8 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 {
     // First Order
 
-    calculate_error(batch, forward_propagation, back_propagation);
-
+//    calculate_error(batch, forward_propagation, back_propagation);
+// error terms ¿?
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
     calculate_layers_delta(forward_propagation, back_propagation);
@@ -589,11 +566,13 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
 
-    calculate_hessian_approximation(second_order_loss);
+    calculate_error_gradient(batch,forward_propagation,back_propagation);
+
+    calculate_hessian_approximation(batch, second_order_loss);
 
     // Loss
 
-    second_order_loss.loss = back_propagation.error;
+    second_order_loss.loss = second_order_loss.error;
 
     // Regularization
 
@@ -802,7 +781,6 @@ void LossIndex::calculate_error_gradient(const DataSet::Batch& batch,
 }
 
 
-
 /// Serializes a default error term object into a XML document of the TinyXML library.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -939,7 +917,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
+  /*  tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
@@ -948,7 +926,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);
+    regularization_from_XML(regularization_document);*/
 }
 
 
@@ -1063,6 +1041,7 @@ type LossIndex::l2_norm(const Tensor<type, 1>& parameters) const
     return norm(0);
 }
 
+
 type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
 {
     Tensor<type, 0> norm;
@@ -1071,6 +1050,7 @@ type LossIndex::l1_norm(const Tensor<type, 1>& parameters) const
 
     return norm(0);
 }
+
 
 Tensor<type, 1> LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters) const
 {
@@ -1081,7 +1061,6 @@ Tensor<type, 1> LossIndex::l1_norm_gradient(const Tensor<type, 1>& parameters) c
     gradient.device(*thread_pool_device) = parameters.sign();
 
     return gradient;
-
 }
 
 

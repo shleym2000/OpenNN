@@ -4258,9 +4258,6 @@ void DataSet::set_default()
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-
-    data = new_data;
-
     set_instances_number(data.dimension(0));
 
 //   set_variables_number(data.dimension(1));
@@ -4272,6 +4269,7 @@ void DataSet::set_data(const Tensor<type, 2>& new_data)
 
     set(instances_number, variables_number);
 
+    data = new_data;
 }
 
 
@@ -5867,10 +5865,10 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const RegressionResults linear_regression = OpenNN::linear_regression(input_column, target_column);
-                const RegressionResults exponential_regression = OpenNN::exponential_regression(input_column, target_column);
-                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(input_column, target_column);
-                const RegressionResults power_regression = OpenNN::power_regression(input_column, target_column);
+                const RegressionResults linear_regression = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults exponential_regression = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults power_regression = OpenNN::power_regression(thread_pool_device, input_column, target_column);
 
                 RegressionResults strongest_regression = linear_regression;
 
@@ -5885,7 +5883,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = linear_regression(input_column, target_column);
+                regressions(i,j) = linear_regression(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
@@ -8724,7 +8722,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     file.close();
 
     cout << "Binary data file saved." << endl;
-
 }
 
 

@@ -416,8 +416,6 @@ void LevenbergMarquardtAlgorithm::set_warning_gradient_norm(const type& new_warn
 
 #endif
 
-    // Set warning gradient norm
-
     warning_gradient_norm = new_warning_gradient_norm;
 }
 
@@ -442,8 +440,6 @@ void LevenbergMarquardtAlgorithm::set_error_parameters_norm(const type& new_erro
     }
 
 #endif
-
-    // Set error parameters norm
 
     error_parameters_norm = new_error_parameters_norm;
 }
@@ -470,8 +466,6 @@ void LevenbergMarquardtAlgorithm::set_error_gradient_norm(const type& new_error_
 
 #endif
 
-    // Set error gradient norm
-
     error_gradient_norm = new_error_gradient_norm;
 }
 
@@ -497,8 +491,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_parameters_increment_norm(
 
 #endif
 
-    // Set error learning rate
-
     minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
 }
 
@@ -522,8 +514,6 @@ void LevenbergMarquardtAlgorithm::set_minimum_loss_decrease(const type& new_mini
     }
 
 #endif
-
-    // Set minimum loss improvement
 
     minimum_loss_decrease = new_minimum_loss_decrease;
 }
@@ -559,8 +549,6 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
     }
 
 #endif
-
-    // Set gradient norm goal
 
     gradient_norm_goal = new_gradient_norm_goal;
 }
@@ -605,8 +593,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
     }
 
 #endif
-
-    // Set maximum time
 
     maximum_time = new_maximum_time;
 }
@@ -816,7 +802,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         // Neural network
 
@@ -833,7 +819,10 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         // Loss index
 
-        loss_index_pointer->calculate_terms_second_order_loss(training_batch, training_forward_propagation, training_back_propagation, terms_second_order_loss);
+        loss_index_pointer->calculate_terms_second_order_loss(training_batch,
+                                                              training_forward_propagation,
+                                                              training_back_propagation,
+                                                              terms_second_order_loss);
 
         training_loss = terms_second_order_loss.loss;
 
@@ -850,7 +839,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
              terms_second_order_loss.sum_hessian_diagonal(damping_parameter);
 
-             parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1.)*terms_second_order_loss.gradient);
+             parameters_increment = perform_Householder_QR_decomposition(terms_second_order_loss.hessian,(-1)*terms_second_order_loss.gradient);
 
              Tensor<type, 1> new_parameters = parameters + parameters_increment;
 
@@ -858,7 +847,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
              loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
 
-             const type new_loss = training_back_propagation.error;
+             const type new_loss = training_back_propagation.error/* + loss_index_pointer->calculate_regularization(new_parameters)*/;
 
              if(new_loss <= training_loss) // succesfull step
              {
@@ -883,7 +872,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
         parameters_increment_norm = l2_norm(parameters_increment);
 
-        if(epoch == 1)
+        if(epoch == 0)
         {
             training_loss_decrease = 0;
         }
@@ -1488,6 +1477,8 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 {
     ostringstream buffer;
 
+    file_stream.OpenElement("LevenbergMarquardt");
+
     // Damping paramterer factor.
 
     file_stream.OpenElement("DampingParameterFactor");
@@ -1620,6 +1611,8 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
 
     file_stream.CloseElement();
 }
@@ -1880,9 +1873,7 @@ Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decompositio
     Tensor<type, 1> x(n);
 
     const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
-
     const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
-
     Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
 
     x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);

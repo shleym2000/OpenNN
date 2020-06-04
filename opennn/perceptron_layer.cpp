@@ -533,7 +533,8 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
     scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
     limit = sqrt(static_cast<type>(3.0) * scale);
 
-    biases.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+//    biases.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
+    biases.setZero();
 
     synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
 
@@ -542,10 +543,6 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 
     synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
     synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
-
-//    cout << "Limit:" << endl << limit << endl;
-//    cout << "SW:" << endl << synaptic_weights << endl;
-//    system("pause");
 }
 
 
@@ -752,14 +749,85 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 }
 
 
+void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
+                                   ForwardPropagation& forward_propagation) const
+ {
+#ifdef __OPENNN_DEBUG__
+
+    const Index inputs_number = get_inputs_number();
+
+    if(inputs_number != inputs.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void forward_propagate(const Tensor<type, 2>&, ForwardPropagation&) method.\n"
+               << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
+               << inputs_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    calculate_combinations(inputs,
+                           biases,
+                           synaptic_weights,
+                           forward_propagation.combinations_2d);
+
+    calculate_activations_derivatives(forward_propagation.combinations_2d,
+                                      forward_propagation.activations_2d,
+                                      forward_propagation.activations_derivatives_2d);
+}
+
+
+void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
+                                   Tensor<type, 1> potential_parameters,
+                                   ForwardPropagation& forward_propagation) const
+   {
+    const Index neurons_number = get_neurons_number();
+    const Index inputs_number = get_inputs_number();
+
+#ifdef __OPENNN_DEBUG__
+
+    if(inputs_number != inputs.dimension(1))
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void forward_propagate(const Tensor<type, 2>&, Tensor<type, 1>&, ForwardPropagation&) method.\n"
+               << "Number of inputs columns (" << inputs.dimension(1) << ") must be equal to number of inputs ("
+               << inputs_number << ").\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    const TensorMap<Tensor<type, 2>> potential_biases(potential_parameters.data(), neurons_number, 1);
+
+    const TensorMap<Tensor<type, 2>> potential_synaptic_weights(potential_parameters.data()+neurons_number,
+                                                                inputs_number, neurons_number);
+
+    calculate_combinations(inputs,
+                           potential_biases,
+                           potential_synaptic_weights,
+                           forward_propagation.combinations_2d);
+
+    calculate_activations_derivatives(forward_propagation.combinations_2d,
+                                      forward_propagation.activations_2d,
+                                      forward_propagation.activations_derivatives_2d);
+}
+
+
 // Delta methods
 
 void PerceptronLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
-   {      
-       output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
-   }
+{
+    output_delta.device(*thread_pool_device) = forward_propagation.activations_derivatives_2d*output_gradient;
+}
 
 
 void PerceptronLayer::calculate_hidden_delta(Layer* next_layer_pointer,
@@ -802,7 +870,6 @@ void PerceptronLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointe
     hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
 
     hidden_delta.device(*thread_pool_device) = hidden_delta*activations_derivatives;
-
 }
 
 

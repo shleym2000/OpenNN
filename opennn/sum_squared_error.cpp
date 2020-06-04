@@ -167,7 +167,7 @@ void SumSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
 
 // Hessian method
 
-void SumSquaredError::calculate_hessian_approximation(LossIndex::SecondOrderLoss& second_order_loss) const
+void SumSquaredError::calculate_hessian_approximation(const DataSet::Batch&, LossIndex::SecondOrderLoss& second_order_loss) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -240,15 +240,13 @@ void SumSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("Error");
-
-    file_stream.PushAttribute("Type", "SUM_SQUARED_ERROR");
+    file_stream.OpenElement("SumSquaredError");
 
     file_stream.CloseElement();
 
     // Regularization
 
-    write_regularization_XML(file_stream);
+//    write_regularization_XML(file_stream);
 }
 
 
@@ -272,7 +270,7 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regularization
 
-    tinyxml2::XMLDocument regularization_document;
+    /*tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
@@ -281,7 +279,7 @@ void SumSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);
+    regularization_from_XML(regularization_document);*/
 }
 
 }

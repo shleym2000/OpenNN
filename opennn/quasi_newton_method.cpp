@@ -1051,6 +1051,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
     const Index training_instances_number = data_set_pointer->get_training_instances_number();
+
     const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
     const bool has_selection = data_set_pointer->has_selection();
 
@@ -1670,7 +1671,7 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-//    file_stream.OpenElement("QuasiNewtonMethod");
+    file_stream.OpenElement("QuasiNewtonMethod");
 
     // Inverse hessian approximation method
 
@@ -1804,6 +1805,8 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
+
+    file_stream.CloseElement();
 }
 
 
@@ -1932,6 +1935,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
+
     // Inverse hessian approximation method
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("InverseHessianApproximationMethod");
@@ -1967,121 +1971,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             learning_rate_algorithm.from_XML(learning_rate_algorithm_document);
         }
     }
-    /*
-       // Warning parameters norm
-       {
-           const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningParametersNorm");
 
-           if(element)
-           {
-              const type new_warning_parameters_norm = static_cast<type>(atof(element->GetText()));
-
-              try
-              {
-                 set_warning_parameters_norm(new_warning_parameters_norm);
-              }
-              catch(const logic_error& e)
-              {
-                 cerr << e.what() << endl;
-              }
-           }
-       }
-
-       // Warning gradient norm
-       {
-           const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningGradientNorm");
-
-           if(element)
-           {
-              const type new_warning_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-              try
-              {
-                 set_warning_gradient_norm(new_warning_gradient_norm);
-              }
-              catch(const logic_error& e)
-              {
-                 cerr << e.what() << endl;
-              }
-           }
-       }
-
-       // Warning learning rate
-       {
-           const tinyxml2::XMLElement* element = root_element->FirstChildElement("WarningLearningRate");
-
-           if(element)
-           {
-              const type new_warning_learning_rate = static_cast<type>(atof(element->GetText()));
-
-              try
-              {
-                 set_warning_learning_rate(new_warning_learning_rate);
-              }
-              catch(const logic_error& e)
-              {
-                 cerr << e.what() << endl;
-              }
-           }
-       }
-
-       // Error parameters norm
-       {
-           const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorParametersNorm");
-
-           if(element)
-           {
-              const type new_error_parameters_norm = static_cast<type>(atof(element->GetText()));
-
-              try
-              {
-                 set_error_parameters_norm(new_error_parameters_norm);
-              }
-              catch(const logic_error& e)
-              {
-                 cerr << e.what() << endl;
-              }
-           }
-       }
-
-       // Error gradient norm
-       {
-           const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorGradientNorm");
-
-           if(element)
-           {
-              const type new_error_gradient_norm = static_cast<type>(atof(element->GetText()));
-
-              try
-              {
-                 set_error_gradient_norm(new_error_gradient_norm);
-              }
-              catch(const logic_error& e)
-              {
-                 cerr << e.what() << endl;
-              }
-           }
-       }
-
-       // Error learning rate
-       {
-           const tinyxml2::XMLElement* element = root_element->FirstChildElement("ErrorLearningRate");
-
-           if(element)
-           {
-              const type new_error_learning_rate = static_cast<type>(atof(element->GetText()));
-
-              try
-              {
-                 set_error_learning_rate(new_error_learning_rate);
-              }
-              catch(const logic_error& e)
-              {
-                 cerr << e.what() << endl;
-              }
-           }
-       }
-    */
     // Return minimum selection error neural network
 
     const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");

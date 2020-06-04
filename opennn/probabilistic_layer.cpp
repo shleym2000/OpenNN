@@ -643,6 +643,7 @@ void ProbabilisticLayer::calculate_combinations(const Tensor<type, 2>& inputs,
     }
 
     combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
+
 }
 
 
@@ -776,11 +777,22 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
 {
+//    cout << "Probabilistic forward propagate ------------------------------" << endl;
     calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
 
     calculate_activations_derivatives(forward_propagation.combinations_2d,
                                       forward_propagation.activations_2d,
                                       forward_propagation.activations_derivatives_3d);
+
+
+//    cout << "Inputs: " << inputs << endl;
+
+//    cout << "Combinations : " << forward_propagation.combinations_2d << endl;
+//    cout << "activations_2d : " << forward_propagation.activations_2d << endl;
+//    cout << "activations_derivatives_3d : " << forward_propagation.activations_derivatives_3d << endl;
+
+//    cout << "--------------------------------------------------------------" << endl;
+
 }
 
 
@@ -874,7 +886,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
             throw logic_error(buffer.str());
         }
 
-        Tensor<type, 1> output_gradient_row(batch_instances_number);
+        Tensor<type, 1> output_gradient_row(neurons_number);
         Tensor<type, 1> output_delta_row(neurons_number);
 
         Index index = 0;
@@ -884,8 +896,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
         {
             output_gradient_row = output_gradient.chip(i,0);
 
-
-            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index*i,
+            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(forward_propagation.activations_derivatives_3d.data()+index,
                                                                         neurons_number, neurons_number);
 
             output_delta_row.device(*thread_pool_device) = output_gradient_row.contract(activations_derivatives_matrix, AT_B);
@@ -894,6 +905,7 @@ void ProbabilisticLayer::calculate_output_delta(ForwardPropagation& forward_prop
             {
                 output_delta(i,j) = output_delta_row(j);
             }
+
 
             index += step;
         }
