@@ -693,9 +693,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             // Neural network
 
             neural_network_pointer->forward_propagate(batch, forward_propagation);
-//            forward_propagation.print();
 
-//            system("pause");
+//            forward_propagation.print();
 
             // Loss
 
@@ -709,6 +708,8 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             update_iteration(back_propagation, optimization_data);
 
             neural_network_pointer->set_parameters(optimization_data.parameters);
+
+
         }
 
         // Loss
@@ -1121,6 +1122,8 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 {
     ostringstream buffer;
 
+    file_stream.OpenElement("StochasticGradientDescent");
+
     // Batch size
 
     file_stream.OpenElement("BatchSize");
@@ -1207,6 +1210,7 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.PushText(buffer.str().c_str());
 
+    file_stream.CloseElement();
     file_stream.CloseElement();
 }
 

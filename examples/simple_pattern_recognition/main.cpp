@@ -14,6 +14,7 @@
 #include <sstream>
 #include <time.h>
 #include <stdexcept>
+#include <omp.h>
 
 // OpenNN includes
 
@@ -53,6 +54,7 @@ int main(void)
         neural_network_architecture.setValues({2, 2, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
+
         neural_network.set_thread_pool_device(thread_pool_device);
 
         neural_network.set_inputs_names(inputs_names);
@@ -67,28 +69,36 @@ int main(void)
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-//        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+        training_strategy.set_thread_pool_device(thread_pool_device);
+
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
+
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
         const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 
-        data_set.set_testing();
+//        data_set.set_testing();
 
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
+//        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+//        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+//        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
         // Save results
 
-        data_set.save("../data/data_set.xml");
+//        data_set.save("../data/data_set.xml");
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
+//        neural_network.save("../data/neural_network.xml");
+//        neural_network.save_expression("../data/expression.txt");
 
-        training_strategy.save("../data/training_strategy.xml");
+//        training_strategy.save("../data/training_strategy.xml");
 //        training_strategy_results.save("../data/training_strategy_results.dat");
 
 //        binary_classification_tests.save("../data/binary_classification_tests.dat");

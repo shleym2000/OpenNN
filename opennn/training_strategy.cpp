@@ -1,4 +1,4 @@
-//   OpenNN: Open Neural Networks Library
+//   OpenNN: Open Neural Networks Library+
 //   www.opennn.net
 //
 //   T R A I N I N G   S T R A T E G Y   C L A S S
@@ -25,6 +25,10 @@ TrainingStrategy::TrainingStrategy()
 
     set_optimization_method(QUASI_NEWTON_METHOD);
 
+    LossIndex* loss_index_pointer = get_loss_index_pointer();
+
+    set_loss_index_pointer(loss_index_pointer);
+
     set_default();
 }
 
@@ -40,8 +44,13 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     neural_network_pointer = new_neural_network_pointer;
 
     set_optimization_method(QUASI_NEWTON_METHOD);
-
     set_loss_method(NORMALIZED_SQUARED_ERROR);
+
+    set_loss_index_data_set_pointer(data_set_pointer);
+    set_loss_index_neural_network_pointer(neural_network_pointer);
+
+    LossIndex* loss_index_pointer = get_loss_index_pointer();
+    set_loss_index_pointer(loss_index_pointer);
 
     set_default();
 }
@@ -95,34 +104,82 @@ NeuralNetwork* TrainingStrategy::get_neural_network_pointer() const
 
 /// Returns a pointer to the LossIndex class.
 
-LossIndex* TrainingStrategy::get_loss_index_pointer() const
+LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
-/*
-    if(loss_method == SUM_SQUARED_ERROR && sum_squared_error_pointer != nullptr) return sum_squared_error_pointer;
-    else if(loss_method == MEAN_SQUARED_ERROR && mean_squared_error_pointer != nullptr) return mean_squared_error_pointer;
-    else if(loss_method == NORMALIZED_SQUARED_ERROR && normalized_squared_error_pointer != nullptr) return normalized_squared_error_pointer;
-    else if(loss_method == MINKOWSKI_ERROR && Minkowski_error_pointer != nullptr) return Minkowski_error_pointer;
-    else if(loss_method == WEIGHTED_SQUARED_ERROR && weighted_squared_error_pointer != nullptr) return weighted_squared_error_pointer;
-    else if(loss_method == CROSS_ENTROPY_ERROR && cross_entropy_error_pointer != nullptr) return cross_entropy_error_pointer;
-    else return nullptr;
-*/
+    switch (loss_method)
+    {
+    case SUM_SQUARED_ERROR:
+    {
+        return &sum_squared_error;
+    }
+
+    case MEAN_SQUARED_ERROR:
+    {
+        return &mean_squared_error;
+    }
+
+    case NORMALIZED_SQUARED_ERROR:
+    {
+        return &normalized_squared_error;
+    }
+
+    case MINKOWSKI_ERROR:
+    {
+        return &Minkowski_error;
+    }
+
+    case WEIGHTED_SQUARED_ERROR:
+    {
+        return &weighted_squared_error;
+    }
+
+    case CROSS_ENTROPY_ERROR:
+    {
+        return &cross_entropy_error;
+    }
+    }
+
     return nullptr;
 }
 
 
 /// Returns a pointer to the OptimizationAlgorithm class.
 
-OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer() const
+OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
-/*
-    if(optimization_method == GRADIENT_DESCENT && gradient_descent_pointer != nullptr) return gradient_descent_pointer;
-    else if(optimization_method == CONJUGATE_GRADIENT && conjugate_gradient_pointer != nullptr) return conjugate_gradient_pointer;
-    else if(optimization_method == QUASI_NEWTON_METHOD && quasi_Newton_method_pointer != nullptr) return quasi_Newton_method_pointer;
-    else if(optimization_method == LEVENBERG_MARQUARDT_ALGORITHM && Levenberg_Marquardt_algorithm_pointer != nullptr) return Levenberg_Marquardt_algorithm_pointer;
-    else if(optimization_method == STOCHASTIC_GRADIENT_DESCENT && stochastic_gradient_descent_pointer != nullptr) return stochastic_gradient_descent_pointer;
-    else if(optimization_method == ADAPTIVE_MOMENT_ESTIMATION && adaptive_moment_estimation_pointer != nullptr) return adaptive_moment_estimation_pointer;
-    else return nullptr;
-*/
+    switch (optimization_method)
+    {
+    case GRADIENT_DESCENT:
+    {
+        return &gradient_descent;
+    }
+
+    case CONJUGATE_GRADIENT:
+    {
+        return &conjugate_gradient;
+    }
+
+    case STOCHASTIC_GRADIENT_DESCENT:
+    {
+        return &stochastic_gradient_descent;
+    }
+
+    case ADAPTIVE_MOMENT_ESTIMATION:
+    {
+        return &adaptive_moment_estimation;
+    }
+
+    case QUASI_NEWTON_METHOD:
+    {
+        return &quasi_Newton_method;
+    }
+
+    case LEVENBERG_MARQUARDT_ALGORITHM:
+    {
+        return &Levenberg_Marquardt_algorithm;
+    }
+    }
+
     return nullptr;
 }
 
@@ -147,27 +204,31 @@ bool TrainingStrategy::has_data_set() const
 
 bool TrainingStrategy::has_loss_index() const
 {
-    if(get_loss_index_pointer() == nullptr)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    return true;
+
+//    if(get_loss_index_pointer() == nullptr)
+//    {
+//        return false;
+//    }
+//    else
+//    {
+//        return true;
+//    }
 }
 
 
 bool TrainingStrategy::has_optimization_algorithm() const
 {
-    if(get_optimization_algorithm_pointer() == nullptr)
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
+    return true;
+
+//    if(get_optimization_algorithm_pointer() == nullptr)
+//    {
+//        return false;
+//    }
+//    else
+//    {
+//        return true;
+//    }
 }
 
 
@@ -524,6 +585,8 @@ void TrainingStrategy::set_loss_method(const LossMethod& new_loss_method)
     LossIndex::RegularizationMethod regularization_method;
 
     loss_method = new_loss_method;
+
+    set_loss_index_pointer(get_loss_index_pointer());
 }
 
 
@@ -580,9 +643,46 @@ void TrainingStrategy::set_optimization_method(const string& new_optimization_me
 
 void TrainingStrategy::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    get_loss_index_pointer()->set_thread_pool_device(new_thread_pool_device);
+    set_loss_thread_pool_device(new_thread_pool_device);
+    set_optimization_thread_pool_device(new_thread_pool_device);
+}
 
-    get_optimization_algorithm_pointer()->set_thread_pool_device(new_thread_pool_device);
+
+void TrainingStrategy::set_data_set_pointer(DataSet* new_data_set_pointer)
+{
+    data_set_pointer = new_data_set_pointer;
+
+    set_loss_index_data_set_pointer(data_set_pointer);
+}
+
+
+void TrainingStrategy::set_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+{
+    neural_network_pointer = new_neural_network_pointer;
+
+    set_loss_index_neural_network_pointer(neural_network_pointer);
+}
+
+
+void TrainingStrategy::set_loss_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+{
+    sum_squared_error.set_thread_pool_device(new_thread_pool_device);
+    mean_squared_error.set_thread_pool_device(new_thread_pool_device);
+    normalized_squared_error.set_thread_pool_device(new_thread_pool_device);
+    Minkowski_error.set_thread_pool_device(new_thread_pool_device);
+    weighted_squared_error.set_thread_pool_device(new_thread_pool_device);
+    cross_entropy_error.set_thread_pool_device(new_thread_pool_device);
+}
+
+
+void TrainingStrategy::set_optimization_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
+{
+    gradient_descent.set_thread_pool_device(new_thread_pool_device);
+    conjugate_gradient.set_thread_pool_device(new_thread_pool_device);
+    stochastic_gradient_descent.set_thread_pool_device(new_thread_pool_device);
+    adaptive_moment_estimation.set_thread_pool_device(new_thread_pool_device);
+    quasi_Newton_method.set_thread_pool_device(new_thread_pool_device);
+    Levenberg_Marquardt_algorithm.set_thread_pool_device(new_thread_pool_device);
 }
 
 
@@ -591,46 +691,34 @@ void TrainingStrategy::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_
 
 void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
-    // Main
+    gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
+    conjugate_gradient.set_loss_index_pointer(new_loss_index_pointer);
+    stochastic_gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
+    adaptive_moment_estimation.set_loss_index_pointer(new_loss_index_pointer);
+    quasi_Newton_method.set_loss_index_pointer(new_loss_index_pointer);
+    Levenberg_Marquardt_algorithm.set_loss_index_pointer(new_loss_index_pointer);
+}
 
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
 
-    case CONJUGATE_GRADIENT:
-    {
-        conjugate_gradient.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
+void TrainingStrategy::set_loss_index_data_set_pointer(DataSet* new_data_set_pointer)
+{
+    sum_squared_error.set_data_set_pointer(new_data_set_pointer);
+    mean_squared_error.set_data_set_pointer(new_data_set_pointer);
+    normalized_squared_error.set_data_set_pointer(new_data_set_pointer);
+    cross_entropy_error.set_data_set_pointer(new_data_set_pointer);
+    weighted_squared_error.set_data_set_pointer(new_data_set_pointer);
+    Minkowski_error.set_data_set_pointer(new_data_set_pointer);
+}
 
-    case QUASI_NEWTON_METHOD:
-    {
-        quasi_Newton_method.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
 
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        Levenberg_Marquardt_algorithm.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        stochastic_gradient_descent.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        adaptive_moment_estimation.set_loss_index_pointer(new_loss_index_pointer);
-    }
-    break;
-    }
+void TrainingStrategy::set_loss_index_neural_network_pointer(NeuralNetwork* new_neural_network_pointer)
+{
+    sum_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    mean_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    normalized_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    cross_entropy_error.set_neural_network_pointer(new_neural_network_pointer);
+    weighted_squared_error.set_neural_network_pointer(new_neural_network_pointer);
+    Minkowski_error.set_neural_network_pointer(new_neural_network_pointer);
 }
 
 
@@ -642,45 +730,23 @@ void TrainingStrategy::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 void TrainingStrategy::set_display(const bool& new_display)
 {
     display = new_display;
+    gradient_descent.set_display(display);
+    conjugate_gradient.set_display(display);
+    stochastic_gradient_descent.set_display(display);
+    adaptive_moment_estimation.set_display(display);
+    quasi_Newton_method.set_display(display);
+    Levenberg_Marquardt_algorithm.set_display(display);
+}
 
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        gradient_descent.set_display(display);
-    }
-    break;
 
-    case CONJUGATE_GRADIENT:
-    {
-        conjugate_gradient.set_display(display);
-    }
-    break;
-
-    case QUASI_NEWTON_METHOD:
-    {
-        quasi_Newton_method.set_display(display);
-    }
-    break;
-
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        Levenberg_Marquardt_algorithm.set_display(display);
-    }
-    break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        stochastic_gradient_descent.set_display(display);
-    }
-    break;
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        adaptive_moment_estimation.set_display(display);
-    }
-    break;
-    }
+void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_selection_error)
+{
+    gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
+    conjugate_gradient.set_reserve_selection_error_history(reserve_selection_error);
+    stochastic_gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
+    adaptive_moment_estimation.set_reserve_selection_error_history(reserve_selection_error);
+    quasi_Newton_method.set_reserve_selection_error_history(reserve_selection_error);
+    Levenberg_Marquardt_algorithm.set_reserve_selection_error_history(reserve_selection_error);
 }
 
 
@@ -1118,144 +1184,43 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Loss index
 
-    switch(loss_method)
-    {
-    case SUM_SQUARED_ERROR:
-    {
-        file_stream.OpenElement("LossIndex");
+    file_stream.OpenElement("LossIndex");
 
-        sum_squared_error.write_XML(file_stream);
+    // Loss method
 
-        file_stream.CloseElement();
-    }
-    break;
+    file_stream.OpenElement("LossMethod");
+    file_stream.PushText(write_loss_method().c_str());
+    file_stream.CloseElement();
 
-    case MEAN_SQUARED_ERROR:
-    {
-        file_stream.OpenElement("LossIndex");
+//    sum_squared_error.write_XML(file_stream);
+    mean_squared_error.write_XML(file_stream);
+    normalized_squared_error.write_XML(file_stream);
+    Minkowski_error.write_XML(file_stream);
+    cross_entropy_error.write_XML(file_stream);
+    weighted_squared_error.write_XML(file_stream);
 
-        mean_squared_error.write_XML(file_stream);
+    sum_squared_error.write_regularization_XML(file_stream);
 
-        file_stream.CloseElement();
-    }
-    break;
+    file_stream.CloseElement();
 
-    case NORMALIZED_SQUARED_ERROR:
-    {
-        file_stream.OpenElement("LossIndex");
+    // Optimization algorithm
 
-        normalized_squared_error.write_XML(file_stream);
+    file_stream.OpenElement("OptimizationAlgorithm");
 
-        file_stream.CloseElement();
-    }
-    break;
+    file_stream.OpenElement("OptimizationMethod");
+    file_stream.PushText(write_optimization_method().c_str());
+    file_stream.CloseElement();
 
-    case MINKOWSKI_ERROR:
-    {
-        file_stream.OpenElement("LossIndex");
+    gradient_descent.write_XML(file_stream);
+    conjugate_gradient.write_XML(file_stream);
+    stochastic_gradient_descent.write_XML(file_stream);
+    adaptive_moment_estimation.write_XML(file_stream);
+    quasi_Newton_method.write_XML(file_stream);
+    Levenberg_Marquardt_algorithm.write_XML(file_stream);
 
-        Minkowski_error.write_XML(file_stream);
+    file_stream.CloseElement();
 
-        file_stream.CloseElement();
-    }
-    break;
-
-    case CROSS_ENTROPY_ERROR:
-    {
-        file_stream.OpenElement("LossIndex");
-
-        cross_entropy_error.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    break;
-
-    case WEIGHTED_SQUARED_ERROR:
-    {
-        file_stream.OpenElement("LossIndex");
-
-        weighted_squared_error.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    }
-
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-    {
-        file_stream.OpenElement("Main");
-
-        file_stream.PushAttribute("Type", "GRADIENT_DESCENT");
-
-        gradient_descent.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    break;
-
-    case CONJUGATE_GRADIENT:
-    {
-        file_stream.OpenElement("Main");
-
-        file_stream.PushAttribute("Type", "CONJUGATE_GRADIENT");
-
-        conjugate_gradient.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    break;
-
-    case QUASI_NEWTON_METHOD:
-    {
-        file_stream.OpenElement("Main");
-
-        file_stream.PushAttribute("Type", "QUASI_NEWTON_METHOD");
-
-        quasi_Newton_method.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    break;
-
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        file_stream.OpenElement("Main");
-
-        file_stream.PushAttribute("Type", "LEVENBERG_MARQUARDT_ALGORITHM");
-
-        Levenberg_Marquardt_algorithm.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        file_stream.OpenElement("Main");
-
-        file_stream.PushAttribute("Type", "STOCHASTIC_GRADIENT_DESCENT");
-
-        stochastic_gradient_descent.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    break;
-
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        file_stream.OpenElement("Main");
-
-        file_stream.PushAttribute("Type", "ADAPTIVE_MOMENT_ESTIMATION");
-
-        adaptive_moment_estimation.write_XML(file_stream);
-
-        file_stream.CloseElement();
-    }
-    break;
-
-    }
+    // Close TrainingStrategy
 
     file_stream.CloseElement();
 }
@@ -1285,245 +1250,298 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const tinyxml2::XMLElement* error_element = element->FirstChildElement("Error");
+            const tinyxml2::XMLElement* loss_method_element = element->FirstChildElement("LossMethod");
 
-            const string new_loss_method = error_element->Attribute("Type");
+            set_loss_method(loss_method_element->GetText());
+            /*// Sum squared error
 
-            set_loss_method(new_loss_method);
+            const tinyxml2::XMLElement* sum_squared_error_element = element->FirstChildElement("SumSquaredError");
 
-            switch(loss_method)
-            {
-            case SUM_SQUARED_ERROR:
+            if(sum_squared_error_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* sum_squared_error_element = new_document.NewElement("SumSquaredError");
+                tinyxml2::XMLElement* sum_squared_error_element_copy = new_document.NewElement("SumSquaredError");
 
                 for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    sum_squared_error_element->InsertEndChild(copy );
+                    sum_squared_error_element_copy->InsertEndChild(copy);
                 }
 
-                new_document.InsertEndChild(sum_squared_error_element);
+                new_document.InsertEndChild(sum_squared_error_element_copy);
 
                 sum_squared_error.from_XML(new_document);
-            }
-            break;
+            }*/
 
-            case MEAN_SQUARED_ERROR:
+            // Mean squared error
+
+            const tinyxml2::XMLElement* mean_squared_error_element = element->FirstChildElement("MeanSquaredError");
+
+            if(mean_squared_error_element)
             {
-                tinyxml2::XMLDocument new_document;
+                /*tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* mean_squared_error_element = new_document.NewElement("MeanSquaredError");
+                tinyxml2::XMLElement* mean_squared_error_element_copy = new_document.NewElement("SumSquaredError");
 
                 for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    mean_squared_error_element->InsertEndChild(copy );
+                    mean_squared_error_element_copy->InsertEndChild(copy);
                 }
 
-                new_document.InsertEndChild(mean_squared_error_element);
+                new_document.InsertEndChild(mean_squared_error_element_copy);
 
-                mean_squared_error.from_XML(new_document);
+                mean_squared_error.from_XML(new_document);*/
             }
-            break;
 
-            case NORMALIZED_SQUARED_ERROR:
+            // Normalized squared error
+
+            const tinyxml2::XMLElement* normalized_squared_error_element = element->FirstChildElement("NormalizedSquaredError");
+
+            if(normalized_squared_error_element)
             {
-                tinyxml2::XMLDocument new_document;
+                /*tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* normalized_squared_error_element = new_document.NewElement("NormalizedSquaredError");
+                tinyxml2::XMLElement* normalized_squared_error_element_copy = new_document.NewElement("NormalizedSquaredError");
 
                 for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    normalized_squared_error_element->InsertEndChild(copy );
+                    normalized_squared_error_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(normalized_squared_error_element);
+                new_document.InsertEndChild(normalized_squared_error_element_copy);
 
-                normalized_squared_error.from_XML(new_document);
+                normalized_squared_error.from_XML(new_document);*/
             }
-            break;
 
-            case MINKOWSKI_ERROR:
+            // Minkowski error
+
+            const tinyxml2::XMLElement* Minkowski_error_element = element->FirstChildElement("MinkowskiError");
+
+            if(Minkowski_error_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* Minkowski_error_element = new_document.NewElement("MinkowskiError");
+                tinyxml2::XMLElement* Minkowski_error_element_copy = new_document.NewElement("MinkowskiError");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=Minkowski_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    Minkowski_error_element->InsertEndChild(copy );
+                    Minkowski_error_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(Minkowski_error_element);
+                new_document.InsertEndChild(Minkowski_error_element_copy);
 
                 Minkowski_error.from_XML(new_document);
             }
-            break;
-
-            case CROSS_ENTROPY_ERROR:
+            else
             {
-                tinyxml2::XMLDocument new_document;
-
-                tinyxml2::XMLElement* cross_entropy_error_element = new_document.NewElement("CrossEntropyError");
-
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-                {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    cross_entropy_error_element->InsertEndChild(copy );
-                }
-
-                new_document.InsertEndChild(cross_entropy_error_element);
-
-                cross_entropy_error.from_XML(new_document);
+                Minkowski_error.set_Minkowski_parameter(1.5);
             }
-            break;
 
-            case WEIGHTED_SQUARED_ERROR:
+            // Cross entropy error
+
+            const tinyxml2::XMLElement* cross_entropy_element = element->FirstChildElement("CrossEntropyError");
+
+            if(cross_entropy_element)
             {
-                tinyxml2::XMLDocument new_document;
+                /*tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* weighted_squared_error_element = new_document.NewElement("WeightedSquaredError");
+                tinyxml2::XMLElement* cross_entropy_error_element_copy = new_document.NewElement("CrossEntropyError");
 
                 for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    weighted_squared_error_element->InsertEndChild(copy );
+                    cross_entropy_error_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(weighted_squared_error_element);
+                new_document.InsertEndChild(cross_entropy_error_element_copy);
+
+                cross_entropy_error.from_XML(new_document);*/
+            }
+
+            // Weighted squared error
+
+            const tinyxml2::XMLElement* weighted_squared_error_element = element->FirstChildElement("WeightedSquaredError");
+
+            if(weighted_squared_error_element)
+            {
+                tinyxml2::XMLDocument new_document;
+
+                tinyxml2::XMLElement* weighted_squared_error_element_copy = new_document.NewElement("WeightedSquaredError");
+
+                for(const tinyxml2::XMLNode* nodeFor=weighted_squared_error_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
+                    weighted_squared_error_element_copy->InsertEndChild(copy );
+                }
+
+                new_document.InsertEndChild(weighted_squared_error_element_copy);
 
                 weighted_squared_error.from_XML(new_document);
             }
+            else
+            {
+                weighted_squared_error.set_positives_weight(1);
+                weighted_squared_error.set_negatives_weight(1);
             }
-        }
 
+            // Regularization
+
+            const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
+
+            if(regularization_element)
+            {
+                tinyxml2::XMLDocument regularization_document;
+                tinyxml2::XMLNode* element_clone;
+
+                element_clone = regularization_element->DeepClone(&regularization_document);
+
+                regularization_document.InsertFirstChild(element_clone);
+
+                sum_squared_error.regularization_from_XML(regularization_document);
+            }
+
+        }
     }
 
-    // Main
+    // Optimization algorithm
+
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Main");
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("OptimizationAlgorithm");
 
         if(element)
         {
-            const string new_optimization_method = element->Attribute("Type");
+            const tinyxml2::XMLElement* optimization_method_element = element->FirstChildElement("OptimizationMethod");
 
-            set_optimization_method(new_optimization_method);
+            set_optimization_method(optimization_method_element->GetText());
 
-            switch(optimization_method)
-            {
-            case GRADIENT_DESCENT:
+            // Gradient descent
+
+            const tinyxml2::XMLElement* gradient_descent_element = element->FirstChildElement("GradientDescent");
+
+            if(gradient_descent_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* gradient_descent_element = new_document.NewElement("GradientDescent");
+                tinyxml2::XMLElement* gradient_descent_element_copy = new_document.NewElement("GradientDescent");
 
                 for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    gradient_descent_element->InsertEndChild(copy );
+                    gradient_descent_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(gradient_descent_element);
+                new_document.InsertEndChild(gradient_descent_element_copy);
 
                 gradient_descent.from_XML(new_document);
             }
-            break;
 
-            case CONJUGATE_GRADIENT:
+            // Conjugate gradient
+
+            const tinyxml2::XMLElement* conjugate_gradient_element = element->FirstChildElement("ConjugateGradient");
+
+            if(conjugate_gradient_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* conjugate_gradient_element = new_document.NewElement("ConjugateGradient");
+                tinyxml2::XMLElement* conjugate_gradient_element_copy = new_document.NewElement("ConjugateGradient");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=conjugate_gradient_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    conjugate_gradient_element->InsertEndChild(copy );
+                    conjugate_gradient_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(conjugate_gradient_element);
+                new_document.InsertEndChild(conjugate_gradient_element_copy);
 
                 conjugate_gradient.from_XML(new_document);
             }
-            break;
 
-            case QUASI_NEWTON_METHOD:
+            // Quasi-Newton method
+
+            const tinyxml2::XMLElement* quasi_Newton_method_element = element->FirstChildElement("QuasiNewtonMethod");
+
+            if(quasi_Newton_method_element)
             {
-                tinyxml2::XMLDocument new_document;
+                tinyxml2::XMLDocument quasi_Newton_document;
 
-                tinyxml2::XMLElement* quasi_newton_method_element = new_document.NewElement("QuasiNewtonMethod");
+                tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
-                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    quasi_newton_method_element->InsertEndChild(copy );
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&quasi_Newton_document );
+                    quasi_newton_method_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(quasi_newton_method_element);
+                quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
 
-                quasi_Newton_method.from_XML(new_document);
+                quasi_Newton_method.from_XML(quasi_Newton_document);
             }
-            break;
 
-            case LEVENBERG_MARQUARDT_ALGORITHM:
+            // Levenberg Marquardt
+
+            const tinyxml2::XMLElement* Levenberg_Marquardt_element = element->FirstChildElement("LevenbergMarquardtAlgorithm");
+
+            if(Levenberg_Marquardt_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* levenberg_marquardt_algorithm_element = new_document.NewElement("LevenbergMarquardtAlgorithm");
+                tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = new_document.NewElement("LevenbergMarquardtAlgorithm");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    levenberg_marquardt_algorithm_element->InsertEndChild(copy );
+                    levenberg_marquardt_algorithm_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(levenberg_marquardt_algorithm_element);
+                new_document.InsertEndChild(levenberg_marquardt_algorithm_element_copy);
 
                 Levenberg_Marquardt_algorithm.from_XML(new_document);
             }
-            break;
 
-            case STOCHASTIC_GRADIENT_DESCENT:
+            // Stochastic gradient
+
+            const tinyxml2::XMLElement* stochastic_gradient_descent_element = element->FirstChildElement("StochasticGradientDescent");
+
+            if(stochastic_gradient_descent_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* stochastic_gradient_descent_element = new_document.NewElement("StochasticGradientDescent");
+                tinyxml2::XMLElement* stochastic_gradient_descent_element_copy = new_document.NewElement("StochasticGradientDescent");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=stochastic_gradient_descent_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    stochastic_gradient_descent_element->InsertEndChild(copy );
+                    stochastic_gradient_descent_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(stochastic_gradient_descent_element);
+                new_document.InsertEndChild(stochastic_gradient_descent_element_copy);
 
                 stochastic_gradient_descent.from_XML(new_document);
             }
-            break;
 
-            case ADAPTIVE_MOMENT_ESTIMATION:
+            // Adaptive moment estimation
+
+            const tinyxml2::XMLElement* adaptive_moment_estimation_element = element->FirstChildElement("AdaptiveMomentEstimation");
+
+            if(adaptive_moment_estimation_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* adaptive_moment_estimation_element = new_document.NewElement("AdaptiveMomentEstimation");
+                tinyxml2::XMLElement* adaptive_moment_estimation_element_copy = new_document.NewElement("AdaptiveMomentEstimation");
 
-                for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                for(const tinyxml2::XMLNode* nodeFor=adaptive_moment_estimation_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {
                     tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                    adaptive_moment_estimation_element->InsertEndChild(copy );
+                    adaptive_moment_estimation_element_copy->InsertEndChild(copy );
                 }
 
-                new_document.InsertEndChild(adaptive_moment_estimation_element);
+                new_document.InsertEndChild(adaptive_moment_estimation_element_copy);
 
                 adaptive_moment_estimation.from_XML(new_document);
-            }
-            break;
-
             }
         }
     }

@@ -1919,7 +1919,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
 
-    //file_stream.OpenElement("ConjugateGradient");
+    file_stream.OpenElement("ConjugateGradient");
 
     // Training direction method
 
@@ -2078,7 +2078,7 @@ void ConjugateGradient::write_XML(tinyxml2::XMLPrinter& file_stream) const
         file_stream.CloseElement();
     }
 
-    //file_stream.CloseElement();
+    file_stream.CloseElement();
 }
 
 
@@ -2590,7 +2590,7 @@ void ConjugateGradient::update_epoch(
                     optimization_data.training_direction);
 
         cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
-        system("pause");
+//        system("pause");
     }
 
     // Get initial learning rate

@@ -604,7 +604,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
             this->add_layer(perceptron_layer_pointer);
 
-            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
+//            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
         }
 
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(outputs_number);
@@ -1349,6 +1349,7 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
     {
          trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
                                                                      forward_propagation.layers(i));
+
     }
 }
 

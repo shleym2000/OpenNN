@@ -101,8 +101,8 @@ public:
 
    NeuralNetwork* get_neural_network_pointer() const;
 
-   LossIndex* get_loss_index_pointer() const;
-   OptimizationAlgorithm* get_optimization_algorithm_pointer() const;
+   LossIndex* get_loss_index_pointer();
+   OptimizationAlgorithm* get_optimization_algorithm_pointer();
 
    bool has_neural_network() const;
    bool has_data_set() const;
@@ -142,7 +142,15 @@ public:
 
    void set_thread_pool_device(ThreadPoolDevice*);
 
+   void set_data_set_pointer(DataSet*);
+   void set_neural_network_pointer(NeuralNetwork*);
+
+   void set_loss_thread_pool_device(ThreadPoolDevice*);
+   void set_optimization_thread_pool_device(ThreadPoolDevice*);
+
    void set_loss_index_pointer(LossIndex*);
+   void set_loss_index_data_set_pointer(DataSet*);
+   void set_loss_index_neural_network_pointer(NeuralNetwork*);
 
    void set_loss_method(const LossMethod&);
    void set_optimization_method(const OptimizationMethod&);
@@ -151,6 +159,8 @@ public:
    void set_optimization_method(const string&);
 
    void set_display(const bool&);
+
+   void set_reserve_selection_error_history(const bool&);
 
    // Training methods
 
