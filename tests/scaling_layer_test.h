@@ -138,7 +138,6 @@ public:
    // XML expression methods
 
    void test_write_expression();
-   void test_object_to_string();
 
    // Serialization methods
 
@@ -156,7 +155,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

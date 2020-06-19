@@ -761,7 +761,7 @@ void LongShortTermMemoryLayerTest::test_set_parameters_random()
 
 }
 
-/*
+
 void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 {
    cout << "test_calculate_parameters_norm\n";
@@ -778,11 +778,11 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
    long_short_term_memory_layer.set_parameters_constant(0.0);
    parameters=long_short_term_memory_layer.get_parameters();
 
-   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
+//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
 
-   assert_true(parameters == 0.0, LOG);
-   assert_true(parameters.size() == 32, LOG);
-   assert_true(parameters_norm == 0.0, LOG);
+//   assert_true(parameters == 0.0, LOG);
+//   assert_true(parameters.size() == 32, LOG);
+//   assert_true(parameters_norm == 0.0, LOG);
 
    // Test
 
@@ -794,22 +794,24 @@ void LongShortTermMemoryLayerTest::test_calculate_parameters_norm()
 
    parameters = long_short_term_memory_layer.get_parameters();
 
-   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
+//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
 
-   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
+//   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
 
 
    // Test
 
    long_short_term_memory_layer.set(4, 2);
 
-   parameters.resize(56, 1.0);
+   parameters.resize(56);
+
+   parameters.setConstant(1.0);
 
    long_short_term_memory_layer.set_parameters(parameters);
 
-   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
+//   parameters_norm = long_short_term_memory_layer.calculate_parameters_norm();
 
-   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
+//   assert_true(abs(parameters_norm - l2_norm(parameters)) < 1.0e-6, LOG);
 }
 
 void LongShortTermMemoryLayerTest::test_get_parameters()
@@ -838,20 +840,14 @@ void LongShortTermMemoryLayerTest::test_get_parameters()
 //   cout<< "weight.  "<< long_short_term_memory_layer.get_weights()<<endl;
 //   cout<< "recurrent_weight.  "<< long_short_term_memory_layer.get_recurrent_weights()<<endl;
 //   cout<< "biases "<< long_short_term_memory_layer.get_biases()<<endl;
-
 }
-*/
+
+
 void LongShortTermMemoryLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   const int n = omp_get_max_threads();
-   NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-   ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
    LongShortTermMemoryLayer long_short_term_memory_layer;
-
-
 
    Tensor<type, 2> inputs;
 //   Tensor<type, 2> outputs;
@@ -1022,7 +1018,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

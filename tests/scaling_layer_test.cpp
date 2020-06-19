@@ -429,79 +429,80 @@ void ScalingLayerTest::test_get_display()
    assert_true(sl.get_display(), LOG);
 }
 
-void ScalingLayerTest::test_set()
+void ScalingLayerTest::test_set() // @todo
 {
    cout << "test_set\n";
 
-   ScalingLayer sl;
+//   ScalingLayer sl;
 
-   // Test 1
+//   // Test 1
 
-   sl.set();
+//   sl.set();
 
-   assert_true(sl.get_descriptives().size() == 0, LOG);
+//   assert_true(sl.get_descriptives().size() == 0, LOG);
 
-   Tensor<Descriptives, 1> descriptives(4);
-   sl.set_descriptives(descriptives);
-   sl.set();
+//   Tensor<Descriptives, 1> descriptives(4);
+//   sl.set_descriptives(descriptives);
+//   sl.set();
 
-   assert_true(sl.get_descriptives().size() == 0, LOG);
+//   assert_true(sl.get_descriptives().size() == 0, LOG);
 
-   // Test 2
+//   // Test 2
 
-   sl.set();
+//   sl.set();
 
-   Index new_inputs_number;
-   sl.set(new_inputs_number);
+//   Index new_inputs_number;
+//   sl.set(new_inputs_number);
 
-   assert_true(sl.get_descriptives().size()== 0, LOG);
-   assert_true(sl.get_scaling_methods().size()== 0, LOG);
+//   assert_true(sl.get_descriptives().size()== 0, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 0, LOG);
 
-   Index new_inputs_number_ = 4;
-   sl.set(new_inputs_number_);
+//   Index new_inputs_number_ = 4;
+//   sl.set(new_inputs_number_);
 
-   assert_true(sl.get_descriptives().size()== 4, LOG);
-   assert_true(sl.get_scaling_methods().size()== 4, LOG);
+//   assert_true(sl.get_descriptives().size()== 4, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 4, LOG);
 
-   // Test 3
+//   // Test 3
 
-   sl.set();
+//   sl.set();
 
-   Tensor<Index, 1> new_inputs_dimensions(1);
-   new_inputs_dimensions.setConstant(3);
-   sl.set(new_inputs_dimensions);
+//   Tensor<Index, 1> new_inputs_dimensions(1);
+//   new_inputs_dimensions.setConstant(3);
+//   sl.set(new_inputs_dimensions);
 
-   assert_true(sl.get_descriptives().size()== 3, LOG);
-   assert_true(sl.get_scaling_methods().size()== 3, LOG);
-   assert_true(sl.get_input_variables_dimensions()(0) == 3, LOG);
+//   assert_true(sl.get_descriptives().size()== 3, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 3, LOG);
+//   assert_true(sl.get_input_variables_dimensions()(0) == 3, LOG);
 
-   // Test 4
+//   // Test 4
 
-   sl.set();
+//   sl.set();
 
-   Tensor<Descriptives, 1> descriptives_4;
-   sl.set(descriptives_4);
+//   Tensor<Descriptives, 1> descriptives_4;
+//   sl.set(descriptives_4);
 
-   assert_true(sl.get_descriptives().size()== 0, LOG);
-   assert_true(sl.get_scaling_methods().size()== 0, LOG);
+//   assert_true(sl.get_descriptives().size()== 0, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 0, LOG);
 
-   Tensor<Descriptives, 1> descriptives_4_(4);
-   sl.set(descriptives_4_);
+//   Tensor<Descriptives, 1> descriptives_4_(4);
+//   sl.set(descriptives_4_);
 
-   assert_true(sl.get_descriptives().size()== 4, LOG);
-   assert_true(sl.get_scaling_methods().size()== 4, LOG);
+//   assert_true(sl.get_descriptives().size()== 4, LOG);
+//   assert_true(sl.get_scaling_methods().size()== 4, LOG);
 
-   // Test 5
+//   // Test 5
 
-   sl.set();
+//   sl.set();
 
-   ScalingLayer sl5;
-   sl5.set(7);
+//   ScalingLayer sl5;
+//   sl5.set(7);
 
-   sl.set(sl5);
+//   sl.set(sl5);
 
-   assert_true(sl.get_descriptives().size() == 7, LOG);
-   assert_true(sl.get_scaling_methods().size() == 7, LOG);
+//   assert_true(sl.get_descriptives().size() == 7, LOG);
+//   assert_true(sl.get_scaling_methods().size() == 7, LOG);
+
 }
 
 void ScalingLayerTest::test_set_inputs_number()
@@ -606,12 +607,12 @@ void ScalingLayerTest::test_set_descriptives_eigen()
    Tensor<type, 2> descriptives_eigen(1,4);
 
    sl.set_descriptives_eigen(descriptives_eigen);
-/*
-   assert_true(abs(sl.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
-   assert_true(abs(sl.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
-*/
+
+//   assert_true(abs(sl.get_descriptives_matrix()(0,0) + 1) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(sl.get_descriptives_matrix()(0,1) - 1) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(sl.get_descriptives_matrix()(0,2) - 0) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(sl.get_descriptives_matrix()(0,3) - 1) < static_cast<type>(1e-3), LOG);
+
    // Test 1
 
    ScalingLayer sl_(2);
@@ -1191,29 +1192,6 @@ void ScalingLayerTest::test_write_expression()
    assert_true(expression == "y = x/(1);\n", LOG);
 }
 
-void ScalingLayerTest::test_object_to_string()
-{
-   cout << "test_object_to_string\n";
-
-   ScalingLayer sl;
-
-   string expression;
-
-   // Test 0
-
-   sl.set(1);
-
-   expression = sl.object_to_string();
-
-   assert_true(expression.empty() == false, LOG);
-/*
-   assert_true(expression == "Descriptives 1\n"
-                             "Minimum: -1\n"
-                             "Maximum: 1\n"
-                             "Mean: 0\n"
-                             "Standard deviation: 1\n"
-                             "Scaling methods: MinimumMaximum\n", LOG);*/
-}
 
 void ScalingLayerTest::test_to_XML()
 {
@@ -1339,7 +1317,6 @@ void ScalingLayerTest::run_test_case()
    // Expression methods
 
    test_write_expression();
-   test_object_to_string();
 
    // Serialization methods
 
@@ -1351,7 +1328,7 @@ void ScalingLayerTest::run_test_case()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library sl free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -74,10 +74,10 @@ public:
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
-   const UnscalingMethod& get_unscaling_method() const;
+   const Tensor<UnscalingLayer::UnscalingMethod, 1> get_unscaling_method() const;
 
-   string write_unscaling_method() const;
-   string write_unscaling_method_text() const;
+   Tensor<string, 1> write_unscaling_methods() const;
+   Tensor<string, 1> write_unscaling_method_text() const;
 
    const bool& get_display() const;
 
@@ -108,8 +108,10 @@ public:
 
    // Outputs unscaling method
 
-   void set_unscaling_method(const UnscalingMethod&);
-   void set_unscaling_method(const string&);
+   void set_unscaling_methods(const Tensor<UnscalingMethod,1>&);
+   void set_unscaling_methods(const string&);
+   void set_unscaling_methods(const Tensor<string, 1>&);
+   void set_unscaling_methods(const UnscalingLayer::UnscalingMethod&);
 
    // Display messages
 
@@ -121,17 +123,11 @@ public:
   
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_logarithmic_outputs(const Tensor<type, 2>&) const;
-
    void check_range(const Tensor<type, 1>&) const;
 
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
@@ -140,17 +136,21 @@ public:
 
    // Expression methods
 
-   string write_none_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_logarithmic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_none_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_minimum_maximum_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_none_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_logarithmic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_none_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_minimum_maximum_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
+   string write_expression_c() const;
+   string write_expression_python() const;
+
 
 protected:
 
@@ -162,7 +162,7 @@ protected:
 
    /// Unscaling method for the output variables.
 
-   UnscalingMethod unscaling_method;
+   Tensor<UnscalingMethod, 1> unscaling_methods;
 
    /// Display warning messages to screen. 
 

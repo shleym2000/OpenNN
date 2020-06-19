@@ -150,9 +150,13 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
+   string write_expression_c() const;
+
+   string write_expression_python() const;
+
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);

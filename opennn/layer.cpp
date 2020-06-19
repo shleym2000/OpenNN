@@ -21,6 +21,7 @@ Layer::Type Layer::get_type () const
 }
 
 
+
 /// Takes the type of layer used by the model.
 
 string Layer::get_type_string() const
@@ -162,18 +163,6 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &, const Tensor<t
     throw logic_error(buffer.str());
 }
 
-/*
-Layer::ForwardPropagation Layer::forward_propagate(const Tensor<type, 2>&)
- {
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "forward_propagate(const Tensor<type, 2>&) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
- }
-*/
 
 Tensor<Index, 1> Layer::get_input_variables_dimensions() const
 {
@@ -245,28 +234,6 @@ void Layer::set_neurons_number(const Index &)
     throw logic_error(buffer.str());
 }
 
-
-string Layer::write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "get_inputs_number() const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
-string Layer::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "to_string() const method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
 
 // Activations 1d
 
@@ -779,7 +746,6 @@ void Layer::symmetric_threshold(const Tensor<type, 2>& x, Tensor<type, 2>& y) co
 
 void Layer::rectified_linear(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-
     const Tensor<bool, 2> if_sentence = x < x.constant(0);
 
     Tensor<type, 2> zeros(x.dimension(0), x.dimension(1));
