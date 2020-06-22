@@ -53,20 +53,10 @@ public:
    void test_get_biases();
    void test_get_weights();
    void test_get_recurrent_initializer();
-
    void test_get_parameters_number();
-
    void test_get_parameters();
-
-   //void test_calculate_parameters_norm();
-
-   //void test_get_perceptrons_parameters();
-
-
    void test_calculate_activations_derivatives();
-
    void test_calculate_combinations();
-
    void test_calculate_outputs();
 
    // Unit testing methods
@@ -79,7 +69,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

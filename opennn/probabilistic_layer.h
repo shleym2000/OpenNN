@@ -174,9 +174,17 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
+   string write_expression_c() const;
+   string write_combinations_c() const;
+   string write_activations_c() const;
+
+   string write_expression_python() const;
+   string write_combinations_python() const;
+   string write_activations_python() const;
+
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    virtual tinyxml2::XMLDocument* to_XML() const;
 

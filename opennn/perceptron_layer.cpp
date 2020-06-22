@@ -31,11 +31,13 @@ PerceptronLayer::PerceptronLayer() : Layer()
 /// @param new_neurons_number Number of perceptrons in the layer.
 
 PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& new_neurons_number,
-                                 const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
+                                 const Index& layer_number, const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_activation_function);
 
     layer_type = Perceptron;
+
+    layer_name = "perceptron_layer_" + to_string(layer_number);
 }
 
 
@@ -323,6 +325,8 @@ void PerceptronLayer::set(const PerceptronLayer& other_perceptron_layer)
 
 void PerceptronLayer::set_default()
 {
+    layer_name = "perceptron_layer";
+
     display = true;
 
     layer_type = Perceptron;
@@ -538,8 +542,8 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 
     synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
 
-    Eigen::Tensor<float, 0> min_weight = synaptic_weights.minimum();
-    Eigen::Tensor<float, 0> max_weight = synaptic_weights.maximum();
+    Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
+    Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
 
     synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
     synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
@@ -1026,36 +1030,17 @@ string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
 
-      Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
+        Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
-               buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
+        buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
 
-               for(Index i = 0; i < inputs_names.size() - 1; i++)
-               {
+        for(Index i = 0; i < inputs_names.size() - 1; i++)
+        {
+           buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
+        }
 
-                   buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
-               }
-
-               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
+        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
     }
-
-    return buffer.str();
-}
-
-
-string PerceptronLayer::object_to_string() const
-{
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
-
-    ostringstream buffer;
-
-    buffer << "Perceptron layer" << endl;
-    buffer << "Inputs number: " << inputs_number << endl;
-    buffer << "Activation function: " << write_activation_function() << endl;
-    buffer << "Neurons number: " << neurons_number << endl;
-    buffer << "Biases:\n " << biases << endl;
-    buffer << "Synaptic_weights:\n" << synaptic_weights;
 
     return buffer.str();
 }
@@ -1259,6 +1244,222 @@ string PerceptronLayer::write_activation_function_expression() const
         return write_activation_function();
     }
 }
+
+string PerceptronLayer::write_combinations_c() const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tvector<float> combinations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+        }
+
+        buffer << ";" << endl;
+    }
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_activations_c() const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\n\tvector<float> activations(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tactivations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+
+        case HyperbolicTangent:
+            buffer << "tanh(combinations[" << i << "]);\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "combinations[" << i << "] < 0.0 ? 0.0 : combinations[" << i << "];\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]));\n";
+            break;
+
+        case Threshold:
+            buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : 0.0;\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "combinations[" << i << "] >= 0.0 ? 1.0 : -1.0;\n";
+            break;
+
+        case Linear:
+            buffer << "combinations[" << i << "];\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "combinations[" << i << "] < 0.0 ? 1.0507*1.67326*(exp(combinations[" << i << "]) - 1.0) : 1.0507*combinations[" << i << "];\n";
+            break;
+
+        case SoftPlus:
+            buffer << "log(1.0 + exp(combinations[" << i << "]));\n";
+            break;
+
+        case SoftSign:
+            buffer << "combinations[" << i << "] < 0.0 ? combinations[" << i << "]/(1.0 - combinations[" << i << "] ) : combinations[" << i << "]/(1.0 + combinations[" << i << "] );\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "combinations[" << i << "] < 0.0 ? 1.0*(exp(combinations[" << i << "]) - 1.0) : combinations[" << i << "];\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+
+        }
+    }
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_combinations_python() const
+{
+    ostringstream buffer;
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tcombinations[" << i << "] = " << biases(i);
+
+        for(Index j = 0; j < inputs_number; j++)
+        {
+             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+        }
+
+        buffer << " " << endl;
+    }
+
+    buffer << "\t" << endl;
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_activations_python() const
+{
+    ostringstream buffer;
+
+    const Index neurons_number = get_neurons_number();
+
+    buffer << "\tactivations = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\tactivations[" << i << "] = ";
+
+        switch(activation_function)
+        {
+
+        case HyperbolicTangent:
+            buffer << "np.tanh(combinations[" << i << "])\n";
+            break;
+
+        case RectifiedLinear:
+            buffer << "np.maximum(0.0, combinations[" << i << "])\n";
+            break;
+
+        case Logistic:
+            buffer << "1.0/(1.0 + np.exp(-combinations[" << i << "]))\n";
+            break;
+
+        case Threshold:
+            buffer << "1.0 if combinations[" << i << "] >= 0.0 else 0.0\n";
+            break;
+
+        case SymmetricThreshold:
+            buffer << "1.0 if combinations[" << i << "] >= 0.0 else -1.0\n";
+            break;
+
+        case Linear:
+            buffer << "combinations[" << i << "]\n";
+            break;
+
+        case ScaledExponentialLinear:
+            buffer << "1.0507*1.67326*(np.exp(combinations[" << i << "]) - 1.0) if combinations[" << i << "] < 0.0 else 1.0507*combinations[" << i << "]\n";
+            break;
+
+        case SoftPlus:
+            buffer << "np.log(1.0 + np.exp(combinations[" << i << "]))\n";
+            break;
+
+        case SoftSign:
+            buffer << "combinations[" << i << "]/(1.0 - combinations[" << i << "] ) if combinations[" << i << "] < 0.0 else combinations[" << i << "]/(1.0 + combinations[" << i << "] )\n";
+            break;
+
+        case ExponentialLinear:
+            buffer << "1.0*(np.exp(combinations[" << i << "]) - 1.0) if combinations[" << i << "] < 0.0 else combinations[" << i << "]\n";
+            break;
+
+        case HardSigmoid:
+            ///@todo
+            break;
+
+        }
+    }
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_expression_c() const
+{
+    ostringstream buffer;
+
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << write_combinations_c();
+
+    buffer << write_activations_c();
+
+    buffer << "\n\treturn activations;\n}" << endl;
+
+    return buffer.str();
+}
+
+
+string PerceptronLayer::write_expression_python() const
+{
+    ostringstream buffer;
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << write_combinations_python();
+
+    buffer << write_activations_python();
+
+    buffer << "\n\treturn activations;\n" << endl;
+
+    return buffer.str();
+}
+
 
 }
 

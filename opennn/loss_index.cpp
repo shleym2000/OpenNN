@@ -416,9 +416,9 @@ void LossIndex::check() const
 /// @param layers_delta vector of tensors with layers delta.
 
 void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
-                                                          const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                                          const BackPropagation& back_propagation,
-                                                          SecondOrderLoss& second_order_loss) const
+                                               const NeuralNetwork::ForwardPropagation& forward_propagation,
+                                               const BackPropagation& back_propagation,
+                                               SecondOrderLoss& second_order_loss) const
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -469,19 +469,14 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
 Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<type, 2>& layer_deltas, const Tensor<type, 2>& layer_inputs) const
 {
-    cout << "------------------------------" << endl;
     const Index instances_number = layer_inputs.dimension(0);
     const Index inputs_number = layer_inputs.dimension(1);
     const Index neurons_number = layer_deltas.dimension(1);
 
-    cout << "Instances_number: " << instances_number << endl;
-    cout << "Inputs_number: " << inputs_number << endl;
-    cout << "Neurons_number: " << neurons_number << endl;
-
     const Index synaptic_weights_number = neurons_number*inputs_number;
 
     Tensor<type, 2> layer_error_Jacobian(instances_number, neurons_number*(1+inputs_number));
-    layer_error_Jacobian.setConstant(1);
+    layer_error_Jacobian.setConstant(0);
 
     Index parameter;
 
@@ -503,10 +498,6 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
             layer_error_Jacobian(instance, synaptic_weights_number+perceptron) = layer_delta;
         }
     }
-
-    cout << "------------------------------" << endl;
-
-    system("pause");
 
     return layer_error_Jacobian;
 }
@@ -555,7 +546,17 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
     // First Order
 
 //    calculate_error(batch, forward_propagation, back_propagation);
-// error terms ¿?
+
+//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+//    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+//    const Tensor<type, 2>& targets = batch.targets_2d;
+
+//    Tensor<type, 1> error_terms(outputs.dimension(0));
+//    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
+
+//    error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
+
     calculate_output_gradient(batch, forward_propagation, back_propagation);
 
     calculate_layers_delta(forward_propagation, back_propagation);
@@ -849,6 +850,7 @@ void LossIndex::regularization_from_XML(const tinyxml2::XMLDocument& document)
     }
 }
 
+
 void LossIndex::write_regularization_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     ostringstream buffer;
@@ -917,7 +919,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
     // Regularization
 
-  /*  tinyxml2::XMLDocument regularization_document;
+    tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
     const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
@@ -926,7 +928,7 @@ void LossIndex::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);*/
+    regularization_from_XML(regularization_document);
 }
 
 
@@ -937,7 +939,7 @@ LossIndex::BackPropagation::~BackPropagation()
 }
 
 
-Tensor<type, 1> LossIndex:: calculate_training_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
+Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(LossIndex* loss_index_pointer) const
 {
     const Index instances_number = data_set_pointer->get_training_instances_number();
 

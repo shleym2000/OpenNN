@@ -103,14 +103,6 @@ public:
     void test_karl_pearson_correlation();
     void test_karl_pearson_correlation_missing_values();
 
-    // One way anova
-
-    void test_one_way_anova();
-    void test_one_way_anova_correlation();
-    void test_one_way_anova_correlation_missing_values();
-
-    void test_f_snedecor_critical_point();
-    void test_f_snedecor_critical_point_missing_values();
 
     // Unit tseting method
 
@@ -124,7 +116,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

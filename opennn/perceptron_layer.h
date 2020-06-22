@@ -51,7 +51,7 @@ public:
 
    explicit PerceptronLayer();
 
-   explicit PerceptronLayer(const Index&, const Index&, const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
+   explicit PerceptronLayer(const Index&, const Index&, const Index& = 0 , const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
    PerceptronLayer(const PerceptronLayer&);
 
@@ -187,7 +187,7 @@ public:
 
    void insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const;
 
-   // Expression methods
+   // Expression methods   
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
@@ -196,7 +196,15 @@ public:
 
    string write_activation_function_expression() const;
 
-   string object_to_string() const;
+   string write_expression_c() const;
+   string write_combinations_c() const;
+   string write_activations_c() const;
+
+   string write_combinations_python() const;
+   string write_activations_python() const;
+   string write_expression_python() const;
+
+   
 
    // Serialization methods
 
@@ -208,7 +216,7 @@ protected:
    // MEMBERS
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
-   /// and passed through the neuron's trabsfer function to generate the neuron's output.
+   /// and passed through the neuron's transfer function to generate the neuron's output.
 
    Tensor<type, 2> biases;
 

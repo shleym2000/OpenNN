@@ -750,6 +750,39 @@ void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_s
 }
 
 
+void TrainingStrategy::set_maximum_epochs_number(const int & maximum_epochs_number)
+{
+    gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
+    conjugate_gradient.set_maximum_epochs_number(maximum_epochs_number);
+    stochastic_gradient_descent.set_maximum_epochs_number(maximum_epochs_number);
+    adaptive_moment_estimation.set_maximum_epochs_number(maximum_epochs_number);
+    quasi_Newton_method.set_maximum_epochs_number(maximum_epochs_number);
+    Levenberg_Marquardt_algorithm.set_maximum_epochs_number(maximum_epochs_number);
+}
+
+
+void TrainingStrategy::set_display_period(const int & display_period)
+{
+    gradient_descent.set_display_period(display_period);
+    conjugate_gradient.set_display_period(display_period);
+    stochastic_gradient_descent.set_display_period(display_period);
+    adaptive_moment_estimation.set_display_period(display_period);
+    quasi_Newton_method.set_display_period(display_period);
+    Levenberg_Marquardt_algorithm.set_display_period(display_period);
+}
+
+
+void TrainingStrategy::set_maximum_time(const type & maximum_time)
+{
+    gradient_descent.set_maximum_time(maximum_time);
+    conjugate_gradient.set_maximum_time(maximum_time);
+    stochastic_gradient_descent.set_maximum_time(maximum_time);
+    adaptive_moment_estimation.set_maximum_time(maximum_time);
+    quasi_Newton_method.set_maximum_time(maximum_time);
+    Levenberg_Marquardt_algorithm.set_maximum_time(maximum_time);
+}
+
+
 /// Sets the members of the training strategy object to their default values:
 /// <ul>
 /// <li> Display: true.
@@ -921,86 +954,29 @@ void TrainingStrategy::perform_training_void()
 
 bool TrainingStrategy::check_forecasting() const
 {
-/*
-    const Index batch_instances_number = data_set.get_batch_instances_number();
-    Index timesteps = 0;
+//    const Index batch_instances_number = data_set.get_batch_instances_number();
 
-    if(neural_network.has_recurrent_layer())
-    {
-        timesteps = neural_network.get_recurrent_layer_pointer()->get_timesteps();
-    }
-    else if(neural_network.has_long_short_term_memory_layer())
-    {
-        timesteps = neural_network.get_long_short_term_memory_layer_pointer()->get_timesteps();
-    }
+//    Index timesteps = 0;
 
-    if(batch_instances_number%timesteps == 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-*/
+//    if(neural_network.has_recurrent_layer())
+//    {
+//        timesteps = neural_network.get_recurrent_layer_pointer()->get_timesteps();
+//    }
+//    else if(neural_network.has_long_short_term_memory_layer())
+//    {
+//        timesteps = neural_network.get_long_short_term_memory_layer_pointer()->get_timesteps();
+//    }
+
+//    if(batch_instances_number%timesteps == 0)
+//    {
+//        return true;
+//    }
+//    else
+//    {
+//        return false;
+//    }
+
     return false;
-}
-
-
-/// Returns a string representation of the training strategy.
-
-string TrainingStrategy::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Training strategy\n";
-
-    // Main
-
-    buffer << "Loss method: " << write_loss_method() << "\n";
-
-    buffer << "Training method: " << write_optimization_method() << "\n";
-
-    switch(optimization_method)
-    {
-    case GRADIENT_DESCENT:
-
-        buffer << gradient_descent.object_to_string();
-
-        break;
-
-    case CONJUGATE_GRADIENT:
-
-        buffer << conjugate_gradient.object_to_string();
-
-        break;
-
-    case QUASI_NEWTON_METHOD:
-
-        buffer << quasi_Newton_method.object_to_string();
-
-        break;
-
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-
-        buffer << Levenberg_Marquardt_algorithm.object_to_string();
-
-        break;
-
-    case STOCHASTIC_GRADIENT_DESCENT:
-
-        buffer << stochastic_gradient_descent.object_to_string();
-
-        break;
-
-    case ADAPTIVE_MOMENT_ESTIMATION:
-
-        buffer << adaptive_moment_estimation.object_to_string();
-
-        break;
-    }
-
-    return buffer.str();
 }
 
 
@@ -1008,7 +984,6 @@ string TrainingStrategy::object_to_string() const
 
 void TrainingStrategy::print() const
 {
-    cout << object_to_string();
 }
 
 
@@ -1403,7 +1378,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 sum_squared_error.regularization_from_XML(regularization_document);
             }
-
         }
     }
 

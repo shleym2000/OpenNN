@@ -89,16 +89,17 @@ public:
    void test_add_instance();
    void test_append_variable();
    void test_remove_variable();
-   void test_subtract_instance(); 
    void test_unuse_constant_columns();
    void test_unuse_repeated_instances();
    void test_unuse_non_significant_inputs();
    void test_unuse_columns_missing_values();
 
    // Initialization methods
+
    void test_initialize_data();
 
    // Statistics methods
+
    void test_calculate_data_descriptives();
    void test_calculate_data_descriptives_missing_values();
    void test_calculate_training_instances_descriptives();
@@ -111,6 +112,7 @@ public:
    void test_calculate_testing_targets_mean();
 
    // Correlation methods
+
    void test_calculate_linear_correlations();
    void test_calculate_autocorrelations();
    void test_calculate_cross_correlations();
@@ -118,46 +120,52 @@ public:
    void test_calculate_total_input_correlations();
 
    // Trending methods
+
    void test_calculate_trends();
 
    // Histrogram methods
+
    void test_calculate_data_histograms();
 
    // Filtering methods
+
+   void test_filter_column();
    void test_filter_data();
-   void test_filter_variable();
 
    // Data scaling
+
    void test_scale_data_mean_standard_deviation();  
    void test_scale_data_minimum_maximum(); 
 
    // Input variables scaling
+
    void test_scale_inputs_mean_standard_deviation();
    void test_scale_inputs_minimum_maximum();
 
    // Target variables scaling
+
    void test_scale_targets_mean_standard_deviation();
    void test_scale_targets_minimum_maximum();
 
    // Input-target variables scaling
+
    void test_scale_variables_mean_standard_deviation();
    void test_scale_variables_minimum_maximum();
 
    // Data unscaling
+
    void test_unscale_data_mean_standard_deviation();
    void test_unscale_data_minimum_maximum();
 
    // Input variables unscaling
+
    void test_unscale_inputs_mean_standard_deviation();
    void test_unscale_inputs_minimum_maximum();
 
    // Target variables unscaling
+
    void test_unscale_targets_mean_standard_deviation();
    void test_unscale_targets_minimum_maximum();
-
-   // Input-target variables unscaling
-
- //  void test_unscale_variables_minimum_maximum();
 
    // Pattern recognition methods
 
@@ -167,15 +175,6 @@ public:
    void test_balance_multiple_targets_distribution();
    void test_balance_function_regression_targets_distribution();
 
-   // Outlier detection
-
-   void test_calculate_instances_distances();
-   //void test_calculate_k_distances();
-   //void test_calculate_reachability_distances();
-   //void test_calculate_reachability_density();
-   //void test_calculate_local_outlier_factor();
-
-   //void test_clean_local_outlier_factor();
    void test_clean_Tukey_outliers();
 
    // Data generation
@@ -187,11 +186,8 @@ public:
 
    void test_to_XML();
    void test_from_XML();
-
    void test_print();
-
    void test_read_csv();
-
    void test_read_adult_csv();
    void test_read_airline_passengers_csv();
    void test_read_car_csv();
@@ -214,10 +210,8 @@ public:
 
    void test_covariance_matrix();
    void test_perform_principal_components_analysis();
-
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
-
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();
 
@@ -230,7 +224,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

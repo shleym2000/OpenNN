@@ -41,7 +41,7 @@ using namespace Eigen;
 namespace OpenNN
 {
 
-/// This class represents the concept of data set for data modelling problems, such as function regression, classification, time series prediction, images approximation and images classification.
+/// This class represents the concept of data set for data modelling problems, such as approximation, classification or forecasting.
 
 ///
 /// It basically consists of a data Matrix separated by columns.
@@ -101,7 +101,7 @@ public:
    /// This enumeration represents the possible uses of an variable
    /// (input, target, time or unused).
 
-   enum VariableUse{Input, Target, Time, UnusedVariable};
+   enum VariableUse{Id, Input, Target, Time, UnusedVariable};
 
    /// This enumeration represents the data type of a column
    /// (numeric, binary, categorical or time).
@@ -161,6 +161,7 @@ public:
        void add_category(const string&);
 
        void set_categories_uses(const Tensor<string, 1>&);
+       void set_categories_uses(const VariableUse&);
 
        bool is_used();
        bool is_unused();
@@ -342,6 +343,8 @@ public:
    const bool& get_header_line() const;
    const bool& get_rows_label() const;
 
+   Tensor<string, 1> get_rows_label_tensor() const;
+
    const Separator& get_separator() const;
    char get_separator_char() const;
    string get_separator_string() const;
@@ -503,11 +506,7 @@ public:
 
    Tensor<Index, 1> unuse_repeated_instances();
 
-   Tensor<Index, 1> unuse_non_significant_input_columns();
-
    Tensor<string, 1> unuse_uncorrelated_columns(const type& = 0.25);
-
-   Tensor<Index, 1> unuse_most_populated_target(const Index&);
 
    // Initialization methods
 
@@ -530,9 +529,6 @@ public:
 
    Tensor<Descriptives, 1> calculate_columns_descriptives_training_instances() const;
    Tensor<Descriptives, 1> calculate_columns_descriptives_selection_instances() const;
-   Tensor<Descriptives, 1> calculate_columns_descriptives_testing_instances() const;
-
-   Tensor<type, 2> calculate_variables_descriptives_matrix() const;
 
    Tensor<Descriptives, 1> calculate_input_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_target_variables_descriptives() const;
@@ -548,9 +544,7 @@ public:
    Descriptives calculate_inputs_descriptives(const Index&) const;
 
    Tensor<type, 1> calculate_used_targets_mean() const;
-   Tensor<type, 1> calculate_training_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
-   Tensor<type, 1> calculate_testing_targets_mean() const;
 
    Index calculate_training_negatives(const Index&) const;
    Index calculate_selection_negatives(const Index&) const;
@@ -607,6 +601,7 @@ public:
    // Data scaling
 
    Tensor<string, 1> calculate_default_scaling_methods() const;
+   Tensor<string, 1> calculate_default_unscaling_methods() const;
    void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
    void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
    Tensor<Descriptives, 1> scale_data_minimum_maximum();
@@ -614,26 +609,22 @@ public:
 
    // Input variables scaling
 
-   void scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation();
-
    void scale_input_mean_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_mean_standard_deviation(const Index&);
 
    void scale_input_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_standard_deviation(const Index&);
 
-   void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_inputs_minimum_maximum();
-
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
-   Tensor<Descriptives, 1> scale_inputs(const string&);
-   void scale_inputs(const string&, const Tensor<Descriptives, 1>&);
    void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
 
    // Target variables scaling
+
+   void scale_target_minimum_maximum(const Descriptives&, const Index&);
+   void scale_target_mean_standard_deviation(const Descriptives&, const Index&);
+   void scale_target_logarithmic(const Descriptives&, const Index&);
 
    void scale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
    Tensor<Descriptives, 1> scale_targets_minimum_maximum();
@@ -645,36 +636,25 @@ public:
    Tensor<Descriptives, 1> scale_targets_logarithmic();
 
    Tensor<Descriptives, 1> scale_targets(const string&);
-   void scale_targets(const string&, const Tensor<Descriptives, 1>&);
+   void scale_targets(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
 
    // Data unscaling
 
-   void unscale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   void unscale_input_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_input_mean_standard_deviation(const Descriptives&, const Index&);
+   void unscale_input_standard_deviation(const Descriptives&, const Index&);
+   void unscale_inputs(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
-   // Input variables unscaling
-
-   void unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-
-   // Target variables unscaling
-
-   void unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   void unscale_target_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_target_mean_standard_deviation(const Descriptives&, const Index&);
+   void unscale_target_logarithmic(const Descriptives&, const Index&);
+   void unscale_targets(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
    // Classification methods
 
    Tensor<Index, 1> calculate_target_distribution() const;
 
-   Tensor<Index, 1> balance_binary_targets_distribution(const type& = 100.0);
-   Tensor<Index, 1> balance_multiple_targets_distribution();
-
-
-   Tensor<Index, 1> balance_approximation_targets_distribution(const type& = 10.0);
-
    // Outlier detection
-
-   Tensor<Index, 1> calculate_Tukey_outliers(const Index&, const type& = 1.5) const;
 
    Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = 1.5) const;
 
@@ -705,7 +685,7 @@ public:
 
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    void print() const;
    void print_summary() const;
@@ -744,8 +724,6 @@ public:
 
    void fill_time_series(const Index&);
 
-   void delete_unused_instances();
-
    void numeric_to_categorical(const Index&);
 
    // Missing values
@@ -761,8 +739,6 @@ public:
    void impute_missing_values_median();
 
    void scrub_missing_values();
-
-   Tensor<string, 1> unuse_columns_missing_values(const type&);
 
    Tensor<Index, 1> count_nan_columns() const;
    Index count_rows_with_nan() const;

@@ -308,7 +308,7 @@ public:
 
    // Serialization methods
 
-   string object_to_string() const;
+   
  
    Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
@@ -332,17 +332,131 @@ public:
 
    void save_data(const string&) const;
 
+   Tensor<string, 1> get_layers_names() const
+   {
+       const Index layers_number = get_layers_number();
+
+       Tensor<string, 1> layers_names(layers_number);
+
+       for(Index i = 0; i < layers_number; i++)
+       {
+           layers_names[i] = layers_pointers[i]->get_name();
+       }
+
+       return layers_names;
+   }
+
+
    // Expression methods
 
    string write_expression() const;
-   string write_mathematical_expression_php() const;
-   string write_expression_python() const;
    string write_expression_php() const;
+   string write_expression_python() const;
    string write_expression_R() const;
+   string write_expression_c() const;
 
-   void save_expression(const string&);
+   void save_expression_c(const string&);
    void save_expression_python(const string&);
    void save_expression_R(const string&);
+
+   // PHP methods
+
+   string write_threshold_php() const
+   {
+       ostringstream buffer;
+
+       buffer << "function Threshold($x)\n"
+                 "{\n"
+                 "   if($x < 0)\n"
+                 "   {\n"
+                 "       return 0;\n"
+                 "   }\n"
+                 "   else\n"
+                 "   {\n"
+                 "       return 1;\n"
+                 "   }\n"
+                 "}\n\n";
+
+        return buffer.str();
+   }
+
+   string write_symmetric_threshold_php() const
+   {
+       ostringstream buffer;
+
+       buffer << "function SymmetricThreshold(&x)\n"
+                 "{\n"
+                 "   if($x < 0)\n"
+                 "   {\n"
+                 "       return -1;\n"
+                 "   }\n"
+                 "   else\n"
+                 "   {\n"
+                 "       return 1;\n"
+                 "   }\n"
+                 "}\n\n";
+
+        return buffer.str();
+   }
+
+   string write_logistic_php() const
+   {
+       ostringstream buffer;
+
+       buffer << "function Logistic($x)\n"
+                 "{\n"
+                 "   return 1/(1+exp(-$x));"
+                 "}\n\n";
+
+        return buffer.str();
+   }
+
+   /// @todo
+
+   string write_softmax_php() const
+   {
+       ostringstream buffer;
+
+       return buffer.str();
+   }
+
+
+   string write_threshold_r() const
+   {
+       ostringstream buffer;
+
+       buffer << "Threshold <- function(x) { \n"
+                 "   if(x < 0)  0 \n"
+                 "   else 1 \n"
+                 "}\n\n";
+
+       return buffer.str();
+   }
+
+
+   string write_symmetric_threshold_r() const
+   {
+       ostringstream buffer;
+
+       buffer << "SymmetricThreshold <- function(x) { \n"
+                 "   if(x < 0)  -1 \n"
+                 "   else 1 \n"
+                 "}\n\n";
+
+       return buffer.str();
+   }
+
+
+   string write_logistic_r() const
+   {
+       ostringstream buffer;
+
+       buffer << "Logistic <- function(x) { \n"
+                 "   1/(1+exp(-x))\n"
+                 "}\n\n";
+
+       return buffer.str();
+   }
 
    /// Calculate de forward propagation in the neural network
 
@@ -350,6 +464,8 @@ public:
    void forward_propagate(const DataSet::Batch&, Tensor<type, 1>&, ForwardPropagation&) const;
 
 protected:
+
+   string name = "neural_network";
 
    /// Names of inputs
 

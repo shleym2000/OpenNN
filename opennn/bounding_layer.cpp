@@ -110,12 +110,12 @@ string BoundingLayer::write_bounding_method() const
 
 
 Tensor<Index, 1> BoundingLayer::get_input_variables_dimensions() const
-{
-    /*
-        return Tensor<Index, 1>(1, lower_bounds.size());
-    */
+{       
+    Tensor<Index, 1> dimensions(1);
 
-    return Tensor<Index, 1>();
+    dimensions(0) = lower_bounds.size();
+
+    return dimensions;
 }
 
 
@@ -471,6 +471,8 @@ void BoundingLayer::set_display(const bool& new_display)
 
 void BoundingLayer::set_default()
 {
+    layer_name = "bounding_layer";
+
     display = true;
 
     bounding_method = Bounding;
@@ -601,16 +603,51 @@ string BoundingLayer::write_expression_php(const Tensor<string, 1>& inputs_names
 }
 
 
-/// Returns a string representation of the current bonding layer object.
+///
+/// \brief BoundingLayer::write_expression_c
+/// \return
 
-string BoundingLayer::object_to_string() const
+string BoundingLayer::write_expression_c() const
 {
+    const Index neurons_number = get_neurons_number();
+
     ostringstream buffer;
 
-    buffer << "Bounding layer\n"
-           << "Lower bounds: " << lower_bounds << "\n"
-           << "Upper bounds: " << upper_bounds << "\n"
-           << "Display: " << display << "\n";
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
+    }
+
+    buffer << "\n\treturn outputs;\n}" << endl;
+
+    return buffer.str();
+}
+
+
+///
+/// \brief BoundingLayer::write_expression_python
+/// \return
+
+string BoundingLayer::write_expression_python() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+    }
+
+    buffer << "\n\treturn outputs\n" << endl;
 
     return buffer.str();
 }

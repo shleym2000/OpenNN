@@ -161,6 +161,10 @@ public:
    void set_display(const bool&);
 
    void set_reserve_selection_error_history(const bool&);
+   void set_maximum_epochs_number(const int&);
+   void set_display_period(const int&);
+
+   void set_maximum_time(const type&);
 
    // Training methods
 
@@ -175,7 +179,7 @@ public:
 
    // Serialization methods
 
-   string object_to_string() const;
+   
 
    void print() const;
 

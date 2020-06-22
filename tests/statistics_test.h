@@ -43,13 +43,11 @@ public:
    // Minimum
    void test_set_minimum();
    void test_minimum();
-   void test_minimum_missing_values();
    void test_minimum_matrix();
 
    // Maximun
    void test_set_maximum();
    void test_maximum();
-   void test_maximum_missing_values();
    void test_maximum_matrix();
 
 
@@ -143,7 +141,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

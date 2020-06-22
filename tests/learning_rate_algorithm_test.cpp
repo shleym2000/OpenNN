@@ -18,7 +18,7 @@ LearningRateAlgorithmTest::~LearningRateAlgorithmTest()
 {
 }
 
-/*
+
 void LearningRateAlgorithmTest::test_constructor()
 {
    cout << "test_constructor\n"; 
@@ -60,9 +60,6 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method()
    cout << "test_get_learning_rate_method\n";
 
    LearningRateAlgorithm tra;
-
-   tra.set_learning_rate_method(LearningRateAlgorithm::Fixed);
-   assert_true(tra.get_learning_rate_method() == LearningRateAlgorithm::Fixed, LOG);
 
    tra.set_learning_rate_method(LearningRateAlgorithm::GoldenSection);
    assert_true(tra.get_learning_rate_method() == LearningRateAlgorithm::GoldenSection, LOG);
@@ -178,171 +175,187 @@ void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
 {
    cout << "test_calculate_fixed_directional_point\n";
 
-   Tensor<Index, 1> indices;
+//   Tensor<Index, 1> indices;
 
-   NeuralNetwork neural_network;
+//   NeuralNetwork neural_network;
 
-   Tensor<type, 1> parameters;
+//   Tensor<Index, 1> architecture;
+//   Tensor<type, 1> parameters;
 
-   SumSquaredError sum_squared_error(&neural_network);
+//   SumSquaredError sum_squared_error(&neural_network);
 
-   type loss;
-   Tensor<type, 1> gradient;
+//   type loss;
+//   Tensor<type, 1> gradient;
 
-   LearningRateAlgorithm tra(&sum_squared_error);
+//   LearningRateAlgorithm tra(&sum_squared_error);
 
-   Tensor<type, 1> training_direction;
-   type learning_rate;
+//   Tensor<type, 1> training_direction;
+//   type learning_rate;
 
-   pair<type,type> directional_point;
+//   pair<type,type> directional_point;
 
-   // Test
+//   // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+//   architecture.setValues({1,1});
 
-   neural_network.set_parameters_constant(1.0);
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   loss = sum_squared_error.calculate_training_loss();
+//   neural_network.set_parameters_constant(1.0);
 
-   gradient = sum_squared_error.calculate_training_loss_gradient();
+////   loss = sum_squared_error.calculate_training_loss();
 
-   training_direction = gradient*(-1.0);
-   learning_rate = 0.001;
+////   gradient = sum_squared_error.calculate_training_loss_gradient();
 
-   directional_point = tra.calculate_fixed_directional_point(loss, training_direction, learning_rate);
+//   training_direction = -gradient;
+//   learning_rate = 0.001;
 
-   assert_true(directional_point.second < loss, LOG);
+////   directional_point = tra.calculate_fixed_directional_point(loss, training_direction, learning_rate);
 
-   assert_true(abs(directional_point.second - sum_squared_error.calculate_training_loss(training_direction, learning_rate)) <= numeric_limits<type>::min(), LOG);
+//   assert_true(directional_point.second < loss, LOG);
 
-   parameters = neural_network.get_parameters();
+////   assert_true(abs(directional_point.second - sum_squared_error.calculate_training_loss(training_direction, learning_rate)) <= numeric_limits<type>::min(), LOG);
 
-   neural_network.set_parameters(parameters + training_direction*learning_rate);
+//   parameters = neural_network.get_parameters();
 
-   assert_true(abs(directional_point.second - sum_squared_error.calculate_training_loss()) <= numeric_limits<type>::min(), LOG);
+////   neural_network.set_parameters(parameters + training_direction*learning_rate);
 
-   // Test
+////   assert_true(abs(directional_point.second - sum_squared_error.calculate_training_loss()) <= numeric_limits<type>::min(), LOG);
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+//   // Test
 
-   neural_network.set_parameters_constant(1.0);
+//   architecture.setValues({1,1});
 
-   training_direction.set(2, -1.0);
-   learning_rate = 1.0;
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   directional_point = tra.calculate_fixed_directional_point(3.14, training_direction, learning_rate);
+//   neural_network.set_parameters_constant(1.0);
 
-   assert_true(directional_point.first == 1.0, LOG);
-   assert_true(directional_point.second == 0.0, LOG);
+////   training_direction.set(2, -1.0);
+////   learning_rate = 1.0;
+
+////   directional_point = tra.calculate_fixed_directional_point(3.14, training_direction, learning_rate);
+
+////   assert_true(directional_point.first == 1.0, LOG);
+////   assert_true(directional_point.second == 0.0, LOG);
 }
 
 
-void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
+void LearningRateAlgorithmTest::test_calculate_bracketing_triplet() // @todo
 {
     cout << "test_calculate_bracketing_triplet\n";
 
-    DataSet data_set(2, 1, 1);
+//    DataSet data_set(2, 1, 1);
 
-    data_set.set_data_random();
+//    data_set.set_data_random();
 
-    Tensor<Index, 1> instances_indices(0, 1, data_set.get_instances_number()-1);
+//    Tensor<Index, 1> instances_indices(0, 1, data_set.get_instances_number()-1);
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+//    Tensor<Index, 1> architecture;
 
-    SumSquaredError sum_squared_error(&neural_network, &data_set);
+//    architecture.setValues({1,1});
 
-    LearningRateAlgorithm tra(&sum_squared_error);
+//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
-    type loss = 0.0;
-    Tensor<type, 1> training_direction;
-    type initial_learning_rate = 0.0;
+//    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-    LearningRateAlgorithm::Triplet triplet;
+//    LearningRateAlgorithm tra(&sum_squared_error);
 
-    // Test
+//    type loss = 0.0;
+//    Tensor<type, 1> training_direction;
+//    type initial_learning_rate = 0.0;
 
-    sum_squared_error.set_regularization_method(LossIndex::L2);
+//    LearningRateAlgorithm::Triplet triplet;
 
-    neural_network.set_parameters_random();
+//    // Test
 
-    loss = sum_squared_error.calculate_training_loss();
-    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
-    initial_learning_rate = 0.01;
+//    sum_squared_error.set_regularization_method(LossIndex::L2);
 
-    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+//    neural_network.set_parameters_random();
 
-    assert_true(triplet.A.first <= triplet.U.first, LOG);
-    assert_true(triplet.U.first <= triplet.B.first, LOG);
-    assert_true(triplet.A.second >= triplet.U.second, LOG);
-    assert_true(triplet.U.second <= triplet.B.second, LOG);
+//    loss = sum_squared_error.calculate_training_loss();
+//    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
+//    initial_learning_rate = 0.01;
 
-    // Test
+//    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-    neural_network.set_parameters_constant(0.0);
+//    assert_true(triplet.A.first <= triplet.U.first, LOG);
+//    assert_true(triplet.U.first <= triplet.B.first, LOG);
+//    assert_true(triplet.A.second >= triplet.U.second, LOG);
+//    assert_true(triplet.U.second <= triplet.B.second, LOG);
 
-    loss = sum_squared_error.calculate_training_loss();
-    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
-    initial_learning_rate = 0.01;
+//    // Test
 
-    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+//    neural_network.set_parameters_constant(0.0);
 
-    /// @todo test fails
+////    loss = sum_squared_error.calculate_training_loss();
+////    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
+////    initial_learning_rate = 0.01;
 
-    assert_true(triplet.has_length_zero(), LOG);
+////    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-    // Test
+//    /// @todo test fails
 
-    neural_network.set_parameters_constant(1.0);
+//    assert_true(triplet.has_length_zero(), LOG);
 
-    loss = sum_squared_error.calculate_training_loss();
-    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
-    initial_learning_rate = 0.0;
+//    // Test
 
-    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+//    neural_network.set_parameters_constant(1.0);
 
-    assert_true(triplet.has_length_zero(), LOG);
+////    loss = sum_squared_error.calculate_training_loss();
+////    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
+////    initial_learning_rate = 0.0;
 
-    // Test
+////    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-    data_set.set(1, 1, 1);
-    data_set.set_data_random();
+//    assert_true(triplet.has_length_zero(), LOG);
 
-    instances_indices.set(0, 1, data_set.get_instances_number()-1);
+//    // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.set_parameters_random();
+//    data_set.set(1, 1, 1);
+//    data_set.set_data_random();
 
-    loss = sum_squared_error.calculate_training_loss();
-    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
-    initial_learning_rate = 0.001;
+////    instances_indices.set(0, 1, data_set.get_instances_number()-1);
 
-    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+////    Tensor<Index, 1> architecture;
 
-    assert_true(triplet.A.first <= triplet.U.first, LOG);
-    assert_true(triplet.U.first <= triplet.B.first, LOG);
-    assert_true(triplet.A.second >= triplet.U.second, LOG);
-    assert_true(triplet.U.second <= triplet.B.second, LOG);
+//    architecture.setValues({1,1});
 
-    // Test
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set_parameters_random();
 
-    data_set.set(3, 1, 1);
-    data_set.set_data_random();
+////    loss = sum_squared_error.calculate_training_loss();
+////    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
+//    initial_learning_rate = 0.001;
 
-    instances_indices.set(0, 1, data_set.get_instances_number()-1);
+////    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    neural_network.set_parameters_random();
+//    assert_true(triplet.A.first <= triplet.U.first, LOG);
+//    assert_true(triplet.U.first <= triplet.B.first, LOG);
+//    assert_true(triplet.A.second >= triplet.U.second, LOG);
+//    assert_true(triplet.U.second <= triplet.B.second, LOG);
 
-    loss = sum_squared_error.calculate_training_loss();
-    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
-    initial_learning_rate = 0.001;
+//    // Test
 
-    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+//    data_set.set(3, 1, 1);
+//    data_set.set_data_random();
 
-    assert_true(triplet.A.first <= triplet.U.first, LOG);
-    assert_true(triplet.U.first <= triplet.B.first, LOG);
-    assert_true(triplet.A.second >= triplet.U.second, LOG);
-    assert_true(triplet.U.second <= triplet.B.second, LOG);
+////    instances_indices.set(0, 1, data_set.get_instances_number()-1);
+
+//    architecture.setValues({1,1});
+
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set_parameters_random();
+
+////    loss = sum_squared_error.calculate_training_loss();
+////    training_direction = sum_squared_error.calculate_training_loss_gradient()*(-1.0);
+////    initial_learning_rate = 0.001;
+
+////    triplet = tra.calculate_bracketing_triplet(loss, training_direction, initial_learning_rate);
+
+//    assert_true(triplet.A.first <= triplet.U.first, LOG);
+//    assert_true(triplet.U.first <= triplet.B.first, LOG);
+//    assert_true(triplet.A.second >= triplet.U.second, LOG);
+//    assert_true(triplet.U.second <= triplet.B.second, LOG);
+
 }
 
 
@@ -350,31 +363,35 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 {
    cout << "test_calculate_golden_section_directional_point\n";
 
-   DataSet data_set(1, 1, 1);
-   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
+//   DataSet data_set(1, 1, 1);
+//   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
+//   Tensor<Index, 1> architecture;
 
-   SumSquaredError sum_squared_error(&neural_network);
+//   architecture.setValues({1,1});
 
-   LearningRateAlgorithm tra(&sum_squared_error);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
 
-   neural_network.set_parameters_constant(1.0);
+//   SumSquaredError sum_squared_error(&neural_network);
 
-   type loss = sum_squared_error.calculate_training_loss();
-   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
+//   LearningRateAlgorithm tra(&sum_squared_error);
 
-   Tensor<type, 1> training_direction = gradient*(-1.0);
-   type initial_learning_rate = 0.001;
+//   neural_network.set_parameters_constant(1.0);
 
-   type loss_tolerance = 1.0e-6;
-   tra.set_loss_tolerance(loss_tolerance);
+//   type loss = sum_squared_error.calculate_training_loss();
+//   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
+
+//   Tensor<type, 1> training_direction = gradient*(-1.0);
+//   type initial_learning_rate = 0.001;
+
+//   type loss_tolerance = 1.0e-6;
+//   tra.set_loss_tolerance(loss_tolerance);
   
-   pair<type,type> directional_point
-   = tra.calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
+//   pair<type,type> directional_point
+//   = tra.calculate_golden_section_directional_point(loss, training_direction, initial_learning_rate);
 
-   assert_true(directional_point.first >= 0.0, LOG);
-   assert_true(directional_point.second < loss, LOG);
+//   assert_true(directional_point.first >= 0.0, LOG);
+//   assert_true(directional_point.second < loss, LOG);
 }
 
 
@@ -382,30 +399,34 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 {
    cout << "test_calculate_Brent_method_directional_point\n";
 
-   DataSet data_set(1, 1, 1);
-   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
+//   DataSet data_set(1, 1, 1);
+//   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
 
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1});
-   SumSquaredError sum_squared_error(&neural_network);
+//   Tensor<Index, 1> architecture;
 
-   LearningRateAlgorithm tra(&sum_squared_error);
+//   architecture.setValues({1,1});
 
-   neural_network.set_parameters_constant(1.0);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//   SumSquaredError sum_squared_error(&neural_network);
 
-   type loss = sum_squared_error.calculate_training_loss();
-   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
+//   LearningRateAlgorithm tra(&sum_squared_error);
 
-   Tensor<type, 1> training_direction = gradient*(-1.0);
-   type initial_learning_rate = 0.001;
+//   neural_network.set_parameters_constant(1.0);
 
-   type loss_tolerance = 1.0e-6;
-   tra.set_loss_tolerance(loss_tolerance);
+//   type loss = sum_squared_error.calculate_training_loss();
+//   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
-   pair<type,type> directional_point
-   = tra.calculate_Brent_method_directional_point(loss, training_direction, initial_learning_rate);
+//   Tensor<type, 1> training_direction = gradient*(-1.0);
+//   type initial_learning_rate = 0.001;
 
-   assert_true(directional_point.first >= 0.0, LOG);
-   assert_true(directional_point.second < loss, LOG);
+//   type loss_tolerance = 1.0e-6;
+//   tra.set_loss_tolerance(loss_tolerance);
+
+//   pair<type,type> directional_point
+//   = tra.calculate_Brent_method_directional_point(loss, training_direction, initial_learning_rate);
+
+//   assert_true(directional_point.first >= 0.0, LOG);
+//   assert_true(directional_point.second < loss, LOG);
 }
 
 
@@ -421,12 +442,12 @@ void LearningRateAlgorithmTest::test_to_XML()
 
    delete document;
 }
-*/
+
 
 void LearningRateAlgorithmTest::run_test_case()
 {
    cout << "Running training rate algorithm test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
@@ -456,7 +477,6 @@ void LearningRateAlgorithmTest::run_test_case()
 
    test_set();
    test_set_default();   
-
    test_set_loss_index_pointer();
 
    // Training operators
@@ -466,9 +486,7 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training parameters
 
    test_set_loss_tolerance();
-
    test_set_warning_learning_rate();
-
    test_set_error_learning_rate();
 
    // Utilities
@@ -478,20 +496,20 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training methods
 
    test_calculate_bracketing_triplet();
-//   test_calculate_fixed_directional_point();
-//   test_calculate_golden_section_directional_point();
-//   test_calculate_Brent_method_directional_point();
-//   test_calculate_directional_point();
+   test_calculate_fixed_directional_point();
+   test_calculate_golden_section_directional_point();
+   test_calculate_Brent_method_directional_point();
+   test_calculate_directional_point();
 
    // Serialization methods
 
    test_to_XML();
-*/
+
    cout << "End of training rate algorithm test case.\n";
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

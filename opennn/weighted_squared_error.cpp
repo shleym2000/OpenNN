@@ -377,6 +377,7 @@ void WeightedSquaredError::calculate_output_gradient(const DataSet::Batch& batch
      back_propagation.output_gradient = (if_sentence.select(f_1, else_sentence.select(f_2, f_3)));
 }
 
+
 void WeightedSquaredError::calculate_Jacobian_gradient(const DataSet::Batch& batch,
                                     const NeuralNetwork::ForwardPropagation& forward_propagation,
                                     LossIndex::SecondOrderLoss& second_order_loss) const
@@ -635,20 +636,6 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 //    regularization_document.InsertFirstChild(element_clone);
 
 //    regularization_from_XML(regularization_document);
-}
-
-
-/// Returns the model in string format.
-
-string WeightedSquaredError::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Weighted squared error.\n"
-           << "Positives weight: " << positives_weight << "\n"
-           << "Negatives weight: " << negatives_weight << endl;
-
-    return buffer.str();
 }
 
 }
