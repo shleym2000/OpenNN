@@ -50,7 +50,7 @@ int main(void)
 
         data_set.split_instances_random();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives;// = data_set.scale_inputs_minimum_maximum();
         const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
 
         // Neural network
@@ -77,7 +77,7 @@ int main(void)
 
         unscaling_layer_pointer->set_descriptives(targets_descriptives);
 
-        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
+//        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::MinimumMaximum);
 
 //        unscaling_layer_pointer->set_unscaling_method(UnscalingLayer::NoUnscaling);
 
@@ -96,9 +96,8 @@ int main(void)
 
         // Testing analysis
 
-        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
-
-        data_set.unscale_targets_minimum_maximum(targets_descriptives);
+//        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
+//        data_set.unscale_targets_minimum_maximum(targets_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -109,7 +108,7 @@ int main(void)
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
+//        neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
         training_strategy_results.save("../data/training_strategy_results.dat");

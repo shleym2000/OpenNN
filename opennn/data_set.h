@@ -609,23 +609,15 @@ public:
 
    // Input variables scaling
 
-   void scale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_inputs_mean_standard_deviation();
-
    void scale_input_mean_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_mean_standard_deviation(const Index&);
 
    void scale_input_standard_deviation(const Descriptives&, const Index&);
    Descriptives scale_input_standard_deviation(const Index&);
 
-   void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_inputs_minimum_maximum();
-
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
-   Tensor<Descriptives, 1> scale_inputs(const string&);
-   void scale_inputs(const string&, const Tensor<Descriptives, 1>&);
    void scale_inputs(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&);
 
    // Target variables scaling
@@ -648,18 +640,15 @@ public:
 
    // Data unscaling
 
-   void unscale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   void unscale_input_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_input_mean_standard_deviation(const Descriptives&, const Index&);
+   void unscale_input_standard_deviation(const Descriptives&, const Index&);
+   void unscale_inputs(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
-   // Input variables unscaling
-
-   void unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_inputs_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-
-   // Target variables unscaling
-
-   void unscale_targets_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void unscale_targets_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   void unscale_target_minimum_maximum(const Descriptives&, const Index&);
+   void unscale_target_mean_standard_deviation(const Descriptives&, const Index&);
+   void unscale_target_logarithmic(const Descriptives&, const Index&);
+   void unscale_targets(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
 
    // Classification methods
 

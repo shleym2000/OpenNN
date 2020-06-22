@@ -24,6 +24,7 @@ int main(void)
 {
     try
     {
+
         cout << "OpenNN. Breast Cancer Application." << endl;
 
         srand(static_cast<unsigned>(time(nullptr)));
@@ -44,51 +45,64 @@ int main(void)
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
+        const Index input_variables_number = data_set.get_input_variables_number();
+
+        Tensor<string, 1> scaling_methods(input_variables_number);
+        scaling_methods.setConstant("MeanStandardDeviation");
+
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
+        data_set.scale_inputs(scaling_methods, inputs_descriptives);
 
         // Neural network
 
         Tensor<Index, 1> neural_netowrk_architecture(3);
-        neural_netowrk_architecture.setValues({9, 3, 1});
+        neural_netowrk_architecture.setValues({9, 7, 1});
 
-        NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_netowrk_architecture);
+        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_netowrk_architecture);
         neural_network.set_thread_pool_device(thread_pool_device);
 
+        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::HyperbolicTangent);
+        dynamic_cast<ProbabilisticLayer*>(neural_network.get_trainable_layers_pointers()(1))->set_activation_function(ProbabilisticLayer::Logistic);
+
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
         training_strategy.set_thread_pool_device(thread_pool_device);
 
-        training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::CONJUGATE_GRADIENT);
+
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
+
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
 
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+        ConjugateGradient* cg = training_strategy.get_conjugate_gradient_pointer();
 
-        quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
+        cg->set_loss_goal(1.0e-3);
 
-        quasi_Newton_method_pointer->set_display(true);
+        cg->set_display(true);
 
         training_strategy.set_display(true);
 
         training_strategy.perform_training();
 
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MeanStandardDeviation);
+
         // Model selection
 
-        ModelSelection model_selection(&training_strategy);
+         ModelSelection model_selection(&training_strategy);
 
         model_selection.perform_neurons_selection();
 
         // Testing analysis
 
-        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
+        data_set.unscale_inputs(scaling_methods, inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -115,6 +129,7 @@ int main(void)
         cout << "Matthews correlation coefficient: " << binary_classification_tests[12] << endl;
         cout << "Informedness                    : " << binary_classification_tests[13] << endl;
         cout << "Markedness                      : " << binary_classification_tests[14] << endl;
+
 
         cout << "End" << endl;
 

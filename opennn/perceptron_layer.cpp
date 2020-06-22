@@ -542,8 +542,8 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 
     synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
 
-    Eigen::Tensor<float, 0> min_weight = synaptic_weights.minimum();
-    Eigen::Tensor<float, 0> max_weight = synaptic_weights.maximum();
+    Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
+    Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
 
     synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
     synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
@@ -1387,7 +1387,7 @@ string PerceptronLayer::write_activations_python() const
             break;
 
         case Logistic:
-            buffer << "1.0/(1.0 + exp(-combinations[" << i << "]))\n";
+            buffer << "1.0/(1.0 + np.exp(-combinations[" << i << "]))\n";
             break;
 
         case Threshold:
