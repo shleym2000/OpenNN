@@ -1443,6 +1443,7 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
     }
+
     return outputs;
 }
 
@@ -1889,8 +1890,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    cout << "AAAAAAAAAAAAAAAAA" << endl;
-
     // Inputs
 
     {
@@ -1907,6 +1906,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             inputs_from_XML(inputs_document);
         }
+
     }
 
     // Layers
@@ -2025,7 +2025,14 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            inputs_names(i) = input_element->GetText();
+//            inputs_names(i) = input_element->GetText();
+            if(!input_element->GetText()){
+                inputs_names(i) = "";
+            }
+            else{
+                inputs_names(i) = input_element->GetText();
+            }
+
         }
     }
 }
@@ -2343,7 +2350,12 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            outputs_names(i) = output_element->GetText();
+            if(!output_element->GetText()){
+                outputs_names(i) = "";
+            }else{
+                outputs_names(i) = output_element->GetText();
+            }
+
         }
     }
 }
@@ -2390,6 +2402,8 @@ void NeuralNetwork::save(const string& file_name) const
     tinyxml2::XMLPrinter document(pFile);
 
     write_XML(document);
+
+    fclose(pFile);
 }
 
 
@@ -2431,7 +2445,7 @@ void NeuralNetwork::load(const string& file_name)
 
     tinyxml2::XMLDocument document;
 
-    if(!document.LoadFile(file_name.c_str()))
+    if(document.LoadFile(file_name.c_str()))
     {
         ostringstream buffer;
 
@@ -2440,6 +2454,7 @@ void NeuralNetwork::load(const string& file_name)
                << "Cannot load XML file " << file_name << ".\n";
 
         throw logic_error(buffer.str());
+
     }
 
     from_XML(document);

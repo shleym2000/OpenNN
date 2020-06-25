@@ -4924,7 +4924,13 @@ Index DataSet::calculate_testing_negatives(const Index& target_index) const
 
 void DataSet::set_variables_descriptives()
 {
-    variables_descriptives = descriptives(data);
+    const Tensor<Index, 1> used_indices = get_used_instances_indices();
+
+    Tensor<Index, 1> variables_indices;
+
+    intialize_sequential_eigen_tensor(variables_indices, 0, 1, get_variables_number()-1);
+
+    variables_descriptives = descriptives(data, used_indices, variables_indices);
 }
 
 
@@ -6418,9 +6424,13 @@ void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_des
 
 void DataSet::scale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
+    const type slope = static_cast<type>(2)/input_statistics.standard_deviation;
+
+    const type intercept = -static_cast<type>(2)*input_statistics.mean/input_statistics.standard_deviation;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, input_index) = static_cast<type>(2)*(data(i, input_index) - input_statistics.mean) / input_statistics.standard_deviation;
+        data(i, input_index) = data(i, input_index)*slope + intercept;
     }
 }
 
@@ -6506,9 +6516,13 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 
 void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
+    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : static_cast<type>(2)/(input_statistics.maximum-input_statistics.minimum);
+
+    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : -(input_statistics.maximum + input_statistics.minimum)/(input_statistics.maximum - input_statistics.minimum);
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, input_index) = static_cast<type>(2.0)*(data(i, input_index)-input_statistics.minimum)/(input_statistics.maximum-input_statistics.minimum)-static_cast<type>(1.0);
+        data(i, input_index) = data(i, input_index)*slope + intercept;
     }
 }
 
@@ -6545,11 +6559,13 @@ Descriptives DataSet::scale_input_minimum_maximum(const Index& input_index)
 /// It scales every input variable with the given method.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& inputs_descriptives)
+Tensor<Descriptives, 1> DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods)
 {
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
+
+    for(Index i = 0; i < scaling_unscaling_methods.dimension(0); i++)
     {
         switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
         {
@@ -6589,6 +6605,8 @@ void DataSet::scale_inputs(const Tensor<string, 1>& scaling_unscaling_methods, c
         }
         }
     }
+
+    return inputs_descriptives;
 }
 
 
@@ -6809,18 +6827,34 @@ Tensor<Descriptives, 1> DataSet::scale_targets(const string& scaling_unscaling_m
 
 void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
+    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+                0 :
+                static_cast<type>(2)/(target_statistics.maximum-target_statistics.minimum);
+
+    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+                0 :
+                -(target_statistics.maximum + target_statistics.minimum)/(target_statistics.maximum - target_statistics.minimum);
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = static_cast<type>(2.0)*(data(i, target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum)-static_cast<type>(1.0);
+        data(i, target_index) = data(i, target_index)*slope + intercept;
     }
 }
 
 
 void DataSet::scale_target_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
 {
+    const type slope = std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
+                0 :
+                static_cast<type>(2)/target_statistics.standard_deviation;
+
+    const type intercept = std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
+                0 :
+                -static_cast<type>(2)*target_statistics.mean/target_statistics.standard_deviation;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = static_cast<type>(2)*(data(i, target_index) - target_statistics.mean) / target_statistics.standard_deviation;
+        data(i, target_index) = data(i, target_index)*slope + intercept;
     }
 }
 
@@ -6829,7 +6863,14 @@ void DataSet::scale_target_logarithmic(const Descriptives& target_statistics, co
 {
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = static_cast<type>(0.5)*(exp(data(i,target_index)-1))*(target_statistics.maximum-target_statistics.minimum) + target_statistics.minimum;
+        if(std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3))
+        {
+            data(i, target_index) = 0;
+        }
+        else
+        {
+            data(i, target_index) = static_cast<type>(0.5)*(exp(data(i,target_index)-1))*(target_statistics.maximum-target_statistics.minimum) + target_statistics.minimum;
+        }
     }
 }
 
@@ -6837,9 +6878,10 @@ void DataSet::scale_target_logarithmic(const Descriptives& target_statistics, co
 /// It scales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
+Tensor<Descriptives, 1> DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods)
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
 
     for (Index i = 0; i < scaling_unscaling_methods.size(); i++)
     {
@@ -6872,6 +6914,7 @@ void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, 
         }
         }
     }
+    return targets_descriptives;
 }
 
 
@@ -6882,9 +6925,13 @@ void DataSet::scale_targets(const Tensor<string, 1>& scaling_unscaling_methods, 
 
 void DataSet::unscale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
+    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
+
+    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? input_statistics.minimum : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, input_index) = (data(i, input_index)+static_cast<type>(1))/static_cast<type>(2)*(input_statistics.maximum-input_statistics.minimum)+input_statistics.minimum;
+        data(i, input_index) = data(i, input_index)*slope + intercept;
     }
 }
 
@@ -6896,9 +6943,13 @@ void DataSet::unscale_input_minimum_maximum(const Descriptives& input_statistics
 
 void DataSet::unscale_input_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
+    const type slope = std::abs(input_statistics.mean - 0) < static_cast<type>(1e-3) ? 0 : input_statistics.standard_deviation/static_cast<type>(2);
+
+    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3) ? input_statistics.minimum : input_statistics.mean;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, input_index) = input_statistics.standard_deviation/static_cast<type>(2)*data(i,input_index)+input_statistics.mean;
+        data(i, input_index) = data(i, input_index)*slope + intercept;
     }
 }
 
@@ -6910,9 +6961,13 @@ void DataSet::unscale_input_mean_standard_deviation(const Descriptives& input_st
 
 void DataSet::unscale_input_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
 {
+    const type slope = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3) ? 0 : input_statistics.standard_deviation/static_cast<type>(2);
+
+    const type intercept = std::abs(input_statistics.mean-0) < static_cast<type>(1e-3) ? input_statistics.minimum : 0;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, input_index) = input_statistics.standard_deviation/static_cast<type>(2)*data(i,input_index);
+        data(i, input_index) = data(i, input_index)*slope + intercept;
     }
 }
 
@@ -6969,18 +7024,32 @@ void DataSet::unscale_inputs(const Tensor<string, 1>& scaling_unscaling_methods,
 
 void DataSet::unscale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
+    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+                0 :
+                (target_statistics.maximum - target_statistics.minimum)/static_cast<type>(2);
+
+    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+                target_statistics.minimum :
+                (target_statistics.minimum + target_statistics.maximum)/static_cast<type>(2);
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = (data(i, target_index)+static_cast<type>(1))/static_cast<type>(2)*(target_statistics.maximum-target_statistics.minimum)+target_statistics.minimum;
+        data(i, target_index) = data(i, target_index)*slope + intercept;
     }
 }
 
 
 void DataSet::unscale_target_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
 {
+    const type slope = std::abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
+                0 :
+                target_statistics.standard_deviation/static_cast<type>(2);
+
+    const type intercept = target_statistics.mean;
+
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = target_statistics.standard_deviation/static_cast<type>(2)*data(i,target_index)+target_statistics.mean;
+        data(i, target_index) = data(i, target_index)*slope + intercept;
     }
 }
 
@@ -6989,7 +7058,14 @@ void DataSet::unscale_target_logarithmic(const Descriptives& target_statistics, 
 {
     for(Index i = 0; i < data.dimension(0); i++)
     {
-        data(i, target_index) = log(static_cast<type>(2)*(data(i,target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum));
+        if(std::abs(target_statistics.maximum - target_statistics.minimum) < static_cast<type>(1e-3))
+        {
+            data(i, target_index) = target_statistics.minimum;
+        }
+        else
+        {
+            data(i, target_index) = log(static_cast<type>(2)*(data(i,target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum));
+        }
     }
 }
 
@@ -8300,17 +8376,16 @@ void DataSet::print_summary() const
 
 void DataSet::save(const string& file_name) const
 {
-//   tinyxml2::XMLDocument* document = write_XML();
+    FILE *pFile;
+    errno_t err;
 
-//    tinyxml2::XMLPrinter filestream;
-//    write_XML(filestream);
+    err = fopen_s(&pFile, file_name.c_str(), "w");
 
-//    document.
+    tinyxml2::XMLPrinter document(pFile);
 
+    write_XML(document);
 
-//   document->SaveFile(file_name.c_str());
-
-//   delete document;
+    fclose(pFile);
 }
 
 
@@ -9590,7 +9665,12 @@ void DataSet::read_csv_1()
 
     cout << "Setting rows labels..." << endl;
 
-    if(contains_substring(data_file_preview(0)(0), "id"))
+    string first_name = data_file_preview(0)(0);
+    transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
+
+    cout << "First name: " << first_name << endl;
+
+    if(contains_substring(first_name, "id"))
     {
         has_rows_labels = true;
     }
@@ -9618,7 +9698,6 @@ void DataSet::read_csv_1()
 
     if(has_columns_names)
     {
-
         has_rows_labels ? set_columns_names(data_file_preview(0).slice(Eigen::array<Eigen::Index, 1>({1}), Eigen::array<Eigen::Index, 1>({data_file_preview(0).size()-1})))
                         : set_columns_names(data_file_preview(0));
     }
@@ -10414,6 +10493,23 @@ Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const 
 
 void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
         const Index& start, const Index& step, const Index& end) const
+{
+    const Index new_size = (end-start)/step+1;
+
+    new_tensor.resize(new_size);
+    new_tensor(0) = start;
+
+    for(Index i = 1; i < new_size-1; i++)
+    {
+        new_tensor(i) = new_tensor(i-1)+step;
+    }
+
+    new_tensor(new_size-1) = end;
+}
+
+
+void DataSet::intialize_sequential_eigen_type_tensor(Tensor<type, 1>& new_tensor,
+        const type& start, const type& step, const type& end) const
 {
     const Index new_size = (end-start)/step+1;
 
