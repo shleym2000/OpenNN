@@ -50,8 +50,7 @@ int main(void)
         Tensor<string, 1> scaling_methods(input_variables_number);
         scaling_methods.setConstant("MeanStandardDeviation");
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.calculate_input_variables_descriptives();
-        data_set.scale_inputs(scaling_methods, inputs_descriptives);
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs(scaling_methods);
 
         // Neural network
 
@@ -129,7 +128,6 @@ int main(void)
         cout << "Matthews correlation coefficient: " << binary_classification_tests[12] << endl;
         cout << "Informedness                    : " << binary_classification_tests[13] << endl;
         cout << "Markedness                      : " << binary_classification_tests[14] << endl;
-
 
         cout << "End" << endl;
 

@@ -90,6 +90,8 @@ LossIndex::LossIndex(const LossIndex& other_error_term)
     : neural_network_pointer(nullptr),
       data_set_pointer(nullptr)
 {
+    set_default();
+
     neural_network_pointer = other_error_term.neural_network_pointer;
 
     data_set_pointer = other_error_term.data_set_pointer;
@@ -232,6 +234,8 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
+    if(thread_pool_device != nullptr) delete thread_pool_device;
+
     thread_pool_device = new_thread_pool_device;
 }
 
@@ -257,6 +261,10 @@ void LossIndex::set_data_set_pointer(DataSet* new_data_set_pointer)
 
 void LossIndex::set_default()
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     regularization_method = L2;
     display = true;
 }
@@ -436,6 +444,7 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
     const Tensor<type, 2>& inputs = batch.inputs_2d;
 
     Tensor<type, 2> error_Jacobian(instances_number, parameters_number);
+    error_Jacobian.setZero();
 
     Index index = 0;
 
@@ -490,12 +499,12 @@ Tensor<type, 2> LossIndex::calculate_layer_error_terms_Jacobian(const Tensor<typ
 
             for(Index input = 0; input < inputs_number; input++)
             {
-                layer_error_Jacobian(instance, parameter) = layer_delta*layer_inputs(instance, input);
+                layer_error_Jacobian(instance, neurons_number+parameter) = layer_delta*layer_inputs(instance, input);
 
                 parameter++;
             }
 
-            layer_error_Jacobian(instance, synaptic_weights_number+perceptron) = layer_delta;
+            layer_error_Jacobian(instance, /*synaptic_weights_number+*/perceptron) = layer_delta;
         }
     }
 
@@ -545,19 +554,9 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 {
     // First Order
 
-//    calculate_error(batch, forward_propagation, back_propagation);
+    calculate_error_terms(batch, forward_propagation, second_order_loss);
 
-//    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-//    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-//    const Tensor<type, 2>& targets = batch.targets_2d;
-
-//    Tensor<type, 1> error_terms(outputs.dimension(0));
-//    const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
-
-//    error_terms.device(*thread_pool_device) = ((outputs - targets).square().sum(rows_sum)).sqrt();
-
-    calculate_output_gradient(batch, forward_propagation, back_propagation);
+    calculate_error_terms_output_gradient(batch, forward_propagation, back_propagation, second_order_loss);
 
     calculate_layers_delta(forward_propagation, back_propagation);
 
@@ -565,9 +564,7 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
 
     calculate_error_terms_Jacobian(batch, forward_propagation, back_propagation, second_order_loss);
 
-    calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
-
-    calculate_error_gradient(batch,forward_propagation,back_propagation);
+    calculate_Jacobian_gradient(batch, second_order_loss);
 
     calculate_hessian_approximation(batch, second_order_loss);
 
@@ -585,6 +582,20 @@ void LossIndex::calculate_terms_second_order_loss(const DataSet::Batch& batch,
         second_order_loss.gradient += regularization_weight*calculate_regularization_gradient(parameters);
         second_order_loss.hessian += regularization_weight*calculate_regularization_hessian(parameters);
     }
+}
+
+
+void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batch,
+                                           NeuralNetwork::ForwardPropagation& forward_propagation,
+                                           BackPropagation& back_propagation,
+                                           SecondOrderLoss& second_order_loss) const
+{
+    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
+
+    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
+    const Tensor<type, 2>& targets = batch.targets_2d;
+    back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
+
 }
 
 
@@ -735,6 +746,7 @@ void LossIndex::calculate_layers_delta(NeuralNetwork::ForwardPropagation& forwar
                                 back_propagation.neural_network.layers(i+1).delta,
                                 back_propagation.neural_network.layers(i).delta);
    }
+
 }
 
 
@@ -995,6 +1007,69 @@ Tensor<type, 1> LossIndex:: calculate_error_gradient_numerical_differentiation(L
 }
 
 
+Tensor<type, 2> LossIndex::calculate_Jacobian_numerical_differentiation(LossIndex * loss_index_pointer) const
+{
+    const Index instances_number = data_set_pointer->get_training_instances_number();
+
+    DataSet::Batch batch(instances_number, data_set_pointer);
+
+    Tensor<Index, 1> instances_indices = data_set_pointer->get_training_instances_indices();
+    const Tensor<Index, 1> input_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+
+    batch.fill(instances_indices, input_indices, target_indices);
+
+    NeuralNetwork::ForwardPropagation forward_propagation(instances_number, neural_network_pointer);
+
+    BackPropagation back_propagation(instances_number, loss_index_pointer);
+
+    Tensor<type, 1> parameters = neural_network_pointer->get_parameters();
+
+    const Index parameters_number = parameters.size();
+
+    LossIndex::SecondOrderLoss second_order_loss(parameters_number, instances_number);
+
+    neural_network_pointer->forward_propagate(batch, parameters, forward_propagation);
+    loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
+
+    type h;
+
+//    Index m = second_order_loss.error_terms.size();
+
+    Tensor<type, 1> parameters_forward(parameters);
+    Tensor<type, 1> parameters_backward(parameters);
+
+    Tensor<type, 1> error_terms_forward(parameters_number);
+    Tensor<type, 1> error_terms_backward(parameters_number);
+
+    Tensor<type, 2> J(instances_number,parameters_number);
+
+    for(Index j = 0; j < parameters_number; j++)
+    {
+        h = calculate_h(parameters(j));
+
+        parameters_backward(j) -= h;
+        neural_network_pointer->forward_propagate(batch, parameters_backward, forward_propagation);
+        loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
+        error_terms_backward = second_order_loss.error_terms;
+        parameters_backward(j) += h;
+
+        parameters_forward(j) += h;
+        neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
+        loss_index_pointer->calculate_error_terms(batch, forward_propagation, second_order_loss);
+        error_terms_forward = second_order_loss.error_terms;
+        parameters_forward(j) -= h;
+
+        for(Index i = 0; i < instances_number; i++)
+        {
+            J(i,j) = (error_terms_forward(i) - error_terms_backward(i))/(static_cast<type>(2.0)*h);
+        }
+    }
+
+    return J;
+}
+
+
 type LossIndex::calculate_eta() const
 {
     const Index precision_digits = 6;
@@ -1086,7 +1161,7 @@ Tensor<type, 1> LossIndex::l2_norm_gradient(const Tensor<type, 1>& parameters) c
 
     const type norm = l2_norm(parameters);
 
-    if(static_cast<Index>(norm) ==  0)
+    if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())
     {
         gradient.setZero();
 
@@ -1107,7 +1182,7 @@ Tensor<type, 2> LossIndex::l2_norm_hessian(const Tensor<type, 1>& parameters) co
 
     const type norm = l2_norm(parameters);
 
-    if(static_cast<Index>(norm) == 0.0)
+    if((norm - static_cast<type>(0)) < std::numeric_limits<type>::min())
     {
         hessian.setZero();
 

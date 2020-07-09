@@ -1165,8 +1165,6 @@ Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
     Tensor<Index, 1> layers_neurons_number(layers_pointers.size());
 
-//    cout << layers_pointers.size() << endl;
-
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
         layers_neurons_number(i) = layers_pointers[i]->get_neurons_number();
@@ -1416,21 +1414,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
         throw logic_error(buffer.str());
     }
 
-    //    const Index inputs_number = get_inputs_number();
-
-    //    const Index inputs_dimension = inputs.dimension(1);
-
-    //    if(inputs_size != inputs_number)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Dimension of inputs (" <<  << ") must be equal to number of inputs.\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
 #endif
 
     const Index layers_number = get_layers_number();
@@ -1442,106 +1425,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     for(Index i = 1; i < layers_number; i++)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
-    }
-    return outputs;
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs) const
-{
-#ifdef __OPENNN_DEBUG__
-
-    ///@todo check for convolutional
-
-    //    const Index inputs_dimensions_number = inputs.rank();
-
-    //    if(inputs_dimensions_number != 2)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
-    //    const Index inputs_number = get_inputs_number();
-
-    //    const Index inputs_columns_number = inputs.dimension(1);
-
-    //    if(inputs_columns_number != inputs_number)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
-#endif
-
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
-    }
-
-    return outputs;
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs,
-                                                           const Tensor<type, 1>& parameters) const
-{
-    const Index batch_size = inputs.dimension(0);
-
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-#ifdef __OPENNN_DEBUG__
-
-    if(trainable_layers_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, cons Tensor<type, 1>&) const method.\n"
-               << "This neural network has not got any layer.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    const Tensor<Tensor<type, 1>, 1> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
-
-    Tensor<type, 2> outputs(batch_size, trainable_layers_pointers[0]->get_neurons_number());
-
-    if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::Type::Pooling)
-    {
-        outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-    }
-
-    else outputs = trainable_layers_pointers[0]->calculate_outputs(inputs, trainable_layers_parameters[0]);
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        outputs.resize(batch_size, trainable_layers_pointers[i]->get_neurons_number());
-
-        if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::Type::Pooling)
-        {
-            outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
-        }
-        else outputs = trainable_layers_pointers[i]->calculate_outputs(outputs, trainable_layers_parameters[i]);
     }
 
     return outputs;
@@ -1889,8 +1772,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
-    cout << "AAAAAAAAAAAAAAAAA" << endl;
-
     // Inputs
 
     {
@@ -1907,6 +1788,7 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             inputs_from_XML(inputs_document);
         }
+
     }
 
     // Layers
@@ -2025,7 +1907,14 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            inputs_names(i) = input_element->GetText();
+//            inputs_names(i) = input_element->GetText();
+            if(!input_element->GetText()){
+                inputs_names(i) = "";
+            }
+            else{
+                inputs_names(i) = input_element->GetText();
+            }
+
         }
     }
 }
@@ -2343,7 +2232,12 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            outputs_names(i) = output_element->GetText();
+            if(!output_element->GetText()){
+                outputs_names(i) = "";
+            }else{
+                outputs_names(i) = output_element->GetText();
+            }
+
         }
     }
 }
@@ -2390,6 +2284,8 @@ void NeuralNetwork::save(const string& file_name) const
     tinyxml2::XMLPrinter document(pFile);
 
     write_XML(document);
+
+    fclose(pFile);
 }
 
 
@@ -2431,7 +2327,7 @@ void NeuralNetwork::load(const string& file_name)
 
     tinyxml2::XMLDocument document;
 
-    if(!document.LoadFile(file_name.c_str()))
+    if(document.LoadFile(file_name.c_str()))
     {
         ostringstream buffer;
 
@@ -2440,6 +2336,7 @@ void NeuralNetwork::load(const string& file_name)
                << "Cannot load XML file " << file_name << ".\n";
 
         throw logic_error(buffer.str());
+
     }
 
     from_XML(document);
@@ -2477,6 +2374,46 @@ void NeuralNetwork::load_parameters(const string& file_name)
 }
 
 
+/// Loads the neural network parameters from a data file.
+/// The format of this file is just a sequence of numbers.
+/// @param file_name Name of parameters data file.
+
+void NeuralNetwork::load_parameters_binary(const string& file_name)
+{
+    ifstream file;
+
+    file.open(file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork template.\n"
+               << "void load_parameters_binary(const string&) method.\n"
+               << "Cannot open binary file: " << file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    streamsize size = sizeof(double);
+
+    const Index parameters_number = get_parameters_number();
+
+    Tensor<type, 1> new_parameters(parameters_number);
+
+    type value;
+
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        new_parameters(i) = value;
+    }
+
+    set_parameters(new_parameters);
+}
+
+
 /// Returns a string with the c function of the expression represented by the neural network.
 
 string NeuralNetwork::write_expression_c() const
@@ -2496,11 +2433,11 @@ string NeuralNetwork::write_expression_c() const
     buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
     buffer <<"Example:"<<endl;
     buffer <<""<<endl;
-    buffer <<"\tvector<float>sample(n);\t"<<endl;
+    buffer <<"\tvector<float> sample(n);\t"<<endl;
     buffer <<"\tsample[0] = 1;\t"<<endl;
     buffer <<"\tsample[1] = 2;\t"<<endl;
     buffer <<"\tsample[n] = 10;\t"<<endl;
-    buffer <<"\tvector<float>outputs = neural_network(sample);"<<endl;
+    buffer <<"\tvector<float> outputs = neural_network(sample);"<<endl;
     buffer <<""<<endl;
     buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
     buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;

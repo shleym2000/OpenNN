@@ -129,13 +129,6 @@ public:
    const type& get_momentum() const;
    const bool& get_nesterov() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-
    // Stopping criteria
 
    const type& get_loss_goal() const;
@@ -161,12 +154,6 @@ public:
        batch_instances_number = new_batch_instances_number;
    }
 
-
-   void set_batch_size(const Index& new_batch_instances_number)
-   {
-       batch_instances_number = new_batch_instances_number;
-   }
-
    //Training operators
 
    void set_initial_learning_rate(const type&);
@@ -176,10 +163,10 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
+   
+   
+   
+   
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -242,19 +229,19 @@ private:
 
    /// Value for the parameters norm at which a warning message is written to the screen. 
 
-   type warning_parameters_norm;
+   
 
    /// Value for the gradient norm at which a warning message is written to the screen. 
 
-   type warning_gradient_norm;
+   
 
    /// Value for the parameters norm at which the training process is assumed to fail. 
    
-   type error_parameters_norm;
+   
 
    /// Value for the gradient norm at which the training process is assumed to fail. 
 
-   type error_gradient_norm;
+   
 
    // Stopping criteria
 
@@ -284,7 +271,7 @@ private:
 
    bool reserve_selection_error_history;
 
-   Index batch_instances_number = 10;
+   Index batch_instances_number = 1000;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"

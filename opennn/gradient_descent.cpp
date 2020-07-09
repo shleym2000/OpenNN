@@ -74,60 +74,6 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
 }
 
 
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is
-/// written to the screen.
-
-const type& GradientDescent::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written
-/// to the screen.
-
-const type& GradientDescent::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich a warning message is written to the screen during line
-/// minimization.
-
-const type& GradientDescent::get_warning_learning_rate() const
-{
-    return warning_learning_rate;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is
-/// written to the screen and the program exits.
-
-const type& GradientDescent::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& GradientDescent::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-
-const type& GradientDescent::get_error_learning_rate() const
-{
-    return error_learning_rate;
-}
-
-
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& GradientDescent::get_minimum_parameters_increment_norm() const
@@ -194,14 +140,6 @@ const bool& GradientDescent::get_choose_best_selection() const
 }
 
 
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-const bool& GradientDescent::get_apply_early_stopping() const
-{
-    return apply_early_stopping;
-}
-
-
 /// Returns true if the loss history vector is to be reserved, and false otherwise.
 
 const bool& GradientDescent::get_reserve_training_error_history() const
@@ -232,17 +170,6 @@ void GradientDescent::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 
 void GradientDescent::set_default()
 {
-
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e6;
-    warning_learning_rate = 1.0e6;
-
-    error_parameters_norm = 1.0e9;
-    error_gradient_norm = 1.0e9;
-    error_learning_rate = 1.0e9;
-
     // Stopping criteria
 
     minimum_parameters_increment_norm = 0;
@@ -257,7 +184,6 @@ void GradientDescent::set_default()
     maximum_time = 1000.0;
 
     choose_best_selection = false;
-    apply_early_stopping = true;
 
     // TRAINING HISTORY
 
@@ -268,14 +194,6 @@ void GradientDescent::set_default()
 
     display = true;
     display_period = 5;
-}
-
-
-void GradientDescent::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
-{
-    thread_pool_device = new_thread_pool_device;
-
-    learning_rate_algorithm.set_thread_pool_device(new_thread_pool_device);
 }
 
 
@@ -299,176 +217,6 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
     reserve_training_error_history = new_reserve_all_training_history;
 
     reserve_selection_error_history = new_reserve_all_training_history;
-}
-
-
-/// Sets a new value for the parameters vector norm at which a warning message is written to the
-/// screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void GradientDescent::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void GradientDescent::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning gradient norm
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at wich a warning message is written to the screen during line
-/// minimization.
-/// @param new_warning_learning_rate Warning learning rate value.
-
-void GradientDescent::set_warning_learning_rate(const type& new_warning_learning_rate)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_warning_learning_rate(const type&) method.\n"
-               << "Warning learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    warning_learning_rate = new_warning_learning_rate;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void GradientDescent::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error parameters norm
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void GradientDescent::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error gradient norm
-
-    error_gradient_norm = new_error_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at wich a the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-/// @param new_error_learning_rate Error learning rate value.
-
-void GradientDescent::set_error_learning_rate(const type& new_error_learning_rate)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_error_learning_rate(const type&) method.\n"
-               << "Error learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    error_learning_rate = new_error_learning_rate;
 }
 
 
@@ -640,16 +388,6 @@ void GradientDescent::set_maximum_time(const type& new_maximum_time)
 void GradientDescent::set_choose_best_selection(const bool& new_choose_best_selection)
 {
     choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account,
-/// false otherwise.
-
-void GradientDescent::set_apply_early_stopping(const bool& new_apply_early_stopping)
-{
-    apply_early_stopping = new_apply_early_stopping;
 }
 
 
@@ -895,9 +633,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
         parameters_norm = l2_norm(optimization_data.parameters);
 
-        if(display && parameters_norm >= warning_parameters_norm)
-            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
-
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         // Loss index
@@ -930,9 +665,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         if(gradient_norm < numeric_limits<type>::min()) throw logic_error("Gradient is zero");
-
-        if(display && gradient_norm >= warning_gradient_norm)
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
 
         // Optimization algorithm
 
@@ -988,7 +720,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = LossGoal;
         }
 
-        else if(selection_error_increases >= maximum_selection_error_increases && apply_early_stopping)
+        else if(selection_error_increases >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1242,83 +974,6 @@ tinyxml2::XMLDocument* GradientDescent::to_XML() const
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
 
-    // Apply early stopping
-
-    element = document->NewElement("ApplyEarlyStopping");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning parameters norm
-
-//   element = document->NewElement("WarningParametersNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_parameters_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Warning gradient norm
-
-//   element = document->NewElement("WarningGradientNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_gradient_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Warning learning rate
-
-//   element = document->NewElement("WarningLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Error parameters norm
-
-//   element = document->NewElement("ErrorParametersNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_parameters_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Error gradient norm
-
-//   element = document->NewElement("ErrorGradientNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_gradient_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
-    // Error learning rate
-
-//   element = document->NewElement("ErrorLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-
     // Minimum parameters increment norm
 
     element = document->NewElement("MinimumParametersIncrementNorm");
@@ -1488,17 +1143,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
-    // Apply early stopping
-
-    file_stream.OpenElement("ApplyEarlyStopping");
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Minimum parameters increment norm
 
     file_stream.OpenElement("MinimumParametersIncrementNorm");
@@ -1647,24 +1291,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         try
         {
             set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Apply early stopping
-
-    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
-
-    if(apply_early_stopping_element)
-    {
-        string new_apply_early_stopping = apply_early_stopping_element->GetText();
-
-        try
-        {
-            set_apply_early_stopping(new_apply_early_stopping != "0");
         }
         catch(const logic_error& e)
         {

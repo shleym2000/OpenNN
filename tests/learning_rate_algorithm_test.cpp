@@ -75,33 +75,9 @@ void LearningRateAlgorithmTest::test_get_learning_rate_method_name()
 }
 
 
-void LearningRateAlgorithmTest::test_get_warning_learning_rate()
-{
-   cout << "test_get_warning_learning_rate\n";
-
-   LearningRateAlgorithm tra;
-
-   tra.set_warning_learning_rate(0.0);
-
-   assert_true(tra.get_warning_learning_rate() == 0.0, LOG);
-}
-
-
-void LearningRateAlgorithmTest::test_get_error_learning_rate()
-{
-   cout << "test_get_error_learning_rate\n";
-
-   LearningRateAlgorithm tra;
-
-   tra.set_error_learning_rate(0.0);
-
-   assert_true(tra.get_error_learning_rate() == 0.0, LOG);
-}
-
-
 void LearningRateAlgorithmTest::test_get_display()
 {
-   cout << "test_get_warning_gradient_norm\n"; 
+   cout << "test_get_display\n";
 
    LearningRateAlgorithm tra;
 
@@ -150,18 +126,6 @@ void LearningRateAlgorithmTest::test_set_learning_rate_method()
 void LearningRateAlgorithmTest::test_set_loss_tolerance()
 {
    cout << "test_set_loss_tolerance\n"; 
-}
-
-
-void LearningRateAlgorithmTest::test_set_warning_learning_rate()
-{
-   cout << "test_set_warning_learning_rate\n";
-}
-
-
-void LearningRateAlgorithmTest::test_set_error_learning_rate()
-{
-   cout << "test_set_error_learning_rate\n";
 }
 
 
@@ -399,20 +363,20 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
 {
    cout << "test_calculate_Brent_method_directional_point\n";
 
-//   DataSet data_set(1, 1, 1);
-//   Tensor<Index, 1> indices(1,1,data_set.get_instances_number()-1);
+   DataSet data_set(1, 1, 1);
+   Tensor<Index, 1> indices(3);
+   indices.setValues({1,1,data_set.get_instances_number()-1});
 
-//   Tensor<Index, 1> architecture;
+   Tensor<Index, 1> architecture(2);
 
-//   architecture.setValues({1,1});
+   architecture.setValues({1,1});
 
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-//   SumSquaredError sum_squared_error(&neural_network);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   SumSquaredError sum_squared_error(&neural_network);
 
-//   LearningRateAlgorithm tra(&sum_squared_error);
+   LearningRateAlgorithm tra(&sum_squared_error);
 
-//   neural_network.set_parameters_constant(1.0);
-
+   neural_network.set_parameters_constant(1.0);
 //   type loss = sum_squared_error.calculate_training_loss();
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
@@ -466,9 +430,6 @@ void LearningRateAlgorithmTest::run_test_case()
 
    test_get_loss_tolerance();
 
-   test_get_warning_learning_rate();
-   test_get_error_learning_rate();
-
    // Utilities
    
    test_get_display();
@@ -486,8 +447,6 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training parameters
 
    test_set_loss_tolerance();
-   test_set_warning_learning_rate();
-   test_set_error_learning_rate();
 
    // Utilities
 
