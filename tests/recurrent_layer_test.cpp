@@ -291,7 +291,7 @@ void RecurrentLayerTest::test_get_parameters()
 //   recurrent_weights.setValues({{7.9, -2.3},{1.2, -1.5}});
 
    recurrent_layer.set_recurrent_weights(recurrent_weights);
-   cout<<"parameters:  "<< recurrent_layer.get_parameters()<<endl;
+//   cout<<"parameters:  "<< recurrent_layer.get_parameters()<<endl;
 //   cout<<"norm:  "<< recurrent_layer.calculate_parameters_norm()<<endl;
 
 }
@@ -317,8 +317,6 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
     numerical_differentiation_tests = true;
 
    // Test
-
-   recurrent_layer.set_thread_pool_device(thread_pool_device);
 
    recurrent_layer.set(1, 1);
    combinations_2d.resize(1,1);
@@ -468,8 +466,6 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    //Test
 
-   recurrent_layer.set_thread_pool_device(thread_pool_device);
-
    recurrent_layer.set(2,2);
 
    inputs.resize(instances,2);
@@ -493,18 +489,6 @@ void RecurrentLayerTest::test_calculate_outputs()
    parameters = recurrent_layer.get_parameters();
 
    Tensor<type, 2> outputs = recurrent_layer.calculate_outputs(inputs);
-
-   Tensor<type, 2> outputs_parameters = recurrent_layer.calculate_outputs(inputs, parameters);
-
-   Tensor<type, 2> outputs_2 = recurrent_layer.calculate_outputs(inputs,new_biases, new_weights, new_recurrent_weights);
-
-   assert_true(outputs(0) == outputs_parameters(0), LOG);
-
-   assert_true(outputs_2(0) == outputs_parameters(0), LOG);
-
-   assert_true(outputs(0) == outputs_2(0), LOG);
-
-   cout<<"outputs:"<<recurrent_layer.calculate_outputs(inputs) <<endl;
 }
 
 

@@ -23,7 +23,6 @@ TestingAnalysis::TestingAnalysis()
 }
 
 
-
 /// Neural network constructor.
 /// It creates a testing analysis object associated to a neural network but not to a mathematical model or a data set.
 /// By default, it constructs the function regression testing object.
@@ -174,12 +173,18 @@ const bool& TestingAnalysis::get_display() const
 
 void TestingAnalysis::set_default()
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     display = true;
 }
 
 
 void TestingAnalysis::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
+    if(thread_pool_device != nullptr) delete thread_pool_device;
+
     thread_pool_device = new_thread_pool_device;
 }
 
@@ -3047,6 +3052,63 @@ Tensor<type, 1> TestingAnalysis::calculate_multiple_classification_tests() const
 }
 
 
+void TestingAnalysis::save_confusion(const string& confusion_file_name) const
+{
+    const Tensor<Index, 2> confusion = calculate_confusion();
+
+    const Index columns_number = confusion.dimension(0);
+
+    ofstream confusion_file(confusion_file_name);
+
+    Tensor<string, 1> target_variable_names = data_set_pointer->get_target_variables_names();
+
+    confusion_file << ",";
+
+    for(Index i = 0; i < confusion.dimension(0); i++)
+    {
+        confusion_file << target_variable_names(i);
+
+        if(i != target_variable_names.dimension(0) -1)
+        {
+            confusion_file << ",";
+        }
+    }
+
+    confusion_file << endl;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        confusion_file << target_variable_names(i) << ",";
+
+        for(Index j = 0; j < columns_number; j++)
+        {
+            if(j == columns_number - 1)
+            {
+                confusion_file << confusion(i,j) << endl;
+            }
+            else
+            {
+                confusion_file << confusion(i,j) << ",";
+            }
+        }
+    }
+    confusion_file.close();
+}
+
+
+void TestingAnalysis::save_multiple_classification_tests(const string& classification_tests_file_name) const
+{
+    const Tensor<type, 1> multiple_classification_tests = calculate_multiple_classification_tests();
+
+    ofstream multiple_classifiaction_tests_file(classification_tests_file_name);
+
+    multiple_classifiaction_tests_file << "accuracy,error" << endl;
+    multiple_classifiaction_tests_file << multiple_classification_tests(0)*100 << "," << multiple_classification_tests(1)*100 << endl;
+
+    multiple_classifiaction_tests_file.close();
+}
+
+
 /// Returns a matrix of subvectors which have the rates for a multiple classification problem.
 
 Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() const
@@ -3112,11 +3174,13 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates() cons
 /// The number of columns of the matrix is the number of columns of the target data.
 
 Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const Tensor<type, 2>& targets,
-                                                                                     const Tensor<type, 2>& outputs,
-                                                                                     const Tensor<Index, 1>& testing_indices) const
+                                                                          const Tensor<type, 2>& outputs,
+                                                                          const Tensor<Index, 1>& testing_indices) const
 {
     const Index rows_number = targets.dimension(0);
     const Index columns_number = outputs.dimension(1);
+    cout << "Rows number: " << rows_number << endl;
+    cout << "Columns number: " << columns_number << endl;
 
     Tensor<Index, 2> multiple_classification_rates(rows_number, columns_number);
 
@@ -3132,6 +3196,69 @@ Tensor<Index, 2> TestingAnalysis::calculate_multiple_classification_rates(const 
     }
 
     return multiple_classification_rates;
+}
+
+
+Tensor<string, 2> TestingAnalysis::calculate_missclassified_instances(const Tensor<type, 2>& targets,
+                                                                      const Tensor<type, 2>& outputs,
+                                                                      const Tensor<string, 1>& labels)
+{
+    const Index instances_number = targets.dimension(0);
+
+    Tensor<string, 2> missclassified_instances(instances_number, 4);
+
+    Index predicted_class, actual_class;
+    Index number_of_missclassified = 0;
+    string class_name;
+
+    for(Index i = 0; i < instances_number; i++)
+    {
+        predicted_class = maximal_index(outputs.chip(i, 0));
+        actual_class = maximal_index(targets.chip(i, 0));
+
+        if(actual_class == predicted_class)
+        {
+            continue;
+        }
+        else
+        {
+            missclassified_instances(number_of_missclassified, 0) = labels(i);
+            class_name = data_set_pointer->get_target_variables_names()(actual_class);
+            missclassified_instances(number_of_missclassified, 1) = class_name;
+            class_name = data_set_pointer->get_target_variables_names()(predicted_class);
+            missclassified_instances(number_of_missclassified, 2) = class_name;
+            missclassified_instances(number_of_missclassified, 3) = to_string(outputs(i, predicted_class));
+
+            number_of_missclassified ++;
+        }
+    }
+
+    Eigen::array<Index, 2> offsets = {0, 0};
+    Eigen::array<Index, 2> extents = {number_of_missclassified, 4};
+
+    return missclassified_instances.slice(offsets, extents);
+}
+
+
+void TestingAnalysis::save_missclassified_instances(const Tensor<type, 2>& targets,
+                                                    const Tensor<type, 2>& outputs,
+                                                    const Tensor<string, 1>& labels,
+                                                    const string& missclassified_instances_file_name)
+{
+    const Tensor<string,2> missclassified_instances = calculate_missclassified_instances(targets,
+                                                                                         outputs,
+                                                                                         labels);
+
+    ofstream missclassified_instances_file(missclassified_instances_file_name);
+    missclassified_instances_file << "instance_name,actual_class,predicted_class,probability" << endl;
+    for(Index i = 0; i < missclassified_instances.dimension(0); i++)
+    {
+        missclassified_instances_file << missclassified_instances(i, 0) << ",";
+        missclassified_instances_file << missclassified_instances(i, 1) << ",";
+        missclassified_instances_file << missclassified_instances(i, 2) << ",";
+        missclassified_instances_file << missclassified_instances(i, 3) << endl;
+    }
+    missclassified_instances_file.close();
 }
 
 
@@ -3806,7 +3933,7 @@ bool TestingAnalysis::contains(const Tensor<type, 1>& tensor, const type& value)
 
     type* it = find(copy.data(), copy.data()+copy.size(), value);
 
-    return(it != (copy.data()+copy.size()));
+    return it != (copy.data()+copy.size());
 }
 
 Tensor<type, 2> TestingAnalysis::delete_row(const Tensor<type, 2>& tensor, const Index& row_index) const

@@ -90,7 +90,6 @@ public:
             // Optimization algorithm data
 
             training_direction.resize(parameters_number);
-
         }
 
         void print() const
@@ -150,16 +149,6 @@ public:
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-   const type& get_error_learning_rate() const;
-
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;
@@ -173,7 +162,6 @@ public:
    const type& get_maximum_time() const;
 
    const bool& get_choose_best_selection() const;
-   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
@@ -190,21 +178,9 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
-   void set_thread_pool_device(ThreadPoolDevice*);
-
-   // Training parameters
-
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_warning_learning_rate(const type&);
-
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
-   void set_error_learning_rate(const type&);
+   // Stopping criteria
 
    void set_maximum_epochs_number(const Index&);
-
-   // Stopping criteria
 
    void set_minimum_parameters_increment_norm(const type&);
 
@@ -216,7 +192,6 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
-   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -262,32 +237,6 @@ private:
 
    type first_learning_rate = static_cast<type>(0.01);
 
-   // TRAINING PARAMETERS
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   type warning_parameters_norm;
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   type warning_gradient_norm;
-
-   /// Learning rate value at wich a warning message is written to the screen.
-
-   type warning_learning_rate;
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   type error_parameters_norm;
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   type error_gradient_norm;
-
-   /// Learning rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
-
-   type error_learning_rate;
-
    // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
@@ -311,14 +260,6 @@ private:
 
    Index maximum_selection_error_increases;
 
-   /// Initial batch size
-
-   Index training_initial_batch_size;
-
-   /// Maximum training batch size
-
-   Index training_maximum_batch_size;
-
    /// Maximum epochs number
 
    Index maximum_epochs_number;
@@ -330,10 +271,6 @@ private:
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
    bool choose_best_selection;
-
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   bool apply_early_stopping;
 
    // TRAINING HISTORY 
 

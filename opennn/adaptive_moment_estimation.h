@@ -100,13 +100,6 @@ public:
    const type& get_beta_2() const;
    const type& get_epsilon() const;
 
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-
    // Stopping criteria
 
    const type& get_loss_goal() const;
@@ -137,10 +130,6 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -153,10 +142,6 @@ public:
 
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
-
-   // Utilities
-
-   void set_display_period(const Index&);
 
    // Training methods
 
@@ -207,25 +192,7 @@ private:
 
    type epsilon;
 
-   // TRAINING PARAMETERS
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   type warning_parameters_norm;
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   type warning_gradient_norm;
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   type error_parameters_norm;
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   type error_gradient_norm;
-
-   // Stopping criteria
+    // Stopping criteria
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
@@ -253,7 +220,7 @@ private:
 
    bool reserve_selection_error_history;
 
-   Index batch_instances_number = 10;
+   Index batch_instances_number = 1000;
 
 
 #ifdef OPENNN_CUDA

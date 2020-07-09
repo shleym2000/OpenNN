@@ -19,6 +19,7 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
+#include <omp.h>
 
 // OpenNN includes
 
@@ -249,10 +250,6 @@ public:
 
    const type& get_learning_rate_tolerance() const;
 
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_learning_rate() const;
-  
    // Utilities
    
    const bool& get_display() const;
@@ -273,10 +270,6 @@ public:
    // Training parameters
 
    void set_learning_rate_tolerance(const type&);
-
-   void set_warning_learning_rate(const type&);
-
-   void set_error_learning_rate(const type&);
 
    // Utilities
 
@@ -325,14 +318,6 @@ protected:
    type learning_rate_tolerance = static_cast<type>(1.0e-3);
 
    type loss_tolerance = static_cast<type>(1.0e-3);
-
-   /// Big learning rate value at which the algorithm displays a warning.
-
-   type warning_learning_rate;
-
-   /// Big learning rate value at which the algorithm throws an exception.
-
-   type error_learning_rate;
 
    // UTILITIES
 

@@ -1176,6 +1176,51 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
+    // Check ideal correlation
+
+    vector<int> sorted_index = get_indices_sorted(scaled_x);
+
+    Tensor<type,1> x_sorted(x.dimension(0));
+    Tensor<type,1> y_sorted(y.dimension(0));
+
+    for(Index i =0; i<scaled_x.dimension(0); i++)
+    {
+        x_sorted(i) = scaled_x(sorted_index[i]);
+        y_sorted(i) = new_y(sorted_index[i]);
+    }
+
+    Index counter = 0;
+
+    for(Index i=0; i<scaled_x.dimension(0)-1; i++)
+    {
+        if(y_sorted(i) != y_sorted(i+1))
+        {
+            counter++;
+        }
+    }
+
+    if(counter == 1 && new_y(sorted_index[0]) == 0)
+    {
+        CorrelationResults logistic_correlations;
+
+        logistic_correlations.correlation = 1;
+
+        logistic_correlations.correlation_type = Logistic_correlation;
+
+        return logistic_correlations;
+    }
+
+    if(counter == 1 && new_y(sorted_index[0]) == 1)
+    {
+        CorrelationResults logistic_correlations;
+
+        logistic_correlations.correlation = -1;
+
+        logistic_correlations.correlation_type = Logistic_correlation;
+
+        return logistic_correlations;
+    }
+
     // Calculate coefficients
 
     Tensor<type, 1> coefficients(2);
@@ -1236,6 +1281,23 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     logistic_correlations.correlation_type = Logistic_correlation;
 
     return logistic_correlations;
+}
+
+vector<int> get_indices_sorted(Tensor<type,1>& x)
+{
+    vector<type> y(x.size());
+
+    vector<int> index;
+
+    size_t n(0);
+
+    generate(begin(y), end(y), [&]{ return n++; });
+
+    sort(begin(y), end(y), [&](int i1, int i2) { return x[i1] < x[i2]; } );
+
+    for (auto v : y) index.push_back(v);
+
+    return index;
 }
 
 

@@ -65,22 +65,22 @@ public:
 
    // Error methods
 
-   float calculate_error(const DataSet& data_set_pointer,
-                        const NeuralNetwork& neural_network_pointer) const;
-
    void calculate_error(const DataSet::Batch& batch,
                         const NeuralNetwork::ForwardPropagation& forward_propagation,
                         LossIndex::BackPropagation& back_propagation) const;
 
+   void calculate_error_terms(const DataSet::Batch&,
+                              const NeuralNetwork::ForwardPropagation&,
+                              SecondOrderLoss&) const;
+
    // Gradient methods
 
-   void calculate_output_gradient(const DataSet::Batch& batch,
-                                  const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                  BackPropagation& back_propagation) const;
+   void calculate_output_gradient(const DataSet::Batch&,
+                                  const NeuralNetwork::ForwardPropagation&,
+                                  BackPropagation&) const;
 
-   void calculate_Jacobian_gradient(const DataSet::Batch& batch,
-                                       const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                       LossIndex::SecondOrderLoss& second_order_loss) const;
+   void calculate_Jacobian_gradient(const DataSet::Batch&,
+                                    LossIndex::SecondOrderLoss&) const;
 
    // Hessian method
 

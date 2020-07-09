@@ -225,6 +225,7 @@ public:
    // Columns get methods
 
    Tensor<Column, 1> get_columns() const;
+   Tensor<Column, 1> get_time_series_columns() const;
    Tensor<Column, 1> get_input_columns() const;
    Tensor<Column, 1> get_target_columns() const;
    Tensor<Column, 1> get_used_columns() const;
@@ -298,6 +299,8 @@ public:
    Tensor<type, 2> get_training_data() const;
    Tensor<type, 2> get_selection_data() const;
    Tensor<type, 2> get_testing_data() const;
+   Tensor<string, 1> get_time_series_columns_names() const;
+   Index get_time_series_columns_number() const;
 
    Tensor<type, 2> get_input_data() const;
    Tensor<type, 2> get_target_data() const;
@@ -344,6 +347,8 @@ public:
    const bool& get_rows_label() const;
 
    Tensor<string, 1> get_rows_label_tensor() const;
+   Tensor<string, 1> get_selection_rows_label_tensor();
+   Tensor<string, 1> get_testing_rows_label_tensor();
 
    const Separator& get_separator() const;
    char get_separator_char() const;
@@ -546,6 +551,7 @@ public:
    Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
 
+   Index calculate_used_negatives(const Index&) const;
    Index calculate_training_negatives(const Index&) const;
    Index calculate_selection_negatives(const Index&) const;
    Index calculate_testing_negatives(const Index&) const;
@@ -618,6 +624,10 @@ public:
    void scale_input_minimum_maximum(const Descriptives&, const Index&);
    Descriptives scale_input_minimum_maximum(const Index&);
 
+
+   void scale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void unscale_inputs_minimum_maximum(const Tensor<Descriptives, 1>&);
+
    Tensor<Descriptives, 1> scale_inputs(const Tensor<string, 1>&);
 
    // Target variables scaling
@@ -662,11 +672,14 @@ public:
 
    // Time series methods
 
-   void transform_columns_time_series();
+   void transform_time_series_columns();
+   void transform_time_series_data();
+   void get_time_series_columns_number(const Index&);
+   void set_time_series_data(const Tensor<type, 2>&);
 
+   Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
    Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
-
    Tensor<type, 2> calculate_lag_plot() const;
    Tensor<type, 2> calculate_lag_plot(const Index&);
 
@@ -753,6 +766,10 @@ public:
    void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_instances(const Tensor<Index, 1>&, const Index&) const;
+
+   bool get_has_rows_labels() const;
+
+   void shuffle();
 
 private:
 

@@ -65,6 +65,8 @@ string Layer::get_type_string() const
 
 void Layer::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
+    if(thread_pool_device != nullptr) delete thread_pool_device;
+
     thread_pool_device = new_thread_pool_device;
 }
 
@@ -146,18 +148,6 @@ Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &)
 
     buffer << "OpenNN Exception: Layer class.\n"
            << "calculate_outputs(const Tensor<type, 2> &) method.\n"
-           << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
-
-    throw logic_error(buffer.str());
-}
-
-
-Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &, const Tensor<type, 1> &)
-{
-    ostringstream buffer;
-
-    buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<type, 2> &, const Tensor<type, 1> &) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
@@ -871,24 +861,23 @@ void Layer::competitive(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 
 void Layer::softmax(const Tensor<type, 2>& x, Tensor<type, 2>& y) const
 {
-    const Index dim = x.dimension(1);
+    const Index columns_number = x.dimension(1);
 
     const Index rows_number = y.dimension(0);
 
-    //Activations
+    // Activations
 
-    Tensor<type, 1> sums = rows_sums(x.exp());
+    const Tensor<type, 1> sums = rows_sums(x.exp());
 
     y.device(*thread_pool_device) = x.exp();
 
-    for(Index row = 0; row < rows_number; row++)
+    for(Index i = 0; i < rows_number; i++)
     {
-        for(Index i = 0; i < dim; i++)
+        for(Index j = 0; j < columns_number; j++)
         {
-            y(row, i) = y(row, i) / sums(row);
+            y(i, j) = y(i, j) / sums(i);
         }
     }
-
 }
 
 

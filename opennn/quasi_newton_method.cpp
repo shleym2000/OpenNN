@@ -55,14 +55,6 @@ QuasiNewtonMethod::~QuasiNewtonMethod()
 }
 
 
-void QuasiNewtonMethod::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
-{
-    thread_pool_device = new_thread_pool_device;
-
-    learning_rate_algorithm.set_thread_pool_device(new_thread_pool_device);
-}
-
-
 /// Returns a constant reference to the learning rate algorithm object inside the quasi-Newton method object.
 
 const LearningRateAlgorithm& QuasiNewtonMethod::get_learning_rate_algorithm() const
@@ -107,57 +99,6 @@ string QuasiNewtonMethod::write_inverse_hessian_approximation_method() const
            << "Unknown inverse hessian approximation method.\n";
 
     throw logic_error(buffer.str());
-}
-
-
-/// Returns the minimum value for the norm of the parameters vector at wich a warning message is written to the screen.
-
-const type& QuasiNewtonMethod::get_warning_parameters_norm() const
-{
-    return warning_parameters_norm;
-}
-
-
-/// Returns the minimum value for the norm of the gradient vector at wich a warning message is written to the screen.
-
-const type& QuasiNewtonMethod::get_warning_gradient_norm() const
-{
-    return warning_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich a warning message is written to the screen during line minimization.
-
-const type& QuasiNewtonMethod::get_warning_learning_rate() const
-{
-    return warning_learning_rate;
-}
-
-
-/// Returns the value for the norm of the parameters vector at wich an error message is written to the screen
-/// and the program exits.
-
-const type& QuasiNewtonMethod::get_error_parameters_norm() const
-{
-    return error_parameters_norm;
-}
-
-
-/// Returns the value for the norm of the gradient vector at wich an error message is written
-/// to the screen and the program exits.
-
-const type& QuasiNewtonMethod::get_error_gradient_norm() const
-{
-    return error_gradient_norm;
-}
-
-
-/// Returns the learning rate value at wich the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-
-const type& QuasiNewtonMethod::get_error_learning_rate() const
-{
-    return error_learning_rate;
 }
 
 
@@ -230,14 +171,6 @@ const type& QuasiNewtonMethod::get_maximum_time() const
 const bool& QuasiNewtonMethod::get_choose_best_selection() const
 {
     return choose_best_selection;
-}
-
-
-/// Returns true if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-const bool& QuasiNewtonMethod::get_apply_early_stopping() const
-{
-    return apply_early_stopping;
 }
 
 
@@ -339,16 +272,6 @@ void QuasiNewtonMethod::set_default()
 
     learning_rate_algorithm.set_default();
 
-    // TRAINING PARAMETERS
-
-    warning_parameters_norm = 1.0e6;
-    warning_gradient_norm = 1.0e3;
-    warning_learning_rate = 1.0e3;
-
-    error_parameters_norm = 1.0e6;
-    error_gradient_norm = 1.0e6;
-    error_learning_rate = 1.0e6;
-
     // Stopping criteria
 
     minimum_parameters_increment_norm = 0;
@@ -362,7 +285,6 @@ void QuasiNewtonMethod::set_default()
     maximum_time = 3600.0;
 
     choose_best_selection = false;
-    apply_early_stopping = false;
 
     // TRAINING HISTORY
 
@@ -373,166 +295,6 @@ void QuasiNewtonMethod::set_default()
 
     display = true;
     display_period = 5;
-}
-
-
-/// Sets a new value for the parameters vector norm at which a warning message is written to the
-/// screen.
-/// @param new_warning_parameters_norm Warning norm of parameters vector value.
-
-void QuasiNewtonMethod::set_warning_parameters_norm(const type& new_warning_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_warning_parameters_norm(const type&) method.\n"
-               << "Warning parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning parameters norm
-
-    warning_parameters_norm = new_warning_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which
-/// a warning message is written to the screen.
-/// @param new_warning_gradient_norm Warning norm of gradient vector value.
-
-void QuasiNewtonMethod::set_warning_gradient_norm(const type& new_warning_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_warning_gradient_norm(const type&) method.\n"
-               << "Warning gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set warning gradient norm
-
-    warning_gradient_norm = new_warning_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at wich a warning message is written to the screen during line
-/// minimization.
-/// @param new_warning_learning_rate Warning learning rate value.
-
-void QuasiNewtonMethod::set_warning_learning_rate(const type& new_warning_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_warning_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_warning_learning_rate(const type&) method.\n"
-               << "Warning learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    warning_learning_rate = new_warning_learning_rate;
-}
-
-
-/// Sets a new value for the parameters vector norm at which an error message is written to the
-/// screen and the program exits.
-/// @param new_error_parameters_norm Error norm of parameters vector value.
-
-void QuasiNewtonMethod::set_error_parameters_norm(const type& new_error_parameters_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_parameters_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_error_parameters_norm(const type&) method.\n"
-               << "Error parameters norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error parameters norm
-
-    error_parameters_norm = new_error_parameters_norm;
-}
-
-
-/// Sets a new value for the gradient vector norm at which an error message is written to the screen
-/// and the program exits.
-/// @param new_error_gradient_norm Error norm of gradient vector value.
-
-void QuasiNewtonMethod::set_error_gradient_norm(const type& new_error_gradient_norm)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_gradient_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_error_gradient_norm(const type&) method.\n"
-               << "Error gradient norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error gradient norm
-
-    error_gradient_norm = new_error_gradient_norm;
-}
-
-
-/// Sets a new learning rate value at wich a the line minimization algorithm is assumed to fail when
-/// bracketing a minimum.
-/// @param new_error_learning_rate Error learning rate value.
-
-void QuasiNewtonMethod::set_error_learning_rate(const type& new_error_learning_rate)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_error_learning_rate < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_error_learning_rate(const type&) method.\n"
-               << "Error learning rate must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    error_learning_rate = new_error_learning_rate;
 }
 
 
@@ -676,16 +438,6 @@ void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_selection)
 {
     choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the selection error decrease stopping criteria has to be taken in account or not.
-/// @param new_apply_early_stopping True if the selection error decrease stopping criteria has to be taken in account,
-/// false otherwise.
-
-void QuasiNewtonMethod::set_apply_early_stopping(const bool& new_apply_early_stopping)
-{
-    apply_early_stopping = new_apply_early_stopping;
 }
 
 
@@ -928,8 +680,8 @@ void QuasiNewtonMethod::update_epoch(
         NeuralNetwork::ForwardPropagation& forward_propagation,
         LossIndex::BackPropagation& back_propagation,
         QNMOptimizationData& optimization_data)
-{  
-    const type loss = back_propagation.loss;
+{
+    optimization_data.old_training_loss = back_propagation.loss;
 
     optimization_data.parameters_difference.device(*thread_pool_device)
             = optimization_data.parameters - optimization_data.old_parameters;
@@ -1009,7 +761,6 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     back_propagation.loss = directional_point.second;
-    optimization_data.old_training_loss = loss;
 }
 
 
@@ -1103,11 +854,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         parameters_norm = l2_norm(optimization_data.parameters);
 
-        if(display && parameters_norm >= warning_parameters_norm)
-        {
-            cout << "OpenNN Warning: Parameters norm is " << parameters_norm << ".\n";
-        }
-
         neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
@@ -1136,11 +882,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             }
 
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
-        }
-
-        if(display && gradient_norm >= warning_gradient_norm)
-        {
-            cout << "OpenNN Warning: Gradient norm is " << gradient_norm << ".\n";
         }
 
         // Optimization data
@@ -1205,7 +946,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = GradientNormGoal;
         }
-        else if(apply_early_stopping && selection_failures >= maximum_selection_error_increases)
+        else if(selection_failures >= maximum_selection_error_increases)
         {
             if(display)
             {
@@ -1383,89 +1124,6 @@ tinyxml2::XMLDocument* QuasiNewtonMethod::to_XML() const
 
     text = document->NewText(buffer.str().c_str());
     element->LinkEndChild(text);
-
-    // Apply early stopping
-
-    element = document->NewElement("ApplyEarlyStopping");
-    root_element->LinkEndChild(element);
-
-    buffer.str("");
-    buffer << apply_early_stopping;
-
-    text = document->NewText(buffer.str().c_str());
-    element->LinkEndChild(text);
-
-    // Warning parameters norm
-//   {
-//   element = document->NewElement("WarningParametersNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_parameters_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Warning gradient norm
-//   {
-//   element = document->NewElement("WarningGradientNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_gradient_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Warning learning rate
-//   {
-//   element = document->NewElement("WarningLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << warning_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Error parameters norm
-//   {
-//   element = document->NewElement("ErrorParametersNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_parameters_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Error gradient norm
-//   {
-//   element = document->NewElement("ErrorGradientNorm");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_gradient_norm;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
-
-    // Error learning rate
-//   {
-//   element = document->NewElement("ErrorLearningRate");
-//   root_element->LinkEndChild(element);
-
-//   buffer.str("");
-//   buffer << error_learning_rate;
-
-//   text = document->NewText(buffer.str().c_str());
-//   element->LinkEndChild(text);
-//   }
 
     // Minimum parameters increment norm
     {
@@ -1677,17 +1335,6 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << choose_best_selection;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Apply early stopping
-
-    file_stream.OpenElement("ApplyEarlyStopping");
-
-    buffer.str("");
-    buffer << apply_early_stopping;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1959,24 +1606,6 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
         try
         {
             set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Apply early stopping
-
-    const tinyxml2::XMLElement* apply_early_stopping_element = root_element->FirstChildElement("ApplyEarlyStopping");
-
-    if(apply_early_stopping_element)
-    {
-        string new_apply_early_stopping = apply_early_stopping_element->GetText();
-
-        try
-        {
-            set_apply_early_stopping(new_apply_early_stopping != "0");
         }
         catch(const logic_error& e)
         {
