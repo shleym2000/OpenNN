@@ -521,10 +521,6 @@ public:
 
    // Descriptives methods
 
-   void set_variables_descriptives();
-   Tensor<Descriptives, 1> get_input_variables_descriptives() const;
-   Tensor<Descriptives, 1> get_target_variables_descriptives() const;
-
    Tensor<Descriptives, 1> calculate_variables_descriptives() const;
    Tensor<Descriptives, 1> calculate_used_variables_descriptives() const;
 
@@ -546,7 +542,7 @@ public:
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
    Tensor<type, 1> calculate_used_variables_minimums() const;
 
-   Descriptives calculate_inputs_descriptives(const Index&) const;
+   Descriptives calculate_input_descriptives(const Index&) const;
 
    Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
@@ -698,12 +694,10 @@ public:
 
    // Serialization methods
 
-   
-
    void print() const;
    void print_summary() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
 
    void from_XML(const tinyxml2::XMLDocument&);
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -860,8 +854,6 @@ private:
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
    Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-
-   Tensor<Descriptives, 1> variables_descriptives;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
