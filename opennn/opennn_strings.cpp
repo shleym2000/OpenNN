@@ -113,52 +113,6 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     return tokens;
 }
 
-/// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
-/// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
-/// @param str String to be tokenized.
-
-void get_tokens(const string& str, const char& separator, Tensor<string, 1>& tokens)
-{
-
-//    const Index tokens_number = count_tokens(str, separator);
-
-//    Tensor<string, 1> tokens(tokens_number);
-
-    // Skip delimiters at beginning.
-
-    string::size_type lastPos = str.find_first_not_of(separator, 0);
-
-    // Find first "non-delimiter"
-
-    Index index = 0;
-
-    string::size_type pos = str.find_first_of(separator, lastPos);
-
-    while(string::npos != pos || string::npos != lastPos)
-    {
-        // Found a token, add it to the vector
-
-        tokens[index] = str.substr(lastPos, pos - lastPos);
-
-        // Skip delimiters. Note the "not_of"
-
-        lastPos = str.find_first_not_of(separator, pos);
-
-        // Find next "non-delimiter"
-
-        pos = str.find_first_of(separator, lastPos);
-
-        index++;
-    }
-
-//    for(Index i = 0; i < tokens.size(); i++)
-//    {
-//        trim(tokens[i]);
-//    }
-
-//    return tokens;
-}
-
 
 /// Returns a new vector with the elements of this string vector casted to type.
 
@@ -195,7 +149,6 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
 bool is_numeric_string(const string& str)
 {
-    /*
     std::istringstream iss(str.data());
 
     type dTestSink;
@@ -220,10 +173,10 @@ bool is_numeric_string(const string& str)
     {
         return false;
     }
-    */
 
-    return !str.empty() && std::find_if(str.begin(),
-        str.end(), [](unsigned char c) { return (!std::isdigit(c) && c != '-' && c != '+' && c != '.' && c != 'e'/* && c != 'E'*/); }) == str.end();
+//    return std::all_of(str.begin(), str.end(), is_digit_string);
+
+//    return iss.rdbuf()->in_avail() == 0;
 }
 
 
@@ -232,7 +185,6 @@ bool is_numeric_string(const string& str)
 
 bool is_date_time_string(const string& str)
 {
-    if(is_numeric_string(str)) return false;
 
     const regex regular_expression("20[0-9][0-9]|19[0-9][0-9]+[-|/|.](0[1-9]|1[0-2])"
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
@@ -789,20 +741,3 @@ void replace(string& source, const string& find_what, const string& replace_with
     }
 }
 }
-
-// OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
-//
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2.1 of the License, or any later version.
-//
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
-
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA

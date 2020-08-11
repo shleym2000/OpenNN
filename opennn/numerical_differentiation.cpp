@@ -20,6 +20,14 @@ NumericalDifferentiation::NumericalDifferentiation()
 }
 
 
+/// Copy constructor.
+
+NumericalDifferentiation::NumericalDifferentiation(const NumericalDifferentiation& other_numerical_differentiation)
+{
+    set(other_numerical_differentiation);
+}
+
+
 /// Destructor.
 
 NumericalDifferentiation::~NumericalDifferentiation()
@@ -101,7 +109,7 @@ void NumericalDifferentiation::set_numerical_differentiation_method
 /// The argument is a string with the name of the numerical differentiation method.
 /// @param new_numerical_differentiation_method Numerical differentiation method name string.
 
-void NumericalDifferentiation:: set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
+void NumericalDifferentiation::set_numerical_differentiation_method(const string& new_numerical_differentiation_method)
 {
     if(new_numerical_differentiation_method == "ForwardDifferences")
     {
@@ -189,7 +197,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_h(const Tensor<type, 1>& x) 
 
     for(Index i = 0; i < n; i++)
     {
-        h(i) = sqrt(eta)*(1 + abs(x(i)));
+        h(i) = sqrt(eta)*(static_cast<type>(1.0) + abs(x(i)));
     }
 
     return h;
@@ -210,27 +218,6 @@ Tensor<type, 2> NumericalDifferentiation::calculate_h(const Tensor<type, 2>& x) 
     Tensor<type, 2> h(dimensions);
 
     Tensor<type, 2> y = x.abs();
-
-    for(Index i = 0; i < n; i++)
-    {
-        h(i) = sqrt(eta)*(1 + y(i));
-    }
-
-    return h;
-}
-
-
-Tensor<type, 4> NumericalDifferentiation::calculate_h(const Tensor<type, 4>& x) const
-{
-    const type eta = calculate_eta();
-
-    const Index n = x.size();
-
-    const auto& dimensions = x.dimensions();
-
-    Tensor<type, 4> h(dimensions);
-
-    Tensor<type, 4> y = x.abs();
 
     for(Index i = 0; i < n; i++)
     {
@@ -272,7 +259,7 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
         const type numerator = y(i) - y[i-1];
         const type denominator = x(i) - x[i-1];
 
-        if(abs(denominator) > numeric_limits<float>::min())
+        if(abs(denominator) < numeric_limits<float>::min())
         {
             derivatives(i) = numerator/denominator;
         }
@@ -289,6 +276,57 @@ Tensor<type, 1> NumericalDifferentiation::calculate_backward_differences_derivat
     }
 
     return derivatives;
+}
+
+
+/// Serializes this numerical differentiation object into a XML document->
+
+tinyxml2::XMLDocument* NumericalDifferentiation::to_XML() const
+{
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
+
+    ostringstream buffer;
+
+    // Numerical differentiation
+
+    tinyxml2::XMLElement* root_element = document->NewElement("NumericalDifferentiation");
+
+    document->InsertFirstChild(root_element);
+
+    // Numerical differentiation method
+
+    element = document->NewElement("NumericalDifferentiationMethod");
+    root_element->LinkEndChild(element);
+
+    text = document->NewText(write_numerical_differentiation_method().c_str());
+    element->LinkEndChild(text);
+
+    // Precision digits
+
+    element = document->NewElement("PrecisionDigits");
+    root_element->LinkEndChild(element);
+
+    buffer.str("");
+    buffer << precision_digits;
+
+    text = document->NewText(buffer.str().c_str());
+    element->LinkEndChild(text);
+
+    // Display
+
+    element = document->NewElement("Display");
+    root_element->LinkEndChild(element);
+
+    buffer.str("");
+    buffer << display;
+
+    text = document->NewText(buffer.str().c_str());
+    element->LinkEndChild(text);
+
+    return document;
 }
 
 

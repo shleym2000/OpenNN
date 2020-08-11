@@ -23,6 +23,7 @@
 
 #include "training_strategy.h"
 #include "inputs_selection.h"
+#include "tinyxml2.h"
 #include "config.h"
 
 namespace OpenNN
@@ -48,6 +49,10 @@ public:
     explicit GeneticAlgorithm();
 
     explicit GeneticAlgorithm(TrainingStrategy*);
+
+    explicit GeneticAlgorithm(const tinyxml2::XMLDocument&);
+
+    explicit GeneticAlgorithm(const string&);
 
     // Destructor
 
@@ -85,31 +90,31 @@ public:
         {
         }
 
-        
+        string object_to_string() const;
 
         inline void resize_history(const Index& new_size)
         {
-            generation_optimum_training_error_history.resize(new_size);
-            generation_minimum_selection_error_history.resize(new_size);
-            generation_selection_error_mean_history.resize(new_size);
-            generation_selection_error_standard_deviation_history.resize(new_size);
+            generation_optimum_loss_history.resize(new_size);
+            generation_minimum_selection_history.resize(new_size);
+            generation_mean_history.resize(new_size);
+            generation_standard_deviation_history.resize(new_size);
         }
 
-        /// Values of the minimum training error in each generation.
+        /// Values of the minimum loss in each generation.
 
-        Tensor<type, 1> generation_optimum_training_error_history;
+        Tensor<type, 1> generation_optimum_loss_history;
 
         /// Values of the minimum selection error in each generation.
 
-        Tensor<type, 1> generation_minimum_selection_error_history;
+        Tensor<type, 1> generation_minimum_selection_history;
 
         /// Mean of the selection error in each generation.
 
-        Tensor<type, 1> generation_selection_error_mean_history;
+        Tensor<type, 1> generation_mean_history;
 
         /// Standard deviation of the selection error in each generation.
 
-        Tensor<type, 1> generation_selection_error_standard_deviation_history;
+        Tensor<type, 1> generation_standard_deviation_history;
     };
 
     // Get methods
@@ -242,7 +247,19 @@ public:
 
     type euclidean_distance(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor);
+    static vector<bool> tensor_to_vector(const Tensor<bool, 1>& tensor)
+    {
+        const size_t size = static_cast<size_t>(tensor.dimension(0));
+
+        vector<bool> new_vector(static_cast<size_t>(size));
+
+        for(size_t i = 0; i < size; i++)
+        {
+            new_vector[i] = tensor(static_cast<Index>(i));
+        }
+
+        return new_vector;
+    }
 
     bool contains(const vector<vector<bool>>&, const vector<bool>&) const;
 
@@ -250,7 +267,7 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
+    tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;

@@ -25,6 +25,8 @@
 
 #include "layer.h"
 
+#include "tinyxml2.h"
+
 namespace OpenNN
 {
 
@@ -45,6 +47,12 @@ public:
    // INPUTS AND PRINCIPAL COMPONENTS NUMBER CONSTRUCTOR
 
    explicit PrincipalComponentsLayer(const Index&, const Index&);
+
+   // COPY CONSTRUCTOR
+
+   PrincipalComponentsLayer(const PrincipalComponentsLayer&);
+
+   
 
    virtual ~PrincipalComponentsLayer();
 
@@ -120,7 +128,7 @@ public:
 
    // Serialization methods
 
-   
+   tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;

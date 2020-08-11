@@ -23,7 +23,9 @@
 
 #include "training_strategy.h"
 #include "inputs_selection.h"
+#include "tinyxml2.h"
 #include "config.h"
+
 
 namespace OpenNN
 {
@@ -43,6 +45,10 @@ public:
     explicit GrowingInputs();
 
     explicit GrowingInputs(TrainingStrategy*);
+
+    explicit GrowingInputs(const tinyxml2::XMLDocument&);
+
+    explicit GrowingInputs(const string&);
 
     // Destructor
 
@@ -93,7 +99,7 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
+    tinyxml2::XMLDocument* to_XML() const;
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;

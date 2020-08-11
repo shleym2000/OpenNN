@@ -34,6 +34,11 @@
 #include "pooling_layer.h"
 #include "long_short_term_memory_layer.h"
 #include "recurrent_layer.h"
+#include "tinyxml2.h"
+
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/kernels.h"
+#endif
 
 namespace OpenNN
 {
@@ -64,6 +69,8 @@ public:
 
    explicit NeuralNetwork(const Tensor<Layer*, 1>&);
 
+   NeuralNetwork(const NeuralNetwork&);
+
    // Destructor
 
    virtual ~NeuralNetwork();
@@ -74,11 +81,9 @@ public:
 
        ForwardPropagation() {}
 
-       ForwardPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+       ForwardPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
-           if(new_batch_samples_number == 0) return;
-
-           batch_samples_number = new_batch_samples_number;
+           batch_instances_number = new_batch_instances_number;
 
            neural_network_pointer = new_neural_network_pointer;
 
@@ -90,7 +95,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(new_batch_samples_number, trainable_layers_pointers(i));
+               layers(i).set(new_batch_instances_number, trainable_layers_pointers(i));
            }
        }
 
@@ -112,7 +117,7 @@ public:
            }
        }
 
-       Index batch_samples_number = 0;
+       Index batch_instances_number = 0;
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
@@ -124,17 +129,17 @@ public:
    {
        BackPropagation() {}
 
-       BackPropagation(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+       BackPropagation(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
-           batch_samples_number = new_batch_samples_number;
+           batch_instances_number = new_batch_instances_number;
 
            neural_network_pointer = new_neural_network_pointer;
        }
 
 
-       void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
+       void set(const Index& new_batch_instances_number, NeuralNetwork* new_neural_network_pointer)
        {
-           batch_samples_number = new_batch_samples_number;
+           batch_instances_number = new_batch_instances_number;
 
            neural_network_pointer = new_neural_network_pointer;
 
@@ -146,7 +151,7 @@ public:
 
            for(Index i = 0; i < trainable_layers_number; i++)
            {
-               layers(i).set(batch_samples_number, trainable_layers_pointers(i));
+               layers(i).set(batch_instances_number, trainable_layers_pointers(i));
            }
        }
 
@@ -164,7 +169,7 @@ public:
            }
        }
 
-       Index batch_samples_number = 0;
+       Index batch_instances_number = 0;
 
        NeuralNetwork* neural_network_pointer = nullptr;
 
@@ -190,11 +195,11 @@ public:
 
    bool is_empty() const;  
 
-   const Tensor<string, 1>& get_inputs_names() const;
+   Tensor<string, 1> get_inputs_names() const;
    string get_input_name(const Index&) const;
    Index get_input_index(const string&) const;
 
-   const Tensor<string, 1>& get_outputs_names() const;
+   Tensor<string, 1> get_outputs_names() const;
    string get_output_name(const Index&) const;
    Index get_output_index(const string&) const;
 
@@ -234,7 +239,7 @@ public:
 
    virtual void set_default();
 
-   void set_thread_pool_device(ThreadPoolDevice*);
+   void set_device_pointer(Device*);
 
    void set_layers_pointers(Tensor<Layer*, 1>&);
 
@@ -257,11 +262,6 @@ public:
    Index get_inputs_number() const;
    Index get_outputs_number() const;
 
-   Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
-   Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
-   Tensor<Index, 1> get_trainable_layers_synaptic_weight_numbers() const;
-
-
    Tensor<Index, 1> get_architecture() const;
 
    // Parameters
@@ -271,6 +271,7 @@ public:
    Tensor<type, 1> get_parameters() const;
 
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
+
    Tensor<Tensor<type, 1>, 1> get_trainable_layers_parameters(const Tensor<type, 1>&) const;
 
    void set_parameters(Tensor<type, 1>&);
@@ -284,6 +285,8 @@ public:
    // Parameters
 
    type calculate_parameters_norm() const;
+   Descriptives calculate_parameters_descriptives() const;
+   Histogram calculate_parameters_histogram(const Index& = 10) const;
 
    void perturbate_parameters(const type&);
 
@@ -291,12 +294,21 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
+   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const;
+
+   Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
+
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
+
+   Tensor<Histogram, 1> calculate_outputs_histograms(const Index& = 1000, const Index& = 10);
+   Tensor<Histogram, 1> calculate_outputs_histograms(const Tensor<type, 2>&, const Index& = 10);
 
    Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
 
    // Serialization methods
 
+   string object_to_string() const;
+ 
    Tensor<string, 2> get_information() const;
    Tensor<string, 2> get_perceptron_layers_information() const;
    Tensor<string, 2> get_probabilistic_layer_information() const;
@@ -316,42 +328,72 @@ public:
 
    virtual void load(const string&);
    void load_parameters(const string&);
-   void load_parameters_binary(const string&);
 
    void save_data(const string&) const;
-
-   Tensor<string, 1> get_layers_names() const
-   {
-       const Index layers_number = get_layers_number();
-
-       Tensor<string, 1> layers_names(layers_number);
-
-       for(Index i = 0; i < layers_number; i++)
-       {
-           layers_names[i] = layers_pointers[i]->get_name();
-       }
-
-       return layers_names;
-   }
-
 
    // Expression methods
 
    string write_expression() const;
+   string write_mathematical_expression_php() const;
    string write_expression_python() const;
-   string write_expression_c() const;
+   string write_expression_php() const;
+   string write_expression_R() const;
 
-   void save_expression_c(const string&);
+   void save_expression(const string&);
    void save_expression_python(const string&);
+   void save_expression_R(const string&);
 
    /// Calculate de forward propagation in the neural network
 
-   void forward_propagate(const DataSet::Batch&, ForwardPropagation&) const;
-   void forward_propagate(const DataSet::Batch&, Tensor<type, 1>&, ForwardPropagation&) const;
+   void forward_propagate(const DataSet::Batch& batch,
+                                      ForwardPropagation& forward_propagation) const
+   {
+       const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       const Index trainable_layers_number = trainable_layers_pointers.size();
+
+       trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+
+       for(Index i = 1; i < trainable_layers_number; i++)
+       {
+            trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                        forward_propagation.layers(i));
+       }
+   }
+
+
+   void forward_propagate(const DataSet::Batch& batch,
+                                      Tensor<type, 1>& parameters,
+                                      ForwardPropagation& forward_propagation) const
+   {                       
+       const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+       const Index trainable_layers_number = trainable_layers_pointers.size();
+
+       const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
+
+       const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
+
+       trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+
+       Index index = parameters_number;
+
+       for(Index i = 1; i < trainable_layers_number; i++)
+       {
+           const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+           const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
+            trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                        potential_parameters,
+                                                                        forward_propagation.layers(i));
+
+            index += parameters_number;
+       }       
+   }
+
 
 protected:
-
-   string name = "neural_network";
 
    /// Names of inputs
 
@@ -369,13 +411,10 @@ protected:
 
    bool display = true;
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/neural_network_cuda.h"
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/neural_network_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/neural_network_mkl.h"
-#endif
 };
 
 }

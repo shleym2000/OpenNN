@@ -42,140 +42,14 @@ ConvolutionalLayer::ConvolutionalLayer(const Tensor<Index, 1>& new_inputs_dimens
 /// Returns a boolean, true if convolutional layer is empty and false otherwise.
 
 bool ConvolutionalLayer::is_empty() const
-{   
-    if(biases.size() == 0 && synaptic_weights.size() == 0)
-    {
-        return true;
-    }
-
+{
+    /*
+        if(biases.empty() && synaptic_weights.empty())
+        {
+            return true;
+        }
+    */
     return false;
-}
-
-
-void ConvolutionalLayer::insert_padding(const Tensor<type, 4>& inputs, Tensor<type, 4>& padded_output) // @todo Add stride
-{
-    switch(convolution_type)
-    {
-        case Valid: padded_output = inputs; return;
-
-        case Same:
-        {
-                Eigen::array<pair<int, int>, 4> paddings;
-                const int pad = int(0.5 *(get_filters_rows_number() - 1));
-                paddings[0] = make_pair(pad, pad);
-                paddings[1] = make_pair(pad, pad);
-                paddings[2] = make_pair(0, 0);
-                paddings[3] = make_pair(0, 0);
-                padded_output = inputs.pad(paddings);
-                return;
-        }
-
-        default: return;
-    }
-}
-
-
-/// Calculate combinations
-void ConvolutionalLayer::calculate_convolutions(const Tensor<type, 4>& inputs, Tensor<type, 4>& convolutions) const
-{
-    const Index number_of_kernels = synaptic_weights.dimension(3);
-    const Index number_of_images = inputs.dimension(3);
-
-    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
-
-    Tensor<type, 3> kernel;
-
-    #pragma omp parallel for
-    for(Index i = 0; i < number_of_images; i++)
-    {
-        for(Index j = 0; j < number_of_kernels; j++)
-        {
-            kernel = synaptic_weights.chip(j, 3);
-            convolutions.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims);
-        }
-    }
-}
-
-
-void ConvolutionalLayer::calculate_combinations(const Tensor<type, 4>& inputs, Tensor<type, 4> & combinations) const
-{
-    const Index number_of_kernels = synaptic_weights.dimension(3);
-    const Index number_of_images = inputs.dimension(3);
-
-    const Eigen::array<ptrdiff_t, 3> dims = {0, 1, 2};
-
-    Tensor<type, 3> kernel;
-
-    #pragma omp parallel for
-    for(Index i = 0; i < number_of_images; i++)
-    {
-        for(Index j = 0; j < number_of_kernels; j++)
-        {
-            kernel = synaptic_weights.chip(j, 3);
-            combinations.chip(i, 3).chip(j, 2) = inputs.chip(i, 3).convolve(kernel, dims) + biases(j);
-        }
-    }
-}
-
-
-/// Calculates activations
-void ConvolutionalLayer::calculate_activations(const Tensor<type, 4>& inputs, Tensor<type, 4>& activations) const
-{
-    switch(activation_function)
-    {
-        case Linear: linear(inputs, activations); return;
-
-        case Logistic: logistic(inputs, activations); return;
-
-        case HyperbolicTangent: hyperbolic_tangent(inputs, activations); return;
-
-        case Threshold: threshold(inputs, activations); return;
-
-        case SymmetricThreshold: symmetric_threshold(inputs, activations); return;
-
-        case RectifiedLinear: rectified_linear(inputs, activations); return;
-
-        case ScaledExponentialLinear: scaled_exponential_linear(inputs, activations); return;
-
-        case SoftPlus: soft_plus(inputs, activations); return;
-
-        case SoftSign: soft_sign(inputs, activations); return;
-
-        case HardSigmoid: hard_sigmoid(inputs, activations); return;
-
-        case ExponentialLinear: exponential_linear(inputs, activations); return;
-    }
-}
-
-
-void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>& combinations_4d,
-                                                           Tensor<type, 4>& activations,
-                                                           Tensor<type, 4>& activations_derivatives) const
-{
-    switch(activation_function)
-    {
-        case Linear: linear_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case Logistic: logistic_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case HyperbolicTangent: hyperbolic_tangent_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case Threshold: threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case SymmetricThreshold: symmetric_threshold_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case RectifiedLinear: rectified_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case ScaledExponentialLinear: scaled_exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case SoftPlus: soft_plus_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case SoftSign: soft_sign_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case HardSigmoid: hard_sigmoid_derivatives(combinations_4d, activations, activations_derivatives); return;
-
-        case ExponentialLinear: exponential_linear_derivatives(combinations_4d, activations, activations_derivatives); return;
-    }
 }
 
 
@@ -184,64 +58,9 @@ void ConvolutionalLayer::calculate_activations_derivatives(const Tensor<type, 4>
 
 Tensor<type, 4> ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs)
 {
-    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
+//    return calculate_activations(calculate_combinations(inputs));
 
-    Tensor<type, 4> outputs(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
-    Tensor<type, 4> combinations(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
-
-    calculate_combinations(inputs, combinations);
-    calculate_activations(combinations, outputs);
-
-    return outputs;
-}
-
-
-/// Returns the output of the convolutional layer applied to a batch of images.
-/// @param inputs The batch of images.
-
-void ConvolutionalLayer::calculate_outputs(const Tensor<type, 4>& inputs, Tensor<type, 4>& outputs)
-{
-    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
-
-    outputs.resize(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
-
-    Tensor<type, 4> combinations(outputs_dimensions(0), outputs_dimensions(1), outputs_dimensions(2), outputs_dimensions(3));
-
-    calculate_combinations(inputs, combinations);
-    calculate_activations(combinations, outputs);
-}
-
-void ConvolutionalLayer::forward_propagate(const Tensor<type, 4> &inputs, ForwardPropagation &forward_propagation) const
-{
-//       calculate_convolutions(inputs, forward_propagation.combinations_4d);
-
-//       calculate_activations(forward_propagation.combinations_4d, forward_propagation.activations_4d);
-
-//       calculate_activations_derivatives(forward_propagation.combinations_4d,forward_propagation.activations_derivatives_4d);
-
-    const Tensor<Index, 1> outputs_dimensions = get_outputs_dimensions();
-
-    forward_propagation.combinations_4d.resize(outputs_dimensions(0),
-                                               outputs_dimensions(1),
-                                               outputs_dimensions(2),
-                                               outputs_dimensions(3));
-
-    forward_propagation.activations_4d.resize(outputs_dimensions(0),
-                                              outputs_dimensions(1),
-                                              outputs_dimensions(2),
-                                              outputs_dimensions(3));
-
-    forward_propagation.activations_derivatives_4d.resize(outputs_dimensions(0),
-                                                          outputs_dimensions(1),
-                                                          outputs_dimensions(2),
-                                                          outputs_dimensions(3));
-
-    calculate_combinations(inputs,
-                           forward_propagation.combinations_4d);
-
-    calculate_activations_derivatives(forward_propagation.combinations_4d,
-                                      forward_propagation.activations_4d,
-                                      forward_propagation.activations_derivatives_4d);
+    return Tensor<type, 4>();
 }
 
 
@@ -250,27 +69,27 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_poi
         const Tensor<type, 2>& activations_derivatives,
         const Tensor<type, 2>& next_layer_delta) const
 {
-    const Type next_layer_type = next_layer_pointer->get_type();
+    const Type layer_type = next_layer_pointer->get_type();
 
-    if(next_layer_type == Convolutional)
+    if(layer_type == Convolutional)
     {
         ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(next_layer_pointer);
 
-//        return calculate_hidden_delta_convolutional(convolutional_layer, activations_2d, activations_derivatives, next_layer_delta);
+        return calculate_hidden_delta_convolutional(convolutional_layer, activations_2d, activations_derivatives, next_layer_delta);
     }
-    else if(next_layer_type == Pooling)
+    else if(layer_type == Pooling)
     {
         PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(next_layer_pointer);
 
         return calculate_hidden_delta_pooling(pooling_layer, activations_2d, activations_derivatives, next_layer_delta);
     }
-    else if(next_layer_type == Perceptron)
+    else if(layer_type == Perceptron)
     {
         PerceptronLayer* perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
 
         return calculate_hidden_delta_perceptron(perceptron_layer, activations_2d, activations_derivatives, next_layer_delta);
     }
-    else if(next_layer_type == Probabilistic)
+    else if(layer_type == Probabilistic)
     {
         ProbabilisticLayer* probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
 
@@ -284,7 +103,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta(Layer* next_layer_poi
 Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(ConvolutionalLayer* next_layer_pointer,
         const Tensor<type, 2>&,
         const Tensor<type, 2>& activations_derivatives,
-        const Tensor<type, 4>& next_layer_delta) const
+        const Tensor<type, 2>& next_layer_delta) const
 {
 
     // Current layer's values
@@ -293,7 +112,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
     const Index filters_number = get_filters_number();
     const Index output_rows_number = get_outputs_rows_number();
     const Index output_columns_number = get_outputs_columns_number();
-
+    /*
         // Next layer's values
 
         const Index next_layers_filters_number = next_layer_pointer->get_filters_number();
@@ -304,11 +123,11 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
         const Index next_layers_row_stride = next_layer_pointer->get_row_stride();
         const Index next_layers_column_stride = next_layer_pointer->get_column_stride();
 
-        const Tensor<type, 4> next_layers_weights = next_layer_pointer->get_synaptic_weights();
+        const Tensor<type, 2> next_layers_weights = next_layer_pointer->get_synaptic_weights();
 
         // Hidden delta calculation
 
-        Tensor<type, 4> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
+        Tensor<type, 2> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
 
         const Index size = hidden_delta.size();
 
@@ -336,9 +155,9 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
                     {
                         const type delta_element = next_layer_delta(image_index, i, j, k);
 
-//                        const type weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
+                        const type weight = next_layers_weights(i, channel_index, row_index - j*next_layers_row_stride, column_index - k*next_layers_column_stride);
 
-//                        sum += delta_element*weight;
+                        sum += delta_element*weight;
                     }
                 }
             }
@@ -346,9 +165,10 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_convolutional(Convolu
             hidden_delta(image_index, channel_index, row_index, column_index) = sum;
         }
 
-//        return hidden_delta*activations_derivatives;
-
+        return hidden_delta*activations_derivatives;
+    */
     return Tensor<type, 2>();
+
 }
 
 
@@ -357,7 +177,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
         const Tensor<type, 2>& activations_derivatives,
         const Tensor<type, 2>& next_layer_delta) const
 {
-
+    /*
         switch(next_layer_pointer->get_pooling_method())
         {
             case OpenNN::PoolingLayer::PoolingMethod::NoPooling:
@@ -385,7 +205,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
 
                 // Hidden delta calculation
 
-                Tensor<type, 4> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
+                Tensor<type, 2> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
 
                 const Index size = hidden_delta.size();
 
@@ -409,16 +229,16 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
                     {
                         for(Index j = lower_column_index; j < upper_column_index; j++)
                         {
-//                            const type delta_element = next_layer_delta(image_index, channel_index, i, j);
+                            const type delta_element = next_layer_delta(image_index, channel_index, i, j);
 
-//                            sum += delta_element;
+                            sum += delta_element;
                         }
                     }
 
                     hidden_delta(image_index, channel_index, row_index, column_index) = sum;
                 }
 
-//                return (hidden_delta*activations_derivatives)/(next_layers_pool_rows*next_layers_pool_columns);
+                return (hidden_delta*activations_derivatives)/(next_layers_pool_rows*next_layers_pool_columns);
             }
 
             case OpenNN::PoolingLayer::PoolingMethod::MaxPooling:
@@ -441,7 +261,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
 
                 // Hidden delta calculation
 
-                Tensor<type, 4> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
+                Tensor<type, 2> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
 
                 const Index size = hidden_delta.size();
 
@@ -465,7 +285,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
                     {
                         for(Index j = lower_column_index; j < upper_column_index; j++)
                         {
-//                            const type delta_element = next_layer_delta(image_index, channel_index, i, j);
+                            const type delta_element = next_layer_delta(image_index, channel_index, i, j);
 
                             Tensor<type, 2> activations_current_submatrix(next_layers_pool_rows, next_layers_pool_columns);
 
@@ -473,8 +293,8 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
                             {
                                 for(Index submatrix_column_index = 0; submatrix_column_index < next_layers_pool_columns; submatrix_column_index++)
                                 {
-//                                    activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
-//                                            activations_2d(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
+                                    activations_current_submatrix(submatrix_row_index, submatrix_column_index) =
+                                            activations_2d(image_index, channel_index, i*next_layers_row_stride + submatrix_row_index, j*next_layers_column_stride + submatrix_column_index);
                                 }
                             }
 
@@ -490,7 +310,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
                                     {
                                         max_value = activations_current_submatrix(submatrix_row_index, submatrix_column_index);
 
-//                                        multiply_not_multiply = Tensor<type, 2>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
+                                        multiply_not_multiply = Tensor<type, 2>(next_layers_pool_rows, next_layers_pool_columns, 0.0);
                                         multiply_not_multiply(submatrix_row_index, submatrix_column_index) = 1.0;
                                     }
                                 }
@@ -498,17 +318,17 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_pooling(PoolingLayer*
 
                             const type max_derivative = multiply_not_multiply(row_index - i*next_layers_row_stride, column_index - j*next_layers_column_stride);
 
-//                            sum += delta_element*max_derivative;
+                            sum += delta_element*max_derivative;
                         }
                     }
 
                     hidden_delta(image_index, channel_index, row_index, column_index) = sum;
                 }
 
-//                return hidden_delta*activations_derivatives;
+                return hidden_delta*activations_derivatives;
             }
         }
-
+    */
     return Tensor<type, 2>();
 }
 
@@ -518,7 +338,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_perceptron(Perceptron
         const Tensor<type, 2>& activations_derivatives,
         const Tensor<type, 2>& next_layer_delta) const
 {
-
+    /*
         // Current layer's values
 
         const Index images_number = next_layer_delta.dimension(0);
@@ -534,7 +354,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_perceptron(Perceptron
 
         // Hidden delta calculation
 
-        Tensor<type, 4> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
+        Tensor<type, 2> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
 
         const Index size = hidden_delta.size();
 
@@ -561,8 +381,8 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_perceptron(Perceptron
             hidden_delta(image_index, channel_index, row_index, column_index) = sum;
         }
 
-//        return hidden_delta*activations_derivatives;
-
+        return hidden_delta*activations_derivatives;
+    */
     return Tensor<type, 2>();
 
 }
@@ -573,7 +393,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabi
         const Tensor<type, 2>& activations_derivatives,
         const Tensor<type, 2>& next_layer_delta) const
 {
-
+    /*
         // Current layer's values
 
         const Index images_number = next_layer_delta.dimension(0);
@@ -589,7 +409,7 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabi
 
         // Hidden delta calculation
 
-        Tensor<type, 4> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
+        Tensor<type, 2> hidden_delta(images_number, filters_number, output_rows_number, output_columns_number);
 
         const Index size = hidden_delta.size();
 
@@ -616,38 +436,36 @@ Tensor<type, 2> ConvolutionalLayer::calculate_hidden_delta_probabilistic(Probabi
             hidden_delta(image_index, channel_index, row_index, column_index) = sum;
         }
 
-//        return hidden_delta*activations_derivatives;
-
+        return hidden_delta*activations_derivatives;
+    */
     return Tensor<type, 2>();
 
 }
 
 
-Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 4>& previous_layers_outputs,
-                                                             const Layer::ForwardPropagation&,
-                                                             const Tensor<type, 2>& layer_deltas)
+Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 2>& previous_layers_outputs,
+        const Layer::ForwardPropagation&,
+        const Tensor<type, 2>& layer_deltas)
 {
+    /*
+        Tensor<type, 2> layers_inputs;
 
-        Tensor<type, 4> layers_inputs;
+        switch(get_padding_option()) {
 
-        switch(convolution_type) {
-
-            case OpenNN::ConvolutionalLayer::ConvolutionType::Valid:
+            case OpenNN::ConvolutionalLayer::PaddingOption::NoPadding:
             {
                 layers_inputs = previous_layers_outputs;
             }
             break;
 
-            case OpenNN::ConvolutionalLayer::ConvolutionType::Same:
+            case OpenNN::ConvolutionalLayer::PaddingOption::Same:
             {
-                layers_inputs.resize(previous_layers_outputs.dimension(0) + get_padding_height(),
-                                     previous_layers_outputs.dimension(1) + get_padding_width(),
-                                     previous_layers_outputs.dimension(2),
-                                     previous_layers_outputs.dimension(3));
+                layers_inputs.resize(previous_layers_outputs.dimension(0), previous_layers_outputs.dimension(1),
+                                                  previous_layers_outputs.dimension(2) + get_padding_height(), previous_layers_outputs.dimension(3) + get_padding_width());
 
                 for(Index image_number = 0; image_number < previous_layers_outputs.dimension(0); image_number++)
                 {
-                    //layers_inputs.set_tensor(image_number, insert_padding(previous_layers_outputs.get_tensor(image_number)));
+                    layers_inputs.set_tensor(image_number, insert_padding(previous_layers_outputs.get_tensor(image_number)));
                 }
             }
             break;
@@ -657,10 +475,9 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
 
         const Index parameters_number = get_parameters_number();
 
-        Tensor<type, 1> layer_error_gradient(parameters_number);
-        layer_error_gradient.setZero();
+        Tensor<type, 1> layer_error_gradient(parameters_number, 0.0);
 
-        const Index images_number = layer_deltas.dimension(3);
+        const Index images_number = layer_deltas.dimension(0);
         const Index filters_number = get_filters_number();
         const Index filters_channels_number = get_filters_channels_number();
         const Index filters_rows_number = get_filters_rows_number();
@@ -681,17 +498,17 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
 
             type sum = 0;
 
-            for(Index i = 0; i < output_rows_number; i++)
+            for(Index i = 0; i < images_number; i++)
             {
-                for(Index j = 0; j < output_columns_number; j++)
+                for(Index j = 0; j < output_rows_number; j++)
                 {
-                    for(Index k = 0; k < images_number; k++)
+                    for(Index k = 0; k < output_columns_number; k++)
                     {
-//                        const type delta_element = layer_deltas(i, filter_index, j, k);
+                        const type delta_element = layer_deltas(i, filter_index, j, k);
 
-//                        const type input_element = layers_inputs(i, channel_index, j*row_stride + row_index, k*column_stride + column_index);
+                        const type input_element = layers_inputs(i, channel_index, j*row_stride + row_index, k*column_stride + column_index);
 
-//                        sum += delta_element*input_element;
+                        sum += delta_element*input_element;
                     }
                 }
             }
@@ -713,9 +530,9 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
                 {
                     for(Index k = 0; k < output_columns_number; k++)
                     {
-                        //const type delta_element = layer_deltas(i, bias_index, j, k);
+                        const type delta_element = layer_deltas(i, bias_index, j, k);
 
-                        //sum += delta_element;
+                        sum += delta_element;
                     }
                 }
             }
@@ -724,8 +541,8 @@ Tensor<type, 1> ConvolutionalLayer::calculate_error_gradient(const Tensor<type, 
         }
 
         return layer_error_gradient;
-
-//    return Tensor<type, 1>();
+    */
+    return Tensor<type, 1>();
 
 }
 
@@ -746,7 +563,7 @@ Index ConvolutionalLayer::get_outputs_rows_number() const
 
     const Index padding_height = get_padding_height();
 
-    return (input_variables_dimensions(0) - filters_rows_number + 2 * padding_height)/row_stride + 1;
+    return (input_variables_dimensions[1] - filters_rows_number + padding_height)/row_stride + 1;
 }
 
 
@@ -758,7 +575,7 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
     const Index padding_width = get_padding_width();
 
-    return (input_variables_dimensions(1) - filters_columns_number + 2 * padding_width)/column_stride + 1;
+    return (input_variables_dimensions[2] - filters_columns_number + padding_width)/column_stride + 1;
 }
 
 
@@ -766,12 +583,11 @@ Index ConvolutionalLayer::get_outputs_columns_number() const
 
 Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 {
-    Tensor<Index, 1> outputs_dimensions(4);
+    Tensor<Index, 1> outputs_dimensions(3);
 
-    outputs_dimensions(0) = get_outputs_rows_number();
-    outputs_dimensions(1) = get_outputs_columns_number();
-    outputs_dimensions(2) = get_filters_number();
-    outputs_dimensions(3) = input_variables_dimensions(3); // Number of images
+    outputs_dimensions[0] = get_filters_number();
+    outputs_dimensions[1] = get_outputs_rows_number();
+    outputs_dimensions[2] = get_outputs_columns_number();
 
     return outputs_dimensions;
 }
@@ -779,9 +595,9 @@ Tensor<Index, 1> ConvolutionalLayer::get_outputs_dimensions() const
 
 /// Returns the padding option.
 
-ConvolutionalLayer::ConvolutionType ConvolutionalLayer::get_convolution_type() const
+ConvolutionalLayer::PaddingOption ConvolutionalLayer::get_padding_option() const
 {
-    return convolution_type;
+    return padding_option;
 }
 
 
@@ -805,7 +621,7 @@ Index ConvolutionalLayer::get_row_stride() const
 
 Index ConvolutionalLayer::get_filters_number() const
 {
-    return synaptic_weights.dimension(3);
+    return synaptic_weights.dimension(0);
 }
 
 
@@ -813,7 +629,7 @@ Index ConvolutionalLayer::get_filters_number() const
 
 Index ConvolutionalLayer::get_filters_channels_number() const
 {
-    return synaptic_weights.dimension(2);
+    return synaptic_weights.dimension(1);
 }
 
 
@@ -821,7 +637,7 @@ Index ConvolutionalLayer::get_filters_channels_number() const
 
 Index  ConvolutionalLayer::get_filters_rows_number() const
 {
-    return synaptic_weights.dimension(0);
+    return synaptic_weights.dimension(2);
 }
 
 
@@ -829,7 +645,7 @@ Index  ConvolutionalLayer::get_filters_rows_number() const
 
 Index ConvolutionalLayer::get_filters_columns_number() const
 {
-    return synaptic_weights.dimension(1);
+    return synaptic_weights.dimension(3);
 }
 
 
@@ -837,9 +653,9 @@ Index ConvolutionalLayer::get_filters_columns_number() const
 
 Index ConvolutionalLayer::get_padding_width() const
 {
-    switch(convolution_type)
+    switch(padding_option)
     {
-    case Valid:
+    case NoPadding:
     {
         return 0;
     }
@@ -858,9 +674,9 @@ Index ConvolutionalLayer::get_padding_width() const
 
 Index ConvolutionalLayer::get_padding_height() const
 {
-    switch(convolution_type)
+    switch(padding_option)
     {
-    case Valid:
+    case NoPadding:
     {
         return 0;
     }
@@ -891,9 +707,9 @@ Index ConvolutionalLayer::get_neurons_number() const
 
 Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 {
-
-//        return synaptic_weights.to_vector().assemble(biases);
-
+    /*
+        return synaptic_weights.to_vector().assemble(biases);
+      */
     return Tensor<type, 1>();
 
 }
@@ -903,7 +719,11 @@ Tensor<type, 1> ConvolutionalLayer::get_parameters() const
 
 Index ConvolutionalLayer::get_parameters_number() const
 {
-    return synaptic_weights.size() + biases.size();
+    const Index biases_number = biases.size();
+
+    const Index synaptic_weights_number = synaptic_weights.size();
+
+    return synaptic_weights_number + biases_number;
 }
 
 
@@ -946,21 +766,20 @@ void ConvolutionalLayer::set(const Tensor<Index, 1>& new_inputs_dimensions, cons
     }
 
 #endif
+    /*
+        input_variables_dimensions.set(new_inputs_dimensions);
 
-//        input_variables_dimensions.set(new_inputs_dimensions);
+        const Index filters_number = new_filters_dimensions[0];
+        const Index filters_channels_number = new_inputs_dimensions[0];
+        const Index filters_rows_number = new_filters_dimensions[1];
+        const Index filters_columns_number = new_filters_dimensions[2];
 
-    const Index filters_rows_number = new_filters_dimensions[0];
-    const Index filters_columns_number = new_filters_dimensions[1];
-    const Index filters_channels_number = new_inputs_dimensions[2];
-    const Index filters_number = new_filters_dimensions[3];
+        biases.resize(filters_number);
+        biases.setRandom();
 
-    biases.resize(filters_number);
-    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-
-    synaptic_weights.resize(filters_rows_number, filters_columns_number, filters_channels_number, filters_number);
-    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-
-    input_variables_dimensions = new_inputs_dimensions;
+        synaptic_weights.resize(filters_number, filters_channels_number, filters_rows_number, filters_columns_number);
+        synaptic_weights.setRandom();
+    */
 }
 
 
@@ -1014,18 +833,18 @@ void ConvolutionalLayer::set_biases(const Tensor<type, 1>& new_biases)
 /// Sets the layer's synaptic weights.
 /// @param new_synaptic_weights The desired synaptic weights.
 
-void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 4>& new_synaptic_weights)
+void ConvolutionalLayer::set_synaptic_weights(const Tensor<type, 2>& new_synaptic_weights)
 {
     synaptic_weights = new_synaptic_weights;
 }
 
 
 /// Sets the padding option.
-/// @param new_convolution_type The desired convolution type.
+/// @param new_padding_option The desired padding option.
 
-void ConvolutionalLayer::set_convolution_type(const ConvolutionalLayer::ConvolutionType& new_convolution_type)
+void ConvolutionalLayer::set_padding_option(const ConvolutionalLayer::PaddingOption& new_padding_option)
 {
-    convolution_type = new_convolution_type;
+    padding_option = new_padding_option;
 }
 
 
@@ -1060,8 +879,9 @@ void ConvolutionalLayer::set_column_stride(const Index& new_stride_column)
 /// Sets the synaptic weights and biases to the given values.
 /// @param new_parameters A vector containing the synaptic weights and biases, in this order.
 
-void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, const Index& )
+void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& /*new_parameters*/, const Index& )
 {
+    /*
     const Index synaptic_weights_number = synaptic_weights.size();
 
     const Index parameters_number = get_parameters_number();
@@ -1071,26 +891,52 @@ void ConvolutionalLayer::set_parameters(const Tensor<type, 1>& new_parameters, c
     const Index filters_rows_number = get_filters_rows_number();
     const Index filters_columns_number = get_filters_columns_number();
 
-//        synaptic_weights = new_parameters.get_subvector(0, synaptic_weights_number-1).to_tensor({filters_number, filters_channels_number, filters_rows_number, filters_columns_number});
+        synaptic_weights = new_parameters.get_subvector(0, synaptic_weights_number-1).to_tensor({filters_number, filters_channels_number, filters_rows_number, filters_columns_number});
 
-//        biases = new_parameters.get_subvector(synaptic_weights_number, parameters_number-1);
-
+        biases = new_parameters.get_subvector(synaptic_weights_number, parameters_number-1);
+    */
 }
 
 
 /// Returns the layer's biases.
-const Tensor<type, 1>& ConvolutionalLayer::get_biases() const
+
+Tensor<type, 1> ConvolutionalLayer::get_biases() const
 {
     return biases;
 }
 
 
+Tensor<type, 1> ConvolutionalLayer::extract_biases(const Tensor<type, 1>& parameters) const
+{
+    /*
+        return parameters.get_last(get_filters_number());
+    */
+    return Tensor<type, 1>();
+
+}
+
 
 /// Returns the layer's synaptic weights.
 
-const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
+Tensor<type, 2> ConvolutionalLayer::get_synaptic_weights() const
 {
     return synaptic_weights;
+}
+
+
+Tensor<type, 2> ConvolutionalLayer::extract_synaptic_weights(const Tensor<type, 1>& parameters) const
+{
+    /*
+        return parameters.get_first(synaptic_weights.size()).to_tensor({get_filters_number(), get_filters_channels_number(), get_filters_rows_number(), get_filters_columns_number()});
+    */
+    return Tensor<type, 2>();
+}
+
+/// Returns the number of channels of the input.
+
+Index ConvolutionalLayer::get_inputs_channels_number() const
+{
+    return input_variables_dimensions[0];
 }
 
 
@@ -1098,21 +944,13 @@ const Tensor<type, 4>& ConvolutionalLayer::get_synaptic_weights() const
 
 Index ConvolutionalLayer::get_inputs_rows_number() const
 {
-    return input_variables_dimensions[0];
+    return input_variables_dimensions[1];
 }
 
 
 /// Returns the number of columns of the input.
 
 Index ConvolutionalLayer::get_inputs_columns_number() const
-{
-    return input_variables_dimensions[1];
-}
-
-
-/// Returns the number of channels of the input.
-
-Index ConvolutionalLayer::get_inputs_channels_number() const
 {
     return input_variables_dimensions[2];
 }

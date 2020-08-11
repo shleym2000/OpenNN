@@ -12,7 +12,6 @@
 
 #include <iostream>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -28,59 +27,58 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
+        // Device
+
+        Device device(Device::EigenSimpleThreadPool);
+
         // Data set
 
         DataSet data_set("../data/pima_indians_diabetes.csv", ';', true);
+        data_set.set_device_pointer(&device);
 
-        data_set.split_samples_random();
-
-        const Index input_variables_number = data_set.get_input_variables_number();
-        const Index target_variables_number = data_set.get_target_variables_number();
+        data_set.split_instances_random(0.60,0.20,0.20);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
-        scaling_inputs_methods.setConstant("MinimumMaximum");
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
         // Neural network
 
-        const Index hidden_neurons_number = 3;
-
         Tensor<Index, 1> neural_network_architecture(3);
-        neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
+        neural_network_architecture.setValues({8, 6, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
 
         neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
 
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
+
+        neural_network.set_outputs_names(targets_names);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::RegularizationMethod::L2);
         training_strategy.get_loss_index_pointer()->set_regularization_weight(0.001);
 
-        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
-
         QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+
         quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+
         quasi_Newton_method_pointer->set_loss_goal(1.0e-3);
 
         const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
 
         // Testing analysis
 
-        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
@@ -112,10 +110,13 @@ int main(void)
         data_set.save("../data/data_set.xml");
 
         neural_network.save("../data/neural_network.xml");
-
-        neural_network.save_expression_python("neural_network.py");
+        neural_network.save_expression("../data/expression.txt");
 
         training_strategy.save("../data/training_strategy.xml");
+//        training_strategy_results.save("../data/training_strategy_results.dat");
+
+//        confusion.save_csv("../data/confusion.csv");
+//        binary_classification_tests.save("../data/binary_classification_tests.dat");
 
         cout << "End" << endl;
 

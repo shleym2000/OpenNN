@@ -30,6 +30,26 @@ GeneticAlgorithm::GeneticAlgorithm(TrainingStrategy* new_training_strategy_point
 }
 
 
+/// File constructor.
+/// @param file_name Name of XML order selection file.
+
+GeneticAlgorithm::GeneticAlgorithm(const string& file_name)
+    : InputsSelection(file_name)
+{
+    load(file_name);
+}
+
+
+/// XML constructor.
+/// @param genetic_algorithm_document Pointer to a TinyXML document containing the genetic algorithm data.
+
+GeneticAlgorithm::GeneticAlgorithm(const tinyxml2::XMLDocument& genetic_algorithm_document)
+    : InputsSelection(genetic_algorithm_document)
+{
+    from_XML(genetic_algorithm_document);
+}
+
+
 /// Destructor.
 
 GeneticAlgorithm::~GeneticAlgorithm()
@@ -246,7 +266,7 @@ void GeneticAlgorithm::set_default()
     if(training_strategy_pointer == nullptr
             || !training_strategy_pointer->has_neural_network())
     {
-        maximum_iterations_number = 100;
+        maximum_epochs_number = 100;
 
         mutation_rate = 0.5;
 
@@ -255,7 +275,7 @@ void GeneticAlgorithm::set_default()
     else
     {
         inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
-        maximum_iterations_number = static_cast<Index>(max(100.,inputs_number*5.));
+        maximum_epochs_number = static_cast<Index>(max(100.,inputs_number*5.));
 
         mutation_rate = static_cast<type>(1.0/inputs_number);
 
@@ -346,7 +366,21 @@ void GeneticAlgorithm::set_population(const Tensor<bool, 2>& new_population)
 
         throw logic_error(buffer.str());
     }
+/* Not right
+    const Index inputs_number = neural_network_pointer->get_inputs_number();
 
+    if(new_population.dimension(1) != inputs_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: GeneticAlgorithm class.\n"
+               << "void set_population(const Tensor<type, 2>&) method.\n"
+               << "Population columns (" << new_population.dimension(1)
+               << ") must be equal to inputs number ("<<inputs_number<<").\n";
+
+        throw logic_error(buffer.str());
+    }
+*/
     if(new_population.dimension(0)  != population_size)
     {
         ostringstream buffer;
@@ -907,6 +941,8 @@ void GeneticAlgorithm::initialize_weighted_population()
 
     Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
 
+//    Tensor<type, 1> final_correlations = absolute_value(correlations.calculate_rows_sum());
+
     const Eigen::array<int, 1> rows_sum = {Eigen::array<int, 1>({1})};
 
     Tensor<type, 1> final_correlations = correlations.sum(rows_sum).abs();
@@ -1099,6 +1135,7 @@ void GeneticAlgorithm::evaluate_population()
     }
 
     calculate_fitness();
+
 }
 
 
@@ -1206,18 +1243,12 @@ void GeneticAlgorithm::calculate_rank_fitness()
 void GeneticAlgorithm::evolve_population()
 {
     Index zero_ocurrences;
-
+cout <<"selection" << endl;
     perform_selection();
-
-    cout << "perform selection" << endl;
-
+cout << "crossover" << endl;
     perform_crossover();
-
-    cout << "perform crossover" << endl;
-
+cout << "mutation" << endl;
     perform_mutation();
-
-    cout << "perform mutation" << endl;
 
     for(Index i = 0; i < population.dimension(0); i++)
     {
@@ -1301,15 +1332,15 @@ void GeneticAlgorithm::perform_selection()
 
         selected_population[selected_index] = true;
 
-        population_vector_copy.push_back(tensor_to_vector(population.chip(selected_index, 0)));
+        vector<bool> selected_inputs = tensor_to_vector(population.chip(selected_index, 0));
+        population_vector_copy.push_back(selected_inputs);
 
         fitness_copy[selected_index] = -1;
     }
 
     // Natural selection
 
-    while(static_cast<Index>(population_vector_copy.size()) < elitism_size
-       && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
+    while(static_cast<Index>(population_vector_copy.size()) < elitism_size && static_cast<Index>(population_vector_copy.size()) < selected_population_size)
     {
         selected_index = maximal_index(fitness_copy);
 
@@ -1335,6 +1366,10 @@ void GeneticAlgorithm::perform_selection()
         }
 
         fitness_copy[selected_index] = -1;
+
+//        Tensor<type, 0> stop = fitness_copy.mean();
+
+//        if(stop(0) == -1.) break;
     }
 
     // Roulette wheel
@@ -1370,7 +1405,7 @@ void GeneticAlgorithm::perform_selection()
             random_loops++;
         }
     }
-cout << "wheel" << endl;
+
     population_copy.resize(static_cast<Index>(population_vector_copy.size()), static_cast<Index>(population_vector_copy[0].size()));
 
     population.setZero();
@@ -1853,6 +1888,8 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     bool end_algortihm = false;
 
+    Index iterations = 0;
+
     Index index = 0;
 
     time_t beginning_time, current_time;
@@ -1878,22 +1915,14 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     initialize_population();
 
-    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
-    {
-        cout << "iteration: " << iteration << endl;
-
-        if(iteration != 0)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    {cout << "1" << endl;
+        if(epoch != 0)
         {
-            cout << "Before evolve" << endl;
-
             evolve_population();
-
-            cout << "Evolve" << endl;
         }
 
         evaluate_population();
-
-        cout << "Evaluate" << endl;
 
         minimal_index = get_optimal_individual_index();
 
@@ -1926,43 +1955,34 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             optimal_inputs = current_inputs;
             optimum_training_error = current_training_error;
             optimum_selection_error = current_selection_error;
-            optimal_generation = iteration;
+            optimal_generation = epoch;
             optimal_parameters = current_parameters;
         }
 
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
+/*
         if(reserve_generation_mean)
         {
-            results->generation_selection_error_mean_history
-                    = insert_result(current_mean(), results->generation_selection_error_mean_history);
+            results->generation_mean_history.push_back(current_mean);
         }
 
         if(reserve_generation_standard_deviation)
         {
-//            results->generation_standard_deviation_history.push_back(current_standard_deviation);
-
-            results->generation_selection_error_standard_deviation_history
-                    = insert_result(current_standard_deviation, results->generation_selection_error_standard_deviation_history);
+            results->generation_standard_deviation_history.push_back(current_standard_deviation);
         }
 
         if(reserve_generation_minimum_selection)
         {
-//            results->generation_minimum_selection_history.push_back(current_selection_error);
-
-            results->generation_minimum_selection_error_history
-                    = insert_result(current_selection_error, results->generation_minimum_selection_error_history);
+            results->generation_minimum_selection_history.push_back(current_selection_error);
         }
 
         if(reserve_generation_optimum_loss)
         {
-//            results->generation_optimum_loss_history.push_back(current_training_error);
-
-            results->generation_optimum_training_error_history
-                    = insert_result(current_training_error, results->generation_optimum_training_error_history);
+            results->generation_optimum_loss_history.push_back(current_training_error);
         }
-
+*/
         // Stopping criteria
 
         if(elapsed_time >= maximum_time)
@@ -1987,13 +2007,13 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(iteration >= maximum_iterations_number-1)
+        else if(epoch >= maximum_epochs_number-1)
         {
             end_algortihm = true;
 
             if(display)
             {
-                cout << "Maximum number of iterations reached." << endl;
+                cout << "Maximum number of epochs reached." << endl;
             }
 
             results->stopping_condition = InputsSelection::MaximumIterations;
@@ -2005,11 +2025,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
             if(current_inputs[j] == false)
             {
-                current_uses(index) = DataSet::UnusedVariable;
+                current_uses[index] = DataSet::UnusedVariable;
             }
             else
             {
-                current_uses(index) = DataSet::Input;
+                current_uses[index] = DataSet::Input;
             }
         }
 
@@ -2020,7 +2040,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
         if(display)
         {
-            cout << "Generation: " << iteration+1 << endl;
+            cout << "Generation: " << epoch+1 << endl;
             cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>()
                  << " " << endl;
             cout << "Generation optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
@@ -2033,21 +2053,17 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
             cout << endl;
         }
 
-        if(end_algortihm == true)
-        {
-            // Save results
-
-            results->optimal_inputs = optimal_inputs;
-            results->final_selection_error = optimum_selection_error;
-            results->final_training_error = optimum_training_error;
-            results->iterations_number = iteration+1;
-            results->elapsed_time = elapsed_time;
-            results->minimal_parameters = optimal_parameters;
-
-            break;
-        }
+        if(end_algortihm == true) break;
     }
 
+    // Save results
+
+    results->optimal_inputs = optimal_inputs;
+    results->final_selection_error = optimum_selection_error;
+    results->final_training_error = optimum_training_error;
+    results->iterations_number = iterations;
+    results->elapsed_time = elapsed_time;
+    results->minimal_parameters = optimal_parameters;
 
     Index original_index;
 
@@ -2058,11 +2074,11 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
         original_index = get_input_index(original_uses, i);
         if(optimal_inputs[i] == 1)
         {
-            optimal_uses(original_index) = DataSet::Input;
+            optimal_uses[original_index] = DataSet::Input;
         }
         else
         {
-            optimal_uses(original_index) = DataSet::UnusedVariable;
+            optimal_uses[original_index] = DataSet::UnusedVariable;
         }
     }
 
@@ -2070,27 +2086,15 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
     data_set_pointer->set_columns_uses(optimal_uses);
 
-    cout << "data set results" << endl;
-
     // Set Neural network results
 
     neural_network_pointer->set_inputs_number(optimal_inputs);
 
-    cout << "inputs number" << endl;
-
     neural_network_pointer->set_parameters(optimal_parameters);
-
-    cout << "set parameters" << endl;
-
-    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
-
-        cout << "inputs names" << endl;
 
     time(&current_time);
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-
-        cout << "time" << endl;
 
     if(display)
     {
@@ -2110,8 +2114,7 @@ GeneticAlgorithm::GeneticAlgorithmResults* GeneticAlgorithm::perform_inputs_sele
 
 Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 {
-    Tensor<string, 2> string_matrix(10, 2);
-/*
+    /*
         ostringstream buffer;
 
         Tensor<string, 1> labels;
@@ -2119,30 +2122,38 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
        // Trials number
 
-       string_matrix(0, 0) = "Trials number";
+       labels.push_back("Trials number");
 
        buffer.str("");
        buffer << trials_number;
 
+       values.push_back(buffer.str());
+
        // Tolerance
 
-       string_matrix(1, 0) = "Tolerance";
+       labels.push_back("Tolerance");
 
        buffer.str("");
        buffer << tolerance;
 
+       values.push_back(buffer.str());
+
        // Population size
 
-       string_matrix(2, 0) = "Population size";
+       labels.push_back("Population size");
 
        buffer.str("");
        buffer << population_size;
 
+       values.push_back(buffer.str());
+
        // Initialization method
 
-       string_matrix(3, 0) = "Initialization method";
+       labels.push_back("Initialization method");
 
        const string initialization_method = write_initialization_method();
+
+       values.push_back(initialization_method);
 
        // Fitness assignment method
 
@@ -2167,6 +2178,7 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
        buffer.str("");
        buffer << elitism_size;
 
+       values.push_back(buffer.str());
 
        // Crossover first point
 
@@ -2175,6 +2187,8 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
        buffer.str("");
        buffer << crossover_first_point;
 
+       values.push_back(buffer.str());
+
        // Crossover second point
 
        labels.push_back("Crossover second point");
@@ -2182,12 +2196,16 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
        buffer.str("");
        buffer << crossover_second_point;
 
+       values.push_back(buffer.str());
+
        // Selective pressure
 
        labels.push_back("Selective pressure");
 
        buffer.str("");
        buffer << selective_pressure;
+
+       values.push_back(buffer.str());
 
        // Mutation rate
 
@@ -2293,8 +2311,343 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
        values.push_back(buffer.str());
 
-*/
+       const Index rows_number = labels.size();
+       const Index columns_number = 2;
+
+       Tensor<string, 2> string_matrix(rows_number, columns_number);
+
+       string_matrix.set_column(0, labels, "name");
+       string_matrix.set_column(1, values, "value");
+
         return string_matrix;
+    */
+    return Tensor<string, 2>();
+}
+
+
+/// Prints to the screen the genetic algorithm parameters, the stopping criteria
+/// and other user stuff concerning the genetic algorithm object.
+
+tinyxml2::XMLDocument* GeneticAlgorithm::to_XML() const
+{
+    ostringstream buffer;
+
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+
+    // Order Selection algorithm
+
+    tinyxml2::XMLElement* root_element = document->NewElement("GeneticAlgorithm");
+
+    document->InsertFirstChild(root_element);
+
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
+
+    // Regression
+//    {
+//        element = document->NewElement("Approximation");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << approximation;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    // Trials number
+    {
+        element = document->NewElement("TrialsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << trials_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Tolerance
+    {
+        element = document->NewElement("Tolerance");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << tolerance;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Population size
+    {
+        element = document->NewElement("PopulationSize");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << population_size;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Initialization method
+    {
+        element = document->NewElement("InitializationMethod");
+        root_element->LinkEndChild(element);
+
+        text = document->NewText(write_initialization_method().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Fitness assignment method
+    {
+        element = document->NewElement("FitnessAssignmentMethod");
+        root_element->LinkEndChild(element);
+
+        text = document->NewText(write_fitness_assignment_method().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Crossover method
+    {
+        element = document->NewElement("CrossoverMethod");
+        root_element->LinkEndChild(element);
+
+        text = document->NewText(write_crossover_method().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Elitism size
+    {
+        element = document->NewElement("ElitismSize");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << elitism_size;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Crossover first point
+    {
+        element = document->NewElement("CrossoverFirstPoint");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << crossover_first_point;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Crossover second point
+    {
+        element = document->NewElement("CrossoverSecondPoint");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << crossover_second_point;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Selective pressure
+    {
+        element = document->NewElement("SelectivePressure");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << selective_pressure;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Mutation rate
+    {
+        element = document->NewElement("MutationRate");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << mutation_rate;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // selection error goal
+    {
+        element = document->NewElement("SelectionErrorGoal");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << selection_error_goal;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum iterations
+    {
+        element = document->NewElement("MaximumGenerationsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_epochs_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum time
+    {
+        element = document->NewElement("MaximumTime");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_time;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Reserve generation optimum loss
+    {
+        element = document->NewElement("ReserveGenerationOptimumLoss");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << reserve_generation_optimum_loss;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Reserve generation minimum selection
+    {
+        element = document->NewElement("ReserveGenerationMinimumSelection");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << reserve_generation_minimum_selection;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Reserve generation mean
+    {
+        element = document->NewElement("ReserveGenerationMean");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << reserve_generation_mean;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Reserve generation standard deviation
+    {
+        element = document->NewElement("ReserveGenerationStandardDeviation");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << reserve_generation_standard_deviation;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Incest prevention distance
+//    {
+//        element = document->NewElement("IncestPreventionDistance");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << incest_prevention_distance;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+
+    // Reserve loss data
+//    {
+//        element = document->NewElement("ReserveTrainingErrorHistory");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << reserve_error_data;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    // Reserve selection error data
+//    {
+//        element = document->NewElement("ReserveSelectionErrorHistory");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << reserve_selection_error_data;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    // Reserve minimal parameters
+//    {
+//        element = document->NewElement("ReserveMinimalParameters");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << reserve_minimal_parameters;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    // Display
+//    {
+//        element = document->NewElement("Display");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << display;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    // Maximum correlation
+//    {
+//        element = document->NewElement("MaximumCorrelation");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << maximum_correlation;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    // Minimum correlation
+//    {
+//        element = document->NewElement("MinimumCorrelation");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << minimum_correlation;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    return document;
 }
 
 
@@ -2436,7 +2789,7 @@ void GeneticAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumGenerationsNumber");
 
     buffer.str("");
-    buffer << maximum_iterations_number;
+    buffer << maximum_epochs_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -2827,11 +3180,11 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_training_error_data = element->GetText();
+            const string new_reserve_error_data = element->GetText();
 
             try
             {
-                set_reserve_training_error_data(new_reserve_training_error_data != "0");
+                set_reserve_error_data(new_reserve_error_data != "0");
             }
             catch(const logic_error& e)
             {
@@ -3019,11 +3372,11 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 
 void GeneticAlgorithm::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    tinyxml2::XMLDocument* document = to_XML();
 
-//    document->SaveFile(file_name.c_str());
+    document->SaveFile(file_name.c_str());
 
-//    delete document;
+    delete document;
 }
 
 
@@ -3050,6 +3403,111 @@ void GeneticAlgorithm::load(const string& file_name)
     from_XML(document);
 }
 
+
+/// Returns a string representation of the current genetic algorithm results structure.
+
+string GeneticAlgorithm::GeneticAlgorithmResults::object_to_string() const
+{
+    ostringstream buffer;
+    /*
+        // Loss history
+
+        if(!loss_data.empty())
+        {
+            buffer << "% Loss history:\n"
+                   << loss_data.to_row_matrix() << "\n";
+        }
+
+        // selection error history
+
+        if(!selection_error_data.empty())
+        {
+            buffer << "% Selection loss history:\n"
+                   << selection_error_data.to_row_matrix() << "\n";
+        }
+
+        // Generation optimum loss history
+
+        if(!generation_optimum_loss_history.empty())
+        {
+            buffer << "% Generation optimum loss history:\n"
+                   << generation_optimum_loss_history.vector_to_string() << "\n";
+        }
+
+        // Generation minimum selection history
+
+        if(!generation_minimum_selection_history.empty())
+        {
+            buffer << "% Generation minimum selection history:\n"
+                   << generation_minimum_selection_history.vector_to_string() << "\n";
+        }
+
+        // Generation mean history
+
+        if(!generation_mean_history.empty())
+        {
+            buffer << "% Generation mean history:\n"
+                   << generation_mean_history.vector_to_string() << "\n";
+        }
+
+        // Generation standard deviation history
+
+        if(!generation_standard_deviation_history.empty())
+        {
+            buffer << "% Generation standard deviation history:\n"
+                   << generation_standard_deviation_history.vector_to_string() << "\n";
+        }
+
+        // Minimal parameters
+
+        if(!minimal_parameters.empty())
+        {
+            buffer << "% Minimal parameters:\n"
+                   << minimal_parameters << "\n";
+        }
+
+        // Stopping condition
+
+        buffer << "% Stopping condition\n"
+               << write_stopping_condition() << "\n";
+
+        // Optimum selection error
+
+        if(abs(final_selection_error - 0) > numeric_limits<type>::epsilon())
+        {
+            buffer << "% Optimum selection error:\n"
+                   << final_selection_error << "\n";
+        }
+
+        // Final training loss
+
+        if(abs(final_training_error - 0) > numeric_limits<type>::epsilon())
+        {
+            buffer << "% Final training loss:\n"
+                   << final_training_error << "\n";
+        }
+
+        // Optimal input
+
+        if(!optimal_inputs_indices.empty())
+        {
+            buffer << "% Optimal input:\n"
+                   << optimal_inputs_indices << "\n";
+        }
+
+        // Iterations number
+
+
+        buffer << "% Number of iterations:\n"
+               << iterations_number << "\n";
+
+        // Elapsed time
+
+        buffer << "% Elapsed time:\n"
+               << write_elapsed_time(elapsed_time) << "\n";
+    */
+    return buffer.str();
+}
 
 type GeneticAlgorithm::euclidean_distance(const Tensor<type, 1>& tensor, const Tensor<type, 1>& other_tensor)
 {
@@ -3085,22 +3543,6 @@ type GeneticAlgorithm::euclidean_distance(const Tensor<type, 1>& tensor, const T
 
     return sqrt(distance);
 }
-
-
-vector<bool> GeneticAlgorithm::tensor_to_vector(const Tensor<bool, 1>& tensor)
-{
-    const size_t size = static_cast<size_t>(tensor.dimension(0));
-
-    vector<bool> new_vector(static_cast<size_t>(size));
-
-    for(size_t i = 0; i < size; i++)
-    {
-        new_vector[i] = tensor(static_cast<Index>(i));
-    }
-
-    return new_vector;
-}
-
 
 bool GeneticAlgorithm::contains(const vector<vector<bool>>&values, const vector<bool>&values_2) const
 {

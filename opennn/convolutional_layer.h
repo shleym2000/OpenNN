@@ -25,6 +25,8 @@
 #include "layer.h"
 #include "config.h"
 
+#include "tinyxml2.h"
+
 namespace OpenNN
 {
 
@@ -32,16 +34,42 @@ class PoolingLayer;
 class PerceptronLayer;
 class ProbabilisticLayer;
 
+
 class ConvolutionalLayer : public Layer
 {
 
 public:
 
+    struct ConvolutionalLayerForwardPropagation : ForwardPropagation
+    {
+        /// Default constructor.
+
+        explicit ConvolutionalLayerForwardPropagation() : ForwardPropagation(){}
+
+        virtual ~ConvolutionalLayerForwardPropagation() {}
+
+        void allocate()
+        {
+/*
+            const ConvolutionalLayer* convolutional_layer = dynamic_cast<ConvolutionalLayer*>(trainable_layers_pointers[i]);
+
+            const Index outputs_channels_number = convolutional_layer->get_filters_number();
+            const Index outputs_rows_number = convolutional_layer->get_outputs_rows_number();
+            const Index outputs_columns_number = convolutional_layer->get_outputs_columns_number();
+
+            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+            layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
+*/
+        }
+
+    };
+
     /// Enumeration of available activation functions for the convolutional layer.
 
     enum ActivationFunction{Threshold, SymmetricThreshold, Logistic, HyperbolicTangent, Linear, RectifiedLinear, ExponentialLinear, ScaledExponentialLinear, SoftPlus, SoftSign, HardSigmoid};
 
-    enum ConvolutionType{Valid, Same};
+    enum PaddingOption{NoPadding, Same};
 
     // Constructors
 
@@ -51,15 +79,15 @@ public:
 
     // Destructor
 
-    virtual ~ConvolutionalLayer() {}
-
     // Get methods
 
     bool is_empty() const;
 
-    const Tensor<type, 1>& get_biases() const;
+    Tensor<type, 1> get_biases() const;
+    Tensor<type, 1> extract_biases(const Tensor<type, 1>&) const;
 
-    const Tensor<type, 4>& get_synaptic_weights() const;
+    Tensor<type, 2> get_synaptic_weights() const;
+    Tensor<type, 2> extract_synaptic_weights(const Tensor<type, 1>&) const;
 
     ActivationFunction get_activation_function() const;
 
@@ -69,7 +97,7 @@ public:
 
     Index get_outputs_columns_number() const;
 
-    ConvolutionType get_convolution_type() const;
+    PaddingOption get_padding_option() const;
 
     Index get_column_stride() const;
 
@@ -104,9 +132,9 @@ public:
 
     void set_biases(const Tensor<type, 1>&);
 
-    void set_synaptic_weights(const Tensor<type, 4>&);
+    void set_synaptic_weights(const Tensor<type, 2>&);
 
-    void set_convolution_type(const ConvolutionType&);
+    void set_padding_option(const PaddingOption&);
 
     void set_parameters(const Tensor<type, 1>&, const Index& index);
 
@@ -122,49 +150,55 @@ public:
 
     void set_parameters_constant(const type&);
 
-    // Padding
-
-    void insert_padding(const Tensor<type, 4>&, Tensor<type, 4>&);
-
     // Combinations
 
-    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-
-    void calculate_combinations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_convolutions(const Tensor<type, 4>&, Tensor<type, 4>&) const
+    {
+    }
 
     // Activation
 
-    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const;
+    void calculate_activations(const Tensor<type, 4>&, Tensor<type, 4>&) const
+    {
 
-    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
+    }
+
+    void calculate_activations_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&) const
+    {
+
+    }
 
    // Outputs
 
    Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&);
 
-   void calculate_outputs(const Tensor<type, 4>&, Tensor<type, 4>&);
+   void forward_propagate(const Tensor<type, 4>& inputs, ForwardPropagation& forward_propagation) const
+   {
+       calculate_convolutions(inputs, forward_propagation.combinations_4d);
 
-   void forward_propagate(const Tensor<type, 4>&, ForwardPropagation&) const;
+       calculate_activations(forward_propagation.combinations_4d, forward_propagation.activations_4d);
 
+       calculate_activations_derivatives(forward_propagation.combinations_4d, forward_propagation.activations_derivatives_4d);
+   }
 
    // Delta methods
 
    Tensor<type, 2> calculate_hidden_delta(Layer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
-   Tensor<type, 2> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 4>&) const;
+   Tensor<type, 2> calculate_hidden_delta_convolutional(ConvolutionalLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Tensor<type, 2> calculate_hidden_delta_pooling(PoolingLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Tensor<type, 2> calculate_hidden_delta_perceptron(PerceptronLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    Tensor<type, 2> calculate_hidden_delta_probabilistic(ProbabilisticLayer*, const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    // Gradient methods
 
-   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 4>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
+   Tensor<type, 1> calculate_error_gradient(const Tensor<type, 2>&, const Layer::ForwardPropagation&, const Tensor<type, 2>&);
 
 protected:
 
    /// This tensor containing conection strengths from a layer's inputs to its neurons.
 
-   Tensor<type, 4> synaptic_weights;
+   Tensor<type, 2> synaptic_weights;
 
    /// Bias is a neuron parameter that is summed with the neuron's weighted inputs
    /// and passed through the neuron's trabsfer function to generate the neuron's output.
@@ -177,15 +211,9 @@ protected:
 
    Tensor<Index, 1> input_variables_dimensions;
 
-   ConvolutionType convolution_type = Valid;
+   PaddingOption padding_option = NoPadding;
 
    ActivationFunction activation_function = RectifiedLinear;
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/convolutional_layer_cuda.h"
-#endif
-
-
 };
 }
 

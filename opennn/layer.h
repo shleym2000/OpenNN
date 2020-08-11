@@ -20,12 +20,16 @@
 #include <ctype.h>
 #include <iostream>
 #include <vector>
-#include <omp.h>
 
 // OpenNN includes
 
 #include "config.h"
-#include "statistics.h"
+#include "device.h"
+#include "tinyxml2.h"
+
+//Eigen includes
+
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -59,45 +63,42 @@ public:
         {
         }
 
-        explicit ForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        explicit ForwardPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            set(new_batch_instances_number, new_layer_pointer);
         }
 
 
         virtual ~ForwardPropagation() {}
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+
+        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
-            batch_samples_number = new_batch_samples_number;
+            batch_instances_number = new_batch_instances_number;
 
             layer_pointer = new_layer_pointer;
 
             const Index neurons_number = layer_pointer->get_neurons_number();
 
-            combinations_2d.resize(batch_samples_number, neurons_number);
+            combinations_2d.resize(batch_instances_number, neurons_number);
 
-            activations_2d.resize(batch_samples_number, neurons_number);
+//            activations_2d.resize(batch_instances_number, neurons_number);
 
-            if(layer_pointer->get_type() == Perceptron) // Perceptron
+            if(layer_pointer->get_type() == Perceptron)
             {
-                activations_derivatives_2d.resize(batch_samples_number, neurons_number);
+                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
             }
-            else if(layer_pointer->get_type() == Recurrent ) // Recurrent
-            {
-                activations_derivatives_2d.resize(batch_samples_number, neurons_number);
-            }
-            else if(layer_pointer->get_type() == LongShortTermMemory) // LSTM
+            else if(layer_pointer->get_type() == Recurrent && layer_pointer->get_type() == LongShortTermMemory)
             {
                 combinations_1d.resize(neurons_number);
 
                 activations_1d.resize(neurons_number);
 
-                activations_derivatives_3d.resize(batch_samples_number, neurons_number, 5);
+                activations_derivatives_2d.resize(batch_instances_number, neurons_number);
             }
-            else // Probabilistic
+            else
             {
-                activations_derivatives_3d.resize(batch_samples_number, neurons_number, neurons_number);
+                activations_derivatives_3d.resize(neurons_number, neurons_number, batch_instances_number);
             }
         }
 
@@ -120,9 +121,10 @@ public:
                 cout << "Activations derivatives 3d:" << endl;
                 cout << activations_derivatives_3d << endl;
             }
+
         }
 
-        Index batch_samples_number = 0;
+        Index batch_instances_number = 0;
 
         Layer* layer_pointer;
 
@@ -147,18 +149,18 @@ public:
 
         explicit BackPropagation() {}
 
-        explicit BackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        explicit BackPropagation(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
-            set(new_batch_samples_number, new_layer_pointer);
+            set(new_batch_instances_number, new_layer_pointer);
         }
 
 
         virtual ~BackPropagation() {}
 
 
-        void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        void set(const Index& new_batch_instances_number, Layer* new_layer_pointer)
         {
-            batch_samples_number = new_batch_samples_number;
+            batch_instances_number = new_batch_instances_number;
 
             layer_pointer = new_layer_pointer;
 
@@ -169,12 +171,12 @@ public:
 
             synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
-            delta.resize(batch_samples_number, neurons_number);
+            delta.resize(batch_instances_number, neurons_number);
         }
 
         virtual void print() const {}
 
-        Index batch_samples_number = 0;
+        Index batch_instances_number = 0;
 
         Layer* layer_pointer = nullptr;
 
@@ -188,29 +190,19 @@ public:
 
     // Constructor
 
-    explicit Layer()   
+    explicit Layer()
     {
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
     }
 
     // Destructor
 
     virtual ~Layer() {}
 
-    string get_name() const
-    {
-        return layer_name;
-    }
-
     // Parameters initialization methods
 
     virtual void set_parameters_constant(const type&);
 
     virtual void set_parameters_random();
-
-    virtual void set_synaptic_weights_constant_glorot_uniform();
 
     // Architecture
 
@@ -219,15 +211,17 @@ public:
 
     virtual void set_parameters(const Tensor<type, 1>&, const Index&);
 
-    void set_thread_pool_device(ThreadPoolDevice*);
+    void set_device_pointer(Device*);
 
     virtual void insert_gradient(const BackPropagation&, const Index&, Tensor<type, 1>&) const {}
 
     // Outputs
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
+    virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
     virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
+    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&, const Tensor<type, 1>&) {return Tensor<type, 4>();}
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&,
                                           const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
@@ -245,21 +239,21 @@ public:
 
     virtual void calculate_hidden_delta(Layer*,
                                         const Tensor<type, 2>&,
-                                        ForwardPropagation&,
+                                        const Tensor<type, 2>&,
                                         const Tensor<type, 2>&,
                                         Tensor<type, 2>&) const {}
 
     // Get neurons number
 
+    virtual Tensor<Index, 1> get_input_variables_dimensions() const;
+
     virtual Index get_inputs_number() const;
     virtual Index get_neurons_number() const;
-    virtual Index get_synaptic_weights_number() const;
-
 
     virtual void set_inputs_number(const Index&);
     virtual void set_neurons_number(const Index&);
 
-    virtual 
+    virtual string object_to_string() const;
 
     // Layer type
 
@@ -273,22 +267,11 @@ public:
 
     virtual void write_XML(tinyxml2::XMLPrinter&) const {}
 
-    // Expression methods
-
-    virtual string write_expression_c() const {return string();}
-
-    virtual string write_expression_python() const {return string();}
-
-
 protected:
 
-    ThreadPoolDevice* thread_pool_device = nullptr;
+    Device* device_pointer = nullptr;
 
-    /// Layer name.
-
-    string layer_name = "layer";
-
-    /// Layer type.
+    /// Layer type object.
 
     Type layer_type = Perceptron;
 
@@ -298,28 +281,16 @@ protected:
     void hyperbolic_tangent(const Tensor<type,1>&, Tensor<type,1>&) const;
     void logistic(const Tensor<type,1>&, Tensor<type,1>&) const;
     void linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void binary(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const;
-
-    void hard_sigmoid_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void hyperbolic_tangent_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void logistic_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void threshold_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void symmetric_threshold_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void rectified_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void scaled_exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void soft_plus_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void soft_sign_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
-    void exponential_linear_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void binary(const Tensor<type,1>&, Tensor<type,1>&) const {}
+    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const {}
 
     // activations 2d
 
@@ -338,6 +309,18 @@ protected:
     void binary(const Tensor<type, 2>&, Tensor<type, 2>&) const;
     void competitive(const Tensor<type, 2>&, Tensor<type, 2>&) const;
 
+    void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void symmetric_threshold_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void rectified_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void scaled_exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void soft_plus_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void soft_sign_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+    void exponential_linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&) const;
+
     void hard_sigmoid_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void hyperbolic_tangent_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
     void linear_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 2>&) const;
@@ -353,43 +336,12 @@ protected:
     void logistic_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
     void softmax_derivatives(const Tensor<type, 2>&, Tensor<type, 2>&, Tensor<type, 3>&) const;
 
-    // activations 4d
-
-    void linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void logistic(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hyperbolic_tangent(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void symmetric_threshold(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void rectified_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void scaled_exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_plus(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_sign(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hard_sigmoid(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void exponential_linear(const Tensor<type, 4>&, Tensor<type, 4>&) const;
-
-    void linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void logistic_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hyperbolic_tangent_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void threshold_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void symmetric_threshold_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void rectified_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void scaled_exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_plus_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void soft_sign_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void hard_sigmoid_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-    void exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
-
-
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
     const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
-#endif
-
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/layer_mkl.h"
+#ifdef __OPENNN_CUDA__
+    #include "../../artelnics/opennn_cuda/opennn_cuda/layer_cuda.h"
 #endif
 
 };

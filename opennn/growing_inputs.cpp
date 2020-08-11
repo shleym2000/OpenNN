@@ -30,6 +30,26 @@ GrowingInputs::GrowingInputs(TrainingStrategy* new_training_strategy_pointer)
 }
 
 
+/// File constructor.
+/// @param file_name Name of XML genetic algorithm file.
+
+GrowingInputs::GrowingInputs(const string& file_name)
+    : InputsSelection(file_name)
+{
+    load(file_name);
+}
+
+
+/// XML constructor.
+/// @param genetic_algorithm_document Pointer to a TinyXML document containing the genetic algorithm data.
+
+GrowingInputs::GrowingInputs(const tinyxml2::XMLDocument& genetic_algorithm_document)
+    : InputsSelection(genetic_algorithm_document)
+{
+    from_XML(genetic_algorithm_document);
+}
+
+
 /// Destructor.
 
 GrowingInputs::~GrowingInputs()
@@ -178,7 +198,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     type optimum_training_error = numeric_limits<type>::max();
     type optimum_selection_error = numeric_limits<type>::max();
-    type previus_selection_error = numeric_limits< type>::max();
+    type previus_selection_error = numeric_limits<type>::max();
 
     // Data set
 
@@ -244,11 +264,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
     // Model selection
 
-    if(used_columns_number < maximum_iterations_number) maximum_iterations_number = used_columns_number;
+    if(used_columns_number < maximum_epochs_number) maximum_epochs_number = used_columns_number;
 
-    for(Index iteration = 0; iteration < maximum_iterations_number; iteration++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
-        const Index column_index = correlations_descending_indices[iteration];
+        const Index column_index = correlations_descending_indices[epoch];
 
         const string column_name = used_columns_names[column_index];
 
@@ -310,16 +330,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         previus_selection_error = current_selection_error;
 
-        if(reserve_training_error_data)
-        {
-            results->training_error_data = insert_result(current_training_error, results->training_error_data);
-        }
-
-        if(reserve_selection_error_data)
-        {
-            results->selection_error_data = insert_result(current_selection_error, results->selection_error_data);
-        }
-
         time(&current_time);
 
         elapsed_time = static_cast<type>(difftime(current_time,beginning_time));
@@ -342,11 +352,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
             results->stopping_condition = InputsSelection::SelectionErrorGoal;
         }
-        else if(iteration >= maximum_iterations_number)
+        else if(epoch >= maximum_epochs_number)
         {
             end_algorithm = true;
 
-            if(display) cout << "Maximum number of iterations reached." << endl;
+            if(display) cout << "Maximum number of epochs reached." << endl;
 
             results->stopping_condition = InputsSelection::MaximumIterations;
         }
@@ -377,7 +387,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         if(display)
         {
-            cout << "Iteration: " << iteration << endl;
+            cout << "Iteration: " << epoch << endl;
 
             if(end_algorithm == false) cout << "Add input: " << data_set_pointer->get_variable_name(column_index) << endl;
 
@@ -390,20 +400,17 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             cout << endl;
         }
 
-        if(end_algorithm == true)
-        {
-            // Save results
-
-            results->optimal_inputs_indices = optimal_columns_indices;
-            results->final_selection_error = optimum_selection_error;
-            results->final_training_error = optimum_training_error;
-            results->iterations_number = iteration+1;
-            results->elapsed_time = elapsed_time;
-            results->minimal_parameters = optimal_parameters;
-
-            break;
-        }
+        if(end_algorithm == true) break;
     }
+
+    // Save results
+
+    results->optimal_inputs_indices = optimal_columns_indices;
+    results->final_selection_error = optimum_selection_error;
+    results->final_training_error = optimum_training_error;
+//    results->iterations_number = iteration;
+    results->elapsed_time = elapsed_time;
+    results->minimal_parameters = optimal_parameters;
 
     // Set Data set stuff
 
@@ -425,8 +432,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
     neural_network_pointer->set_inputs_number(optimal_inputs_number);
 
     neural_network_pointer->set_parameters(optimal_parameters);
-
-    neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     if(display)
     {
@@ -580,6 +585,185 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
 }
 
 
+/// Prints to the screen the growing inputs parameters, the stopping criteria
+/// and other user stuff concerning the growing inputs object.
+
+tinyxml2::XMLDocument* GrowingInputs::to_XML() const
+{
+    ostringstream buffer;
+
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+
+    // Order Selection algorithm
+
+    tinyxml2::XMLElement* root_element = document->NewElement("GrowingInputs");
+
+    document->InsertFirstChild(root_element);
+
+    tinyxml2::XMLElement* element = nullptr;
+    tinyxml2::XMLText* text = nullptr;
+
+    // Trials number
+    {
+        element = document->NewElement("TrialsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << trials_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Tolerance
+    {
+        element = document->NewElement("Tolerance");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << tolerance;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // selection error goal
+    {
+        element = document->NewElement("SelectionErrorGoal");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << selection_error_goal;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum selection failures
+    {
+        element = document->NewElement("MaximumSelectionFailures");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_selection_failures;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Minimum inputs number
+    {
+        element = document->NewElement("MinimumInputsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << minimum_inputs_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum inputs number
+    {
+        element = document->NewElement("MaximumInputsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_inputs_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Minimum correlation
+    {
+        element = document->NewElement("MinimumCorrelation");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << minimum_correlation;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+
+    // Maximum correlation
+    {
+        element = document->NewElement("MaximumCorrelation");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_correlation;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum iterations
+    {
+        element = document->NewElement("MaximumEpochsNumber");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_epochs_number;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Maximum time
+    {
+        element = document->NewElement("MaximumTime");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << maximum_time;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Reserve loss data
+    {
+        element = document->NewElement("ReserveTrainingErrorHistory");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << reserve_error_data;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Reserve selection error data
+    {
+        element = document->NewElement("ReserveSelectionErrorHistory");
+        root_element->LinkEndChild(element);
+
+        buffer.str("");
+        buffer << reserve_selection_error_data;
+
+        text = document->NewText(buffer.str().c_str());
+        element->LinkEndChild(text);
+    }
+
+    // Display
+//    {
+//        element = document->NewElement("Display");
+//        root_element->LinkEndChild(element);
+
+//        buffer.str("");
+//        buffer << display;
+
+//        text = document->NewText(buffer.str().c_str());
+//        element->LinkEndChild(text);
+//    }
+
+    return document;
+}
+
+
 /// Serializes the growing inputs object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -682,7 +866,7 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MaximumEpochsNumber");
 
     buffer.str("");
-    buffer << maximum_iterations_number;
+    buffer << maximum_epochs_number;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -704,7 +888,7 @@ void GrowingInputs::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("ReserveTrainingErrorHistory");
 
     buffer.str("");
-    buffer << reserve_training_error_data;
+    buffer << reserve_error_data;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -788,11 +972,11 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
-            const string new_reserve_training_error_data = element->GetText();
+            const string new_reserve_error_data = element->GetText();
 
             try
             {
-                set_reserve_training_error_data(new_reserve_training_error_data != "0");
+                set_reserve_error_data(new_reserve_error_data != "0");
             }
             catch(const logic_error& e)
             {
@@ -1037,11 +1221,11 @@ void GrowingInputs::from_XML(const tinyxml2::XMLDocument& document)
 
 void GrowingInputs::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    tinyxml2::XMLDocument* document = to_XML();
 
-//    document->SaveFile(file_name.c_str());
+    document->SaveFile(file_name.c_str());
 
-//    delete document;
+    delete document;
 }
 
 

@@ -48,20 +48,20 @@ class GradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct GDOptimizationData : public OptimizationData
+    struct OptimizationData
     {
         /// Default constructor.
 
-        explicit GDOptimizationData()
+        explicit OptimizationData()
         {
         }
 
-        explicit GDOptimizationData(GradientDescent* new_gradient_descent_pointer)
+        explicit OptimizationData(GradientDescent* new_gradient_descent_pointer)
         {
             set(new_gradient_descent_pointer);
         }
 
-        virtual ~GDOptimizationData() {}
+        virtual ~OptimizationData() {}
 
         void set(GradientDescent* new_gradient_descent_pointer)
         {
@@ -79,7 +79,6 @@ public:
             parameters = neural_network_pointer->get_parameters();
 
             old_parameters.resize(parameters_number);
-            potential_parameters.resize(parameters_number);
 
             parameters_increment.resize(parameters_number);
 
@@ -90,6 +89,7 @@ public:
             // Optimization algorithm data
 
             training_direction.resize(parameters_number);
+
         }
 
         void print() const
@@ -108,6 +108,7 @@ public:
 
         // Neural network data
 
+        Tensor<type, 1> parameters;
         Tensor<type, 1> old_parameters;
 
         Tensor<type, 1> parameters_increment;
@@ -127,6 +128,8 @@ public:
 
         Index epoch = 0;
 
+        Tensor<type, 1> training_direction;
+
         Tensor<type, 0> training_slope;
 
         type learning_rate = 0;
@@ -139,6 +142,8 @@ public:
 
    explicit GradientDescent(LossIndex*);
 
+   explicit GradientDescent(const tinyxml2::XMLDocument&); 
+
    // Destructor
 
    virtual ~GradientDescent();   
@@ -146,6 +151,16 @@ public:
 
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
+
+   // Training parameters
+
+   const type& get_warning_parameters_norm() const;
+   const type& get_warning_gradient_norm() const;
+   const type& get_warning_learning_rate() const;
+
+   const type& get_error_parameters_norm() const;
+   const type& get_error_gradient_norm() const;
+   const type& get_error_learning_rate() const;
 
    // Stopping criteria
 
@@ -160,6 +175,7 @@ public:
    const type& get_maximum_time() const;
 
    const bool& get_choose_best_selection() const;
+   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
@@ -176,11 +192,19 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
-   void set_hardware_use(const string&);
+   // Training parameters
 
-   // Stopping criteria
+   void set_warning_parameters_norm(const type&);
+   void set_warning_gradient_norm(const type&);
+   void set_warning_learning_rate(const type&);
+
+   void set_error_parameters_norm(const type&);
+   void set_error_gradient_norm(const type&);
+   void set_error_learning_rate(const type&);
 
    void set_maximum_epochs_number(const Index&);
+
+   // Stopping criteria
 
    void set_minimum_parameters_increment_norm(const type&);
 
@@ -192,6 +216,7 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
+   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -204,13 +229,7 @@ public:
 
    // Training methods
 
-   void calculate_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-
-   void update_epoch(
-           const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           LossIndex::BackPropagation& back_propagation,
-           GDOptimizationData& optimization_data);
+   Tensor<type, 1> calculate_training_direction(const Tensor<type, 1>&) const;
 
    Results perform_training();
 
@@ -222,20 +241,95 @@ public:
 
    Tensor<string, 2> to_string_matrix() const;
 
-   
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
+
+   void update_epoch(
+           const DataSet::Batch& batch,
+           NeuralNetwork::ForwardPropagation& forward_propagation,
+           const LossIndex::BackPropagation& back_propagation,
+           OptimizationData& optimization_data)
+   {
+
+       optimization_data.training_direction = calculate_training_direction(back_propagation.gradient);
+
+       if(l2_norm(optimization_data.training_direction) < numeric_limits<type>::min())
+           throw logic_error("Training direction is zero");
+
+       // Training slope
+
+//       optimization_data.training_slope = -back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
+
+       optimization_data.training_slope = normalized(back_propagation.gradient).contract(optimization_data.training_direction, AT_B);
+
+       if(optimization_data.training_slope(0) >= static_cast<type>(0.0))
+           throw logic_error("Training slope is equal or greater than zero");
+
+       // Get initial learning_rate
+
+       type initial_learning_rate = 0;
+
+       optimization_data.epoch == 0
+               ? initial_learning_rate = first_learning_rate
+               : initial_learning_rate = optimization_data.old_learning_rate;
+
+       pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
+                               batch,
+                               optimization_data.parameters,
+                               forward_propagation,
+                               back_propagation.loss,
+                               optimization_data.training_direction,
+                               initial_learning_rate);
+
+       optimization_data.learning_rate = directional_point.first;
+
+       if(abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+           throw logic_error("Training rate is zero");
+
+       optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
+
+       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
+
+       optimization_data.old_learning_rate = optimization_data.learning_rate;
+   }
 
 private:
 
    // TRAINING OPERATORS
 
-   /// Learning rate algorithm object for one-dimensional minimization. 
+   /// Training rate algorithm object for one-dimensional minimization. 
 
    LearningRateAlgorithm learning_rate_algorithm;
 
    type first_learning_rate = static_cast<type>(0.01);
+
+   // TRAINING PARAMETERS
+
+   /// Value for the parameters norm at which a warning message is written to the screen. 
+
+   type warning_parameters_norm;
+
+   /// Value for the gradient norm at which a warning message is written to the screen. 
+
+   type warning_gradient_norm;
+
+   /// Training rate value at wich a warning message is written to the screen.
+
+   type warning_learning_rate;
+
+   /// Value for the parameters norm at which the training process is assumed to fail. 
+   
+   type error_parameters_norm;
+
+   /// Value for the gradient norm at which the training process is assumed to fail. 
+
+   type error_gradient_norm;
+
+   /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
+
+   type error_learning_rate;
 
    // Stopping criteria
 
@@ -260,6 +354,14 @@ private:
 
    Index maximum_selection_error_increases;
 
+   /// Initial batch size
+
+   Index training_initial_batch_size;
+
+   /// Maximum training batch size
+
+   Index training_maximum_batch_size;
+
    /// Maximum epochs number
 
    Index maximum_epochs_number;
@@ -272,6 +374,10 @@ private:
 
    bool choose_best_selection;
 
+   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
+
+   bool apply_early_stopping;
+
    // TRAINING HISTORY 
 
    /// True if the loss history vector is to be reserved, false otherwise.
@@ -281,10 +387,6 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
-
-   /// Hardware use.
-
-   string hardware_use;
 };
 
 }

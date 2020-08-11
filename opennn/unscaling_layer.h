@@ -24,6 +24,7 @@
 #include "layer.h"
 #include "statistics.h"
 
+#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -34,7 +35,7 @@ namespace OpenNN
 /// Unscaling layers are included in the definition of a neural network.
 /// They are used to unnormalize variables so they are in the original range after computer processing.
 
-class   UnscalingLayer : public Layer
+class UnscalingLayer : public Layer
 {
 
 public:
@@ -46,6 +47,10 @@ public:
    explicit UnscalingLayer(const Index&);
 
    explicit UnscalingLayer(const Tensor<Descriptives, 1>&);
+
+   explicit UnscalingLayer(const tinyxml2::XMLDocument&);
+
+   UnscalingLayer(const UnscalingLayer&);
 
    // Destructor
 
@@ -59,21 +64,21 @@ public:
 
    // Get methods
 
-   
+   Tensor<Index, 1> get_input_variables_dimensions() const;
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
    Tensor<Descriptives, 1> get_descriptives() const;
-   Tensor<type, 2> get_descriptives_matrix() const;
 
+   Tensor<type, 2> get_descriptives_matrix() const;
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
-   const Tensor<UnscalingLayer::UnscalingMethod, 1> get_unscaling_method() const;
+   const UnscalingMethod& get_unscaling_method() const;
 
-   Tensor<string, 1> write_unscaling_methods() const;
-   Tensor<string, 1> write_unscaling_method_text() const;
+   string write_unscaling_method() const;
+   string write_unscaling_method_text() const;
 
    const bool& get_display() const;
 
@@ -104,10 +109,8 @@ public:
 
    // Outputs unscaling method
 
-   void set_unscaling_methods(const Tensor<UnscalingMethod,1>&);
-   void set_unscaling_methods(const string&);
-   void set_unscaling_methods(const Tensor<string, 1>&);
-   void set_unscaling_methods(const UnscalingLayer::UnscalingMethod&);
+   void set_unscaling_method(const UnscalingMethod&);
+   void set_unscaling_method(const string&);
 
    // Display messages
 
@@ -119,24 +122,36 @@ public:
   
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
+   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
+
+   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
+
+   Tensor<type, 2> calculate_logarithmic_outputs(const Tensor<type, 2>&) const;
+
    void check_range(const Tensor<type, 1>&) const;
 
    // Serialization methods
 
-   
+   string object_to_string() const;
 
-   
+   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
    // Expression methods
 
+   string write_none_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_logarithmic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_none_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_minimum_maximum_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_mean_standard_deviation_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_logarithmic_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-
-   string write_expression_c() const;
-   string write_expression_python() const;
-
+   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
 protected:
 
@@ -148,7 +163,7 @@ protected:
 
    /// Unscaling method for the output variables.
 
-   Tensor<UnscalingMethod, 1> unscaling_methods;
+   UnscalingMethod unscaling_method;
 
    /// Display warning messages to screen. 
 

@@ -60,7 +60,9 @@ public:
    // Set methods
 
    void test_set();
+
    void test_set_default();
+
    void test_set_biases();
    void test_set_synaptic_weights();
    void test_set_parameters();
@@ -71,6 +73,7 @@ public:
 
    void test_write_activation_function();
    void test_write_activation_function_text();
+
    void test_set_activation_function();
 
 
@@ -82,7 +85,8 @@ public:
 
    void test_calculate_combinations();
    void test_calculate_activations();
-   void test_calculate_activations_derivatives();
+   void test_calculate_derivatives_activations();
+
    void test_calculate_outputs();
 
    // Expression methods
@@ -92,22 +96,10 @@ public:
    // Serialization methods
 
    void test_to_XML();
+
    void test_from_XML();
 
-   // Forward propagate
 
-   void test_forward_propagate();
-
-   // Hidden delta
-
-   void test_calculate_hidden_delta();
-   void test_calculate_output_delta();
-
-   void test_calculate_error_gradient();
-
-   // Write expression
-
-   void test_write_expression();
 
    // Unit testing methods
 
@@ -120,7 +112,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

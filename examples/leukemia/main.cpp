@@ -16,7 +16,6 @@
 #include <string>
 #include <cstring>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -30,65 +29,109 @@ int main(void)
     {
         cout << "OpenNN. Leukemia Example." << endl;
 
+        srand(static_cast<unsigned>(time(nullptr)));
+
         // Device
 
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+        Device device(Device::EigenSimpleThreadPool);
 
-        DataSet data_set("../data/leukemia.csv",';',false);
+        // Data set
 
-        data_set.set_thread_pool_device(thread_pool_device);
-        data_set.set_training();
+        DataSet data_set("../data/leukemia.csv", ';', false);
+        data_set.set_device_pointer(&device);
 
-        Tensor<Index, 1> input_variables_indices = data_set.get_input_variables_indices();
-        Tensor<Index, 1> target_variables_indices = data_set.get_target_variables_indices();
+        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
+        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        #pragma omp parallel for
+        const Index inputs_number = data_set.get_input_variables_number();
+        const Index targets_number = data_set.get_target_variables_number();
 
-        for(int i=0; i<input_variables_indices.dimension(0); i++)
-        {
+        data_set.split_instances_random();
 
-            CorrelationResults logistic_correlation = logistic_correlations(thread_pool_device,
-                                                      data_set.get_data().chip(input_variables_indices(i),1),
-                                                      data_set.get_data().chip(target_variables_indices(0),1));
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
 
-            CorrelationResults gauss_correlation = gauss_correlations(thread_pool_device,
-                                                   data_set.get_data().chip(input_variables_indices(i),1),
-                                                   data_set.get_data().chip(target_variables_indices(0),1));
+        // Neural network
+
+        Tensor<Index, 1> neural_network_architecture(2);
+        neural_network_architecture.setValues({inputs_number, targets_number});
+
+        NeuralNetwork neural_network(NeuralNetwork::Classification, neural_network_architecture);
+        neural_network.set_device_pointer(&device);
+
+        neural_network.set_inputs_names(inputs_names);
+
+        neural_network.set_outputs_names(targets_names);
+
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+
+        scaling_layer_pointer->set_descriptives(inputs_descriptives);
+
+        scaling_layer_pointer->set_scaling_methods(ScalingLayer::NoScaling);
+
+        // Training strategy
+
+        TrainingStrategy training_strategy(&neural_network, &data_set);
+        training_strategy.set_device_pointer(&device);
+
+        training_strategy.set_loss_method(TrainingStrategy::WEIGHTED_SQUARED_ERROR);
+
+        training_strategy.set_optimization_method(TrainingStrategy::QUASI_NEWTON_METHOD);
+
+        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+
+        quasi_Newton_method_pointer->set_minimum_loss_decrease(1.0e-6);
+
+        training_strategy.set_display(false);
+
+        training_strategy.perform_training_void();
+
+        // Model selection
+
+        ModelSelection model_selection(&training_strategy);
+
+        model_selection.set_inputs_selection_method(ModelSelection::GROWING_INPUTS);
+
+        model_selection.perform_inputs_selection();
+
+        GrowingInputs* growing_inputs_pointer = model_selection.get_growing_inputs_pointer();
+
+        growing_inputs_pointer->set_approximation(false);
+
+        growing_inputs_pointer->set_maximum_selection_failures(3);
+
+//        ModelSelection::Results model_selection_results = model_selection.perform_inputs_selection();
 
 
-            if(abs(logistic_correlation.correlation) > abs(gauss_correlation.correlation) &&
-                    abs(logistic_correlation.correlation) > 0.9)
-            {
-                cout << "Gen: " << i << endl;
-                cout << "Logistic correlation: " << logistic_correlation.correlation << endl;
-            }
+        // Testing analysis
 
-            if(abs(gauss_correlation.correlation) > abs(logistic_correlation.correlation) &&
-                    abs(gauss_correlation.correlation) > 0.9)
-            {
-                cout<<"Gen: "<<i<<endl;
-                cout<<"Gauss correlation: "<<gauss_correlation.correlation<<endl;
-            }
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-            if(i%250 == 0)
-            {
-                cout<<static_cast<float>(i)/static_cast<float>(input_variables_indices.dimension(0))*100
-                   <<"% dataset evaluated"<<endl;
-            }
-        }
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+
+        // Save results
+
+        data_set.save("../data/data_set.xml");
+
+        neural_network.save("../data/neural_network.xml");
+
+        training_strategy.save("../data/training_strategy.xml");
+
+//        model_selection.save("../data/model_selection.xml");
+//        model_selection_results.save("../data/model_selection_results.dat");
+
+//        confusion.save_csv("../data/confusion.csv");
+
+        cout << "Bye" << endl;
 
         return 0;
     }
     catch(exception& e)
     {
-        cerr << e.what() << endl;
+        cout << e.what() << endl;
 
         return 1;
     }
 }
-
 
 
 // OpenNN: Open Neural Networks Library.

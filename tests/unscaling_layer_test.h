@@ -40,25 +40,34 @@ public:
 
    // Get methods
 
-   void test_get_dimensions();
-
    // Multilayer perceptron architecture 
 
-   void test_get_inputs_number();
    void test_get_neurons_number();
 
    // Statistics
 
-   void test_get_descriptives();
-   void test_get_descriptives_matrix();
-
    void test_get_minimums();
+   void test_get_minimum();
+
    void test_get_maximums();
+   void test_get_maximum();
+
+   void test_get_means();
+   void test_get_mean();
+
+   void test_get_standard_deviations();
+   void test_get_standard_deviation();
+
+   void test_get_descriptives();
 
    // Variables scaling and unscaling
 
    void test_get_unscaling_method();
-   void test_write_scaling_methods();
+   void test_get_unscaling_method_name();
+
+   // Display warning 
+
+   void test_get_display_warning();
 
    // Display messages
 
@@ -67,20 +76,25 @@ public:
    // Set methods
 
    void test_set();
-   void test_set_inputs_number();
-   void test_set_neurons_number();
    void test_set_default();
 
    // Output variables descriptives
 
-   void test_set_descriptives();
-   void test_set_descriptives_eigen();
-   void test_set_item_descriptives();
-
-   void test_set_minimum();
-   void test_set_maximum();
+   void test_set_means();
    void test_set_mean();
+
+   void test_set_standard_deviations();
    void test_set_standard_deviation();
+
+   void test_set_minimums();
+   void test_set_minimum();
+
+   void test_set_maximums();
+   void test_set_maximum();
+
+   // Statistics
+
+   void test_set_statistics();
 
    // Variables scaling and unscaling
 
@@ -88,19 +102,16 @@ public:
 
    // Display messages
 
+   void test_set_display_outputs_warning();
    void test_set_display();
 
-   // Check methods
+   // Input range
 
-   void test_is_empty();
+   void test_check_outputs_range();
 
    // Outputs unscaling
 
    void test_calculate_outputs();
-
-   void test_calculate_minimum_maximum_outputs();
-   void test_calculate_mean_standard_deviation_outputs();
-   void test_calculate_logarithmic_outputs();
 
    // Expression methods
 
@@ -122,7 +133,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

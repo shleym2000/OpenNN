@@ -24,9 +24,16 @@ class CrossEntropyErrorTest : public UnitTesting
 
 public:
 
-   explicit CrossEntropyErrorTest();   
+   
+
+   explicit CrossEntropyErrorTest();
+
+
+   
 
    virtual ~CrossEntropyErrorTest();
+
+   
 
    // Get methods
 
@@ -34,10 +41,10 @@ public:
 
    // Error methods
 
-   void test_calculate_error();
+   void test_calculate_training_error();
+   void test_calculate_selection_error();
 
-
-   void test_calculate_error_gradient();
+   void test_calculate_training_error_gradient();
 
    void test_to_XML();
    void test_from_XML();
@@ -51,7 +58,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

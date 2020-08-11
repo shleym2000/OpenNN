@@ -3,7 +3,7 @@
 //
 //   T R A I N I N G   S T R A T E G Y   T E S T   C L A S S   H E A D E R 
 //
-//   Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+//   Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
@@ -26,9 +26,17 @@ class TrainingStrategyTest : public UnitTesting
 
 public:
 
+   
+
    explicit TrainingStrategyTest(); 
 
+
+   
+
    virtual ~TrainingStrategyTest();
+
+
+   
 
    // Constructor and destructor methods
 
@@ -47,6 +55,7 @@ public:
 
    void test_set();
    void test_set_default();
+
    void test_set_loss_index_pointer();
 
     // Utilities
@@ -82,7 +91,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

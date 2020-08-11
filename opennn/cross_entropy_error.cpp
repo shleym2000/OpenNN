@@ -21,6 +21,28 @@ CrossEntropyError::CrossEntropyError() : LossIndex()
 }
 
 
+/// Neural network constructor.
+/// It creates a cross entropy error term associated to a neural network but not measured on any data set.
+/// It also initializes all the rest of class members to their default values.
+/// @param new_neural_network_pointer Pointer to a neural network object.
+
+CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer)
+    : LossIndex(new_neural_network_pointer)
+{
+}
+
+
+/// Data set constructor.
+/// It creates a cross entropy error not associated to any neural network but to be measured on a data set object.
+/// It also initializes all the rest of class members to their default values.
+/// @param new_data_set_pointer Pointer to a data set object.
+
+CrossEntropyError::CrossEntropyError(DataSet* new_data_set_pointer)
+    : LossIndex(new_data_set_pointer)
+{
+}
+
+
 /// Neural network and data set constructor.
 /// It creates a cross entropy error term object associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values:
@@ -33,143 +55,36 @@ CrossEntropyError::CrossEntropyError(NeuralNetwork* new_neural_network_pointer, 
 }
 
 
+/// XML constructor.
+/// It creates a cross entropy error not associated to any neural network and not measured on any data set.
+/// It also sets all the rest of class members from a TinyXML document->
+/// @param cross_entropy_error_document XML document with the class members.
+
+CrossEntropyError::CrossEntropyError(const tinyxml2::XMLDocument& cross_entropy_error_document)
+    : LossIndex(cross_entropy_error_document)
+{
+    from_XML(cross_entropy_error_document);
+}
+
+
+/// Copy constructor.
+/// It creates a cross entropy error not associated to any neural network and not measured on any data set.
+/// It also sets all the rest of class members from another cross-entropy error object.
+/// @param new_cross_entropy_error Object to be copied.
+
+CrossEntropyError::CrossEntropyError(const CrossEntropyError& new_cross_entropy_error)
+    : LossIndex(new_cross_entropy_error)
+{
+
+}
+
+
 /// Destructor.
 
 CrossEntropyError::~CrossEntropyError()
 {
 }
 
-
-void CrossEntropyError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
-{
-    const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-    if(outputs_number == 1)
-    {
-        calculate_binary_error(batch, forward_propagation, back_propagation);
-    }
-    else
-    {
-        calculate_multiple_error(batch, forward_propagation, back_propagation);
-    }
-}
-
-
-void CrossEntropyError::calculate_binary_error(const DataSet::Batch& batch,
-                                               const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                               LossIndex::BackPropagation& back_propagation) const
-{
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    const Index rows_number = outputs.dimension(0);
-    const Index columns_number = outputs.dimension(1);
-
-    type cross_entropy_error = 0.0;
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-            const type target = targets(i,j);
-            const type output = outputs(i,j);
-
-            if(abs(target) < numeric_limits<type>::min() && abs(output) < numeric_limits<type>::min())
-            {
-                // Do nothing
-            }
-            else if(abs(target - 1) < numeric_limits<type>::min()
-                 && abs(output - 1) < numeric_limits<type>::min())
-            {
-                // Do nothing
-            }
-            else if(abs(output) < numeric_limits<type>::min())
-            {
-                cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.000000001));
-            }
-            else if(abs(output - 1) < numeric_limits<type>::min())
-            {
-                cross_entropy_error -= (1 - target)*log(1-output) + target*log(static_cast<type>(0.999999999));
-            }
-            else
-            {
-                cross_entropy_error -= (1 - target)*log(1-output) + target*log(output);
-            }
-        }
-    }
-
-    back_propagation.error = cross_entropy_error;
-}
-
-
-void CrossEntropyError::calculate_multiple_error(const DataSet::Batch& batch,
-                                                 const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                                 LossIndex::BackPropagation& back_propagation) const
-{
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    Tensor<type, 0> cross_entropy_error;
-    cross_entropy_error.device(*thread_pool_device) = (targets*(outputs.log())).sum();
-
-    back_propagation.error = -cross_entropy_error();
-}
-
-
-void CrossEntropyError::calculate_output_gradient(const DataSet::Batch& batch,
-                               const NeuralNetwork::ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const
-{
-     #ifdef __OPENNN_DEBUG__
-
-     check();
-
-     #endif
-
-     const Index outputs_number = neural_network_pointer->get_outputs_number();
-
-     if(outputs_number == 1)
-     {
-         calculate_binary_output_gradient(batch, forward_propagation, back_propagation);
-     }
-     else
-     {
-         calculate_multiple_output_gradient(batch, forward_propagation, back_propagation);
-     }
-}
-
-
-void CrossEntropyError::calculate_binary_output_gradient(const DataSet::Batch& batch,
-                                                         const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                                         BackPropagation& back_propagation) const
-{
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& targets = batch.targets_2d;
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-
-    back_propagation.output_gradient.device(*thread_pool_device) =
-            -static_cast<type>(1)*(targets/outputs) + (static_cast<type>(1) - targets)/(static_cast<type>(1) - outputs);
-}
-
-
-void CrossEntropyError::calculate_multiple_output_gradient(const DataSet::Batch& batch,
-                                                           const NeuralNetwork::ForwardPropagation& forward_propagation,
-                                                           BackPropagation& back_propagation) const
-{
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& targets = batch.targets_2d;
-    const Tensor<type, 2>& outputs = forward_propagation.layers[trainable_layers_number-1].activations_2d;
-
-    back_propagation.output_gradient.device(*thread_pool_device) = -targets/outputs;
-}
 
 /// Returns a string with the name of the cross entropy error loss type, "CROSS_ENTROPY_ERROR".
 
@@ -187,6 +102,38 @@ string CrossEntropyError::get_error_type_text() const
 }
 
 
+/// Serializes the cross entropy error object into a XML document of the TinyXML library.
+/// See the OpenNN manual for more information about the format of this document->
+
+tinyxml2::XMLDocument* CrossEntropyError::to_XML() const
+{
+    ostringstream buffer;
+
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+
+    // Cross entropy error
+
+    tinyxml2::XMLElement* cross_entropy_error_element = document->NewElement("CrossEntropyError");
+
+    document->InsertFirstChild(cross_entropy_error_element);
+
+    // Display
+
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      cross_entropy_error_element->LinkEndChild(display_element);
+
+//      buffer.str("");
+//      buffer << display;
+
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
+
+    return document;
+}
+
+
 /// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 
@@ -194,13 +141,15 @@ void CrossEntropyError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 {
     // Error type
 
-    file_stream.OpenElement("CrossEntropyError");
+    file_stream.OpenElement("Error");
+
+    file_stream.PushAttribute("Type", "CROSS_ENTROPY_ERROR");
 
     file_stream.CloseElement();
 
     // Regularization
 
-//    write_regularization_XML(file_stream);
+    write_regularization_XML(file_stream);
 }
 
 
@@ -233,7 +182,39 @@ void CrossEntropyError::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);    
+    regularization_from_XML(regularization_document);
+
+//    const tinyxml2::XMLElement* root_element = document.FirstChildElement("CrossEntropyError");
+
+//    if(!root_element)
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: CrossEntropyError class.\n"
+//               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+//               << "Cross entropy error element is nullptr.\n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//  // Display
+//  {
+//     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+
+//     if(display_element)
+//     {
+//        const string new_display_string = display_element->GetText();
+
+//        try
+//        {
+//           set_display(new_display_string != "0");
+//        }
+//        catch(const logic_error& e)
+//        {
+//           cerr << e.what() << endl;
+//        }
+//     }
+//  }
 }
 
 }

@@ -21,52 +21,52 @@ using namespace OpenNN;
 int main()
 {
    cout <<
-   "Open Neural Networks Library. Test Suite Application.\n\n"
-   
-   "suite - run all tests\n\n"
-   
-   "Individual Tests:\n\n"
-   
-   "bounding_layer | bl\n"
-   "conjugate_gradient | cg\n"
-   "convolutional_layer | cl\n"
-   "correlations | cr\n"
-   "cross_entropy_error | cee\n"
-   "descriptives | dsc\n"
-   "data_set | ds\n"
+   "Open Neural Networks Library. Test Suite Application.\n"
+   "bounding_layer\n"
+   "conjugate_gradient\n"
+   "correlations\n"
+   "cross_entropy_error\n"
+   "descriptives\n"
    "evolutionary_algorithm\n"
-   "genetic_algorithm | ga\n"
+   "genetic_algorithm\n"
    "golden_section_order\n"
-   "gradient_descent | gd\n"
-   "growing_inputs | gi\n"
-   "incremental_neurons | in\n"
-   "inputs_selection | is\n"
-   "learning_rate_algorithm | lra\n"
-   "levenberg_marquardt_algorithm | lma\n"
-   "long_short_term_memory_layer | lstm\n"
-   "mean_squared_error | mse\n"
-   "minkowski_error | me\n"
-   "model_selection | ms\n"
-   "neural_network | nn\n"
-   "neurons_selection | ns\n"
-   "normalized_squared_error | nse\n"
-   "numerical_differentiation | ndf\n"
-   "perceptron_layer | pl\n"
-   "pooling_layer | pll\n"
-   "probabilistic_layer | pbl\n"
-   "pruning_inputs | pi\n"
-   "quasi_newton_method | qnm\n"
-   "recurrent_layer | rl\n"
-   "scaling_layer | sl\n"
+   "gradient_descent\n"
+   "growing_inputs\n"
+   "incremental_order\n"
+   "instances\n"
+   "inputs\n"
+   "inputs_selection_algorithm\n"
+   "learning_rate_algorithm\n"
+   "levenberg_marquardt_algorithm\n"
+   "linear_algebra\n"
+   "long_short_term_memory_layer\n"
+   "loss_index\n"
+   "mean_squared_error\n"
+   "minkowski_error\n"
+   "missing_values\n"
+   "model_selection\n"
+   "neural_network\n"
+   "newton_method\n"
+   "normalized_squared_error\n"
+   "numerical_differentiation\n"
+   "optimization_algorithm\n"
+   "neurons_selection_algorithm\n"
+   "outputs\n"
+   "perceptron_layer\n"
+   "probabilistic_layer\n"
+   "pruning_inputs\n"
+   "quasi_newton_method\n"
+   "recurrent_layer\n"
+   "scaling_layer\n"
    "simulated_annealing_order\n"
-   "statistics | st\n"
-   "stochastic_gradient_descent | sgd\n"
-   "sum_squared_error | sse\n"
-   "testing_analysis | ta\n"
-   "training_strategy | ts\n"
-   "unscaling_layer | ul\n"
-   "weighted_squared_error | wse\n"
-   "\n" << endl;
+   "suite"
+   "sum_squared_error\n"
+   "testing_analysis\n"
+   "training_strategy\n"
+   "unscaling_layer\n"
+   "variables\n"
+   "weighted_squared_error\n"
+   "Write test:\n"<< endl;
 
    string test;
 
@@ -89,7 +89,7 @@ int main()
       Index tests_passed_count = 0;
       Index tests_failed_count = 0;
 
-      if(test == "correlations" || test == "cr")
+      if(test == "correlations" || test == "")
       {
          CorrelationsTest correlations_test;
          correlations_test.run_test_case();
@@ -125,7 +125,7 @@ int main()
          tests_failed_count += perceptron_layer_test.get_tests_failed_count();
       }
 
-      else if(test == "statistics" || test == "st")
+      else if(test == "statistics" || test == "")
       {
          StatisticsTest matrix_test;
          matrix_test.run_test_case();
@@ -134,7 +134,7 @@ int main()
          tests_failed_count += matrix_test.get_tests_failed_count();
       }
 
-      else if(test == "long_short_term_memory_layer" || test == "lstm")
+      else if(test == "long_short_term_memory_layer" || test == "lstml")
       {
          LongShortTermMemoryLayerTest long_short_memory_layer_test;
 
@@ -163,7 +163,7 @@ int main()
          tests_passed_count += scaling_layer_test.get_tests_passed_count();
          tests_failed_count += scaling_layer_test.get_tests_failed_count();
       }
-      else if(test == "unscaling_layer" || test == "ul")
+      else if(test == "unscaling_layer" || test == "")
       {
          UnscalingLayerTest unscaling_layer_test;
          unscaling_layer_test.run_test_case();
@@ -171,7 +171,7 @@ int main()
          tests_passed_count += unscaling_layer_test.get_tests_passed_count();
          tests_failed_count += unscaling_layer_test.get_tests_failed_count();
       }
-      else if(test == "bounding_layer" || test == "bl")
+      else if(test == "bounding_layer" || test == "")
       {
          BoundingLayerTest bounding_layer_test;
          bounding_layer_test.run_test_case();
@@ -195,7 +195,7 @@ int main()
          tests_passed_count += layer_test.get_tests_passed_count();
          tests_failed_count += layer_test.get_tests_failed_count();
       }
-      else if(test == "pooling_layer" || test == "pll")
+      else if(test == "pooling_layer" || test == "")
       {
          PoolingLayerTest layer_test;
          layer_test.run_test_case();
@@ -211,7 +211,7 @@ int main()
         tests_passed_count += neural_network_test.get_tests_passed_count();
         tests_failed_count += neural_network_test.get_tests_failed_count();
       }
-      else if(test == "sum_squared_error" || test == "sse")
+      else if(test == "sum_squared_error" || test == "sse" || test == "SSE")
       {
         SumSquaredErrorTest sum_squared_error_test;
         sum_squared_error_test.run_test_case();
@@ -259,7 +259,7 @@ int main()
         tests_passed_count += cross_entropy_error_test.get_tests_passed_count();
         tests_failed_count += cross_entropy_error_test.get_tests_failed_count();
       }
-      else if(test == "descriptives" || test == "dsc")
+      else if(test == "descriptives" || test == "")
       {
         StatisticsTest statistics_test;
         statistics_test.run_test_case();
@@ -268,7 +268,7 @@ int main()
         tests_failed_count += statistics_test.get_tests_failed_count();
       }
 
-      else if(test == "learning_rate_algorithm" || test == "lra")
+      else if(test == "learning_rate_algorithm" || test == "")
       {
         LearningRateAlgorithmTest learning_rate_algorithm_test;
         learning_rate_algorithm_test.run_test_case();
@@ -276,7 +276,7 @@ int main()
         tests_passed_count += learning_rate_algorithm_test.get_tests_passed_count();
         tests_failed_count += learning_rate_algorithm_test.get_tests_failed_count();
       }
-      else if(test == "gradient_descent" || test == "gd")
+      else if(test == "gradient_descent" || test == "")
       {
         GradientDescentTest gradient_descent_test;
         gradient_descent_test.run_test_case();
@@ -284,7 +284,7 @@ int main()
         tests_passed_count += gradient_descent_test.get_tests_passed_count();
         tests_failed_count += gradient_descent_test.get_tests_failed_count();
       }
-      else if(test == "conjugate_gradient" || test == "cg")
+      else if(test == "conjugate_gradient" || test == "")
       {
         ConjugateGradientTest conjugate_gradient_test;
         conjugate_gradient_test.run_test_case();
@@ -292,7 +292,7 @@ int main()
         tests_passed_count += conjugate_gradient_test.get_tests_passed_count();
         tests_failed_count += conjugate_gradient_test.get_tests_failed_count();
       }
-      else if(test == "quasi_newton_method" || test == "qnm")
+      else if(test == "quasi_newton_method" || test == "")
       {
         QuasiNewtonMethodTest quasi_Newton_method_test;
         quasi_Newton_method_test.run_test_case();
@@ -300,7 +300,7 @@ int main()
         tests_passed_count += quasi_Newton_method_test.get_tests_passed_count();
         tests_failed_count += quasi_Newton_method_test.get_tests_failed_count();
       }
-      else if(test == "levenberg_marquardt_algorithm" || test == "lma")
+      else if(test == "levenberg_marquardt_algorithm" || test == "")
       {
         LevenbergMarquardtAlgorithmTest Levenberg_Marquardt_algorithm_test;
         Levenberg_Marquardt_algorithm_test.run_test_case();
@@ -308,7 +308,7 @@ int main()
         tests_passed_count += Levenberg_Marquardt_algorithm_test.get_tests_passed_count();
         tests_failed_count += Levenberg_Marquardt_algorithm_test.get_tests_failed_count();
       }
-      else if(test == "stochastic_gradient_descent" || test == "sgd")
+      else if(test == "stochastic_gradient_descent" || test == "")
       {
         StochasticGradientDescentTest stochastic_gradient_descent_test;
         stochastic_gradient_descent_test.run_test_case();
@@ -676,7 +676,7 @@ int main()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -21,9 +21,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#pragma warning(push, 0)
 #include "tinyxml2.h"
-#pragma warning(pop)
 
 #include <new>		// yes, this one new style header, is in the Android SDK.
 #if defined(ANDROID_NDK) || defined(__BORLANDC__) || defined(__QNXNTO__)
@@ -2710,7 +2708,7 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
                     {
                         const int delta = q - p;
                         const int toPrint = (INT_MAX < delta ) ? INT_MAX :(int)delta;
-                        Write(p, toPrint);
+                        Write(p, toPrint );
                         p += toPrint;
                     }
                     bool entityPatternPrinted = false;
@@ -2744,7 +2742,7 @@ void XMLPrinter::PrintString(const char* p, bool restricted )
     {
         const int delta = q - p;
         const int toPrint = (INT_MAX < delta ) ? INT_MAX :(int)delta;
-        Write(p, toPrint);
+        Write(p, toPrint );
     }
 }
 

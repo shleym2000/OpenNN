@@ -21,6 +21,30 @@ MinkowskiError::MinkowskiError() : LossIndex()
 }
 
 
+/// Neural network constructor.
+/// It creates a Minkowski error term associated to a neural network but not measured on any data set.
+/// It also initializes all the rest of class members to their default values.
+/// @param new_neural_network_pointer Pointer to a neural network object.
+
+MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer)
+    : LossIndex(new_neural_network_pointer)
+{
+    set_default();
+}
+
+
+/// Data set constructor.
+/// It creates a Minkowski error term not associated to any neural network but to be measured on a data set.
+/// It also initializes all the rest of class members to their default values.
+/// @param new_data_set_pointer Pointer to a data set object.
+
+MinkowskiError::MinkowskiError(DataSet* new_data_set_pointer)
+    : LossIndex(new_data_set_pointer)
+{
+    set_default();
+}
+
+
 /// Neural network and data set constructor.
 /// It creates a Minkowski error term object associated to a neural network and measured on a data set.
 /// It also initializes all the rest of class members to their default values.
@@ -31,6 +55,20 @@ MinkowskiError::MinkowskiError(NeuralNetwork* new_neural_network_pointer, DataSe
     : LossIndex(new_neural_network_pointer, new_data_set_pointer)
 {
     set_default();
+}
+
+
+/// XML constructor.
+/// It creates a Minkowski error object neither associated to a neural network nor to a data set.
+/// The object members are loaded by means of a XML document.
+/// @param mean_squared_error_document TinyXML document with the Minkowski error elements.
+
+MinkowskiError::MinkowskiError(const tinyxml2::XMLDocument& mean_squared_error_document)
+    : LossIndex(mean_squared_error_document)
+{
+    set_default();
+
+    from_XML(mean_squared_error_document);
 }
 
 
@@ -89,64 +127,6 @@ void MinkowskiError::set_Minkowski_parameter(const type& new_Minkowski_parameter
 }
 
 
-void MinkowskiError::calculate_error(const DataSet::Batch& batch,
-                     const NeuralNetwork::ForwardPropagation& forward_propagation,
-                     LossIndex::BackPropagation& back_propagation) const
-{
-    Tensor<type, 0> minkowski_error;
-
-    const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-    const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-    const Tensor<type, 2>& targets = batch.targets_2d;
-
-    Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
-
-    errors.device(*thread_pool_device) = outputs - targets;
-
-    minkowski_error.device(*thread_pool_device) = (outputs - targets).abs().pow(minkowski_parameter).sum()
-                                                     .pow(static_cast<type>(1.0)/minkowski_parameter);
-
-    const Index training_samples_number = data_set_pointer->get_training_samples_number();
-
-    back_propagation.error = minkowski_error(0) /static_cast<type>(training_samples_number);
-}
-
-
-void MinkowskiError::calculate_output_gradient(const DataSet::Batch& batch,
-                               const NeuralNetwork::ForwardPropagation& forward_propagation,
-                               BackPropagation& back_propagation) const
-{
-     #ifdef __OPENNN_DEBUG__
-
-     check();
-
-     #endif
-
-     const Index training_samples_number = data_set_pointer->get_training_samples_number();
-
-     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
-
-     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
-     const Tensor<type, 2>& targets = batch.targets_2d;
-
-     Tensor<type, 2> errors(outputs.dimension(0), outputs.dimension(1));
-
-//        back_propagation.output_gradient = lp_norm_gradient(forward_propagation.layers[trainable_layers_number].activations_2d
-//                                           - batch.targets_2d, minkowski_parameter)/static_cast<type>(training_samples_number);
-
-     errors.device(*thread_pool_device) = outputs - targets;
-
-     const Tensor<type, 0> p_norm_derivative = (errors.abs().pow(minkowski_parameter).sum().pow(static_cast<type>(1.0)/minkowski_parameter)).pow(minkowski_parameter-1);
-
-     back_propagation.output_gradient.device(*thread_pool_device)
-             = errors*(errors.abs().pow(minkowski_parameter-2));
-
-     back_propagation.output_gradient.device(*thread_pool_device) =
-             back_propagation.output_gradient/(static_cast<type>(training_samples_number)*(p_norm_derivative()));
-}
-
-
 /// Returns a string with the name of the Minkowski error loss type, "MINKOWSKI_ERROR".
 
 string MinkowskiError::get_error_type() const
@@ -163,6 +143,49 @@ string MinkowskiError::get_error_type_text() const
 }
 
 
+/// Serializes the Minkowski error object into a XML document of the TinyXML library.
+/// See the OpenNN manual for more information about the format of this document->
+
+tinyxml2::XMLDocument* MinkowskiError::to_XML() const
+{
+    ostringstream buffer;
+
+    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
+
+    // Minkowski error
+
+    tinyxml2::XMLElement* Minkowski_error_element = document->NewElement("MinkowskiError");
+
+    document->InsertFirstChild(Minkowski_error_element);
+
+    // Minkowski parameter
+    {
+        tinyxml2::XMLElement* Minkowski_parameter_element = document->NewElement("MinkowskiParameter");
+        Minkowski_error_element->LinkEndChild(Minkowski_parameter_element);
+
+        buffer.str("");
+        buffer << minkowski_parameter;
+
+        tinyxml2::XMLText* Minkowski_parameter_text = document->NewText(buffer.str().c_str());
+        Minkowski_parameter_element->LinkEndChild(Minkowski_parameter_text);
+    }
+
+    // Display
+//   {
+//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
+//      Minkowski_error_element->LinkEndChild(display_element);
+
+//      buffer.str("");
+//      buffer << display;
+
+//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
+//      display_element->LinkEndChild(display_text);
+//   }
+
+    return document;
+}
+
+
 /// Serializes the cross entropy error object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document
 
@@ -172,7 +195,9 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Error type
 
-    file_stream.OpenElement("MinkowskiError");
+    file_stream.OpenElement("Error");
+
+    file_stream.PushAttribute("Type", "MINKOWSKI_ERROR");
 
     // Minkowski parameter
 
@@ -191,7 +216,7 @@ void MinkowskiError::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     // Regularization
 
-//    write_regularization_XML(file_stream);
+    write_regularization_XML(file_stream);
 }
 
 
@@ -215,18 +240,13 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 
     // Minkowski parameter
 
-//    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
+    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
 
-    if(root_element)
+    if(error_element)
     {
-        const tinyxml2::XMLElement* parameter_element = root_element->FirstChildElement("MinkowskiParameter");
+        const tinyxml2::XMLElement* parameter_element = error_element->FirstChildElement("MinkowskiParameter");
 
-        type new_Minkowski_parameter = 1.5;
-
-        if(parameter_element)
-        {
-            new_Minkowski_parameter = static_cast<type>(atof(parameter_element->GetText()));
-        }
+        const type new_Minkowski_parameter = static_cast<type>(atof(parameter_element->GetText()));
 
         try
         {
@@ -239,7 +259,7 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Regularization
-/*
+
     tinyxml2::XMLDocument regularization_document;
     tinyxml2::XMLNode* element_clone;
 
@@ -249,7 +269,26 @@ void MinkowskiError::from_XML(const tinyxml2::XMLDocument& document)
 
     regularization_document.InsertFirstChild(element_clone);
 
-    regularization_from_XML(regularization_document);*/
+    regularization_from_XML(regularization_document);
+
+//  // Display
+//  {
+//     const tinyxml2::XMLElement* display_element = root_element->FirstChildElement("Display");
+
+//     if(display_element)
+//     {
+//        const string new_display_string = display_element->GetText();
+
+//        try
+//        {
+//           set_display(new_display_string != "0");
+//        }
+//        catch(const logic_error& e)
+//        {
+//           cerr << e.what() << endl;
+//        }
+//     }
+//  }
 }
 }
 

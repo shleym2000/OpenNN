@@ -47,7 +47,15 @@ public:
 
    explicit TestingAnalysis();
 
+   explicit TestingAnalysis(NeuralNetwork*);
+
+   explicit TestingAnalysis(DataSet*);
+
    explicit TestingAnalysis(NeuralNetwork*, DataSet*);
+
+   explicit TestingAnalysis(const tinyxml2::XMLDocument&);
+
+   explicit TestingAnalysis(const string&);
 
     // Destructor
 
@@ -68,10 +76,7 @@ public:
        Tensor<type, 1> targets;
        Tensor<type, 1> outputs;
 
-       void save(const string&) const
-       {
-        /// @todo
-       }
+       void save(const string&) const;
     };
 
 
@@ -119,19 +124,19 @@ public:
 
     struct BinaryClassifcationRates
     {
-        /// Vector with the indices of the samples which are true positive.
+        /// Vector with the indices of the instances which are true positive.
 
         Tensor<Index, 1> true_positives_indices;
 
-        /// Vector with the indices of the samples which are false positive.
+        /// Vector with the indices of the instances which are false positive.
 
         Tensor<Index, 1> false_positives_indices;
 
-        /// Vector with the indices of the samples which are false negative.
+        /// Vector with the indices of the instances which are false negative.
 
         Tensor<Index, 1> false_negatives_indices;
 
-        /// Vector with the indices of the samples which are true negative.
+        /// Vector with the indices of the instances which are true negative.
 
         Tensor<Index, 1> true_negatives_indices;
     };
@@ -151,8 +156,6 @@ public:
    void set_display(const bool&);
 
    void set_default();
-
-   void set_thread_pool_device(ThreadPoolDevice* );
 
    // Checking methods
 
@@ -234,7 +237,6 @@ public:
 
    Tensor<type, 2> calculate_roc_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
    type calculate_area_under_curve(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
-   type calculate_area_under_curve(const Tensor<type, 2>&) const;
    type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
    type calculate_area_under_curve_confidence_limit(const Tensor<type, 2>&, const Tensor<type, 2>&, const type&) const;
    type calculate_optimal_threshold(const Tensor<type, 2>& ,const Tensor<type, 2>&) const;
@@ -266,42 +268,16 @@ public:
 
    BinaryClassifcationRates calculate_binary_classification_rates() const;
 
-   Tensor<Index, 1> calculate_true_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_false_positive_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_false_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-   Tensor<Index, 1> calculate_true_negative_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
-
-   // Multiple classification tests
-
-   Tensor<type, 1> calculate_multiple_classification_tests() const;
-   void save_confusion(const string&) const;
-   void save_multiple_classification_tests(const string&) const;
+   Tensor<Index, 1> calculate_true_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_false_positive_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_false_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
+   Tensor<Index, 1> calculate_true_negative_instances(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&, const type&) const;
 
    // Multiple classification rates
 
    Tensor<Index, 2> calculate_multiple_classification_rates() const;
 
    Tensor<Index, 2> calculate_multiple_classification_rates(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<Index, 1>&) const;
-
-   Tensor<string, 2> calculate_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
-
-   Tensor<string, 2> calculate_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&);
-
-   void save_well_classified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
-
-   void save_misclassified_samples(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
-
-   void save_well_classified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
-
-   void save_misclassified_samples_statistics(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
-
-   void save_well_classified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
-
-   void save_well_classified_samples_probability_histogram(const Tensor<string, 2>&, const string&);
-
-   void save_misclassified_samples_probability_histogram(const Tensor<type, 2>&, const Tensor<type, 2>&, const Tensor<string, 1>&, const string&);
-
-   void save_misclassified_samples_probability_histogram(const Tensor<string, 2>&, const string&);
 
    // Forecasting methods
 
@@ -311,11 +287,11 @@ public:
 
    // Serialization methods
 
-   
+   string object_to_string() const;
 
    void print() const;
 
-//   virtual
+   virtual tinyxml2::XMLDocument* to_XML() const;
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -328,8 +304,6 @@ public:
 
 
 private: 
-
-   ThreadPoolDevice* thread_pool_device = nullptr;
 
    /// Pointer to the neural network object to be tested. 
 

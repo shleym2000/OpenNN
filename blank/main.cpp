@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
 // System includes
 
 #include <iostream>
@@ -43,67 +42,22 @@ int main(void)
 {
     try
     {
-        cout << "Hello Normal correlation" << endl;
+        cout << "Hello Blank Application" << endl;
 
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-        Tensor<type,1> x(7);
-        Tensor<type,1> y(7);
-
-        y.setValues({0,0,0,1,0,0,0});
-        x.setValues({1,2,3,4,5,6,7});
-
-        DataSet data_set("C:/opennn/examples/leukemia/data/leukemia.csv",';',false);
-
-        for(Index i=0;i<data_set.get_data().dimension(1)-1;i++)
-        {
-            CorrelationResults gauss = gauss_correlations(thread_pool_device,
-                                                          data_set.get_data().chip(i,1),
-                                                          data_set.get_data().chip(data_set.get_data().dimension(1)-1,1));
-
-
-            if(gauss.correlation > 0.9)
-            {
-                cout<<"column: " << i <<endl;
-                cout<<"gauss: " << gauss.correlation <<endl;
-            }
-
-//            CorrelationResults logistic = logistic_correlations(thread_pool_device, x, y);
-
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-        CorrelationResults gauss = gauss_correlations(thread_pool_device, x, y);
-        CorrelationResults logistic = logistic_correlations(thread_pool_device, x, y);
-
-        cout<<"Gauss correlation: "<<gauss.correlation<<endl;
-        cout<<"Logistic correlation: "<<logistic.correlation<<endl;
+        srand(static_cast<unsigned>(time(nullptr)));
 
         return 0;
-    }
-    catch(exception& e)
-    {
-        cerr << e.what() << endl;
 
-        return 1;
     }
-}
+       catch(exception& e)
+    {
+       cerr << e.what() << endl;
+    }
+  }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

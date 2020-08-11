@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "probabilistic_layer_test.h"
-#include <omp.h>
+
 
 ProbabilisticLayerTest::ProbabilisticLayerTest() : UnitTesting()
 {
@@ -29,6 +29,7 @@ void ProbabilisticLayerTest::test_constructor()
 
    ProbabilisticLayer probabilistic_layer_l1;
 
+//   assert_true(probabilistic_layer_l1.get_input_variables_dimensions()(0) == 0, LOG);
    assert_true(probabilistic_layer_l1.get_inputs_number() == 0, LOG);
    assert_true(probabilistic_layer_l1.get_neurons_number() == 0, LOG);
    assert_true(probabilistic_layer_l1.get_biases_number() == 0, LOG);
@@ -72,6 +73,8 @@ void ProbabilisticLayerTest::test_assignment_operator()
 
    ProbabilisticLayer probabilistic_layer_l1;
    ProbabilisticLayer probabilistic_layer_l2;
+
+   // Test
 
    probabilistic_layer_l1.set_neurons_number(2);
    probabilistic_layer_l2.set_neurons_number(probabilistic_layer_l1.get_neurons_number());
@@ -214,6 +217,7 @@ void ProbabilisticLayerTest::test_get_synaptic_weights()
 
 void ProbabilisticLayerTest::test_get_parameters()
 {
+
    cout << "test_get_parameters\n";
 
    ProbabilisticLayer probabilistic_layer;
@@ -259,45 +263,27 @@ void ProbabilisticLayerTest::test_get_decision_threshold()
    assert_true(abs(probabilistic_layer.get_decision_threshold() - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
    }
 
+
 void ProbabilisticLayerTest::test_set()
 {
    cout << "test_set\n";
-
-   ProbabilisticLayer probabilistic_layer;
-   probabilistic_layer.set();
-
-   assert_true(probabilistic_layer.get_biases_number() == 0, LOG);
-   assert_true(probabilistic_layer.get_synaptic_weights_number() == 0, LOG);
 }
 
 void ProbabilisticLayerTest::test_set_default()
 {
    cout << "test_set_default\n";
-
-   ProbabilisticLayer probabilistic_layer;
-   probabilistic_layer.set_neurons_number(2);
-
-   probabilistic_layer.set_default();
-
-   assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::Softmax, LOG);
-   assert_true(abs(probabilistic_layer.get_decision_threshold() - 0.5) < static_cast<type>(1e-5), LOG);
-   assert_true(probabilistic_layer.get_display() == true, LOG);
-
-   probabilistic_layer.set_neurons_number(1);
-
-   probabilistic_layer.set_default();
-
-   assert_true(probabilistic_layer.get_activation_function() == OpenNN::ProbabilisticLayer::Logistic, LOG);
 }
 
 void ProbabilisticLayerTest::test_set_biases()
 {
+
    cout << "test_set_biases\n";
 
     ProbabilisticLayer probabilistic_layer;
 
     Tensor<type, 2> biases(1, 4);
 
+    // Test 0
     probabilistic_layer.set(1, 4);
 
     biases.setZero();
@@ -318,6 +304,7 @@ void ProbabilisticLayerTest::test_set_synaptic_weights()
 
     Tensor<type, 2> synaptic_weights(2, 1);
 
+    // Test 0
     synaptic_weights.setZero();
 
     probabilistic_layer.set_synaptic_weights(synaptic_weights);
@@ -334,6 +321,7 @@ void ProbabilisticLayerTest::test_set_parameters()
 
     ProbabilisticLayer probabilistic_layer;
 
+    //Test
     probabilistic_layer.set(1, 2);
 
     Tensor<type, 1> parameters_2(4);
@@ -362,16 +350,8 @@ void ProbabilisticLayerTest::test_write_activation_function()
 
    ProbabilisticLayer probabilistic_layer;
 
+   // Test
    probabilistic_layer.set();
-
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
-   assert_true(probabilistic_layer.write_activation_function() == "Binary", LOG);
-
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
-   assert_true(probabilistic_layer.write_activation_function() == "Logistic", LOG);
-
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
-   assert_true(probabilistic_layer.write_activation_function() == "Competitive", LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
    assert_true(probabilistic_layer.write_activation_function() == "Softmax", LOG);
@@ -383,16 +363,8 @@ void ProbabilisticLayerTest::test_write_activation_function_text()
 
     ProbabilisticLayer probabilistic_layer;
 
+    // Test
     probabilistic_layer.set();
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Binary);
-    assert_true(probabilistic_layer.write_activation_function_text() == "binary", LOG);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
-    assert_true(probabilistic_layer.write_activation_function_text() == "competitive", LOG);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
-    assert_true(probabilistic_layer.write_activation_function_text() == "logistic", LOG);
 
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
     assert_true(probabilistic_layer.write_activation_function_text() == "softmax", LOG);
@@ -404,6 +376,8 @@ void ProbabilisticLayerTest::test_set_activation_function()
 
    ProbabilisticLayer probabilistic_layer;
 
+   // Test
+
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
    assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Softmax, LOG);
 
@@ -414,12 +388,6 @@ void ProbabilisticLayerTest::test_set_activation_function()
 void ProbabilisticLayerTest::test_get_display()
 {
    cout << "test_get_display\n";
-
-   ProbabilisticLayer probabilistic_layer;
-
-   probabilistic_layer.set_display(true);
-
-   assert_true(probabilistic_layer.get_display() == true, LOG);
 }
 
 void ProbabilisticLayerTest::test_set_display()
@@ -440,6 +408,11 @@ void ProbabilisticLayerTest::test_calculate_combinations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations_2d(1,1);
 
+   Device device(Device::EigenSimpleThreadPool);
+   probabilistic_layer.set_device_pointer(&device);
+
+   // Test 0
+
    biases.setConstant(1.0);
    synaptic_weights.setConstant(2.0);
 
@@ -452,7 +425,6 @@ void ProbabilisticLayerTest::test_calculate_combinations()
    assert_true(combinations_2d.dimension(0) == 1, LOG);
    assert_true(combinations_2d.dimension(1) == 1, LOG);
    assert_true(abs(combinations_2d(0,0) - 7) < static_cast<type>(1e-5) , LOG);
-
 }
 
 void ProbabilisticLayerTest::test_calculate_activations()
@@ -468,6 +440,9 @@ void ProbabilisticLayerTest::test_calculate_activations()
    Tensor<type, 2> inputs(1,1);
    Tensor<type, 2> combinations_2d(1,1);
    Tensor<type, 2> activations_2d(1,1);
+
+   Device device(Device::EigenSimpleThreadPool);
+   probabilistic_layer.set_device_pointer(&device);
 
    // Test 1
 
@@ -487,7 +462,7 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(activations_2d.rank() == 2, LOG);
    assert_true(activations_2d.dimension(0) == 1, LOG);
    assert_true(activations_2d.dimension(1) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG);
+   assert_true(static_cast<Index>(activations_2d(0,0)) == 1 , LOG); // @todo -> should be 1
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Logistic);
 
@@ -538,12 +513,11 @@ void ProbabilisticLayerTest::test_calculate_activations()
 
    activations_2d.resize(1,3);
    probabilistic_layer.calculate_activations(combinations_2d, activations_2d);
-
    assert_true(activations_2d.rank() == 2, LOG);
    assert_true(activations_2d.dimension(0) == 1, LOG);
    assert_true(activations_2d.dimension(1) == 3, LOG);
    assert_true(static_cast<Index>(activations_2d(0,0)) == 1, LOG);
-   assert_true(static_cast<Index>(activations_2d(0,1)) == 0, LOG);
+   assert_true(static_cast<Index>(activations_2d(0,1)) == 1, LOG);
    assert_true(static_cast<Index>(activations_2d(0,2)) == 0, LOG);
 
    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
@@ -551,10 +525,9 @@ void ProbabilisticLayerTest::test_calculate_activations()
    assert_true(abs(activations_2d(0,0) - static_cast<type>(0.6652)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_2d(0,1) - static_cast<type>(0.2447)) < static_cast<type>(1e-3), LOG);
    assert_true(abs(activations_2d(0,2) - static_cast<type>(0.09)) < static_cast<type>(1e-3), LOG);
-
 }
 
-void ProbabilisticLayerTest::test_calculate_activations_derivatives()
+void ProbabilisticLayerTest::test_calculate_derivatives_activations()
 {
     cout << "test_calculate_derivatives_activations\n";
 
@@ -564,6 +537,9 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     Tensor<type, 2> combinations_2d;
     Tensor<type, 2> activations_2d;
     Tensor<type, 3> activations_derivatives;
+
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer.set_device_pointer(&device);
 
     // Test 1
 
@@ -577,6 +553,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
     probabilistic_layer.calculate_activations_derivatives(combinations_2d, activations_2d, activations_derivatives);
 
+
     assert_true(activations_derivatives.rank() == 3, LOG);
     assert_true(activations_derivatives.dimension(0) == 3, LOG);
     assert_true(activations_derivatives.dimension(1) == 3, LOG);
@@ -587,6 +564,7 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.0819)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(1,1,0) - static_cast<type>(0.1848)) < static_cast<type>(1e-3), LOG);
     assert_true(abs(activations_derivatives(2,2,0) - static_cast<type>(0.2227)) < static_cast<type>(1e-3), LOG);
+
 
     // Test 2
 
@@ -623,7 +601,6 @@ void ProbabilisticLayerTest::test_calculate_activations_derivatives()
     assert_true(activations_derivatives.dimension(1) == 1, LOG);
     assert_true(activations_derivatives.dimension(2) == 1, LOG);
     assert_true(abs(activations_derivatives(0,0,0) - static_cast<type>(0.1444)) < static_cast<type>(1e-3), LOG);
-
 }
 
 void ProbabilisticLayerTest::test_calculate_outputs()
@@ -636,6 +613,9 @@ void ProbabilisticLayerTest::test_calculate_outputs()
 
     Tensor<type, 2> inputs;
     Tensor<type, 1> parameters;
+
+    Device device(Device::EigenSimpleThreadPool);
+    probabilistic_layer.set_device_pointer(&device);
 
     // Test 1
 
@@ -665,9 +645,9 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(static_cast<Index>(outputs(0,0)) == static_cast<Index >(sol_(0)), LOG);
-    assert_true(static_cast<Index>(outputs(1,0)) == static_cast<Index >(sol_(1)), LOG);
-    assert_true(static_cast<Index>(outputs(2,0)) == static_cast<Index >(sol_(2)), LOG);
+    assert_true(static_cast<Index >(outputs(0,0)) == static_cast<Index >(sol_(0)), LOG);
+    assert_true(static_cast<Index >(outputs(1,0)) == static_cast<Index >(sol_(1)), LOG);
+    assert_true(static_cast<Index >(outputs(2,0)) == static_cast<Index >(sol_(2)), LOG);
 
     // Test 1_2
 
@@ -678,9 +658,9 @@ void ProbabilisticLayerTest::test_calculate_outputs()
     assert_true(outputs.rank() == 2, LOG);
     assert_true(outputs.dimension(0) == 1, LOG);
     assert_true(outputs.dimension(1) == 4, LOG);
-    assert_true(static_cast<Index>(outputs_2(0,0)) == 1, LOG);
-    assert_true(static_cast<Index>(outputs_2(1,0)) == 0, LOG);
-    assert_true(static_cast<Index>(outputs_2(2,0)) == 0, LOG);
+    assert_true(static_cast<Index >(outputs_2(0,0)) == 1, LOG);
+    assert_true(static_cast<Index >(outputs_2(1,0)) == 0, LOG);
+    assert_true(static_cast<Index >(outputs_2(2,0)) == 0, LOG);
 
     // Test 2
 
@@ -729,144 +709,58 @@ void ProbabilisticLayerTest::test_calculate_outputs()
    assert_true(outputs.dimension(0) == 1, LOG);
    assert_true(outputs.dimension(1) == 2, LOG);
    assert_true(abs(outputs(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-5), LOG);
-
 }
 
-
-void ProbabilisticLayerTest::test_forward_propagate()
+/*
+void ProbabilisticLayerTest::test_to_XML()
 {
-    cout << "test_forward_propagate\n";
+   cout << "test_to_XML\n";
 
-    ProbabilisticLayer probabilistic_layer(2,2);
+   ProbabilisticLayer  probabilistic_layer;
+   tinyxml2::XMLDocument* pld;
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   // Test
 
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
+   probabilistic_layer.set();
 
-    probabilistic_layer.set_parameters_constant(1);
-    inputs.setConstant(1);
+   pld = probabilistic_layer.to_XML();
 
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
+   assert_true(pld != nullptr, LOG);
 
-    assert_true(forward_propagation.combinations_2d.rank() == 2, LOG);
-    assert_true(forward_propagation.combinations_2d.dimension(0) == 1, LOG);
-    assert_true(forward_propagation.combinations_2d.dimension(1) == 2, LOG);
-    assert_true(abs(forward_propagation.combinations_2d(0,0) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.combinations_2d(0,1) - static_cast<type>(3)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_2d(0,0) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_2d(0,1) - static_cast<type>(0.5)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_3d(0,0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(forward_propagation.activations_derivatives_3d(0,1,0) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+   // Test
+
+   probabilistic_layer.set_neurons_number(2);
+   probabilistic_layer.set_activation_function(ProbabilisticLayer::Competitive);
+   probabilistic_layer.set_display(false);
+
+   pld = probabilistic_layer.to_XML();
+
+   probabilistic_layer.from_XML(*pld);
+
+   assert_true(probabilistic_layer.get_neurons_number() == 2, LOG);
+   assert_true(probabilistic_layer.get_activation_function() == ProbabilisticLayer::Competitive, LOG);
+   assert_true(probabilistic_layer.get_display() == false, LOG);
+
+   delete pld;
 }
 
-void ProbabilisticLayerTest::test_calculate_output_delta()
+
+void ProbabilisticLayerTest::test_from_XML()
 {
-    cout << "test_calculate_output_delta\n";
+   cout << "test_from_XML\n";
 
-    ProbabilisticLayer probabilistic_layer(2,2);
+   ProbabilisticLayer  probabilistic_layer;
+   tinyxml2::XMLDocument* pld;
 
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
+   // Test
 
-    Tensor<type,2> output_delta(1,2);
+   pld = probabilistic_layer.to_XML();
 
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
+   probabilistic_layer.from_XML(*pld);
 
-    probabilistic_layer.set_parameters_constant(1);
-    inputs.setConstant(1);
-    Tensor<type,2> activations_2d(1,2);
-
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
-
-    Tensor<type,2> output_gradient(1,2);
-    output_gradient.setValues({{1,0}});
-
-    probabilistic_layer.calculate_output_delta(forward_propagation, output_gradient, output_delta);
-
-    assert_true(output_delta.rank() == 2, LOG);
-    assert_true(output_delta.dimension(0) == 1, LOG);
-    assert_true(output_delta.dimension(1) == 2, LOG);
-    assert_true(abs(output_delta(0,0) - static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(output_delta(0,1) + static_cast<type>(0.25)) < static_cast<type>(1e-3), LOG);
+   delete pld;
 }
-
-void ProbabilisticLayerTest::test_calculate_error_gradient()
-{
-    cout << "test_calculate_error_gradient\n";
-
-    ProbabilisticLayer probabilistic_layer(2,2);
-
-    probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-
-    Tensor<type, 1> parameters(6);
-    Tensor<type, 2> inputs(1,2);
-
-    Tensor<type, 2> output_gradient(1,2);
-
-    Tensor<type, 2> output_delta(1,2);
-
-    // Test 1
-
-    parameters.setValues({1,1, 1,1,1,1});
-    probabilistic_layer.set_parameters(parameters);
-
-    inputs.setValues({{0,1}});
-
-    Layer::ForwardPropagation forward_propagation(1, &probabilistic_layer);
-
-    probabilistic_layer.forward_propagate(inputs, forward_propagation);
-
-    Layer::BackPropagation back_propagation(1, &probabilistic_layer);
-
-    output_gradient.setValues({{1,-7}});
-
-    probabilistic_layer.calculate_output_delta(forward_propagation,output_gradient, output_delta);
-
-    back_propagation.delta = output_delta;
-
-    probabilistic_layer.calculate_error_gradient(inputs, forward_propagation, back_propagation);
-
-    assert_true(back_propagation.biases_derivatives.rank() == 1, LOG);
-    assert_true(back_propagation.biases_derivatives.dimension(0) == 2, LOG);
-    assert_true(abs(back_propagation.biases_derivatives(0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(back_propagation.biases_derivatives(1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-
-    assert_true(back_propagation.synaptic_weights_derivatives.rank() == 2, LOG);
-    assert_true(back_propagation.synaptic_weights_derivatives.dimension(0) == 2, LOG);
-    assert_true(back_propagation.synaptic_weights_derivatives.dimension(1) == 2, LOG);
-    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,0) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(back_propagation.synaptic_weights_derivatives(0,1) - static_cast<type>(0)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,0) - static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-    assert_true(abs(back_propagation.synaptic_weights_derivatives(1,1) + static_cast<type>(2)) < static_cast<type>(1e-3), LOG);
-
-}
-
-
-void ProbabilisticLayerTest::test_write_expression()
-{
-   cout << "test_write_expression\n";
-
-   ProbabilisticLayer probabilistic_layer(2,2);
-
-   probabilistic_layer.set_activation_function(ProbabilisticLayer::Softmax);
-
-   Tensor<string, 1> inputs_names(2);
-   inputs_names.setValues({"Uno_in","Dos_in"});
-
-   Tensor<string, 1> outputs_names(2);
-   outputs_names.setValues({"Uno_out","Dos_out"});
-
-   string expression;
-
-   expression = probabilistic_layer.write_expression(inputs_names,outputs_names);
-
-   assert_true(expression.empty() == false, LOG);
-}
-
-
+*/
 
 void ProbabilisticLayerTest::run_test_case()
 {
@@ -875,13 +769,12 @@ void ProbabilisticLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
+   test_destructor();
 
    // Assignment operators methods
 
    test_assignment_operator();
-
 
    // Get methods
 
@@ -890,32 +783,31 @@ void ProbabilisticLayerTest::run_test_case()
    test_get_parameters();
    test_get_decision_threshold();
 
-
    // Layer architecture
 
    test_get_inputs_number();
    test_get_neurons_number();
 
-
    // Display messages
 
    test_get_display();
 
-
    // Set methods
 
    test_set();
+
    test_set_default();
+
    test_set_biases();
    test_set_synaptic_weights();
    test_set_parameters();
    test_set_decision_threshold();
 
-
    //Activation function
 
    test_write_activation_function();
    test_write_activation_function_text();
+
    test_set_activation_function();
 
 
@@ -923,39 +815,26 @@ void ProbabilisticLayerTest::run_test_case()
 
    test_set_display();
 
-
    // Probabilistic post-processing
 
    test_calculate_combinations();
    test_calculate_activations();
-   test_calculate_activations_derivatives();
+   test_calculate_derivatives_activations();
+
    test_calculate_outputs();
 
+   // Serialization methods
 
-   // Forward propagate
+//   test_to_XML();
 
-   test_forward_propagate();
+//   test_from_XML();
 
-
-   // Hidden delta
-
-   test_calculate_output_delta();
-
-   // Gradient
-
-   test_calculate_error_gradient();
-
-
-   //Write expression
-
-   test_write_expression();
-
-   cout << "End of probabilistic layer test case.\n\n";
+   cout << "End of probabilistic layer test case.\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

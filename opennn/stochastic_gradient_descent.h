@@ -24,9 +24,9 @@
 // OpenNN includes
 
 #include "config.h"
-
+#include "device.h"
 #include "loss_index.h"
-//#include "mean_squared_error.h"
+#include "mean_squared_error.h"
 #include "optimization_algorithm.h"
 
 namespace OpenNN
@@ -44,20 +44,20 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct SGDOptimizationData : public OptimizationData
+    struct OptimizationData
     {
         /// Default constructor.
 
-        explicit SGDOptimizationData()
+        explicit OptimizationData()
         {
         }
 
-        explicit SGDOptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+        explicit OptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
             set(new_stochastic_gradient_descent_pointer);
         }
 
-        virtual ~SGDOptimizationData() {}
+        virtual ~OptimizationData() {}
 
         void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
@@ -76,10 +76,6 @@ public:
             parameters_increment.resize(parameters_number);
             nesterov_increment.resize(parameters_number);
             last_parameters_increment.resize(parameters_number);
-
-            parameters_increment.setZero();
-            nesterov_increment.setZero();
-            last_parameters_increment.setZero();
         }
 
         void print() const
@@ -116,6 +112,8 @@ public:
 
    explicit StochasticGradientDescent(LossIndex*);
 
+   explicit StochasticGradientDescent(const tinyxml2::XMLDocument&); 
+
    // Destructor
 
    virtual ~StochasticGradientDescent();
@@ -126,6 +124,13 @@ public:
    const type& get_initial_decay() const;
    const type& get_momentum() const;
    const bool& get_nesterov() const;
+
+   // Training parameters
+
+   const type& get_warning_parameters_norm() const;
+   const type& get_warning_gradient_norm() const;
+   const type& get_error_parameters_norm() const;
+   const type& get_error_gradient_norm() const;
 
    // Stopping criteria
 
@@ -138,10 +143,6 @@ public:
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
 
-   // Hardware use
-
-   const string& get_hardware_use() const;
-
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
@@ -151,9 +152,15 @@ public:
    void set_reserve_all_training_history(const bool&);
 
 
-   void set_batch_samples_number(const Index& new_batch_samples_number)
+   void set_batch_instances_number(const Index& new_batch_instances_number)
    {
-       batch_samples_number = new_batch_samples_number;
+       batch_instances_number = new_batch_instances_number;
+   }
+
+
+   void set_batch_size(const Index& new_batch_instances_number)
+   {
+       batch_instances_number = new_batch_instances_number;
    }
 
    //Training operators
@@ -163,7 +170,12 @@ public:
    void set_momentum(const type&);
    void set_nesterov(const bool&);
 
+   // Training parameters
 
+   void set_warning_parameters_norm(const type&);
+   void set_warning_gradient_norm(const type&);
+   void set_error_parameters_norm(const type&);
+   void set_error_gradient_norm(const type&);
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -177,18 +189,11 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
-   // Hardware use
-
-   void set_hardware_use(const string&);
-
    // Utilities
 
    void set_display_period(const Index&);
 
    // Training methods
-
-   void update_iteration(const LossIndex::BackPropagation& back_propagation,
-                         SGDOptimizationData& optimization_data);
 
    Results perform_training();
 
@@ -200,9 +205,83 @@ public:
 
    Tensor<string, 2> to_string_matrix() const;
 
+   tinyxml2::XMLDocument* to_XML() const;
+
    void from_XML(const tinyxml2::XMLDocument&);
 
-   void write_XML(tinyxml2::XMLPrinter&) const;   
+   void write_XML(tinyxml2::XMLPrinter&) const;
+
+   void update_iteration(const LossIndex::BackPropagation& back_propagation,
+                         OptimizationData& optimization_data)
+   {
+       type learning_rate = 0;
+
+       initial_decay > 0
+            ? learning_rate = initial_learning_rate/(1 + optimization_data.iteration*initial_decay)
+            : learning_rate = initial_learning_rate;
+
+           switch(device_pointer->get_type())
+           {
+           case Device::EigenDefault:
+           {
+               DefaultDevice* default_device = device_pointer->get_eigen_default_device();
+
+               optimization_data.parameters_increment.device(*default_device) = -learning_rate*back_propagation.gradient;
+
+               optimization_data.parameters.device(*default_device) += optimization_data.parameters_increment;
+
+               break;
+           }
+
+           case Device::EigenSimpleThreadPool:
+           {
+               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
+
+               optimization_data.parameters_increment.device(*thread_pool_device) = -learning_rate*back_propagation.gradient;
+
+               optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+
+               break;
+           }
+
+           case Device::EigenGpu:
+           {
+               //GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
+
+               //y.device(gpu_device) = x.tanh();
+
+               break;
+           }
+           }
+/*
+
+       if(momentum > 0 && !nesterov)
+       {
+           optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+
+           optimization_data.parameters += optimization_data.parameters_increment;
+       }
+       else if(momentum > 0 && nesterov)
+       {
+           optimization_data.parameters_increment += momentum*optimization_data.last_parameters_increment;
+
+           optimization_data.nesterov_increment
+                   = optimization_data.parameters_increment*momentum - back_propagation.gradient*learning_rate;
+
+           optimization_data.parameters += optimization_data.nesterov_increment;
+       }
+       else
+       {
+           optimization_data.parameters += optimization_data.parameters_increment;
+       }
+
+       optimization_data.parameters += optimization_data.parameters_increment;
+*/
+       optimization_data.last_parameters_increment = optimization_data.parameters_increment;
+
+       optimization_data.iteration++;
+   }
+
 
 private:
 
@@ -223,6 +302,24 @@ private:
    /// Boolean. Whether to apply Nesterov momentum.
 
    bool nesterov;
+
+   // Training parameters
+
+   /// Value for the parameters norm at which a warning message is written to the screen. 
+
+   type warning_parameters_norm;
+
+   /// Value for the gradient norm at which a warning message is written to the screen. 
+
+   type warning_gradient_norm;
+
+   /// Value for the parameters norm at which the training process is assumed to fail. 
+   
+   type error_parameters_norm;
+
+   /// Value for the gradient norm at which the training process is assumed to fail. 
+
+   type error_gradient_norm;
 
    // Stopping criteria
 
@@ -252,21 +349,7 @@ private:
 
    bool reserve_selection_error_history;
 
-   /// Number of samples per training batch.
-
-   Index batch_samples_number = 1000;
-
-   /// Hardware use.
-
-   string hardware_use;
-
-#ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
-#endif
-
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/stochastic_gradient_descent_mkl.h"
-#endif
+   Index batch_instances_number = 1000;
 };
 
 }
