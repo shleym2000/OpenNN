@@ -33,8 +33,6 @@ namespace OpenNN
 {
 
 /// This class is used to store information about the Pooling Layer in Convolutional Neural Network(CNN).
-
-///
 /// Pooling: is the procees of merging, ie, reducing the size of the data and remove some noise by different processes.
 
 class PoolingLayer : public Layer
@@ -45,32 +43,6 @@ public:
     /// Enumeration of available methods for pooling data.
 
     enum PoolingMethod {NoPooling, MaxPooling, AveragePooling};
-
-    struct PoolingLayerForwardPropagation : ForwardPropagation
-    {
-        /// Default constructor.
-
-        explicit PoolingLayerForwardPropagation() : ForwardPropagation(){}
-
-        virtual ~PoolingLayerForwardPropagation() {}
-
-        void allocate()
-        {
-/*
-            const PoolingLayer* pooling_layer = dynamic_cast<PoolingLayer*>(trainable_layers_pointers[i]);
-
-            const Index outputs_channels_number = pooling_layer->get_inputs_channels_number();
-            const Index outputs_rows_number = pooling_layer->get_outputs_rows_number();
-            const Index outputs_columns_number = pooling_layer->get_outputs_columns_number();
-
-            layers[i].combinations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-            layers[i].activations_2d.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-            layers[i].activations_derivatives.resize(Tensor<Index, 1>({batch_instances_number, outputs_channels_number, outputs_rows_number, outputs_columns_number}));
-*/
-        }
-
-    };
-
 
     // Constructors
 
@@ -86,7 +58,7 @@ public:
 
      // Get methods
 
-     Tensor<Index, 1> get_input_variables_dimensions() const;
+
      Tensor<Index, 1> get_outputs_dimensions() const;
 
      Index get_inputs_number() const;

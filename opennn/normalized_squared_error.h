@@ -43,13 +43,7 @@ public:
 
    explicit NormalizedSquaredError(NeuralNetwork*, DataSet*);
 
-   explicit NormalizedSquaredError(NeuralNetwork*);
-
-   explicit NormalizedSquaredError(DataSet*);
-
    explicit NormalizedSquaredError();   
-
-   explicit NormalizedSquaredError(const tinyxml2::XMLDocument&);
 
     // Destructor
 
@@ -69,6 +63,8 @@ public:
     void set_selection_normalization_coefficient(const type&);
 
     void set_default();
+
+    void set_data_set_pointer(DataSet* new_data_set_pointer);
 
    // Normalization coefficients 
 
@@ -124,7 +120,7 @@ private:
 
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/normalized_squared_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/normalized_squared_error_mkl.h"
 #endif
 };
 

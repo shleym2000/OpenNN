@@ -38,15 +38,7 @@ public:
 
    explicit CrossEntropyError();
 
-   explicit CrossEntropyError(NeuralNetwork*);
-
-   explicit CrossEntropyError(DataSet*);
-
    explicit CrossEntropyError(NeuralNetwork*, DataSet*);
-
-   explicit CrossEntropyError(const tinyxml2::XMLDocument&);
-
-   CrossEntropyError(const CrossEntropyError&);
 
    // Destructor
 
@@ -95,7 +87,7 @@ public:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/cross_entropy_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/cross_entropy_error_mkl.h"
 #endif
 };
 

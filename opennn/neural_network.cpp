@@ -81,16 +81,6 @@ NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers_pointers)
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing neural network object.
-/// @param other_neural_network Neural network object to be copied.
-
-NeuralNetwork::NeuralNetwork(const NeuralNetwork& other_neural_network)
-{
-    set(other_neural_network);
-}
-
-
 /// Destructor.
 
 NeuralNetwork::~NeuralNetwork()
@@ -292,7 +282,7 @@ bool NeuralNetwork::is_empty() const
 
 /// Returns a string vector with the names of the variables used as inputs.
 
-Tensor<string, 1> NeuralNetwork::get_inputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_inputs_names() const
 {
     return inputs_names;
 }
@@ -312,22 +302,18 @@ string NeuralNetwork::get_input_name(const Index& index) const
 
 Index NeuralNetwork::get_input_index(const string& name) const
 {
-
     for(Index i = 0; i < inputs_names.size(); i++)
     {
-        if(inputs_names(i) == name)
-        {
-            return i;
-            break;
-        }
+        if(inputs_names(i) == name) return i;
     }
+
     return 0;
 }
 
 
 /// Returns a string vector with the names of the variables used as outputs.
 
-Tensor<string, 1> NeuralNetwork::get_outputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_outputs_names() const
 {
     return outputs_names;
 }
@@ -347,14 +333,9 @@ string NeuralNetwork::get_output_name(const Index& index) const
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-
     for(Index i = 0; i < outputs_names.size(); i++)
     {
-        if(outputs_names(i) == name)
-        {
-            return i;
-            break;
-        }
+        if(outputs_names(i) == name) return i;
     }
 
     return 0;
@@ -629,9 +610,13 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Forecasting)
     {
-        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
-        this->add_layer(long_short_term_memory_layer_pointer);
+//        this->add_layer(long_short_term_memory_layer_pointer);
+
+        RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+
+        this->add_layer(recurrent_layer_pointer);
 
         for(Index i = 1; i < size-1; i++)
         {
@@ -1276,30 +1261,6 @@ type NeuralNetwork::calculate_parameters_norm() const
 }
 
 
-/// Returns a descriptives structure of the parameters vector.
-/// That contains the minimum, maximum, mean and standard deviation values of the parameters.
-
-Descriptives NeuralNetwork::calculate_parameters_descriptives() const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return descriptives(parameters);
-}
-
-
-/// Returns a histogram structure of the parameters vector.
-/// That will be used for looking at the distribution of the parameters.
-/// @param bins_number Number of bins in the histogram(10 by default).
-
-Histogram NeuralNetwork::calculate_parameters_histogram(const Index& bins_number) const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return histogram(parameters, bins_number);
-
-}
-
-
 /// Perturbate parameters of the neural network.
 /// @param perturbation Maximum distance of perturbation.
 
@@ -1345,7 +1306,6 @@ void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
     {
          trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
                                                                      forward_propagation.layers(i));
-
     }
 }
 
@@ -1463,78 +1423,6 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
     }
 
     return directional_inputs;
-}
-
-
-/// Calculates the histogram of the outputs with random inputs.
-/// @param points_number Number of random instances to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-/// @todo
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& points_number, const Index& bins_number)
-{
-    const Index inputs_number = get_inputs_number();
-
-    Tensor<type, 2> inputs(points_number, inputs_number);
-    /*
-        if(scaling_layer_pointer == nullptr)
-        {
-        }
-        else
-        {
-            const Tensor<ScalingLayer::ScalingMethod, 1> scaling_methods = scaling_layer_pointer->get_scaling_methods();
-
-            for(Index i = 0; i < scaling_methods.size(); i++)
-            {
-                Tensor<type, 1> input_column(points_number, 0.0);
-
-                if(scaling_methods[i] == ScalingLayer::NoScaling)
-                {
-                    input_column.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-                }
-                else if(scaling_methods[i] == ScalingLayer::MinimumMaximum)
-                {
-                    type minimum = scaling_layer_pointer->get_descriptives(i).minimum;
-                    type maximum = scaling_layer_pointer->get_descriptives(i).maximum;
-
-                    input_column.setRandom(minimum, maximum);
-                }
-                else if(scaling_methods[i] == ScalingLayer::MeanStandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-                else if(scaling_methods[i] == ScalingLayer::StandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-
-                inputs.set_column(i, input_column, "");
-            }
-        }
-
-        const Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-        return histograms(outputs.to_matrix(), bins_number);
-    */
-    return Tensor<Histogram, 1>();
-}
-
-
-/// Calculates the histogram of the outputs with a matrix of given inputs.
-/// @param inputs Matrix of the data to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
-{
-    Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-    return histograms(outputs, bins_number);
 }
 
 
@@ -2270,16 +2158,12 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document;
-
-//    document->SaveFile(file_name.c_str());
-
-//    delete document;
 
     FILE *pFile;
-    errno_t err;
+//    errno_t err;
 
-    err = fopen_s(&pFile, file_name.c_str(), "w");
+//    err = fopen_s(&pFile, file_name.c_str(), "w");
+    pFile = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter document(pFile);
 
@@ -2478,6 +2362,14 @@ string NeuralNetwork::write_expression_c() const
     replace(expression, "--", "+");
 
     return expression;
+}
+
+
+/// @todo
+
+string NeuralNetwork::write_expression() const
+{
+    return string();
 }
 
 

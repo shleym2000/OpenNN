@@ -53,8 +53,6 @@ public:
 
    explicit PerceptronLayer(const Index&, const Index&, const Index& = 0 , const ActivationFunction& = PerceptronLayer::HyperbolicTangent);
 
-   PerceptronLayer(const PerceptronLayer&);
-
    // Destructor
    
    virtual ~PerceptronLayer();
@@ -63,7 +61,7 @@ public:
 
    bool is_empty() const;
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -241,7 +239,7 @@ protected:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/perceptron_layer_mkl.h"
+    #include"../../opennn-mkl/opennn_mkl/perceptron_layer_mkl.h"
 #endif
 };
 

@@ -31,25 +31,18 @@ int main(void)
 
         cout << "OpenNN. Yacht Resistance Production Example." << endl;
 
-        // Device
-
-        const int n = omp_get_max_threads();
-        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
-        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
         // Neural network
 
         const string neural_network_file_name = "../data/neural_network.xml";
 
         NeuralNetwork neural_network(neural_network_file_name);
-        neural_network.set_thread_pool_device(thread_pool_device);
 
-        double longitudinal_position_center_buoyancy;
-        double prismatic_coefficient;
-        double length_displacement_ratio;
-        double beam_draught_ratio;
-        double lenght_beam_ratio;
-        double Froude_number;
+        type longitudinal_position_center_buoyancy;
+        type prismatic_coefficient;
+        type length_displacement_ratio;
+        type beam_draught_ratio;
+        type lenght_beam_ratio;
+        type Froude_number;
 
         cout << "Enter longitudinal position of the center of buoyancy (-5-0):" << endl;
         cin >> longitudinal_position_center_buoyancy;

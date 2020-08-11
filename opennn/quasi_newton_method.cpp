@@ -36,17 +36,6 @@ QuasiNewtonMethod::QuasiNewtonMethod(LossIndex* new_loss_index_pointer)
 }
 
 
-/// XML constructor.
-/// It creates a quasi-Newton method optimization algorithm not associated to any loss index.
-/// It also initializes the class members to their default values.
-
-QuasiNewtonMethod::QuasiNewtonMethod(const tinyxml2::XMLDocument& document)
-    : OptimizationAlgorithm(document)
-{
-    set_default();
-}
-
-
 /// Destructor.
 /// It does not delete any object.
 
@@ -441,6 +430,12 @@ void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_se
 }
 
 
+void QuasiNewtonMethod::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
+}
+
+
 /// Makes the error history vector to be reseved or not in memory.
 /// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
 
@@ -787,24 +782,24 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
+    const Index training_samples_number = data_set_pointer->get_training_samples_number();
 
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
     const bool has_selection = data_set_pointer->has_selection();
 
-    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
+    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
 
-    training_batch.fill(training_instances_indices, inputs_indices, target_indices);
-    selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
+    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
+    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
-    training_instances_indices.resize(0);
-    selection_instances_indices.resize(0);
+    training_samples_indices.resize(0);
+    selection_samples_indices.resize(0);
     inputs_indices.resize(0);
     target_indices.resize(0);
 
@@ -814,8 +809,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -823,8 +818,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type old_selection_error = numeric_limits<type>::max();
 
-    LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -1198,6 +1193,17 @@ void QuasiNewtonMethod::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << reserve_selection_error_history;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1622,7 +1628,26 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
               cerr << e.what() << endl;
            }
         }
-    }    
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
 }
 
 }

@@ -61,14 +61,10 @@ public:
 
         ConjugateGradient* conjugate_gradient_pointer = nullptr;
 
-//        Tensor<type, 1> parameters;
-//        Tensor<type, 1> potential_parameters;
-
         Tensor<type, 1> parameters_increment;
 
         Tensor<type, 1> old_gradient;
 
-//        Tensor<type, 1> training_direction;
         Tensor<type, 1> old_training_direction;
 
         Index epoch = 0;
@@ -92,8 +88,6 @@ public:
    explicit ConjugateGradient(); 
 
    explicit ConjugateGradient(LossIndex*);   
-
-   explicit ConjugateGradient(const tinyxml2::XMLDocument&); 
 
    virtual ~ConjugateGradient();
 
@@ -132,20 +126,12 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
+   void set_hardware_use(const string&);
+
    // Training operators
 
    void set_training_direction_method(const TrainingDirectionMethod&);
    void set_training_direction_method(const string&);
-
-   // Training parameters
-
-   
-   
-   
-
-   
-   
-   
 
    // Stopping criteria
 
@@ -262,6 +248,10 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   /// Hardware use.
+
+   string hardware_use;
 };
 
 }

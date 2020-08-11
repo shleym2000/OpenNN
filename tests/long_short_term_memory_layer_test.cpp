@@ -858,7 +858,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   Tensor<type, 3> recurrent_weights;
 //   Tensor<type, 2> biases;
 
-//   Index instances = 3;
+//   Index samples = 3;
 
 //    //Test
 
@@ -871,7 +871,7 @@ void LongShortTermMemoryLayerTest::test_calculate_outputs()
 //   long_short_term_memory_layer.set_activation_function("HyperbolicTangent");
 //   long_short_term_memory_layer.set_recurrent_activation_function("HardSigmoid");
 
-//   inputs.resize(instances, 3);
+//   inputs.resize(samples, 3);
 //   inputs.setConstant(1.0);
 
 //   weights.resize(3,2,4);
@@ -1013,7 +1013,7 @@ void LongShortTermMemoryLayerTest::run_test_case()
 
    test_calculate_outputs();
 
-   cout << "End of long short term memory layer test case.\n";
+   cout << "End of long short term memory layer test case.\n\n";
 }
 
 

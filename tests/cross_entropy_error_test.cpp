@@ -39,7 +39,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    data_set.generate_sum_data(10,2);
 
-//   Tensor<Descriptives, 1> inputs = data_set.scale_inputs_minimum_maximum();
+//   Tensor<Descriptives, 1> inputs = data_set.scale_input_variables_minimum_maximum();
 
    scaling_layer.set_neurons_number(1);
    scaling_layer.set_inputs_number(1);
@@ -83,7 +83,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    Tensor<type, 1> error_gradient;
    Tensor<type, 1> numerical_error_gradient;
 
-   Index instances_number;
+   Index samples_number;
    Index inputs_number;
    Index outputs_number;
    Index hidden_neurons;
@@ -98,12 +98,12 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test perceptron and probabilistic
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -128,12 +128,12 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test lstm
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -165,12 +165,12 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    // Test recurrent
 
 {
-   instances_number = 10;
+   samples_number = 10;
    inputs_number = 3;
    outputs_number = 2;
    hidden_neurons = 2;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 
    data_set.set_data_random();
 
@@ -194,11 +194,11 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    // Test convolutional
 {
-   instances_number = 5;
+   samples_number = 5;
    inputs_number = 147;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
+   data_set.set(samples_number, inputs_number, outputs_number);
 //   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
 //   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
 //   data_set.set_data_random();
@@ -297,7 +297,7 @@ void CrossEntropyErrorTest::run_test_case()
    test_to_XML();
    test_from_XML();
 
-   cout << "End of cross entropy error test case.\n";
+   cout << "End of cross entropy error test case.\n\n";
 }
 
 

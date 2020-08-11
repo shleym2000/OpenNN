@@ -43,21 +43,7 @@ public:
 
    explicit SumSquaredError();
 
-   // NEURAL NETWORK CONSTRUCTOR
-
-   explicit SumSquaredError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
-
-   explicit SumSquaredError(DataSet*);
-
    explicit SumSquaredError(NeuralNetwork*, DataSet*);   
-
-   explicit SumSquaredError(const tinyxml2::XMLDocument&);
-
-   // COPY CONSTRUCTOR
-
-   SumSquaredError(const SumSquaredError&);
 
    virtual ~SumSquaredError();
 
@@ -104,7 +90,7 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/sum_squared_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/sum_squared_error_mkl.h"
 #endif
 };
 

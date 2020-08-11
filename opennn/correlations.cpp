@@ -127,7 +127,7 @@ type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const T
 /// Takes into account possible missing values.
 /// @param x Vector containing input values.
 /// @param y Vector for computing the linear correlation with the x vector.
-/// @param missing Vector with the missing instances idices.
+/// @param missing Vector with the missing samples idices.
 
 type rank_linear_correlation_missing_values(const ThreadPoolDevice* thread_pool_device,
                                             const Tensor<type, 1>& x, const Tensor<type, 1>& y)
@@ -144,7 +144,7 @@ type rank_linear_correlation_missing_values(const ThreadPoolDevice* thread_pool_
 /// Calculates the correlation between Y and exp(A*X + B).
 /// @param x Vector containing the input values.
 /// @param y Vector containing the target values.
-/// @param missing Vector with the missing instances indices.
+/// @param missing Vector with the missing samples indices.
 
 type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
@@ -582,15 +582,14 @@ Tensor<type, 1> gaussian (const type& a, const type& b, const Tensor<type, 1>& x
 
 Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& a, const Tensor<type,2>& b, const Tensor<type, 2>& x)
 {
-
-    const Index instances_number = x.dimension(0);
+    const Index samples_number = x.dimension(0);
     const Index biases_number = a.dimension(0);
 
-    Tensor<type, 2> combinations(instances_number, biases_number);
+    Tensor<type, 2> combinations(samples_number, biases_number);
 
     for(Index i = 0; i < biases_number; i++)
     {
-        fill_n(combinations.data() + i*instances_number, instances_number, a(i));
+        fill_n(combinations.data() + i*samples_number, samples_number, a(i));
     }
 
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
@@ -1237,7 +1236,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     Tensor<type, 1> coefficients(2);
     coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 
-    const Index epochs_number = 10000;
+    const Index epochs_number = 100000;
     const type step_size = static_cast<type>(0.01);
 
     const type error_goal = static_cast<type>(1.0e-3);
@@ -1312,9 +1311,10 @@ vector<int> get_indices_sorted(Tensor<type,1>& x)
 }
 
 
-CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device,
+                                                  const Tensor<type, 2>& x,
+                                                  const Tensor<type, 1>& y)
 {
-
 #ifdef __OPENNN_DEBUG__
 
     ostringstream buffer;
@@ -1644,13 +1644,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
         if(gradient_norm() < gradient_norm_goal) break;
 
         coefficients += gradient*step_size;
-        /*
-        coefficients = gradient*step_size;
 
-        coefficients += 0.9*last_coefficients;
-
-        last_coefficients = coefficients;
-       */
     }
 
     // Gaussian correlation
@@ -1659,11 +1653,9 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> gaussian_y = gaussian(coefficients(0), coefficients(1), scaled_x);
 
-    gaussian_correlations.correlation = linear_correlation(thread_pool_device, gaussian_y, new_y);
+    gaussian_correlations.correlation = abs(linear_correlation(thread_pool_device, gaussian_y, new_y));
 
-//    if(coefficients(1) < 0) gaussian_correlations.correlation *= (-1);
-
-    gaussian_correlations.correlation_type = Logistic_correlation;
+    gaussian_correlations.correlation_type = Gauss_correlation;
 
     return gaussian_correlations;
 }

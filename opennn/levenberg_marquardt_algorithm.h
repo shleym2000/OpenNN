@@ -111,8 +111,6 @@ public:
 
    explicit LevenbergMarquardtAlgorithm(LossIndex*);
 
-   explicit LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocument&);
-
    // Destructor
 
    virtual ~LevenbergMarquardtAlgorithm();
@@ -160,13 +158,7 @@ public:
    void set_minimum_damping_parameter(const type&);
    void set_maximum_damping_parameter(const type&);
 
-   // Training parameters
-
-   
-   
-
-   
-   
+   void set_hardware_use(const string&);
 
    // Stopping criteria
 
@@ -244,23 +236,6 @@ private:
 
    type damping_parameter_factor;
 
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   
-
-
    // Stopping criteria
 
    /// Norm of the parameters increment vector at which training stops.
@@ -306,6 +281,10 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   /// Hardware use.
+
+   string hardware_use;
 };
 
 }

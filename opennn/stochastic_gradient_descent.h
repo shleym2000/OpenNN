@@ -44,20 +44,20 @@ class StochasticGradientDescent : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct SGDOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
+        explicit SGDOptimizationData()
         {
         }
 
-        explicit OptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
+        explicit SGDOptimizationData(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
             set(new_stochastic_gradient_descent_pointer);
         }
 
-        virtual ~OptimizationData() {}
+        virtual ~SGDOptimizationData() {}
 
         void set(StochasticGradientDescent* new_stochastic_gradient_descent_pointer)
         {
@@ -116,8 +116,6 @@ public:
 
    explicit StochasticGradientDescent(LossIndex*);
 
-   explicit StochasticGradientDescent(const tinyxml2::XMLDocument&); 
-
    // Destructor
 
    virtual ~StochasticGradientDescent();
@@ -140,6 +138,10 @@ public:
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
 
+   // Hardware use
+
+   const string& get_hardware_use() const;
+
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
@@ -149,9 +151,9 @@ public:
    void set_reserve_all_training_history(const bool&);
 
 
-   void set_batch_instances_number(const Index& new_batch_instances_number)
+   void set_batch_samples_number(const Index& new_batch_samples_number)
    {
-       batch_instances_number = new_batch_instances_number;
+       batch_samples_number = new_batch_samples_number;
    }
 
    //Training operators
@@ -161,12 +163,7 @@ public:
    void set_momentum(const type&);
    void set_nesterov(const bool&);
 
-   // Training parameters
 
-   
-   
-   
-   
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -180,6 +177,10 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
+   // Hardware use
+
+   void set_hardware_use(const string&);
+
    // Utilities
 
    void set_display_period(const Index&);
@@ -187,7 +188,7 @@ public:
    // Training methods
 
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
-                         OptimizationData& optimization_data);
+                         SGDOptimizationData& optimization_data);
 
    Results perform_training();
 
@@ -198,8 +199,6 @@ public:
    // Serialization methods
 
    Tensor<string, 2> to_string_matrix() const;
-
-   
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -224,24 +223,6 @@ private:
    /// Boolean. Whether to apply Nesterov momentum.
 
    bool nesterov;
-
-   // Training parameters
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   
 
    // Stopping criteria
 
@@ -271,14 +252,20 @@ private:
 
    bool reserve_selection_error_history;
 
-   Index batch_instances_number = 1000;
+   /// Number of samples per training batch.
+
+   Index batch_samples_number = 1000;
+
+   /// Hardware use.
+
+   string hardware_use;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/stochastic_gradient_descent_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/stochastic_gradient_descent_mkl.h"
 #endif
 };
 

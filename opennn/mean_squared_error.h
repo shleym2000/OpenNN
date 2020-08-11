@@ -42,22 +42,8 @@ public:
    // DEFAULT CONSTRUCTOR
 
    explicit MeanSquaredError();
-
-   // NEURAL NETWORK CONSTRUCTOR
-
-   explicit MeanSquaredError(NeuralNetwork*);
-
-   // DATA SET CONSTRUCTOR
-
-   explicit MeanSquaredError(DataSet*);
    
    explicit MeanSquaredError(NeuralNetwork*, DataSet*);
-
-   explicit MeanSquaredError(const tinyxml2::XMLDocument&);
-
-   // COPY CONSTRUCTOR
-
-   MeanSquaredError(const MeanSquaredError&);
 
    // Destructor
 
@@ -100,7 +86,8 @@ public:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/mean_squared_error_mkl.h"
+//    #include "../opennn_mkl/mean_squared_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/mean_squared_error_mkl.h"
 #endif
 };
 

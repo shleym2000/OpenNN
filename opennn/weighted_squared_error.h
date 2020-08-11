@@ -44,15 +44,7 @@ public:
 
    explicit WeightedSquaredError();
 
-   explicit WeightedSquaredError(NeuralNetwork*);
-
-   explicit WeightedSquaredError(DataSet*);
-
    explicit WeightedSquaredError(NeuralNetwork*, DataSet*); 
-
-   explicit WeightedSquaredError(const tinyxml2::XMLDocument&);
-
-   WeightedSquaredError(const WeightedSquaredError&);
 
    // Destructor
 
@@ -133,7 +125,7 @@ private:
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/weighted_squared_error_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/weighted_squared_error_mkl.h"
 #endif
 };
 

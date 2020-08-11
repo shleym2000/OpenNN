@@ -111,6 +111,10 @@ public:
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
 
+   // Hardware use
+
+   const string& get_hardware_use() const;
+
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
@@ -119,7 +123,7 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
-   void set_batch_instances_number(const Index& new_batch_instances_number);
+   void set_batch_samples_number(const Index& new_batch_samples_number);
 
    // Training operators
 
@@ -142,6 +146,10 @@ public:
 
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
+
+   // Hardware use
+
+   void set_hardware_use(const string&);
 
    // Training methods
 
@@ -218,15 +226,18 @@ private:
 
    bool reserve_selection_error_history;
 
-   Index batch_instances_number = 1000;
+   Index batch_samples_number = 1000;
 
+   /// Hardware use.
+
+   string hardware_use;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
 #ifdef OPENNN_MKL
-    #include "../opennn_mkl/adaptive_moment_estimation_mkl.h"
+    #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
 #endif
 
 };

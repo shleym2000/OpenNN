@@ -53,36 +53,7 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_loss_index_pointer(loss_index_pointer);
 
     set_default();
-}
 
-
-/// XML constructor.
-/// It creates a training strategy object not associated to any loss index object.
-/// It also loads the members of this object from a XML document.
-/// @param document Document of the TinyXML library.
-
-TrainingStrategy::TrainingStrategy(const tinyxml2::XMLDocument& document)
-{
-    set_optimization_method(QUASI_NEWTON_METHOD);
-
-    set_default();
-
-    from_XML(document);
-}
-
-
-/// File constructor.
-/// It creates a training strategy object associated to a loss index object.
-/// It also loads the members of this object from a XML file.
-/// @param file_name Name of training strategy XML file.
-
-TrainingStrategy::TrainingStrategy(const string& file_name)
-{
-    set_optimization_method(QUASI_NEWTON_METHOD);
-
-    set_default();
-
-    load(file_name);
 }
 
 
@@ -341,6 +312,11 @@ WeightedSquaredError* TrainingStrategy::get_weighted_squared_error_pointer()
 {
     return &weighted_squared_error;
 }
+
+//DataSet* TrainingStrategy::get_data_set_pointer()
+//{
+//    return &;
+//}
 
 /// Returns the type of the main loss algorithm composing this training strategy object.
 
@@ -740,6 +716,24 @@ void TrainingStrategy::set_display(const bool& new_display)
 }
 
 
+void TrainingStrategy::set_loss_goal(const type & new_loss_goal)
+{
+    gradient_descent.set_loss_goal(new_loss_goal);
+    conjugate_gradient.set_loss_goal(new_loss_goal);
+    quasi_Newton_method.set_loss_goal(new_loss_goal);
+    Levenberg_Marquardt_algorithm.set_loss_goal(new_loss_goal);
+}
+
+
+void TrainingStrategy::set_maximum_selection_error_increases(const Index & maximum_selection_error_increases)
+{
+    gradient_descent.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    conjugate_gradient.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    quasi_Newton_method.set_maximum_selection_error_increases(maximum_selection_error_increases);
+    Levenberg_Marquardt_algorithm.set_maximum_selection_error_increases(maximum_selection_error_increases);
+}
+
+
 void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_selection_error)
 {
     gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
@@ -811,8 +805,10 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
+
         if(!check_forecasting())
         {
+
             ostringstream buffer;
 
             buffer << "OpenNN Exception: TrainingStrategy class.\n"
@@ -822,9 +818,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
             throw logic_error(buffer.str());
         }
     }
-
     OptimizationAlgorithm::Results results;
-
     // Main
 
     switch(optimization_method)
@@ -955,20 +949,22 @@ void TrainingStrategy::perform_training_void()
 
 bool TrainingStrategy::check_forecasting() const
 {
-//    const Index batch_instances_number = data_set.get_batch_instances_number();
 
-//    Index timesteps = 0;
+    Index timesteps = 0;
 
-//    if(neural_network.has_recurrent_layer())
-//    {
-//        timesteps = neural_network.get_recurrent_layer_pointer()->get_timesteps();
-//    }
-//    else if(neural_network.has_long_short_term_memory_layer())
-//    {
-//        timesteps = neural_network.get_long_short_term_memory_layer_pointer()->get_timesteps();
-//    }
+    if(neural_network_pointer->has_recurrent_layer())
+    {
+        timesteps = neural_network_pointer->get_recurrent_layer_pointer()->get_timesteps();
+    }
+    else if(neural_network_pointer->has_long_short_term_memory_layer())
+    {
+        timesteps = neural_network_pointer->get_long_short_term_memory_layer_pointer()->get_timesteps();
+    }
 
-//    if(batch_instances_number%timesteps == 0)
+
+//    const Index batch_samples_number = data_set.get_batch_samples_number();
+
+//    if(batch_samples_number%timesteps == 0)
 //    {
 //        return true;
 //    }
@@ -977,7 +973,7 @@ bool TrainingStrategy::check_forecasting() const
 //        return false;
 //    }
 
-    return false;
+    return true;
 }
 
 
@@ -1012,7 +1008,7 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     cross_entropy_error.write_XML(file_stream);
     weighted_squared_error.write_XML(file_stream);
 
-    sum_squared_error.write_regularization_XML(file_stream);
+    mean_squared_error.write_regularization_XML(file_stream);
 
     file_stream.CloseElement();
 
@@ -1214,7 +1210,7 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
                 regularization_document.InsertFirstChild(element_clone);
 
-                sum_squared_error.regularization_from_XML(regularization_document);
+                mean_squared_error.regularization_from_XML(regularization_document);
             }
         }
     }

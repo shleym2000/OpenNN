@@ -36,21 +36,6 @@ GradientDescent::GradientDescent(LossIndex* new_loss_index_pointer)
 }
 
 
-
-
-/// XML constructor.
-/// It creates a gradient descent optimization algorithm not associated to any loss index object.
-/// It also loads the class members from a XML document.
-/// @param document TinyXML document with the members of a gradient descent object.
-
-GradientDescent::GradientDescent(const tinyxml2::XMLDocument& document) : OptimizationAlgorithm(document)
-{
-    set_default();
-
-    from_XML(document);
-}
-
-
 /// Destructor.
 
 GradientDescent::~GradientDescent()
@@ -178,10 +163,10 @@ void GradientDescent::set_default()
 
     training_loss_goal = static_cast<type>(1.0e-3);
     gradient_norm_goal = static_cast<type>(1.0e-3);
-    maximum_selection_error_increases = 1000000;
+    maximum_selection_error_increases = 100;
 
     maximum_epochs_number = 1000;
-    maximum_time = 1000.0;
+    maximum_time = 3600;
 
     choose_best_selection = false;
 
@@ -217,6 +202,12 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
     reserve_training_error_history = new_reserve_all_training_history;
 
     reserve_selection_error_history = new_reserve_all_training_history;
+}
+
+
+void GradientDescent::set_hardware_use(const string & new_hardware_use)
+{
+    hardware_use = new_hardware_use;
 }
 
 
@@ -558,24 +549,24 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
-    const Index training_instances_number = data_set_pointer->get_training_instances_number();
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index training_samples_number = data_set_pointer->get_training_samples_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
     const bool has_selection = data_set_pointer->has_selection();
 
-    Tensor<Index, 1> training_instances_indices = data_set_pointer->get_training_instances_indices();
-    Tensor<Index, 1> selection_instances_indices = data_set_pointer->get_selection_instances_indices();
+    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
     Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
     Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_instances_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_instances_number, data_set_pointer);
+    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
+    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
 
-    training_batch.fill(training_instances_indices, inputs_indices, target_indices);
-    selection_batch.fill(selection_instances_indices, inputs_indices, target_indices);
+    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
+    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
-    training_instances_indices.resize(0);
-    selection_instances_indices.resize(0);
+    training_samples_indices.resize(0);
+    selection_samples_indices.resize(0);
     inputs_indices.resize(0);
     target_indices.resize(0);
 
@@ -585,8 +576,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation training_forward_propagation(training_instances_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_instances_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetwork::ForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -596,8 +587,8 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
     type gradient_norm = 0;
 
-    LossIndex::BackPropagation training_back_propagation(training_instances_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_instances_number, loss_index_pointer);
+    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Learning rate
 
@@ -1055,6 +1046,17 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.CloseElement();
 
+    // Hardware use
+
+    file_stream.OpenElement("HardwareUse");
+
+    buffer.str("");
+    buffer << hardware_use;
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
     file_stream.CloseElement();
 }
 
@@ -1274,6 +1276,25 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
+            }
+            catch(const logic_error& e)
+            {
+                cerr << e.what() << endl;
+            }
+        }
+    }
+
+    // Hardware use
+    {
+        const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
+
+        if(element)
+        {
+            const string new_hardware_use = element->GetText();
+
+            try
+            {
+                set_hardware_use(new_hardware_use);
             }
             catch(const logic_error& e)
             {

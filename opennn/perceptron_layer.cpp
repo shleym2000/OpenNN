@@ -41,31 +41,11 @@ PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& ne
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing perceptron layer object.
-/// @param other_perceptron_layer Perceptron layer object to be copied.
-
-PerceptronLayer::PerceptronLayer(const PerceptronLayer& other_perceptron_layer) : Layer()
-{
-    set(other_perceptron_layer);
-
-    layer_type = Perceptron;
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 
 PerceptronLayer::~PerceptronLayer()
 {
-}
-
-
-Tensor<Index, 1> PerceptronLayer::get_input_variables_dimensions() const
-{
-    const Index inputs_number = get_inputs_number();
-
-    return Tensor<Index, 1>(inputs_number);
 }
 
 
@@ -548,11 +528,9 @@ void PerceptronLayer::set_synaptic_weights_constant_glorot_uniform()
 
 void PerceptronLayer::set_parameters_constant(const type& value)
 {
-
     biases.setConstant(value);
 
     synaptic_weights.setConstant(value);
-
 }
 
 
@@ -572,12 +550,12 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
                             const Tensor<type, 2>& synaptic_weights,
                             Tensor<type, 2>& combinations_2d) const
 {
-    const Index batch_instances_number = inputs.dimension(0);
+    const Index batch_samples_number = inputs.dimension(0);
     const Index biases_number = get_biases_number();
 
     for(Index i = 0; i < biases_number; i++)
     {
-        fill_n(combinations_2d.data() + i*batch_instances_number, batch_instances_number, biases(i));
+        fill_n(combinations_2d.data() + i*batch_samples_number, batch_samples_number, biases(i));
     }
 
     combinations_2d.device(*thread_pool_device) += inputs.contract(synaptic_weights, A_B);
@@ -633,8 +611,8 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations_
 }
 
 void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations_2d,
-                                       Tensor<type, 2>& activations,
-                                       Tensor<type, 2>& activations_derivatives) const
+                                                        Tensor<type, 2>& activations,
+                                                        Tensor<type, 2>& activations_derivatives) const
 {
      #ifdef __OPENNN_DEBUG__
 
@@ -801,8 +779,6 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 }
 
 
-// Delta methods
-
 void PerceptronLayer::calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,
                                Tensor<type, 2>& output_delta) const
@@ -883,7 +859,6 @@ void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 
 }
 
-///
 
 void PerceptronLayer::insert_gradient(const BackPropagation& back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {

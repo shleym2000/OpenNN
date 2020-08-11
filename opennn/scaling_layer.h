@@ -46,8 +46,6 @@ public:
 
    explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
-   ScalingLayer(const ScalingLayer&);
-
    // Destructors
 
    virtual ~ScalingLayer();
@@ -58,7 +56,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+   
    Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const;
@@ -133,10 +131,6 @@ public:
    void check_range(const Tensor<type, 1>&) const;
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
-
-   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
 
    // Expression methods
 

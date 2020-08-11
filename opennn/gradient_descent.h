@@ -139,8 +139,6 @@ public:
 
    explicit GradientDescent(LossIndex*);
 
-   explicit GradientDescent(const tinyxml2::XMLDocument&); 
-
    // Destructor
 
    virtual ~GradientDescent();   
@@ -177,6 +175,8 @@ public:
    void set_default();
 
    void set_reserve_all_training_history(const bool&);
+
+   void set_hardware_use(const string&);
 
    // Stopping criteria
 
@@ -281,6 +281,10 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   /// Hardware use.
+
+   string hardware_use;
 };
 
 }

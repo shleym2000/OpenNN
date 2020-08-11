@@ -42,10 +42,6 @@ public:
 
    explicit BoundingLayer(const Index&);
 
-   explicit BoundingLayer(const tinyxml2::XMLDocument&);
-
-   BoundingLayer(const BoundingLayer&);
-
    // Destructor
    
    virtual ~BoundingLayer();
@@ -62,7 +58,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+
    Index get_inputs_number() const;
    Index get_neurons_number() const;
 
@@ -106,7 +102,6 @@ public:
    // Expression methods
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_expression_php(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
    string write_expression_python() const;
