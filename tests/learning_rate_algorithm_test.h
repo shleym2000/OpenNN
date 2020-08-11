@@ -46,10 +46,6 @@ public:
 
    void test_get_loss_tolerance();
 
-   void test_get_warning_learning_rate();
-
-   void test_get_error_learning_rate();
-
    // Utilities
 
    void test_get_display();
@@ -68,10 +64,6 @@ public:
    // Training parameters
 
    void test_set_loss_tolerance();
-
-   void test_set_warning_learning_rate();
-
-   void test_set_error_learning_rate();
 
     // Utilities
 
@@ -102,7 +94,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

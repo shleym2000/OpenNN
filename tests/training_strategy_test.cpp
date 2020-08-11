@@ -18,7 +18,7 @@ TrainingStrategyTest::~TrainingStrategyTest()
 {
 }
 
-/*
+
 void TrainingStrategyTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -108,14 +108,20 @@ void TrainingStrategyTest::test_perform_training()
    cout << "test_perform_training\n";
 
     NeuralNetwork neural_network;
+    Tensor<Index, 1> architecture;
+
     DataSet data_set;
+
     SumSquaredError sum_squared_error(&neural_network, &data_set);
+
     TrainingStrategy ts(&neural_network, &data_set);
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
-    data_set.set(1,1,2);
+//    architecture.setValues({1, 1});
+
+//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    data_set.set(1,1,2);
 
 //    ts.perform_training();
 
@@ -131,13 +137,13 @@ void TrainingStrategyTest::test_to_XML()
 
    // Test
 
-   ts.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+//   training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
-   tinyxml2::XMLDocument* document = ts.to_XML();
+//   tinyxml2::XMLDocument* document = training_strategy.to_XML();
 
-   assert_true(document != nullptr, LOG);
+//   assert_true(document != nullptr, LOG);
 
-   delete document;
+//   delete document;
 
 }
 
@@ -153,13 +159,13 @@ void TrainingStrategyTest::test_from_XML()
 
    ts1.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
-   tinyxml2::XMLDocument* document = ts1.to_XML();
+//    tinyxml2::XMLDocument* document = ts1.to_XML();
 
-    ts2.from_XML(*document);
+//    ts2.from_XML(*document);
 
-   delete document;
+//    delete document;
 
-    assert_true(ts2.get_optimization_method() == TrainingStrategy::GRADIENT_DESCENT, LOG);
+//    assert_true(ts2.get_optimization_method() == TrainingStrategy::GRADIENT_DESCENT, LOG);
 
 }
 
@@ -180,10 +186,9 @@ void TrainingStrategyTest::test_save()
 
    TrainingStrategy training_strategy;
 
-   ts.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
+   training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
-   ts.save(file_name);
-
+//   training_strategy.save(file_name);
 }
 
 
@@ -222,56 +227,60 @@ void TrainingStrategyTest::test_results_destructor()
 
 //    delete results;
 }
-*/
+
 
 void TrainingStrategyTest::run_test_case()
 {
    cout << "Running training strategy test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
    test_destructor();
 
+
    // Get methods
 
    test_get_loss_index_pointer();
+
 
    // Utilities
    
    test_get_display();
 
+
    // Set methods
 
    test_set();
    test_set_default();   
-
    test_set_loss_index_pointer();
+
 
    // Training methods
 
    test_perform_training();
 
+
    // Serialization methods
 
    test_to_XML();
    test_from_XML();
-
    test_print();
    test_save();
    test_load();
+
 
    // Results methods
 
    test_results_constructor();
    test_results_destructor();
-*/
-   cout << "End of training strategy test case.\n";
+
+   cout << "End of training strategy test case.\n\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

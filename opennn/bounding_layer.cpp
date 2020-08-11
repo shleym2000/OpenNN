@@ -34,26 +34,6 @@ BoundingLayer::BoundingLayer(const Index& neurons_number) : Layer()
 }
 
 
-/// XML constructor.
-/// It creates a bounding layer and loads its members from a XML document.
-/// @param bounding_layer_document TinyXML document with the member data.
-
-BoundingLayer::BoundingLayer(const tinyxml2::XMLDocument& bounding_layer_document) : Layer()
-{
-    set(bounding_layer_document);
-}
-
-
-/// Copy constructor.
-/// It creates a copy of an existing bounding layer object.
-/// @param other_bounding_layer Bounding layer to be copied.
-
-BoundingLayer::BoundingLayer(const BoundingLayer& other_bounding_layer) : Layer()
-{
-    set(other_bounding_layer);
-}
-
-
 /// Destructor.
 /// This destructor does not delete any pointer.
 
@@ -106,16 +86,6 @@ string BoundingLayer::write_bounding_method() const
 
         throw logic_error(buffer.str());
     }
-}
-
-
-Tensor<Index, 1> BoundingLayer::get_input_variables_dimensions() const
-{
-    /*
-        return Tensor<Index, 1>(1, lower_bounds.size());
-    */
-
-    return Tensor<Index, 1>();
 }
 
 
@@ -471,6 +441,8 @@ void BoundingLayer::set_display(const bool& new_display)
 
 void BoundingLayer::set_default()
 {
+    layer_name = "bounding_layer";
+
     display = true;
 
     bounding_method = Bounding;
@@ -574,146 +546,55 @@ string BoundingLayer::write_expression(const Tensor<string, 1>& inputs_names, co
 }
 
 
-/// Returns a string with the expression of the lower and upper bounds functions.
+///
+/// \brief BoundingLayer::write_expression_c
+/// \return
 
-string BoundingLayer::write_expression_php(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string BoundingLayer::write_expression_c() const
 {
-    ostringstream buffer;
-
-    buffer.precision(10);
-
-    if(bounding_method == Bounding)
-    {
-        const Index neurons_number = get_neurons_number();
-
-        for(Index i = 0; i < neurons_number; i++)
-        {
-            buffer << outputs_names[i] << " = max(" << lower_bounds[i] << ", " << inputs_names[i] << ");\n";
-            buffer << outputs_names[i] << " = min(" << upper_bounds[i] << ", " << inputs_names[i] << ");\n";
-        }
-    }
-    else
-    {
-        buffer << "";
-    }
-
-    return buffer.str();
-}
-
-
-/// Returns a string representation of the current bonding layer object.
-
-string BoundingLayer::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Bounding layer\n"
-           << "Lower bounds: " << lower_bounds << "\n"
-           << "Upper bounds: " << upper_bounds << "\n"
-           << "Display: " << display << "\n";
-
-    return buffer.str();
-}
-
-
-/// Serializes the bounding layer object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document.
-
-tinyxml2::XMLDocument* BoundingLayer::to_XML() const
-{
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    ostringstream buffer;
-
-    tinyxml2::XMLElement* bounding_layer_element = document->NewElement("BoundingLayer");
-
-    document->InsertFirstChild(bounding_layer_element);
-
-    // Scaling neurons number
-
-    tinyxml2::XMLElement* size_element = document->NewElement("BoundingNeuronsNumber");
-    bounding_layer_element->LinkEndChild(size_element);
-
     const Index neurons_number = get_neurons_number();
 
-    buffer.str("");
-    buffer << neurons_number;
+    ostringstream buffer;
 
-    tinyxml2::XMLText* size_text = document->NewText(buffer.str().c_str());
-    size_element->LinkEndChild(size_text);
+    buffer << "vector<float> " << layer_name << "(const vector<float>& inputs)\n{" << endl;
+
+    buffer << "\tvector<float> outputs(" << neurons_number << ");\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
-        tinyxml2::XMLElement* item_element = document->NewElement("Item");
-        item_element->SetAttribute("Index",static_cast<unsigned>(i+1));
-
-        bounding_layer_element->LinkEndChild(item_element);
-
-        // Lower bound
-
-        tinyxml2::XMLElement* lower_bound_element = document->NewElement("LowerBound");
-        item_element->LinkEndChild(lower_bound_element);
-
-        buffer.str("");
-        buffer << lower_bounds[i];
-
-        tinyxml2::XMLText* lower_bound_text = document->NewText(buffer.str().c_str());
-        lower_bound_element->LinkEndChild(lower_bound_text);
-
-        // Upper bound
-
-        tinyxml2::XMLElement* upper_bound_element = document->NewElement("UpperBound");
-        item_element->LinkEndChild(upper_bound_element);
-
-        buffer.str("");
-        buffer << upper_bounds[i];
-
-        tinyxml2::XMLText* upper_bound_text = document->NewText(buffer.str().c_str());
-        upper_bound_element->LinkEndChild(upper_bound_text);
+        buffer << "\toutputs[" << i << "] = inputs[" << i << "];" << endl;
     }
 
-    // Bounding method
+    buffer << "\n\treturn outputs;\n}" << endl;
 
-    tinyxml2::XMLElement* method_element = document->NewElement("UseBoundingLayer");
-    bounding_layer_element->LinkEndChild(method_element);
-
-    if(bounding_method == Bounding)
-    {
-        buffer.str("");
-        buffer << 1;
-    }
-    else if(bounding_method == NoBounding)
-    {
-        buffer.str("");
-        buffer << 0;
-    }
-    else
-    {
-        buffer << "OpenNN Exception: BoundingLayer class.\n"
-               << "void write_XML(tinyxml2::XMLPrinter&) const method.\n"
-               << "Unknown bounding method type.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    tinyxml2::XMLText* method_text = document->NewText(buffer.str().c_str());
-    method_element->LinkEndChild(method_text);
-//   // Display
-//   {
-//      tinyxml2::XMLElement* display_element = document->NewElement("Display");
-//      bounding_layer_element->LinkEndChild(display_element);
-
-//      buffer.str("");
-//      buffer << display;
-
-//      tinyxml2::XMLText* display_text = document->NewText(buffer.str().c_str());
-//      display_element->LinkEndChild(display_text);
-//   }
-
-    return document;
+    return buffer.str();
 }
 
-// void write_XML(tinyxml2::XMLPrinter&) const method
+
+///
+/// \brief BoundingLayer::write_expression_python
+/// \return
+
+string BoundingLayer::write_expression_python() const
+{
+    const Index neurons_number = get_neurons_number();
+
+    ostringstream buffer;
+
+    buffer << "def " << layer_name << "(inputs):\n" << endl;
+
+    buffer << "\toutputs = [None] * "<<neurons_number<<"\n" << endl;
+
+    for(Index i = 0; i < neurons_number; i++)
+    {
+        buffer << "\toutputs[" << i << "] = inputs[" << i << "]" << endl;
+    }
+
+    buffer << "\n\treturn outputs\n" << endl;
+
+    return buffer.str();
+}
+
 
 /// Serializes the bounding layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.

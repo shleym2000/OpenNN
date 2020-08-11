@@ -25,7 +25,6 @@
 #include "training_strategy.h"
 #include "inputs_selection.h"
 
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -43,17 +42,7 @@ public:
 
     // TRAINING STRATEGY CONSTRUCTOR
 
-    explicit PruningInputs(TrainingStrategy*);
-
-    
-
-    explicit PruningInputs(const tinyxml2::XMLDocument&);
-
-    // FILE CONSTRUCTOR
-
-    explicit PruningInputs(const string&);
-
-    
+    explicit PruningInputs(TrainingStrategy*); 
 
     virtual ~PruningInputs();
 
@@ -107,7 +96,7 @@ public:
 
     Tensor<string, 2> to_string_matrix() const;
 
-    tinyxml2::XMLDocument* to_XML() const;
+    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;

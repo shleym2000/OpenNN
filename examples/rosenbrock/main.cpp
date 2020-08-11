@@ -15,6 +15,8 @@
 #include <string>
 #include <time.h>
 
+#include <omp.h>
+
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
@@ -38,18 +40,14 @@ int main(void)
         const Index samples = 1000000;
         const Index variables = 1000;
 
-        Device device(Device::EigenSimpleThreadPool);
-
         DataSet data_set;
 
         data_set.generate_Rosenbrock_data(samples, variables+1);
 
-        data_set.set_device_pointer(&device);
-
         data_set.set_training();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables_minimum_maximum();
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables_minimum_maximum();
 
         // Neural network
 
@@ -64,7 +62,6 @@ int main(void)
         arquitecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, arquitecture);
-        neural_network.set_device_pointer(&device);
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
 
@@ -75,25 +72,22 @@ int main(void)
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
         training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+        training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
 
         training_strategy.get_mean_squared_error_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_maximum_epochs_number(10);
+//        StochasticGradientDescent* stochastic_gradient_descent_pointer
+//                = training_strategy.get_stochastic_gradient_descent_pointer();
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
+//        stochastic_gradient_descent_pointer->set_batch_size(variables);
 
-        training_strategy.set_device_pointer(&device);
+//        stochastic_gradient_descent_pointer->perform_training();
 
-        StochasticGradientDescent* stochastic_gradient_descent_pointer
-                = training_strategy.get_stochastic_gradient_descent_pointer();
+        training_strategy.perform_training();
 
-        stochastic_gradient_descent_pointer->set_batch_size(variables);
-
-        stochastic_gradient_descent_pointer->perform_training();
-
-        cout << "End" << endl;
+        cout << "End Rosenbrock" << endl;
 
         return 0;
 

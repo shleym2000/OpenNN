@@ -1,5 +1,3 @@
-#include "omp.h"
-
 //Eigen includes
 
 #include "../eigen/Eigen/src/Core/util/DisableStupidWarnings.h"
@@ -14,26 +12,30 @@
 #define EIGEN_USE_THREADS
 #endif
 
-//#define EIGEN_USE_BLAS
+#pragma warning(push, 0)
+#include "tinyxml2.h"
+#include "../eigen/unsupported/Eigen/CXX11/Tensor"
+#include "../eigen/unsupported/Eigen/CXX11/ThreadPool"
+#pragma warning(pop)
 
-//#define EIGEN_TEST_NO_LONGDOUBLE
+#ifdef OPENNN_MKL
+    #include "mkl.h"
+#endif
 
-//#define EIGEN_TEST_NO_COMPLEX
+#ifdef OPENNN_CUDA
 
-//#define EIGEN_TEST_FUNC cxx11_tensor_cuda
+#include "../../opennn-cuda/opennn_cuda/kernels.h"
+#include "cuda.h"
+#include "cuda_runtime.h"
+#include "cublas_v2.h"
+#include <cublasXt.h>
+#include <curand.h>
 
-//#define EIGEN_DEFAULT_DENSE_INDEX_TYPE Index
+#endif
 
-//#define EIGEN_USE_GPU
-
-//#define EIGEN_MALLOC_ALREADY_ALIGNED 1
-
-//#define EIGEN_UNROLLING_LIMIT 1000
 
 namespace OpenNN
 {
     typedef float type;
 }
-
-
 

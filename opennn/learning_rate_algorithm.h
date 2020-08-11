@@ -19,13 +19,14 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
+#include <omp.h>
 
 // OpenNN includes
 
+#include "config.h"
 #include "neural_network.h"
 #include "loss_index.h"
-#include "tinyxml2.h"
-#include "config.h"
+#include "optimization_algorithm.h"
 
 namespace OpenNN
 {
@@ -33,7 +34,7 @@ namespace OpenNN
 /// A learning rate that is adjusted according to an algorithm during training to minimize training time.
 
 ///
-/// This class is used by many different optimization algorithms to calculate the training rate given a training direction.
+/// This class is used by many different optimization algorithms to calculate the learning rate given a training direction.
 ///
 /// It implements the golden section method and the Brent's method.
 
@@ -46,15 +47,13 @@ public:
 
    /// Available training operators for obtaining the perform_training rate.
 
-   enum LearningRateMethod{Fixed, GoldenSection, BrentMethod};
+   enum LearningRateMethod{GoldenSection, BrentMethod};
 
    // Constructors
 
    explicit LearningRateAlgorithm();
 
    explicit LearningRateAlgorithm(LossIndex*);
-
-   explicit LearningRateAlgorithm(const tinyxml2::XMLDocument&);
 
    // Destructor
 
@@ -68,9 +67,9 @@ public:
 
        Triplet()
        {
-           A = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
-           U = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
-           B = make_pair(static_cast<type>(0.0), static_cast<type>(0.0));
+           A = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+           U = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
+           B = make_pair(numeric_limits<type>::max(), numeric_limits<type>::max());
        }
 
        /// Destructor.
@@ -98,17 +97,16 @@ public:
           }
        }
 
-
        inline type get_length() const
        {
-           return B.first - A.first;
+           return abs(B.first - A.first);
        }
 
 
        inline pair<type,type> minimum() const
        {
-
            Tensor<type, 1> losses(3);
+
            losses.setValues({A.second, U.second, B.second});
 
            const Index minimal_index = OpenNN::minimal_index(losses);
@@ -181,21 +179,41 @@ public:
        {
            ostringstream buffer;
 
-           if(A.first > U.first || U.first > B.first)
+           if(U.first < A.first)
            {
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
-                     << "Uncorrect triplet:\n"
+                     << "U is less than A:\n"
                      << struct_to_string();
 
               throw logic_error(buffer.str());
            }
 
-           if(A.second < U.second || U.second > B.second)
+           if(U.first > B.first)
            {
               buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
                      << "void check() const method.\n"
-                     << "Triplet does not satisfy minimum condition:\n"
+                     << "U is greater than A:\n"
+                     << struct_to_string();
+
+              throw logic_error(buffer.str());
+           }
+
+           if(U.second >= A.second)
+           {
+              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
+                     << "void check() const method.\n"
+                     << "fU is equal or greater than fA:\n"
+                     << struct_to_string();
+
+              throw logic_error(buffer.str());
+           }
+
+           if(U.second >= B.second)
+           {
+              buffer << "OpenNN Exception: LearningRateAlgorithm class.\n"
+                     << "void check() const method.\n"
+                     << "fU is equal or greater than fB:\n"
                      << struct_to_string();
 
               throw logic_error(buffer.str());
@@ -230,10 +248,6 @@ public:
 
    const type& get_learning_rate_tolerance() const;
 
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_learning_rate() const;
-  
    // Utilities
    
    const bool& get_display() const;
@@ -244,6 +258,7 @@ public:
    void set(LossIndex*);
 
    void set_loss_index_pointer(LossIndex*);
+   void set_thread_pool_device(ThreadPoolDevice*);
 
    // Training operators
 
@@ -254,44 +269,30 @@ public:
 
    void set_learning_rate_tolerance(const type&);
 
-   void set_warning_learning_rate(const type&);
-
-   void set_error_learning_rate(const type&);
-
    // Utilities
 
    void set_display(const bool&);
 
    void set_default();
 
-   // Training rate method
+   // Learning rate methods
 
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const DataSet::Batch&,
-                                        const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                        const type&, const Tensor<type, 1>&, const type&) const;
-
-   pair<type, type> calculate_fixed_directional_point(const DataSet::Batch&,
-                                                      const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                      const type&, const Tensor<type, 1>&, const type&) const;
-
-   pair<type, type> calculate_golden_section_directional_point(const DataSet::Batch&,
-                                                               const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                               const type&, const Tensor<type, 1>&, const type&) const;
-
-   pair<type, type> calculate_Brent_method_directional_point(const DataSet::Batch&,
-                                                             const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                             const type&, const Tensor<type, 1>&, const type&) const;
+                                        NeuralNetwork::ForwardPropagation&,
+                                        LossIndex::BackPropagation&,
+                                        OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_directional_point(const DataSet::Batch&,
-                                                const Tensor<type, 1>&, NeuralNetwork::ForwardPropagation&,
-                                                const type&, const Tensor<type, 1>&, const type&) const;
+                                                NeuralNetwork::ForwardPropagation&,
+                                                LossIndex::BackPropagation&,
+                                                OptimizationAlgorithm::OptimizationData&) const;
 
    // Serialization methods
 
-   tinyxml2::XMLDocument* to_XML() const;   
+      
    void from_XML(const tinyxml2::XMLDocument&);   
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -310,19 +311,11 @@ protected:
 
    LearningRateMethod learning_rate_method;
 
-   /// Maximum interval length for the training rate.
+   /// Maximum interval length for the learning rate.
 
-   type learning_rate_tolerance;
+   type learning_rate_tolerance = static_cast<type>(1.0e-3);
 
    type loss_tolerance = static_cast<type>(1.0e-3);
-
-   /// Big training rate value at which the algorithm displays a warning. 
-
-   type warning_learning_rate;
-
-   /// Big training rate value at which the algorithm throws an exception. 
-
-   type error_learning_rate;
 
    // UTILITIES
 
@@ -332,6 +325,19 @@ protected:
 
    const type golden_ratio = static_cast<type>(1.618);
 
+   ThreadPoolDevice* thread_pool_device = nullptr;
+
+   bool is_zero(const Tensor<type, 1>& tensor) const
+   {
+       const Index size = tensor.size();
+
+       for(Index i = 0; i < size; i++)
+       {
+           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
+       }
+
+       return true;
+   }
 };
 
 }

@@ -25,7 +25,6 @@
 
 #include "config.h"
 #include "optimization_algorithm.h"
-#include "tinyxml2.h"
 
 // Eigen includes
 
@@ -47,27 +46,76 @@ class LevenbergMarquardtAlgorithm : public OptimizationAlgorithm
 
 public:
 
+   struct LMOptimizationData : public OptimizationData
+   {
+       /// Default constructor.
+
+       explicit LMOptimizationData()
+       {
+       }
+
+       explicit LMOptimizationData(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+       {
+           set(new_Levenberg_Marquardt_method_pointer);
+       }
+
+       virtual ~LMOptimizationData() {}
+
+       void set(LevenbergMarquardtAlgorithm* new_Levenberg_Marquardt_method_pointer)
+       {
+           Levenberg_Marquardt_algorithm = new_Levenberg_Marquardt_method_pointer;
+
+           LossIndex* loss_index_pointer = Levenberg_Marquardt_algorithm->get_loss_index_pointer();
+
+           NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+           const Index parameters_number = neural_network_pointer->get_parameters_number();
+
+           // Neural network data
+
+           parameters.resize(parameters_number);
+           parameters = neural_network_pointer->get_parameters();
+
+           old_parameters.resize(parameters_number);
+
+           parameters_difference.resize(parameters_number);
+
+           potential_parameters.resize(parameters_number);
+           parameters_increment.resize(parameters_number);
+       }
+
+
+       LevenbergMarquardtAlgorithm* Levenberg_Marquardt_algorithm = nullptr;
+
+       // Neural network data
+
+       Tensor<type, 1> old_parameters;
+       Tensor<type, 1> parameters_difference;
+
+       Tensor<type, 1> parameters_increment;
+
+       type parameters_increment_norm = 0;
+
+       // Loss index data
+
+       type old_training_loss = 0;
+
+       // Optimization algorithm data
+
+       Index epoch = 0;
+   };
+
    // Constructors
 
    explicit LevenbergMarquardtAlgorithm();
 
    explicit LevenbergMarquardtAlgorithm(LossIndex*);
 
-   explicit LevenbergMarquardtAlgorithm(const tinyxml2::XMLDocument&);
-
    // Destructor
 
    virtual ~LevenbergMarquardtAlgorithm();
 
    // Get methods
-
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
 
    // Stopping criteria
 
@@ -82,7 +130,6 @@ public:
    const type& get_maximum_time() const;
 
    const bool& get_choose_best_selection() const;
-   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
@@ -111,13 +158,7 @@ public:
    void set_minimum_damping_parameter(const type&);
    void set_maximum_damping_parameter(const type&);
 
-   // Training parameters
-
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
+   void set_hardware_use(const string&);
 
    // Stopping criteria
 
@@ -132,7 +173,6 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
-   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -155,13 +195,21 @@ public:
 
    void perform_training_void();
 
+   void update_epoch(
+           const DataSet::Batch& batch,
+           NeuralNetwork::ForwardPropagation& forward_propagation,
+           LossIndex::BackPropagation& back_propagation,
+           LossIndex::SecondOrderLoss& second_order_loss_terms,
+           LMOptimizationData& optimization_data);
+
+
    string write_optimization_algorithm_type() const;
 
    // Serialization methods
 
    Tensor<string, 2> to_string_matrix() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -187,23 +235,6 @@ private:
    /// Damping parameter increase/decrease factor.
 
    type damping_parameter_factor;
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   type warning_parameters_norm;
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   type warning_gradient_norm;
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   type error_parameters_norm;
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   type error_gradient_norm;
-
 
    // Stopping criteria
 
@@ -240,9 +271,6 @@ private:
 
    bool choose_best_selection;
 
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   bool apply_early_stopping;
 
    // TRAINING HISTORY
 
@@ -253,6 +281,10 @@ private:
    /// True if the selection error history vector is to be reserved, false otherwise.
 
    bool reserve_selection_error_history;
+
+   /// Hardware use.
+
+   string hardware_use;
 };
 
 }

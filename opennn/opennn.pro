@@ -9,6 +9,7 @@
 QT = # Do not use qt
 
 TARGET = opennn
+#DESTDIR = "$$PWD/bin"
 
 TEMPLATE = lib
 
@@ -24,13 +25,17 @@ CONFIG(debug, debug|release) {
 # OpenMP library
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread -lgomp
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp
 
-QMAKE_LFLAGS += -fopenmp -pthread -lgomp
-LIBS += -fopenmp -pthread -lgomp
+QMAKE_LFLAGS += -fopenmp -pthread #-lgomp
+LIBS += -fopenmp -pthread #-lgomp
 }else:!macx{
-QMAKE_CXXFLAGS+= -fopenmp -lgomp
-QMAKE_LFLAGS += -fopenmp -lgomp
+QMAKE_CXXFLAGS+= -fopenmp #-lgomp
+QMAKE_LFLAGS += -fopenmp #-lgomp
+LIBS += -openmp -pthread #-lgomp
+}else: macx{
+INCLUDEPATH += /usr/local/opt/libomp/include
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib
 }
 
 #macx{
@@ -44,7 +49,6 @@ QMAKE_LFLAGS += -fopenmp -lgomp
 HEADERS += \
     numerical_differentiation.h \
     config.h \
-    device.h \
     opennn_strings.h \
     statistics.h \
     correlations.h \

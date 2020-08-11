@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "training_strategy.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -43,10 +42,6 @@ public:
     explicit NeuronsSelection();
 
     explicit NeuronsSelection(TrainingStrategy*);
-
-    explicit NeuronsSelection(const string&);
-
-    explicit NeuronsSelection(const tinyxml2::XMLDocument&);
 
     // Destructor
 
@@ -70,7 +65,7 @@ public:
 
        string write_stopping_condition() const;
 
-       string object_to_string() const;
+
 
        /// Neurons of the diferent neural networks.
 
@@ -78,7 +73,7 @@ public:
 
        /// Performance of the different neural networks.
 
-       Tensor<type, 1> training_loss_data;
+       Tensor<type, 1> training_error_data;
 
        /// Selection loss of the different neural networks.
 
@@ -94,7 +89,7 @@ public:
 
        /// Value of loss for the neural network with minimum selection error.
 
-       type final_training_loss;
+       type final_training_error;
 
        /// Neurons of the neural network with minimum selection error.
 
@@ -164,11 +159,12 @@ public:
     // Neuron selection methods
 
     void delete_selection_history();
-    void delete_training_loss_history();
+    void delete_training_error_history();
     void check() const;
 
     // Utilities
 
+    Tensor<Index, 1> insert_index_result(const Index&, const Tensor<Index, 1>&) const;
     Tensor<type, 1> insert_result(const type&, const Tensor<type, 1>&) const;
     Tensor< Tensor<type, 1>, 1> insert_result(const Tensor<type, 1>&, const Tensor< Tensor<type, 1>, 1>&) const;
 
@@ -198,7 +194,7 @@ protected:
 
     /// Performance of all the neural networks trained.
 
-    Tensor<type, 1> training_loss_history;
+    Tensor<type, 1> training_error_history;
 
     /// Parameters of all the neural networks trained.
 

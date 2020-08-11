@@ -20,11 +20,6 @@
 // OpenNN includes
 
 #include "config.h"
-//
-
-// Eigen includes
-
-#include "../eigen/unsupported/Eigen/CXX11/Tensor"
 
 using namespace std;
 using namespace Eigen;
@@ -161,6 +156,14 @@ struct Histogram
 
   explicit Histogram(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
+  /// Data constructor
+
+  explicit Histogram(const Tensor<type, 1>&, const Index&);
+
+  /// Probabillities constructor
+
+  explicit Histogram(const Tensor<type, 1>&);
+
   /// Destructor.
 
   virtual ~Histogram();
@@ -185,6 +188,8 @@ struct Histogram
 
   Index calculate_frequency(const type&) const;
 
+  void save(const string&) const;
+
   /// Positions of the bins in the histogram.
 
   Tensor<type, 1> centers;
@@ -204,14 +209,16 @@ struct Histogram
      // Minimum
 
      type minimum(const Tensor<type, 1>&);
+     type minimum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Index minimum(const Tensor<Index, 1>&);
-     time_t minimum(const Tensor<time_t, 1>&);
+//     time_t minimum(const Tensor<time_t, 1>&);
      type minimum(const Tensor<type, 2>&);
      Tensor<type, 1> columns_minimums(const Tensor<type, 2>&, const Tensor<Index, 1>& = Tensor<Index, 1>(), const Tensor<Index, 1>& = Tensor<Index, 1>());
 
      // Maximum
 
      type maximum(const Tensor<type, 1>&);
+     type maximum(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Index maximum(const Tensor<Index, 1>&);
      time_t maximum(const Tensor<time_t, 1>&);
      type maximum(const Tensor<type, 2>&);
@@ -229,7 +236,6 @@ struct Histogram
      Tensor<type, 1> mean(const Tensor<type, 2>&);
      Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&);
      Tensor<type, 1> mean(const Tensor<type, 2>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
-     Tensor<type, 1> columns_mean(const Tensor<type, 2>&);
      Tensor<type, 1> rows_means(const Tensor<type, 2>&, const Tensor<Index, 1>&);
 
      // Median
@@ -241,9 +247,11 @@ struct Histogram
 
      // Variance
      type variance(const Tensor<type, 1>&);
+     type variance(const Tensor<type, 1>&, const Tensor<Index, 1>&);
 
      // Standard deviation
      type standard_deviation(const Tensor<type, 1>&);
+     type standard_deviation(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      Tensor<type, 1> standard_deviation(const Tensor<type, 1>&, const Index&);
 
      // Assymetry
@@ -259,7 +267,6 @@ struct Histogram
      // Box plot
      BoxPlot box_plot(const Tensor<type, 1>&);
      BoxPlot box_plot(const Tensor<type, 1>&, const Tensor<Index, 1>&);
-     Tensor<BoxPlot, 1> box_plots(const Tensor<type, 2>&, const Tensor<Tensor<Index, 1>, 1>&, const Tensor<Index, 1>&);
 
      // Descriptives vector
      Descriptives descriptives(const Tensor<type, 1>&);
@@ -278,13 +285,12 @@ struct Histogram
 
      // Distribution
      Index perform_distribution_distance_analysis(const Tensor<type, 1>&);
-     Index perform_distribution_distance_analysis_missing_values(const Tensor<type, 1>&, const Tensor<Index, 1>&);
      type normal_distribution_distance(const Tensor<type, 1>&);
      type half_normal_distribution_distance(const Tensor<type, 1>&);
      type uniform_distribution_distance(const Tensor<type, 1>&);
 
      // Normality
-     Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>&);
+//     Tensor<bool, 1> perform_normality_analysis(const Tensor<type, 1>&);
      type normality_parameter(const Tensor<type, 1>&);
      //bool perform_Lilliefors_normality_test(const Tensor<type, 1>&, const type&);
      //Tensor<bool, 1> perform_Lilliefors_normality_test(const Tensor<type, 1>&, const Tensor<type, 1>&);
@@ -312,17 +318,13 @@ struct Histogram
      Tensor<Index, 1> maximal_indices();
      Tensor<Tensor<Index, 1>, 1> minimal_maximal_indices();
 
-     // Percentiles @todo, mix mising values with percentiles
+     // Percentiles
      Tensor<type, 1> percentiles(const Tensor<type, 1>&);
-     Tensor<type, 1> percentiles_missing_values(const Tensor<type, 1>&);
 
      // Means by categories
      Tensor<type, 1> means_by_categories(const Tensor<type, 2>& matrix);
 
-     // Means continuous
-
      // NAN methods
-
      Index count_nan(const Tensor<type,1>&);
 }
 
