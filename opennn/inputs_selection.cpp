@@ -31,22 +31,6 @@ InputsSelection::InputsSelection(TrainingStrategy* new_training_strategy_pointer
 }
 
 
-/// File constructor.
-
-InputsSelection::InputsSelection(const string&)
-    : training_strategy_pointer(nullptr)
-{
-}
-
-
-/// XML constructor.
-
-InputsSelection::InputsSelection(const tinyxml2::XMLDocument&)
-    : training_strategy_pointer(nullptr)
-{
-}
-
-
 /// Destructor.
 
 InputsSelection::~InputsSelection()
@@ -110,9 +94,9 @@ const Index& InputsSelection::get_trials_number() const
 
 /// Returns true if the loss index losses are to be reserved, and false otherwise.
 
-const bool& InputsSelection::get_reserve_error_data() const
+const bool& InputsSelection::get_reserve_training_error_data() const
 {
-    return reserve_error_data;
+    return reserve_training_error_data;
 }
 
 
@@ -154,7 +138,7 @@ const type& InputsSelection::get_selection_error_goal() const
 
 const Index& InputsSelection::get_maximum_iterations_number() const
 {
-    return maximum_epochs_number;
+    return maximum_iterations_number;
 }
 
 
@@ -218,7 +202,7 @@ void InputsSelection::set_default()
 
     // Results
 
-    reserve_error_data = true;
+    reserve_training_error_data = true;
     reserve_selection_error_data = true;
     reserve_minimal_parameters = true;
 
@@ -228,7 +212,7 @@ void InputsSelection::set_default()
 
     selection_error_goal = 0;
 
-    maximum_epochs_number = 1000;
+    maximum_iterations_number = 1000;
 
     maximum_correlation = 1.0;
     minimum_correlation = 0;
@@ -265,9 +249,9 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
 /// Sets the reserve flag for the loss data.
 /// @param new_reserve_error_data Flag value.
 
-void InputsSelection::set_reserve_error_data(const bool& new_reserve_error_data)
+void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
 {
-    reserve_error_data = new_reserve_error_data;
+    reserve_training_error_data = new_reserve_training_error_data;
 }
 
 
@@ -329,7 +313,7 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
 
 void InputsSelection::set_maximum_iterations_number(const Index& new_maximum_iterations_number)
 {
-    maximum_epochs_number = new_maximum_iterations_number;
+    maximum_iterations_number = new_maximum_iterations_number;
 }
 
 
@@ -818,13 +802,13 @@ void InputsSelection::check() const
 
 
 
-    const Index selection_instances_number = data_set_pointer->get_selection_instances_number();
+    const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    if(selection_instances_number == 0)
+    if(selection_samples_number == 0)
     {
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "void check() const method.\n"
-               << "Number of selection instances is zero.\n";
+               << "Number of selection samples is zero.\n";
 
         throw logic_error(buffer.str());
     }
@@ -876,86 +860,6 @@ string InputsSelection::Results::write_stopping_condition() const
 }
 
 
-/// Returns a string representation of the current inputs selection results structure.
-
-string InputsSelection::Results::object_to_string() const
-{
-    ostringstream buffer;
-    /*
-       // Inputs history
-
-       if(!inputs_data.empty())
-       {
-         buffer << "% Inputs history:\n"
-                << inputs_data.to_row_matrix() << "\n";
-       }
-
-       // Loss history
-
-       if(!loss_data.empty())
-       {
-           buffer << "% Loss history:\n"
-                  << loss_data.to_row_matrix() << "\n";
-       }
-
-       // Selection loss history
-
-       if(!selection_error_data.empty())
-       {
-           buffer << "% Selection loss history:\n"
-                  << selection_error_data.to_row_matrix() << "\n";
-       }
-
-       // Minimal parameters
-
-       if(!minimal_parameters.empty())
-       {
-           buffer << "% Minimal parameters:\n"
-                  << minimal_parameters << "\n";
-       }
-
-       // Stopping condition
-
-       buffer << "% Stopping condition\n"
-              << write_stopping_condition() << "\n";
-
-       // Optimum selection error
-
-       if(abs(final_selection_error - 0) > numeric_limits<type>::epsilon())
-       {
-           buffer << "% Optimum selection error:\n"
-                  << final_selection_error << "\n";
-       }
-
-       // Final training loss
-
-       if(abs(final_training_error - 0) > numeric_limits<type>::epsilon())
-       {
-           buffer << "% Final training loss:\n"
-                  << final_training_error << "\n";
-       }
-
-       // Optimal input
-
-       if(!optimal_inputs_indices.empty())
-       {
-           buffer << "% Optimal input:\n"
-                  << optimal_inputs_indices << "\n";
-       }
-
-       // Iterations number
-
-       buffer << "% Number of iterations:\n"
-              << iterations_number << "\n";
-
-       // Elapsed time
-
-       buffer << "% Elapsed time:\n"
-              << write_elapsed_time(elapsed_time) << "\n";
-    */
-    return buffer.str();
-}
-
 /// Writes the time from seconds in format HH:mm:ss.
 
 const string InputsSelection::write_elapsed_time(const type& time) const
@@ -999,6 +903,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
 
     return elapsed_time.str();
 }
+
 
 /// Return the index of uses where is the(input_number)-th input.
 /// @param uses Vector of the uses of the variables.

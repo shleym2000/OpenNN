@@ -7,7 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "sum_squared_error_test.h"
-
+#include <omp.h>
 
 SumSquaredErrorTest::SumSquaredErrorTest() : UnitTesting() 
 {
@@ -18,7 +18,7 @@ SumSquaredErrorTest::~SumSquaredErrorTest()
 {
 }
 
-/*
+
 void SumSquaredErrorTest::test_constructor()
 {
    cout << "test_constructor\n";
@@ -30,22 +30,19 @@ void SumSquaredErrorTest::test_constructor()
    assert_true(sum_squared_error_1.has_neural_network() == false, LOG);
    assert_true(sum_squared_error_1.has_data_set() == false, LOG);
 
-   // Neural network
-
-   NeuralNetwork neural_network_1;
-   SumSquaredError sum_squared_error_2(&neural_network_1);
-
-   assert_true(sum_squared_error_2.has_neural_network() == true, LOG);
-   assert_true(sum_squared_error_2.has_data_set() == false, LOG);
-
    // Neural network and data set
 
    NeuralNetwork neural_network_2;
    DataSet data_set;
-   SumSquaredError sum_squared_error_3(&neural_network_2, &data_set);
 
-   assert_true(sum_squared_error_3.has_neural_network() == true, LOG);
-   assert_true(sum_squared_error_3.has_data_set() == true, LOG);
+//   assert_true(sum_squared_error_3.has_data_set() == true, LOG);
+
+   NeuralNetwork neural_network_3;
+   SumSquaredError sum_squared_error_4(&neural_network_2, &data_set);
+
+   assert_true(sum_squared_error_4.has_neural_network() == true, LOG);
+   assert_true(sum_squared_error_4.has_data_set() == true, LOG);
+
 }
 
 
@@ -55,155 +52,410 @@ void SumSquaredErrorTest::test_destructor()
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error()
+void SumSquaredErrorTest::test_calculate_error() // @todo
 {
-   cout << "test_calculate_training_error\n";
+   cout << "test_calculate_error\n";
 
-   NeuralNetwork neural_network;
-   Tensor<type, 1> parameters;
+//   NeuralNetwork neural_network;
 
-   DataSet data_set;
-   Tensor<type, 2> data;
+//   Tensor<type, 1> parameters;
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   DataSet data_set;
+//   Tensor<type, 2> data;
 
-   type training_error;
+//   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+//   sum_squared_error.set_thread_pool_device(thread_pool_device);
 
-   // Test
+//   // Test 0
 
-   neural_network.set(NeuralNetwork::Approximation, {2, 2});
-   neural_network.set_parameters_constant(0.0);
+//        //Dataset
 
-   data_set.set(1, 2, 2);
-   data_set.initialize_data(0.0);
+//   data_set.set(1, 2, 2);
+//   data_set.initialize_data(0.0);
+//   data_set.set_training();
 
-   training_error = 0.0;
+//   DataSet::Batch batch(1, &data_set);
 
-   training_error = sum_squared_error.calculate_training_error();
+//   Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
+//   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
+//   Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
 
-   assert_true(training_error == 0.0, LOG);
+//   batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-   // Test
+//   // Neural network
 
-   neural_network.set(NeuralNetwork::Approximation, {2, 2});
-   neural_network.set_parameters_constant(0.0);
+//   Index inputs_number = 2;
+//   Index target_number = 2;
+//   Tensor<Index, 1>architecture(2);
+//   architecture.setValues({inputs_number,target_number});
 
-   data_set.set(1, 2, 2);
-   data_set.initialize_data(1.0);
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_thread_pool_device(thread_pool_device);
+//   neural_network.set_parameters_constant(0.0);
 
-   training_error = sum_squared_error.calculate_training_error();
+//   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &sum_squared_error);
 
-   assert_true(training_error == 2.0, LOG);
+//   neural_network.forward_propagate(batch, forward_propagation);
+//   sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   // Test
+//   sum_squared_error.calculate_error(batch, forward_propagation, training_back_propagation);
 
-   neural_network.set(NeuralNetwork::Approximation, {2, 2});
-   neural_network.set_parameters_random();
+//   assert_true(training_back_propagation.error == 0.0, LOG);
 
-   parameters = neural_network.get_parameters();
+//   // Test 1
 
-   data_set.set(10, 2, 2);
-   data_set.set_data_random();
+//        //Dataset
 
-   assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters)) < numeric_limits<type>::min(), LOG);
+//   data_set.set(1, 2, 2);
+//   data_set.initialize_data(1.0);
+//   data_set.set_training();
 
-   // Test
+//   DataSet::Batch batch_1(1, &data_set);
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
-   neural_network.set_parameters_random();
+//   training_samples_indices = data_set.get_training_samples_indices();
+//   inputs_indices = data_set.get_input_variables_indices();
+//   targets_indices = data_set.get_target_variables_indices();
 
-   parameters = neural_network.get_parameters();
+//   batch_1.fill(training_samples_indices, inputs_indices, targets_indices);
 
-   data_set.set(1, 1, 1);
-   data_set.set_data_random();
+//        // Neural network
 
-   assert_true(abs(sum_squared_error.calculate_training_error() - sum_squared_error.calculate_training_error(parameters*2.0)) > numeric_limits<type>::min(), LOG);
+//   neural_network.set_parameters_constant(0.0);
 
-   // Test
+//   NeuralNetwork::ForwardPropagation forward_propagation_1(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation_1(data_set.get_training_samples_number(), &sum_squared_error);
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
-   neural_network.set_parameters_random();
+//   neural_network.forward_propagate(batch_1, forward_propagation_1);
+//   sum_squared_error.back_propagate(batch_1, forward_propagation_1, training_back_propagation_1);
 
-   parameters = neural_network.get_parameters();
+//   sum_squared_error.calculate_error(batch_1, forward_propagation_1, training_back_propagation_1);
 
-   data_set.set(1, 1, 1);
-   data_set.set_data_random();
+//   assert_true(training_back_propagation_1.error == 2.0, LOG);
 
-   assert_true(sum_squared_error.calculate_training_error() != 0.0, LOG);
+//   // Test 2
 
-    // Test
+//        //Dataset
 
-   data_set.set(1, 1, 1);
-   data_set.initialize_data(0.0);
-   data_set.set_training();
+//   data_set.set(1, 1, 1);
+//   data_set.initialize_data(0.0);
+//   data_set.set_training();
 
-   neural_network.set();
+//   DataSet::Batch batch_2(1, &data_set);
 
-   RecurrentLayer* recurrent_layer = new RecurrentLayer(1, 1);
+//   training_samples_indices = data_set.get_training_samples_indices();
+//   inputs_indices = data_set.get_input_variables_indices();
+//   targets_indices = data_set.get_target_variables_indices();
 
-   neural_network.add_layer(recurrent_layer);
+//   batch_2.fill(training_samples_indices, inputs_indices, targets_indices);
 
-   PerceptronLayer* perceptron_layer = new PerceptronLayer(1,1);
+//        // Neural network
 
-   neural_network.add_layer(perceptron_layer);
+//   neural_network.set();
 
-   neural_network.set_parameters_constant(0.0);
+//   RecurrentLayer* recurrent_layer = new RecurrentLayer(1, 1);
+//   neural_network.add_layer(recurrent_layer);
+//   PerceptronLayer* perceptron_layer = new PerceptronLayer(1,1);
+//   neural_network.add_layer(perceptron_layer);
 
-   training_error = sum_squared_error.calculate_training_error();
+//   neural_network.set_thread_pool_device(thread_pool_device);
 
-   assert_true(abs(training_error) < numeric_limits<type>::min(), LOG);
+//   neural_network.set_parameters_constant(0.0);
+
+//   NeuralNetwork::ForwardPropagation forward_propagation_2(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation_2(data_set.get_training_samples_number(), &sum_squared_error);
+
+//   neural_network.forward_propagate(batch_2, forward_propagation_2);
+//   sum_squared_error.back_propagate(batch_2, forward_propagation_2, training_back_propagation_2);
+
+//   sum_squared_error.calculate_error(batch_2, forward_propagation_2, training_back_propagation_2);
+
+//   assert_true(training_back_propagation_2.error == 0.0, LOG);
+
+//   // Test 3
+
+//        //Dataset
+
+//   data.resize(9,5);
+//   data.setValues({{-1,-1,1,-1,3},
+//                       {-1,0,1,0,2},
+//                       {-1,1,1,1,2},
+//                       {0,-1,1,0,2},
+//                       {0,0,1,1,1},
+//                       {0,1,1,2,2},
+//                       {1,-2,1,1,3},
+//                       {1,0,1,2,2},
+//                       {1,1,1,3,3}});
+//   data_set.set(data);
+//   data_set.set(9, 3, 2);
+//   data_set.set_training();
+
+//   DataSet::Batch batch_3(9, &data_set);
+
+//   training_samples_indices = data_set.get_training_samples_indices();
+//   inputs_indices = data_set.get_input_variables_indices();
+//   targets_indices = data_set.get_target_variables_indices();
+
+//   batch_3.fill(training_samples_indices, inputs_indices, targets_indices);
+
+//        // Neural network
+
+//   neural_network.set();
+
+//   architecture.setValues({3,1,2});
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_thread_pool_device(thread_pool_device);
+//   neural_network.set_parameters_constant(1.0);
+
+//   NeuralNetwork::ForwardPropagation forward_propagation_3(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation_3(data_set.get_training_samples_number(), &sum_squared_error);
+
+//   neural_network.forward_propagate(batch_3, forward_propagation_3);
+//   sum_squared_error.back_propagate(batch_3, forward_propagation_3, training_back_propagation_3);
+
+//   sum_squared_error.calculate_error(batch_3, forward_propagation_3, training_back_propagation_3);
+
+//   assert_true(training_back_propagation_3.error == 8.0, LOG);
+
 }
 
 
-void SumSquaredErrorTest::test_calculate_layers_delta()
+void SumSquaredErrorTest::test_calculate_output_gradient() // @todo
 {
-   cout << "test_calculate_layers_delta\n";
+   cout << "test_calculate_output_gradient\n";
+//   NeuralNetwork neural_network;
 
-   DataSet data_set;
-   NeuralNetwork neural_network;
-   NumericalDifferentiation numerical_differentation;
+//   Tensor<type, 1> parameters;
 
-   Tensor<type, 1> parameters;
+//   DataSet data_set;
+//   Tensor<type, 2> data;
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+//   sum_squared_error.set_thread_pool_device(thread_pool_device);
 
-   // Test
+//   // Test 0
 
-    Index inputs_number = 2;
-    Index outputs_number = 2;
-    Index instances_number = 10;
-    Index hidden_neurons = 1;
+//        //Dataset
 
-    Tensor<Index, 1> instances;
-    instances.set(instances_number);
-    instances.initialize_sequential();
+//   data_set.set(1, 2, 2);
+//   data_set.initialize_data(0.0);
+//   data_set.set_training();
 
-    neural_network.set(NeuralNetwork::Approximation, {inputs_number,hidden_neurons,outputs_number});
-    neural_network.set_parameters_random();
+//   DataSet::Batch batch(1, &data_set);
 
-    data_set.set(instances_number,inputs_number,outputs_number);
-    data_set.set_data_random();
+//   Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
+//   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
+//   Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
 
-    Tensor<type, 2> inputs = data_set.get_input_data(instances);
-    Tensor<type, 2> targets = data_set.get_target_data(instances);
+//   batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-    Tensor<type, 2> outputs = neural_network.calculate_outputs(inputs);
-    Tensor<type, 2> output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
+//        // Neural network
 
-    Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
+//   Index inputs_number = 2;
+//   Index target_number = 2;
+//   Tensor<Index, 1>architecture(2);
+//   architecture.setValues({inputs_number,target_number});
 
-    Tensor<Tensor<type, 2>, 1> layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_thread_pool_device(thread_pool_device);
+//   neural_network.set_parameters_constant(0.0);
 
-    assert_true(layers_delta[0].dimension(0) == instances_number, LOG);
-    assert_true(layers_delta[0].dimension(1) == hidden_neurons, LOG);
-    assert_true(layers_delta[1].dimension(0) == instances_number, LOG);
-    assert_true(layers_delta[1].dimension(1) == outputs_number, LOG);
+//   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &sum_squared_error);
+
+//   neural_network.forward_propagate(batch, forward_propagation);
+//   sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
+
+//   sum_squared_error.calculate_output_gradient(batch, forward_propagation, training_back_propagation);
+
+//   assert_true(training_back_propagation.output_gradient(0) == 0.0, LOG);
+//   assert_true(training_back_propagation.output_gradient(1) == 0.0, LOG);
+
+//   // Test 1
+
+//        //Dataset
+
+//   data_set.set(1, 2, 2);
+//   data_set.initialize_data(1.0);
+//   data_set.set_training();
+
+//   DataSet::Batch batch_1(1, &data_set);
+
+//   training_samples_indices = data_set.get_training_samples_indices();
+//   inputs_indices = data_set.get_input_variables_indices();
+//   targets_indices = data_set.get_target_variables_indices();
+
+//   batch_1.fill(training_samples_indices, inputs_indices, targets_indices);
+
+//        // Neural network
+
+//   Tensor<type, 1> numerical_gradient;
+
+//   neural_network.set_parameters_constant(0.0);
+
+//   NeuralNetwork::ForwardPropagation forward_propagation_1(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation_1(data_set.get_training_samples_number(), &sum_squared_error);
+
+//   neural_network.forward_propagate(batch_1, forward_propagation_1);
+//   sum_squared_error.back_propagate(batch_1, forward_propagation_1, training_back_propagation_1);
+
+//   sum_squared_error.calculate_output_gradient(batch_1, forward_propagation_1, training_back_propagation_1);
+
+//   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
+
+//   assert_true(abs(training_back_propagation_1.output_gradient(0)-numerical_gradient(4)) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(training_back_propagation_1.output_gradient(1)-numerical_gradient(5)) < static_cast<type>(1e-3), LOG);
+
+//   // Test 2_1 / Perceptron
+
+//        //Dataset
+//   Index samples_number = 3;
+//   inputs_number = 1;
+//   Index hidden_neurons = 1;
+//   Index outputs_number = 2;
+
+//   data.resize(samples_number,inputs_number+outputs_number);
+//   data.setValues({{-1,-1,3},{-1,0,2},{-1,1,2},});
+
+//   data_set.set(data);
+//   data_set.set(samples_number, inputs_number, outputs_number);
+//   data_set.set_training();
+
+
+//   DataSet::Batch batch_2(3, &data_set);
+
+//   training_samples_indices = data_set.get_training_samples_indices();
+//   inputs_indices = data_set.get_input_variables_indices();
+//   targets_indices = data_set.get_target_variables_indices();
+
+//   batch_2.fill(training_samples_indices, inputs_indices, targets_indices);
+
+//        // Neural network
+
+//   neural_network.set();
+
+//   PerceptronLayer* perceptron_layer = new PerceptronLayer(hidden_neurons,outputs_number);
+//   neural_network.add_layer(perceptron_layer);
+
+//   neural_network.set_thread_pool_device(thread_pool_device);
+
+//   Tensor<type, 1> parameters_(16);
+//   parameters_.setValues({1,1,2,0, 1,2,1,1, 1,2,1,0, 1,1,2,1});
+//   neural_network.set_parameters(parameters_);
+
+//   NeuralNetwork::ForwardPropagation forward_propagation_2(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation_2(data_set.get_training_samples_number(), &sum_squared_error);
+
+//   neural_network.forward_propagate(batch_2, forward_propagation_2);
+//   sum_squared_error.back_propagate(batch_2, forward_propagation_2, training_back_propagation_2);
+
+//   sum_squared_error.calculate_output_gradient(batch_2, forward_propagation_2, training_back_propagation_2);
+
+////   numerical_gradient.resize(neural_network.get_parameters_number());
+////   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
+
+//   assert_true(abs(training_back_propagation_2.output_gradient(0,1) + static_cast<type>(4.476)) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(training_back_propagation_2.output_gradient(1,0) + static_cast<type>(1.523)) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(training_back_propagation_2.output_gradient(2,1) + static_cast<type>(2.476)) < static_cast<type>(1e-3), LOG);
+
+//   // Test 2_2 / Recurrent
+
+//        // Neural network
+
+//   neural_network.set();
+
+//   RecurrentLayer* recurrent_layer = new RecurrentLayer(inputs_number, outputs_number);
+//   recurrent_layer->initialize_hidden_states(0.0);
+//   recurrent_layer->set_timesteps(10);
+//   neural_network.add_layer(recurrent_layer);
+
+//   neural_network.set_thread_pool_device(thread_pool_device);
+
+//   neural_network.set_parameters(parameters_);
+
+//   NeuralNetwork::ForwardPropagation forward_propagation_2_2(data_set.get_training_samples_number(), &neural_network);
+//   LossIndex::BackPropagation training_back_propagation_2_2(data_set.get_training_samples_number(), &sum_squared_error);
+
+//   neural_network.forward_propagate(batch_2, forward_propagation_2_2);
+//   sum_squared_error.back_propagate(batch_2, forward_propagation_2_2, training_back_propagation_2_2);
+
+//   sum_squared_error.calculate_output_gradient(batch_2, forward_propagation_2_2, training_back_propagation_2_2);
+
+////   numerical_gradient.resize(neural_network.get_parameters_number());
+////   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation(&sum_squared_error);
+
+//   assert_true(abs(training_back_propagation_2_2.output_gradient(0,1) + 6) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(training_back_propagation_2_2.output_gradient(1,0) + 0) < static_cast<type>(1e-3), LOG);
+//   assert_true(abs(training_back_propagation_2_2.output_gradient(2,1) + 4) < static_cast<type>(1e-3), LOG);
+
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error_gradient()
+void SumSquaredErrorTest::test_calculate_Jacobian_gradient() // @todo
 {
-   cout << "test_calculate_training_error_gradient\n";
+   cout << "test_calculate_Jacobian_gradient\n";
+//   NeuralNetwork neural_network;
+
+//   Tensor<type, 1> parameters;
+
+//   DataSet data_set;
+//   Tensor<type, 2> data;
+
+//   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   sum_squared_error.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+//   sum_squared_error.set_thread_pool_device(thread_pool_device);
+
+//   // Test 0
+
+//        //Dataset
+
+//   Index inputs_number = 2;
+//   Index target_number = 3;
+
+//   data_set.set(1, inputs_number, target_number);
+//   data_set.initialize_data(0.0);
+//   data_set.set_training();
+
+//   DataSet::Batch batch(1, &data_set);
+
+//   Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
+//   Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
+//   Tensor<Index,1> targets_indices = data_set.get_target_variables_indices();
+
+//   batch.fill(training_samples_indices, inputs_indices, targets_indices);
+
+//        // Neural network
+
+//   Tensor<Index, 1>architecture(2);
+//   architecture.setValues({inputs_number,target_number});
+
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_thread_pool_device(thread_pool_device);
+//   neural_network.set_parameters_constant(0.0);
+
+//   NeuralNetwork::ForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
+//   neural_network.forward_propagate(batch, forward_propagation);
+
+//   LossIndex::BackPropagation training_back_propagation(data_set.get_training_samples_number(), &sum_squared_error);
+//   sum_squared_error.back_propagate(batch, forward_propagation, training_back_propagation);
+
+//   LossIndex::SecondOrderLoss second_order_loss(neural_network.get_parameters_number(), training_samples_indices.size());
+//   sum_squared_error.calculate_error_terms_Jacobian(batch, forward_propagation, training_back_propagation, second_order_loss);
+//   sum_squared_error.calculate_Jacobian_gradient(batch, forward_propagation, second_order_loss);
+
+//   cout << second_order_loss.gradient << endl;
+
+//   assert_true(second_order_loss.gradient(0) == 0.0, LOG);
+//   assert_true(second_order_loss.gradient(1) == 0.0, LOG);
+
+}
+
+
+void SumSquaredErrorTest::test_calculate_error_gradient()
+{
+   cout << "test_calculate_error_gradient\n";
 
    DataSet data_set;
    NeuralNetwork neural_network;
@@ -218,17 +470,17 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
    Index inputs_number;
    Index outputs_number;
-   Index instances_number;
+   Index samples_number;
    Index hidden_neurons;
 
    // Test lstm
 {
-    instances_number = 10;
+    samples_number = 10;
     inputs_number = 3;
     hidden_neurons = 2;
     outputs_number = 4;
 
-    data_set.set(instances_number, inputs_number, outputs_number);
+    data_set.set(samples_number, inputs_number, outputs_number);
 
     data_set.set_data_random();
 
@@ -250,23 +502,23 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     parameters = neural_network.get_parameters();
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+//    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+//    gradient = sum_squared_error.calculate_error_gradient();
 
-    assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
+//    assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
 
    neural_network.set();
 
    // Test recurrent
 {
-    instances_number = 5;
+    samples_number = 5;
     inputs_number = 3;
     hidden_neurons = 7;
     outputs_number = 3;
 
-    data_set.set(instances_number, inputs_number, outputs_number);
+    data_set.set(samples_number, inputs_number, outputs_number);
 
     data_set.set_data_random();
 
@@ -289,23 +541,23 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     parameters = neural_network.get_parameters();
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+//    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+//    gradient = sum_squared_error.calculate_error_gradient();
 
-    assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
+//    assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
 
    // Test perceptron
 
    neural_network.set();
 {
-    instances_number = 5;
+    samples_number = 5;
     inputs_number = 2;
     hidden_neurons = 7;
     outputs_number = 4;
 
-    data_set.set(instances_number, inputs_number, outputs_number);
+    data_set.set(samples_number, inputs_number, outputs_number);
 
     data_set.set_data_random();
 
@@ -319,226 +571,236 @@ void SumSquaredErrorTest::test_calculate_training_error_gradient()
 
     neural_network.add_layer(output_perceptron_layer);
 
-    numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+//    numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-    gradient = sum_squared_error.calculate_training_error_gradient();
+//    gradient = sum_squared_error.calculate_error_gradient();
 
-    assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
+//    assert_true(numerical_gradient-gradient < 1.0e-3, LOG);
 }
 
    // Test convolutional
 {
-   instances_number = 5;
+   samples_number = 5;
    inputs_number = 147;
    outputs_number = 1;
 
-   data_set.set(instances_number, inputs_number, outputs_number);
-   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
-   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
+   data_set.set(samples_number, inputs_number, outputs_number);
+//   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
+//   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
    data_set.set_data_random();
    data_set.set_training();
 
    const type parameters_minimum = -100.0;
    const type parameters_maximum = 100.0;
 
-   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-   Tensor<type, 2> filters_1({2,3,2,2}, 0);
-   filters_1.setRandom(parameters_minimum,parameters_maximum);
-   convolutional_layer_1->set_synaptic_weights(filters_1);
-   Tensor<type, 1> biases_1(2, 0);
-   biases_1.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_1->set_biases(biases_1);
+//   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
+//   Tensor<type, 2> filters_1({2,3,2,2}, 0);
+//   filters_1.setRandom(parameters_minimum,parameters_maximum);
+//   convolutional_layer_1->set_synaptic_weights(filters_1);
+//   Tensor<type, 1> biases_1(2, 0);
+//   biases_1.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_1->set_biases(biases_1);
 
-   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
-   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<type, 2> filters_2({2,2,2,2}, 0);
-   filters_2.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_2->set_synaptic_weights(filters_2);
-   Tensor<type, 1> biases_2(2, 0);
-   biases_2.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_2->set_biases(biases_2);
+//   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
+//   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+//   Tensor<type, 2> filters_2({2,2,2,2}, 0);
+//   filters_2.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_2->set_synaptic_weights(filters_2);
+//   Tensor<type, 1> biases_2(2, 0);
+//   biases_2.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_2->set_biases(biases_2);
 
-   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
+//   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
 
-   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
-   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-   Tensor<type, 2> filters_3({1,2,2,2}, 0);
-   filters_3.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_3->set_synaptic_weights(filters_3);
-   Tensor<type, 1> biases_3(1, 0);
-   biases_3.setRandom(parameters_minimum, parameters_maximum);
-   convolutional_layer_3->set_biases(biases_3);
+//   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
+//   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+//   Tensor<type, 2> filters_3({1,2,2,2}, 0);
+//   filters_3.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_3->set_synaptic_weights(filters_3);
+//   Tensor<type, 1> biases_3(1, 0);
+//   biases_3.setRandom(parameters_minimum, parameters_maximum);
+//   convolutional_layer_3->set_biases(biases_3);
 
-   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
-   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
+//   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
+//   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
 
-   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
-   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
+//   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
+//   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
 
-   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
+//   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
-   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+//   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
+//   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
 
-   neural_network.set();
-   neural_network.add_layer(convolutional_layer_1);
-   neural_network.add_layer(convolutional_layer_2);
-   neural_network.add_layer(pooling_layer_1);
-   neural_network.add_layer(convolutional_layer_3);
-   neural_network.add_layer(pooling_layer_2);
-   neural_network.add_layer(pooling_layer_3);
-   neural_network.add_layer(perceptron_layer);
-   neural_network.add_layer(probabilistic_layer);
+//   neural_network.set();
+//   neural_network.add_layer(convolutional_layer_1);
+//   neural_network.add_layer(convolutional_layer_2);
+//   neural_network.add_layer(pooling_layer_1);
+//   neural_network.add_layer(convolutional_layer_3);
+//   neural_network.add_layer(pooling_layer_2);
+//   neural_network.add_layer(pooling_layer_3);
+//   neural_network.add_layer(perceptron_layer);
+//   neural_network.add_layer(probabilistic_layer);
 
-   numerical_gradient = sum_squared_error.calculate_training_error_gradient_numerical_differentiation();
+//   numerical_gradient = sum_squared_error.calculate_error_gradient_numerical_differentiation();
 
-   gradient = sum_squared_error.calculate_training_error_gradient();
+//   gradient = sum_squared_error.calculate_error_gradient();
 
-   assert_true(absolute_value(numerical_gradient - gradient) < 1e-3, LOG);
+//   assert_true(absolute_value(numerical_gradient - gradient) < 1e-3, LOG);
 }
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error_terms()
+void SumSquaredErrorTest::test_calculate_error_terms()
 {
-   cout << "test_calculate_training_error_terms\n";
+   cout << "test_calculate_error_terms\n";
 }
 
 
-void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
+void SumSquaredErrorTest::test_calculate_error_terms_Jacobian()
 {   
-   cout << "test_calculate_training_error_terms_Jacobian\n";
+   cout << "test_calculate_error_terms_Jacobian\n";
 
-   NumericalDifferentiation nd;
+//   NumericalDifferentiation nd;
 
-   NeuralNetwork neural_network;
-   Tensor<Index, 1> architecture;
-   Tensor<type, 1> parameters;
+//   NeuralNetwork neural_network;
+//   Tensor<Index, 1> architecture;
+//   Tensor<type, 1> parameters;
 
-   DataSet data_set;
+//   DataSet data_set;
 
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-   Tensor<type, 1> gradient;
+//   Tensor<type, 1> gradient;
 
-   Tensor<type, 1> terms;
-   Tensor<type, 2> terms_Jacobian;
-   Tensor<type, 2> numerical_Jacobian_terms;
+//   Tensor<type, 1> terms;
+//   Tensor<type, 2> terms_Jacobian;
+//   Tensor<type, 2> numerical_Jacobian_terms;
 
-   Tensor<Index, 1> instances;
+//   Tensor<Index, 1> samples;
 
-   Tensor<type, 2> inputs;
-   Tensor<type, 2> targets;
+//   Tensor<type, 2> inputs;
+//   Tensor<type, 2> targets;
 
-   Tensor<type, 2> outputs;
-   Tensor<type, 2> output_gradient;
+//   Tensor<type, 2> outputs;
+//   Tensor<type, 2> output_gradient;
 
-   Tensor<Tensor<type, 2>, 1> layers_activations;
+//   Tensor<Tensor<type, 2>, 1> layers_activations;
 
-   Tensor<Tensor<type, 2>, 1> layers_activations_derivatives;
+//   Tensor<Tensor<type, 2>, 1> layers_activations_derivatives;
 
-   Tensor<Tensor<type, 2>, 1> layers_delta;
+//   Tensor<Tensor<type, 2>, 1> layers_delta;
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+//   architecture.setValues({1, 1, 1});
 
-   neural_network.set_parameters_constant(0.0);
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
 
-   data_set.set(1, 1, 1);
+//   neural_network.set_parameters_constant(0.0);
 
-   data_set.initialize_data(0.0);
+//   data_set.set(1, 1, 1);
 
-   instances.set(1,0);
-   //instances.initialize_sequential();
+//   data_set.initialize_data(0.0);
 
-   inputs = data_set.get_input_data(instances);
-   targets = data_set.get_target_data(instances);
+//   samples.set(1,0);
+   //samples.initialize_sequential();
 
-   outputs = neural_network.calculate_outputs(inputs);
-   output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
+//   inputs = data_set.get_input_data(samples);
+//   targets = data_set.get_target_data(samples);
 
-   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
+//   outputs = neural_network.calculate_outputs(inputs);
+//   output_gradient = sum_squared_error.calculate_output_gradient(outputs, targets);
 
-   layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
+//   Tensor<Layer::ForwardPropagation, 1> forward_propagation = neural_network.forward_propagate(inputs);
 
-   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+//   layers_delta = sum_squared_error.calculate_layers_delta(forward_propagation, output_gradient);
 
-   assert_true(terms_Jacobian.dimension(0) == data_set.get_instances_number(), LOG);
-   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-   assert_true(terms_Jacobian == 0.0, LOG);
+//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian(inputs, forward_propagation, layers_delta);
+
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_samples_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
+//   assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test 
 
-   neural_network.set(NeuralNetwork::Approximation, {3, 4, 2});
-   neural_network.set_parameters_constant(0.0);
+//   architecture.setValues({3, 4, 2});
 
-   data_set.set(3, 2, 5);
-   sum_squared_error.set(&neural_network, &data_set);
-   data_set.initialize_data(0.0);
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_parameters_constant(0.0);
 
-//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
-
-   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-   assert_true(terms_Jacobian == 0.0, LOG);
-
-   // Test
-
-   architecture.resize(3);
-   architecture[0] = 5;
-   architecture[1] = 1;
-   architecture[2] = 2;
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
-   neural_network.set_parameters_constant(0.0);
-
-   data_set.set(5, 2, 3);
-   sum_squared_error.set(&neural_network, &data_set);
-   data_set.initialize_data(0.0);
+//   data_set.set(3, 2, 5);
+//   sum_squared_error.set(&neural_network, &data_set);
+//   data_set.initialize_data(0.0);
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 
-   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_instances_number(), LOG);
-   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
-   assert_true(terms_Jacobian == 0.0, LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
+//   assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
-   neural_network.set_parameters_random();
-   parameters = neural_network.get_parameters();
+//   architecture.resize(3);
+//   architecture[0] = 5;
+//   architecture[1] = 1;
+//   architecture[2] = 2;
 
-   data_set.set(1, 1, 1);
-   data_set.set_data_random();
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_parameters_constant(0.0);
+
+//   data_set.set(5, 2, 3);
+//   sum_squared_error.set(&neural_network, &data_set);
+//   data_set.initialize_data(0.0);
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
-//   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
 
-   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+//   assert_true(terms_Jacobian.dimension(0) == data_set.get_training_samples_number(), LOG);
+//   assert_true(terms_Jacobian.dimension(1) == neural_network.get_parameters_number(), LOG);
+//   assert_true(terms_Jacobian == 0.0, LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.set_parameters_random();
-   parameters = neural_network.get_parameters();
+//   architecture.setValues({1, 1, 1});
 
-   data_set.set(2, 2, 2);
-   data_set.set_data_random();
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_parameters_random();
+//   parameters = neural_network.get_parameters();
+
+//   data_set.set(1, 1, 1);
+//   data_set.set_data_random();
 
 //   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
 //   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
 
-   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+//   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {2, 2, 2});
-   neural_network.set_parameters_random();
+//   architecture.setValues({2, 2, 2});
 
-   data_set.set(2, 2, 2);
-   data_set.set_data_random();
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_parameters_random();
+//   parameters = neural_network.get_parameters();
+
+//   data_set.set(2, 2, 2);
+//   data_set.set_data_random();
+
+//   terms_Jacobian = sum_squared_error.calculate_error_terms_Jacobian();
+//   numerical_Jacobian_terms = nd.calculate_Jacobian(sse, &SumSquaredError::calculate_training_terms, parameters);
+
+//   assert_true(absolute_value(terms_Jacobian-numerical_Jacobian_terms) < 1.0e-3, LOG);
+
+   // Test
+
+//   architecture.setValues({2, 2, 2});
+
+//   neural_network.set(NeuralNetwork::Approximation, architecture);
+//   neural_network.set_parameters_random();
+
+//   data_set.set(2, 2, 2);
+//   data_set.set_data_random();
 
 //   gradient = sum_squared_error.calculate_gradient();
 
@@ -549,37 +811,13 @@ void SumSquaredErrorTest::test_calculate_training_error_terms_Jacobian()
 
 }
 
-void SumSquaredErrorTest::test_calculate_selection_error()
-{
-   cout << "test_calculate_selection_error\n";
-
-//   NeuralNetwork neural_network;
-//   DataSet data_set;
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-//   type selection_error;
-
-   // Test
-
-//   nn.set();
-
-//   nn.construct_multilayer_perceptron();
-
-//   data_set.set();
-
-//   Tensor<Index, 1> indices;
-
-//   selection_error = sum_squared_error.calculate_indices_error(indices);
-   
-//   assert_true(selection_error == 0.0, LOG);
-}
-
 
 void SumSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
 
    NeuralNetwork neural_network;
+   Tensor<Index, 1> architecture;
 
    DataSet data_set;
 
@@ -591,7 +829,9 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
    // Test 
 
-   neural_network.set(NeuralNetwork::Approximation, {1,1,1});
+   architecture.setValues({1,1,1});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_constant(0.0);
 
@@ -602,11 +842,13 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 //   squared_errors = sum_squared_error.calculate_squared_errors();
 
    assert_true(squared_errors.size() == 1, LOG);
-   assert_true(squared_errors == 0.0, LOG);   
+//   assert_true(squared_errors == 0.0, LOG);
 
    // Test
 
-   neural_network.set(NeuralNetwork::Approximation, {2,2,2});
+   architecture.setValues({2,2,2});
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
 
    neural_network.set_parameters_random();
 
@@ -616,7 +858,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors()
 
 //   squared_errors = sum_squared_error.calculate_squared_errors();
 
-//   error = sum_squared_error.calculate_training_error();
+//   error = sum_squared_error.calculate_error();
 
 //   assert_true(abs(squared_errors.sum() - error) < 1.0e-12, LOG);
 }
@@ -661,16 +903,17 @@ void SumSquaredErrorTest::test_from_XML()
 
 //   assert_true(sum_squared_error2.get_display() == false, LOG);
 }
-*/
+
 
 void SumSquaredErrorTest::run_test_case()
 {
    cout << "Running sum squared error test case...\n";
-/*
+
    // Constructor and destructor methods
 
    test_constructor();
    test_destructor();
+
 
    // Get methods
 
@@ -678,30 +921,32 @@ void SumSquaredErrorTest::run_test_case()
 
    // Error methods
 
-   test_calculate_training_error();
+   test_calculate_error();
 
-   test_calculate_layers_delta();
+   test_calculate_output_gradient();
 
-   test_calculate_training_error_gradient();
+   test_calculate_Jacobian_gradient();
+
 
    // Error terms methods
 
-//   test_calculate_training_error_terms();
+   test_calculate_error_terms();
 
-//   test_calculate_training_error_terms_Jacobian();
+   test_calculate_error_terms_Jacobian();
+
 
    //Serialization methods
 
     test_to_XML();
 
     test_from_XML();
-*/
-   cout << "End of sum squared error test case.\n";
+
+   cout << "End of sum squared error test case.\n\n";
 }
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

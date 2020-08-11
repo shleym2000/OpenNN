@@ -17,6 +17,10 @@ namespace OpenNN
 OptimizationAlgorithm::OptimizationAlgorithm()
     : loss_index_pointer(nullptr)
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     set_default();
 }
 
@@ -27,18 +31,11 @@ OptimizationAlgorithm::OptimizationAlgorithm()
 OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
     : loss_index_pointer(new_loss_index_pointer)
 {
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
     set_default();
-}
-
-
-/// XML constructor.
-/// It creates a optimization algorithm object not associated to any loss index object.
-/// It also loads the other members from a XML document.
-
-OptimizationAlgorithm::OptimizationAlgorithm(const tinyxml2::XMLDocument& document)
-    : loss_index_pointer(nullptr)
-{
-    from_XML(document);
 }
 
 
@@ -145,9 +142,11 @@ void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
 }
 
 
-void OptimizationAlgorithm::set_device_pointer(Device* new_device_pointer)
+void OptimizationAlgorithm::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    device_pointer = new_device_pointer;
+    if(thread_pool_device != nullptr) delete thread_pool_device;
+
+    thread_pool_device = new_thread_pool_device;
 }
 
 
@@ -284,37 +283,6 @@ void OptimizationAlgorithm::check() const
 }
 
 
-/// Serializes a default optimization algorithm object into a XML document of the TinyXML library.
-/// See the OpenNN manual for more information about the format of this document.
-
-tinyxml2::XMLDocument* OptimizationAlgorithm::to_XML() const
-{
-    ostringstream buffer;
-
-    tinyxml2::XMLDocument* document = new tinyxml2::XMLDocument;
-
-    // Nueral network outputs integrals
-
-    tinyxml2::XMLElement* optimization_algorithm_element = document->NewElement("OptimizationAlgorithm");
-
-    document->InsertFirstChild(optimization_algorithm_element);
-
-    // Display
-    {
-        tinyxml2::XMLElement* element = document->NewElement("Display");
-        optimization_algorithm_element->LinkEndChild(element);
-
-        buffer.str("");
-        buffer << display;
-
-        tinyxml2::XMLText* text = document->NewText(buffer.str().c_str());
-        element->LinkEndChild(text);
-    }
-
-    return document;
-}
-
-
 /// Serializes the optimization algorithm object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -379,19 +347,6 @@ void OptimizationAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
-/// Returns a default string representation of a optimization algorithm.
-
-string OptimizationAlgorithm::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Training strategy\n"
-           << "Display: " << display << "\n";
-
-    return buffer.str();
-}
-
-
 /// Returns a default(empty) string matrix containing the members
 /// of the optimization algorithm object.
 
@@ -407,7 +362,6 @@ Tensor<string, 2> OptimizationAlgorithm::to_string_matrix() const
 
 void OptimizationAlgorithm::print() const
 {
-    cout << object_to_string();
 }
 
 
@@ -416,11 +370,11 @@ void OptimizationAlgorithm::print() const
 
 void OptimizationAlgorithm::save(const string& file_name) const
 {
-    tinyxml2::XMLDocument* document = to_XML();
+//    tinyxml2::XMLDocument* document = to_XML();
 
-    document->SaveFile(file_name.c_str());
+//    document->SaveFile(file_name.c_str());
 
-    delete document;
+//    delete document;
 }
 
 
@@ -487,24 +441,45 @@ string OptimizationAlgorithm::Results::write_stopping_condition() const
 void OptimizationAlgorithm::Results::resize_training_history(const Index& new_size)
 {
     training_error_history.resize(new_size);
+}
+
+
+/// Resizes all the selection history variables.
+/// @param new_size Size of selection history variables.
+
+void OptimizationAlgorithm::Results::resize_selection_history(const Index& new_size)
+{
     selection_error_history.resize(new_size);
 }
 
 
-/// Resizes the training and selection error history keeping the values.
+/// Resizes the training error history keeping the values.
 /// @param new_size Size of training history variables.
 
-void OptimizationAlgorithm::Results::resize_error_history(const Index& new_size)
+void OptimizationAlgorithm::Results::resize_training_error_history(const Index& new_size)
 {
     const Tensor<type, 1> old_training_error_history = training_error_history;
-    const Tensor<type, 1> old_selection_error_history = selection_error_history;
 
     training_error_history.resize(new_size);
-    selection_error_history.resize(new_size);
 
     for(Index i = 0; i < new_size; i++)
     {
         training_error_history(i) = old_training_error_history(i);
+    }
+}
+
+
+/// Resizes the training error history keeping the values.
+/// @param new_size Size of training history variables.
+
+void OptimizationAlgorithm::Results::resize_selection_error_history(const Index& new_size)
+{
+    const Tensor<type, 1> old_selection_error_history = selection_error_history;
+
+    selection_error_history.resize(new_size);
+
+    for(Index i = 0; i < new_size; i++)
+    {
         selection_error_history(i) = old_selection_error_history(i);
     }
 }
@@ -552,33 +527,6 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
                  << setfill('0') << setw(2) << seconds;
 
     return elapsed_time.str();
-}
-
-/// Returns a string representation of the current quasi-Newton method results structure.
-
-string OptimizationAlgorithm::Results::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "% Results\n";
-
-    // Loss history
-
-    if(training_error_history.dimension(0) != 0)
-    {
-        buffer << "% Training error history:\n"
-               << training_error_history << "\n";
-    }
-
-    // Selection loss history
-
-    if(selection_error_history.dimension(0) != 0)
-    {
-        buffer << "% Selection loss history:\n"
-               << selection_error_history << "\n";
-    }
-
-    return buffer.str();
 }
 
 
@@ -633,9 +581,9 @@ Tensor<string, 2> OptimizationAlgorithm::Results::write_final_results(const Inde
 
     final_results(3,1) = buffer.str();
 
-    // Final training rate
+    // Final learning rate
 
-    //   names.push_back("Final training rate");
+    //   names.push_back("Final learning rate");
 
     //   buffer.str("");
     //   buffer << setprecision(precision) << final_learning_rate;

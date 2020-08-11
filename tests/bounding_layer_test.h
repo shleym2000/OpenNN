@@ -86,11 +86,6 @@ public:
 
    void test_write_expression();
 
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
-
    // Unit testing methods
 
    void run_test_case();
@@ -99,7 +94,7 @@ public:
 #endif
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

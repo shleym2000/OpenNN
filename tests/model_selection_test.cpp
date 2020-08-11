@@ -18,7 +18,7 @@ ModelSelectionTest::~ModelSelectionTest()
 {
 }
 
-/*
+
 void ModelSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
@@ -79,7 +79,7 @@ void ModelSelectionTest::test_set_default()
 }
 
 
-void ModelSelectionTest::test_perform_neurons_selection()
+void ModelSelectionTest::test_perform_neurons_selection() // @todo
 {
     cout << "test_perform_neurons_selection\n";
 
@@ -87,32 +87,34 @@ void ModelSelectionTest::test_perform_neurons_selection()
 
     ds.generate_sum_data(20,2);
 
-    NeuralNetwork nn(NeuralNetwork::Approximation, {1, 2, 1});
+    Tensor<Index, 1> architecture(3);
+    architecture.setValues({1, 2, 1});
 
-    TrainingStrategy ts(&nn, &ds);
+    NeuralNetwork nn(NeuralNetwork::Approximation, architecture);
 
-    ts.set_display(false);
+//    TrainingStrategy ts(&nn, &ds);
 
-    ModelSelection model_selection(&ts);
+//    ts.set_display(false);
 
-    model_selection.set_display(false);
+//    ModelSelection model_selection(&ts);
 
-    IncrementalNeurons* incremental_neurons_pointer = model_selection.get_incremental_neurons_pointer();
+//    model_selection.set_display(false);
 
-    incremental_neurons_pointer->set_maximum_selection_failures(2);
+//    IncrementalNeurons* incremental_neurons_pointer = model_selection.get_incremental_neurons_pointer();
 
-    incremental_neurons_pointer->set_display(false);
+//    incremental_neurons_pointer->set_maximum_selection_failures(2);
 
-    ModelSelection::Results results;
+//    incremental_neurons_pointer->set_display(false);
 
-    results = model_selection.perform_neurons_selection();
+//    ModelSelection::Results results;
 
-    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::GROWING_INPUTS, LOG);
-    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
-    assert_true(results.incremental_neurons_results_pointer->final_training_loss != 0.0, LOG);
-    assert_true(results.incremental_neurons_results_pointer->final_selection_error != 0.0, LOG);
-    assert_true(results.incremental_neurons_results_pointer->optimal_neurons_number >= 1 , LOG);
+//    results = model_selection.perform_neurons_selection();
 
+//    assert_true(model_selection.get_inputs_selection_method() == ModelSelection::GROWING_INPUTS, LOG);
+//    assert_true(model_selection.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
+//    assert_true(results.incremental_neurons_results_pointer->final_training_loss != 0.0, LOG);
+//    assert_true(results.incremental_neurons_results_pointer->final_selection_error != 0.0, LOG);
+//    assert_true(results.incremental_neurons_results_pointer->optimal_neurons_number >= 1 , LOG);
 }
 
 
@@ -122,10 +124,10 @@ void ModelSelectionTest::test_to_XML()
 
     ModelSelection ms;
 
-    tinyxml2::XMLDocument* document = ms.to_XML();
-    assert_true(document != nullptr, LOG);
+//    tinyxml2::XMLDocument* document = ms.to_XML();
+//    assert_true(document != nullptr, LOG);
 
-    delete document;
+//    delete document;
 }
 
 
@@ -140,14 +142,13 @@ void ModelSelectionTest::test_from_XML()
 
     ms1.set_neurons_selection_method(ModelSelection::INCREMENTAL_NEURONS);
 
-    tinyxml2::XMLDocument* document = ms1.to_XML();
+//    tinyxml2::XMLDocument* document = ms1.to_XML();
 
-    ms2.from_XML(*document);
+//    ms2.from_XML(*document);
 
-    delete document;
+//    delete document;
 
-    assert_true(ms2.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
-
+//    assert_true(ms2.get_neurons_selection_method() == ModelSelection::INCREMENTAL_NEURONS, LOG);
 }
 
 
@@ -181,12 +182,12 @@ void ModelSelectionTest::test_load()
     ms.load(file_name);
 
 }
-*/
+
 
 void ModelSelectionTest::run_test_case()
 {
     cout << "Running model selection test case...\n";
-/*
+
     // Constructor and destructor methods
 
     test_constructor();
@@ -212,6 +213,6 @@ void ModelSelectionTest::run_test_case()
     test_from_XML();
     test_save();
     test_load();
-*/
-    cout << "End of model selection test case.\n";
+
+    cout << "End of model selection test case.\n\n";
 }

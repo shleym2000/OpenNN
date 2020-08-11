@@ -28,6 +28,8 @@ public:
 
    virtual ~ConvolutionalLayerTest();
 
+   void test_eigen_convolution();
+
    // Constructor and destructor methods
 
    void test_constructor();
@@ -49,9 +51,7 @@ public:
 
    // Combinations
 
-   void test_calculate_image_convolution();
-
-   void test_calculate_convolutions();
+   void test_calculate_combinations();
 
    // Activation
 
@@ -65,6 +65,10 @@ public:
 
   void test_insert_padding();
 
+  // Forward propagate
+
+  void test_forward_propagate();
+
   // Unit testing methods
 
   void run_test_case();
@@ -75,7 +79,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

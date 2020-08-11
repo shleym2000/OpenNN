@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "neural_network.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -43,10 +42,6 @@ public:
     explicit ResponseOptimization();
 
     explicit ResponseOptimization(NeuralNetwork*);
-
-    void set_evaluations_number(const Index&);
-
-   
 
    virtual ~ResponseOptimization();
 
@@ -108,6 +103,8 @@ public:
    Tensor<type, 1> get_outputs_maximums();
 
    // Set methods
+
+   void set_evaluations_number(const Index&);
 
    void set_input_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());
    void set_output_condition(const string&, const Condition&, const Tensor<type, 1>& = Tensor<type, 1>());

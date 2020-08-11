@@ -23,11 +23,10 @@
 
 // OpenNN includes
 
+#include "config.h"
 #include "loss_index.h"
 #include "optimization_algorithm.h"
 #include "learning_rate_algorithm.h"
-#include "config.h"
-#include "tinyxml2.h"
 
 namespace OpenNN
 {
@@ -46,49 +45,26 @@ class ConjugateGradient : public OptimizationAlgorithm
 
 public:
 
-    struct OptimizationData
+    struct GGOptimizationData : public OptimizationData
     {
         /// Default constructor.
 
-        explicit OptimizationData()
-        {
-        }
+        explicit GGOptimizationData();
 
-        explicit OptimizationData(ConjugateGradient* new_conjugate_gradient_pointer)
-        {
-            set(new_conjugate_gradient_pointer);
-        }
+        explicit GGOptimizationData(ConjugateGradient*);
 
-        virtual ~OptimizationData() {}
+        virtual ~GGOptimizationData();
 
-        void set(ConjugateGradient* new_conjugate_gradient_pointer)
-        {
-            conjugate_gradient_pointer = new_conjugate_gradient_pointer;
+        void set(ConjugateGradient*);
 
-            LossIndex* loss_index_pointer = conjugate_gradient_pointer->get_loss_index_pointer();
-
-            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-            const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-            parameters.resize(parameters_number);
-            parameters = neural_network_pointer->get_parameters();
-        }
-
-        void print() const
-        {
-        }
+        void print() const;
 
         ConjugateGradient* conjugate_gradient_pointer = nullptr;
-
-        Tensor<type, 1> parameters;
-        Tensor<type, 1> old_parameters;
 
         Tensor<type, 1> parameters_increment;
 
         Tensor<type, 1> old_gradient;
 
-        Tensor<type, 1> training_direction;
         Tensor<type, 1> old_training_direction;
 
         Index epoch = 0;
@@ -113,8 +89,6 @@ public:
 
    explicit ConjugateGradient(LossIndex*);   
 
-   explicit ConjugateGradient(const tinyxml2::XMLDocument&); 
-
    virtual ~ConjugateGradient();
 
    // Get methods
@@ -126,16 +100,6 @@ public:
 
    const TrainingDirectionMethod& get_training_direction_method() const;
    string write_training_direction_method() const;
-
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_warning_learning_rate() const;
-
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
-   const type& get_error_learning_rate() const;
 
    // Stopping criteria
 
@@ -150,7 +114,6 @@ public:
    const type& get_maximum_time() const;
 
    const bool& get_choose_best_selection() const;
-   const bool& get_apply_early_stopping() const;
 
    // Reserve training history
 
@@ -163,20 +126,12 @@ public:
 
    void set_loss_index_pointer(LossIndex*);
 
+   void set_hardware_use(const string&);
+
    // Training operators
 
    void set_training_direction_method(const TrainingDirectionMethod&);
    void set_training_direction_method(const string&);
-
-   // Training parameters
-
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_warning_learning_rate(const type&);
-
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
-   void set_error_learning_rate(const type&);
 
    // Stopping criteria
 
@@ -191,7 +146,6 @@ public:
    void set_maximum_time(const type&);
 
    void set_choose_best_selection(const bool&);
-   void set_apply_early_stopping(const bool&);
 
    // Reserve training history
 
@@ -210,10 +164,11 @@ public:
    type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
    type calculate_FR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
-   Tensor<type, 1> calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   void calculate_PR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
-   Tensor<type, 1> calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&) const;
+   void calculate_gradient_descent_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+   void calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    // Training methods
 
@@ -227,7 +182,6 @@ public:
 
    Tensor<string, 2> to_string_matrix() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -235,89 +189,8 @@ public:
    void update_epoch(
            const DataSet::Batch& batch,
            NeuralNetwork::ForwardPropagation& forward_propagation,
-           const LossIndex::BackPropagation& back_propagation,
-           OptimizationData& optimization_data)
-   {
-       const Index parameters_number = optimization_data.parameters.dimension(0);
-
-       if(optimization_data.epoch == 0 || optimization_data.epoch % parameters_number == 0)
-       {
-           optimization_data.training_direction = -back_propagation.gradient;
-
-           optimization_data.training_direction = normalized(optimization_data.training_direction);
-       }
-       else
-       {
-           optimization_data.training_direction = calculate_conjugate_gradient_training_direction(
-                       optimization_data.old_gradient,
-                       back_propagation.gradient,
-                       optimization_data.old_training_direction);
-       }
-
-       // Calculate loss training_slope
-
-       optimization_data.training_slope = back_propagation.gradient.contract(optimization_data.training_direction, AT_B);
-
-       // Check for a descent direction
-
-       if(optimization_data.training_slope(0) >= 0)
-       {
-           // Reset training direction
-
-           optimization_data.training_direction = -back_propagation.gradient;
-
-           cout << "Epoch " << optimization_data.epoch << ": Gradient descent training direction" << endl;
-       }
-
-       // Get initial training rate
-
-       type initial_learning_rate = 0;
-
-       optimization_data.epoch == 0
-               ? initial_learning_rate = first_learning_rate
-               : initial_learning_rate = optimization_data.old_learning_rate;
-
-       pair<type,type> directional_point = learning_rate_algorithm.calculate_directional_point(
-            batch,
-            optimization_data.parameters, forward_propagation,
-            back_propagation.loss,
-            optimization_data.training_direction,
-            initial_learning_rate);
-
-       optimization_data.learning_rate = directional_point.first;
-
-       if(optimization_data.epoch != 0 && abs(optimization_data.learning_rate) < numeric_limits<type>::min())
-       {
-           // Reset training direction
-
-           optimization_data.training_direction = -back_propagation.gradient;
-
-           directional_point = learning_rate_algorithm.calculate_directional_point(batch,
-                               optimization_data.parameters, forward_propagation,
-                               back_propagation.loss,
-                               optimization_data.training_direction,
-                               first_learning_rate);
-
-           optimization_data.learning_rate = directional_point.first;
-       }
-
-       optimization_data.parameters_increment = optimization_data.training_direction*optimization_data.learning_rate;
-
-       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-
-       optimization_data.parameters += optimization_data.parameters_increment;
-
-       optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
-
-       // Update stuff
-
-//       optimization_data.old_loss = back_propagation.loss;
-       optimization_data.old_gradient = back_propagation.gradient;
-
-       optimization_data.old_training_direction = optimization_data.training_direction;
-       optimization_data.old_learning_rate = optimization_data.learning_rate;
-
-}
+           LossIndex::BackPropagation& back_propagation,
+           GGOptimizationData& optimization_data);
 
 private:
 
@@ -327,34 +200,9 @@ private:
 
    TrainingDirectionMethod training_direction_method;
 
-   /// Training rate algorithm object for one-dimensional minimization. 
+   /// Learning rate algorithm object for one-dimensional minimization. 
 
    LearningRateAlgorithm learning_rate_algorithm;
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   type warning_parameters_norm;
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   type warning_gradient_norm;
-
-   /// Training rate value at wich a warning message is written to the screen.
-
-   type warning_learning_rate;
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   type error_parameters_norm;
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   type error_gradient_norm;
-
-   /// Training rate at wich the line minimization algorithm is assumed to be unable to bracket a minimum.
-
-   type error_learning_rate;
-
 
    // Stopping criteria
 
@@ -391,10 +239,6 @@ private:
 
    bool choose_best_selection;
 
-   /// True if the selection error decrease stopping criteria has to be taken in account, false otherwise.
-
-   bool apply_early_stopping;
-
    // TRAINING HISTORY
 
    /// True if the training error history vector is to be reserved, false otherwise.
@@ -405,6 +249,9 @@ private:
 
    bool reserve_selection_error_history;
 
+   /// Hardware use.
+
+   string hardware_use;
 };
 
 }

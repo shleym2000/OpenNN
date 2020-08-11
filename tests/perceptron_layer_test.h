@@ -43,17 +43,14 @@ public:
    // Inputs and perceptrons
 
    void test_is_empty();
-
    void test_get_inputs_number();
    void test_get_neurons_number();
-
    void test_get_perceptrons();
 
    // Parameters
 
    void test_get_biases();
    void test_get_synaptic_weights();
-
    void test_get_parameters_number();
    void test_get_parameters();
 
@@ -96,7 +93,6 @@ public:
    // Parameters initialization methods
 
    void test_set_parameters_constant();
-
    void test_set_synaptic_weights_constant();
    void test_set_parameters_random();
 
@@ -122,20 +118,13 @@ public:
    void test_calculate_hidden_delta();
    void test_calculate_output_delta();
 
+   // Gradient
+
+   void test_calculate_error_gradient();
+
    // Expression methods
 
-   void test_get_activation_function_expression();
-
    void test_write_expression();
-
-   void test_get_network_architecture_expression();
-
-   void test_get_inputs_scaling_expression();
-   void test_get_outputs_unscaling_expression();
-
-   void test_get_boundary_conditions_expression();
-
-   void test_get_bounded_output_expression();
 
    // Unit testing methods
 
@@ -147,7 +136,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

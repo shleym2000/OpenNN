@@ -81,16 +81,6 @@ NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers_pointers)
 }
 
 
-/// Copy constructor.
-/// It creates a copy of an existing neural network object.
-/// @param other_neural_network Neural network object to be copied.
-
-NeuralNetwork::NeuralNetwork(const NeuralNetwork& other_neural_network)
-{
-    set(other_neural_network);
-}
-
-
 /// Destructor.
 
 NeuralNetwork::~NeuralNetwork()
@@ -292,7 +282,7 @@ bool NeuralNetwork::is_empty() const
 
 /// Returns a string vector with the names of the variables used as inputs.
 
-Tensor<string, 1> NeuralNetwork::get_inputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_inputs_names() const
 {
     return inputs_names;
 }
@@ -312,22 +302,18 @@ string NeuralNetwork::get_input_name(const Index& index) const
 
 Index NeuralNetwork::get_input_index(const string& name) const
 {
-
     for(Index i = 0; i < inputs_names.size(); i++)
     {
-        if(inputs_names(i) == name)
-        {
-            return i;
-            break;
-        }
+        if(inputs_names(i) == name) return i;
     }
+
     return 0;
 }
 
 
 /// Returns a string vector with the names of the variables used as outputs.
 
-Tensor<string, 1> NeuralNetwork::get_outputs_names() const
+const Tensor<string, 1>& NeuralNetwork::get_outputs_names() const
 {
     return outputs_names;
 }
@@ -347,14 +333,9 @@ string NeuralNetwork::get_output_name(const Index& index) const
 
 Index NeuralNetwork::get_output_index(const string& name) const
 {
-
     for(Index i = 0; i < outputs_names.size(); i++)
     {
-        if(outputs_names(i) == name)
-        {
-            return i;
-            break;
-        }
+        if(outputs_names(i) == name) return i;
     }
 
     return 0;
@@ -411,12 +392,11 @@ Tensor<Index, 1> NeuralNetwork::get_trainable_layers_indices() const
     for(Index i = 0; i < layers_number; i++)
     {
         if(layers_pointers[i]->get_type() != Layer::Scaling
-                && layers_pointers[i]->get_type() != Layer::Unscaling
-                && layers_pointers[i]->get_type() != Layer::Bounding)
+        && layers_pointers[i]->get_type() != Layer::Unscaling
+        && layers_pointers[i]->get_type() != Layer::Bounding)
         {
             trainable_layers_indices[trainable_layer_index] = i;
             trainable_layer_index++;
-            /*trainable_layers_indices.push_back(i);*/
         }
     }
 
@@ -600,11 +580,11 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     {
         for(Index i = 0; i < size-1; i++)
         {
-            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
+            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1], i);
 
             this->add_layer(perceptron_layer_pointer);
 
-            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
+//            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
         }
 
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(outputs_number);
@@ -619,7 +599,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     {
         for(Index i = 0; i < size-2; i++)
         {
-            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
+            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1], i);
 
             this->add_layer(perceptron_layer_pointer);
         }
@@ -630,13 +610,17 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Forecasting)
     {
-        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
-        this->add_layer(long_short_term_memory_layer_pointer);
+//        this->add_layer(long_short_term_memory_layer_pointer);
+
+        RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+
+        this->add_layer(recurrent_layer_pointer);
 
         for(Index i = 1; i < size-1; i++)
         {
-            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
+            PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1], i);
 
             this->add_layer(perceptron_layer_pointer);
         }
@@ -652,6 +636,14 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 
 }
 
+
+/// Sets a new neural network with a given convolutional neural network architecture (CNN).
+/// It also sets the rest of members to their default values.
+/// @param input_variables_dimensions Define the dimensions of the input varibales.
+/// @param blocks_number Number of blocks.
+/// @param filters_dimensions Architecture of the neural network.
+/// @param outputs_number Architecture of the neural network.
+/// @todo
 
 void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
                         const Index& blocks_number,
@@ -690,7 +682,6 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
     ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer_outputs, outputs_number);
     add_layer(probabilistic_layer);
-
 }
 
 
@@ -721,14 +712,21 @@ void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
     layers_pointers = other_neural_network.layers_pointers;
 
     display = other_neural_network.display;
+
 }
 
+
+/// Sets the names of inputs in neural network
+/// @param new_inputs_names Tensor with the new names of inputs.
 
 void NeuralNetwork::set_inputs_names(const Tensor<string, 1>& new_inputs_names)
 {
     inputs_names = new_inputs_names;
 }
 
+
+/// Sets the names of outputs in neural network.
+/// @param new_outputs_names Tensor with the new names of outputs.
 
 void NeuralNetwork::set_outputs_names(const Tensor<string, 1>& new_outputs_names)
 {
@@ -802,13 +800,13 @@ void NeuralNetwork::set_default()
 }
 
 
-void NeuralNetwork::set_device_pointer(Device* new_device_pointer)
+void NeuralNetwork::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
     const Index layers_number = get_layers_number();
 
     for(Index i = 0; i < layers_number; i++)
     {
-        layers_pointers(i)->set_device_pointer(new_device_pointer);
+        layers_pointers(i)->set_thread_pool_device(new_thread_pool_device);
     }
 }
 
@@ -860,6 +858,80 @@ Index NeuralNetwork::get_outputs_number() const
     return 0;
 }
 
+
+Tensor<Index, 1> NeuralNetwork::get_trainable_layers_neurons_numbers() const
+{
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_pointers.size(); i++)
+    {
+        if(layers_pointers(i)->get_type() != Layer::Scaling
+                && layers_pointers(i)->get_type() != Layer::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Bounding)
+        {
+            layers_neurons_number(count) = layers_pointers[i]->get_neurons_number();
+
+            count++;
+        }
+
+    }
+
+    return layers_neurons_number;
+}
+
+
+Tensor<Index, 1> NeuralNetwork::get_trainable_layers_inputs_numbers() const
+{
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_pointers.size(); i++)
+    {
+        if(layers_pointers(i)->get_type() != Layer::Scaling
+                && layers_pointers(i)->get_type() != Layer::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Bounding)
+        {
+            layers_neurons_number(count) = layers_pointers[i]->get_inputs_number();
+
+            count++;
+        }
+
+    }
+
+    return layers_neurons_number;
+}
+
+
+Tensor<Index, 1> NeuralNetwork::get_trainable_layers_synaptic_weight_numbers() const
+{
+    const Index trainable_layers_number = get_trainable_layers_number();
+
+    Tensor<Index, 1> layers_neurons_number(trainable_layers_number);
+
+    Index count = 0;
+
+    for(Index i = 0; i < layers_pointers.size(); i++)
+    {
+        if(layers_pointers(i)->get_type() != Layer::Scaling
+                && layers_pointers(i)->get_type() != Layer::Unscaling
+                && layers_pointers(i)->get_type() != Layer::Bounding)
+        {
+            layers_neurons_number(count) = layers_pointers[i]->get_synaptic_weights_number();
+
+            count++;
+        }
+
+    }
+
+    return layers_neurons_number;
+}
 
 /// Returns a vector with the architecture of the neural network.
 /// The elements of this vector are as follows;
@@ -1018,7 +1090,6 @@ Tensor<Tensor<type, 1>, 1> NeuralNetwork::get_trainable_layers_parameters(const 
 
 void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
 {
-/*
 #ifdef __OPENNN_DEBUG__
 
     const Index size = new_parameters.size();
@@ -1037,7 +1108,7 @@ void NeuralNetwork::set_parameters(Tensor<type, 1>& new_parameters)
     }
 
 #endif
-*/
+
     const Index trainable_layers_number = get_trainable_layers_number();
 
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
@@ -1077,15 +1148,13 @@ Index NeuralNetwork::get_layers_number() const
 
 Tensor<Index, 1> NeuralNetwork::get_layers_neurons_numbers() const
 {
-
-    Tensor<Index, 1> layers_neurons_number;
-    /*
+    Tensor<Index, 1> layers_neurons_number(layers_pointers.size());
 
     for(Index i = 0; i < layers_pointers.size(); i++)
     {
-        layers_neurons_number.push_back(layers_pointers[i]->get_neurons_number());
+        layers_neurons_number(i) = layers_pointers[i]->get_neurons_number();
     }
-    */
+
     return layers_neurons_number;
 }
 
@@ -1192,30 +1261,6 @@ type NeuralNetwork::calculate_parameters_norm() const
 }
 
 
-/// Returns a descriptives structure of the parameters vector.
-/// That contains the minimum, maximum, mean and standard deviation values of the parameters.
-
-Descriptives NeuralNetwork::calculate_parameters_descriptives() const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return descriptives(parameters);
-}
-
-
-/// Returns a histogram structure of the parameters vector.
-/// That will be used for looking at the distribution of the parameters.
-/// @param bins_number Number of bins in the histogram(10 by default).
-
-Histogram NeuralNetwork::calculate_parameters_histogram(const Index& bins_number) const
-{
-    const Tensor<type, 1> parameters = get_parameters();
-
-    return histogram(parameters, bins_number);
-
-}
-
-
 /// Perturbate parameters of the neural network.
 /// @param perturbation Maximum distance of perturbation.
 
@@ -1241,6 +1286,62 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
     parameters = parameters + perturbation;
 
     set_parameters(parameters);
+}
+
+
+/// Calculates the forward propagation in the neural network.
+/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+
+void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+                                   ForwardPropagation& forward_propagation) const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, forward_propagation.layers(0));
+
+    for(Index i = 1; i < trainable_layers_number; i++)
+    {
+         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                     forward_propagation.layers(i));
+    }
+}
+
+
+/// Calculates the forward propagation in the neural network.
+/// @param batch Batch of data set that contains the inputs and targets to be trained.
+/// @param paramters Parameters of neural network.
+/// @param foward_propagation Is a NeuralNetwork class structure where save the neccesary paraneters of forward propagation.
+
+void NeuralNetwork::forward_propagate(const DataSet::Batch& batch,
+                                   Tensor<type, 1>& parameters,
+                                   ForwardPropagation& forward_propagation) const
+{
+    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
+
+    const Index trainable_layers_number = trainable_layers_pointers.size();
+
+    const Index parameters_number = trainable_layers_pointers(0)->get_parameters_number();
+
+    const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data(), parameters_number);
+
+    trainable_layers_pointers(0)->forward_propagate(batch.inputs_2d, potential_parameters, forward_propagation.layers(0));
+
+    Index index = parameters_number;
+
+    for(Index i = 1; i < trainable_layers_number; i++)
+    {
+        const Index parameters_number = trainable_layers_pointers(i)->get_parameters_number();
+
+        const TensorMap<Tensor<type, 1>> potential_parameters(parameters.data() + index, parameters_number);
+
+         trainable_layers_pointers(i)->forward_propagate(forward_propagation.layers(i-1).activations_2d,
+                                                                     potential_parameters,
+                                                                     forward_propagation.layers(i));
+         index += parameters_number;
+    }
 }
 
 
@@ -1273,21 +1374,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
         throw logic_error(buffer.str());
     }
 
-    //    const Index inputs_number = get_inputs_number();
-
-    //    const Index inputs_dimension = inputs.dimension(1);
-
-    //    if(inputs_size != inputs_number)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Dimension of inputs (" <<  << ") must be equal to number of inputs.\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
 #endif
 
     const Index layers_number = get_layers_number();
@@ -1299,109 +1385,6 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
     for(Index i = 1; i < layers_number; i++)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
-    }
-
-    return outputs;
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs) const
-{
-#ifdef __OPENNN_DEBUG__
-
-    ///@todo check for convolutional
-
-    //    const Index inputs_dimensions_number = inputs.rank();
-
-    //    if(inputs_dimensions_number != 2)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_trainable_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2.\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
-    //    const Index inputs_number = get_inputs_number();
-
-    //    const Index inputs_columns_number = inputs.dimension(1);
-
-    //    if(inputs_columns_number != inputs_number)
-    //    {
-    //        ostringstream buffer;
-
-    //        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-    //               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
-    //               << "Number of columns (" << inputs_columns_number << ") must be equal to number of inputs (" << inputs_number << ").\n";
-
-    //        throw logic_error(buffer.str());
-    //    }
-
-#endif
-
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    Tensor<type, 2> outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-
-    cout << outputs.size() << endl;
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
-    }
-
-    return outputs;
-}
-
-
-Tensor<type, 2> NeuralNetwork::calculate_trainable_outputs(const Tensor<type, 2>& inputs,
-                                                           const Tensor<type, 1>& parameters) const
-{
-    const Index batch_size = inputs.dimension(0);
-
-    const Index trainable_layers_number = get_trainable_layers_number();
-
-#ifdef __OPENNN_DEBUG__
-
-    if(trainable_layers_number == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&, cons Tensor<type, 1>&) const method.\n"
-               << "This neural network has not got any layer.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
-
-    const Tensor<Tensor<type, 1>, 1> trainable_layers_parameters = get_trainable_layers_parameters(parameters);
-
-    Tensor<type, 2> outputs(batch_size, trainable_layers_pointers[0]->get_neurons_number());
-
-    if(trainable_layers_pointers[0]->get_type() == OpenNN::Layer::Type::Pooling)
-    {
-        outputs = trainable_layers_pointers[0]->calculate_outputs(inputs);
-    }
-
-    else outputs = trainable_layers_pointers[0]->calculate_outputs(inputs, trainable_layers_parameters[0]);
-
-    for(Index i = 1; i < trainable_layers_number; i++)
-    {
-        outputs.resize(batch_size, trainable_layers_pointers[i]->get_neurons_number());
-
-        if(trainable_layers_pointers[i]->get_type() == OpenNN::Layer::Type::Pooling)
-        {
-            outputs = trainable_layers_pointers[i]->calculate_outputs(outputs);
-        }
-        else outputs = trainable_layers_pointers[i]->calculate_outputs(outputs, trainable_layers_parameters[i]);
     }
 
     return outputs;
@@ -1442,108 +1425,6 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
     return directional_inputs;
 }
 
-
-/// Calculates the histogram of the outputs with random inputs.
-/// @param points_number Number of random instances to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-/// @todo
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Index& points_number, const Index& bins_number)
-{
-    const Index inputs_number = get_inputs_number();
-
-    Tensor<type, 2> inputs(points_number, inputs_number);
-    /*
-        if(scaling_layer_pointer == nullptr)
-        {
-        }
-        else
-        {
-            const Tensor<ScalingLayer::ScalingMethod, 1> scaling_methods = scaling_layer_pointer->get_scaling_methods();
-
-            for(Index i = 0; i < scaling_methods.size(); i++)
-            {
-                Tensor<type, 1> input_column(points_number, 0.0);
-
-                if(scaling_methods[i] == ScalingLayer::NoScaling)
-                {
-                    input_column.setRandom();
-                }
-                else if(scaling_methods[i] == ScalingLayer::MinimumMaximum)
-                {
-                    type minimum = scaling_layer_pointer->get_descriptives(i).minimum;
-                    type maximum = scaling_layer_pointer->get_descriptives(i).maximum;
-
-                    input_column.setRandom(minimum, maximum);
-                }
-                else if(scaling_methods[i] == ScalingLayer::MeanStandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-                else if(scaling_methods[i] == ScalingLayer::StandardDeviation)
-                {
-                    type mean = scaling_layer_pointer->get_descriptives(i).mean;
-                    type standard_deviation = scaling_layer_pointer->get_descriptives(i).standard_deviation;
-
-                    input_column.setRandom(mean, standard_deviation);
-                }
-
-                inputs.set_column(i, input_column, "");
-            }
-        }
-
-        const Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-        return histograms(outputs.to_matrix(), bins_number);
-    */
-    return Tensor<Histogram, 1>();
-}
-
-
-/// Calculates the histogram of the outputs with a matrix of given inputs.
-/// @param inputs Matrix of the data to evaluate the neural network.
-/// @param bins_number Number of bins for the histograms.
-
-Tensor<Histogram, 1> NeuralNetwork::calculate_outputs_histograms(const Tensor<type, 2>& inputs, const Index& bins_number)
-{
-    const Tensor<type, 2> outputs = calculate_outputs(inputs);
-
-    return histograms(outputs, bins_number);
-}
-
-
-/// Returns a string representation of the current neural network object.
-
-string NeuralNetwork::object_to_string() const
-{
-    ostringstream buffer;
-
-    buffer << "Neural network:\n";
-    /*
-        buffer << "Inputs names:\n";
-        buffer << inputs_names << endl;
-    */
-    // Layers
-
-    const Index layers_number = get_layers_number();
-
-    buffer << "Layers number: " << layers_number << endl;
-
-    for(Index i = 0; i < layers_number; i++)
-    {
-        buffer << "Layer " << i+1 << ":" << endl;
-
-        buffer << layers_pointers[i]->object_to_string() << endl;
-    }
-    /*
-        buffer << "Outputs names:\n";
-        buffer << outputs_names << endl;
-    */
-    return buffer.str();
-}
 
 /// For each layer: inputs, neurons, activation function
 
@@ -1795,9 +1676,8 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             inputs_from_XML(inputs_document);
         }
-    }
 
-    cout << "inputs" << endl;
+    }
 
     // Layers
 
@@ -1836,7 +1716,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
         }
     }
-    cout << "outputs" << endl;
 
     // Display
     {
@@ -1916,7 +1795,14 @@ void NeuralNetwork::inputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            inputs_names(i) = input_element->GetText();
+//            inputs_names(i) = input_element->GetText();
+            if(!input_element->GetText()){
+                inputs_names(i) = "";
+            }
+            else{
+                inputs_names(i) = input_element->GetText();
+            }
+
         }
     }
 }
@@ -2234,7 +2120,12 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
                 throw logic_error(buffer.str());
             }
 
-            outputs_names(i) = output_element->GetText();
+            if(!output_element->GetText()){
+                outputs_names(i) = "";
+            }else{
+                outputs_names(i) = output_element->GetText();
+            }
+
         }
     }
 }
@@ -2244,7 +2135,6 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::print() const
 {
-    if(display) cout << object_to_string();
 }
 
 
@@ -2268,11 +2158,18 @@ void NeuralNetwork::print_summary() const
 
 void NeuralNetwork::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
 
-//    document->SaveFile(file_name.c_str());
+    FILE *pFile;
+//    errno_t err;
 
-//    delete document;
+//    err = fopen_s(&pFile, file_name.c_str(), "w");
+    pFile = fopen(file_name.c_str(), "w");
+
+    tinyxml2::XMLPrinter document(pFile);
+
+    write_XML(document);
+
+    fclose(pFile);
 }
 
 
@@ -2323,6 +2220,7 @@ void NeuralNetwork::load(const string& file_name)
                << "Cannot load XML file " << file_name << ".\n";
 
         throw logic_error(buffer.str());
+
     }
 
     from_XML(document);
@@ -2332,7 +2230,7 @@ void NeuralNetwork::load(const string& file_name)
 /// Loads the neural network parameters from a data file.
 /// The format of this file is just a sequence of numbers.
 /// @param file_name Name of parameters data file.
-
+/// @todo
 void NeuralNetwork::load_parameters(const string& file_name)
 {
     ifstream file(file_name.c_str());
@@ -2360,569 +2258,118 @@ void NeuralNetwork::load_parameters(const string& file_name)
 }
 
 
-/// Returns a string with the expression of the function represented by the neural network.
+/// Loads the neural network parameters from a data file.
+/// The format of this file is just a sequence of numbers.
+/// @param file_name Name of parameters data file.
 
-string NeuralNetwork::write_expression() const
+void NeuralNetwork::load_parameters_binary(const string& file_name)
 {
-    ostringstream buffer;
+    ifstream file;
 
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
+    file.open(file_name.c_str(), ios::binary);
 
-    Tensor<string, 1> inputs_names = get_inputs_names();
-    Tensor<string, 1> outputs_names = get_outputs_names();
-    /*
-        cout << "Inputs names: " << inputs_names << endl;
-        cout << "Outputs names: " << outputs_names << endl;
+    if(!file.is_open())
+    {
+        ostringstream buffer;
 
-        Index position = 0;
+        buffer << "OpenNN Exception: NeuralNetwork template.\n"
+               << "void load_parameters_binary(const string&) method.\n"
+               << "Cannot open binary file: " << file_name << "\n";
 
-        string search;
-        string replace;
+        throw logic_error(buffer.str());
+    }
 
-        for(Index i = 0; i < inputs_number; i++)
-        {
-            position = 0;
+    streamsize size = sizeof(double);
 
-            search = "(";
-            replace = "_";
+    const Index parameters_number = get_parameters_number();
 
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
+    Tensor<type, 1> new_parameters(parameters_number);
 
-            string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
-            inputs_names[i].erase(end_pos, inputs_names[i].end());
+    type value;
 
-            position = 0;
+    for(Index i = 0; i < parameters_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
 
-            search = "-";
-            replace = "_";
+        new_parameters(i) = value;
+    }
 
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = "/";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ")";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ":";
-            replace = "_";
-
-            while((position = inputs_names[i].find(search, position)) != string::npos)
-            {
-                inputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-        }
-
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            position = 0;
-
-            search = "(";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
-            outputs_names[i].erase(end_pos, outputs_names[i].end());
-
-            position = 0;
-
-            search = "-";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = "/";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ")";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-            position = 0;
-
-            search = ":";
-            replace = "_";
-
-            while((position = outputs_names[i].find(search, position)) != string::npos)
-            {
-                outputs_names[i].replace(position, search.length(), replace);
-                position += replace.length();
-            }
-
-        }
-
-        // Scaled inputs
-
-        Tensor<string, 1> scaled_inputs_name(inputs_names.size());
-
-        for(Index i = 0; i < inputs_names.size(); i++)
-        {
-            buffer.str("");
-
-            buffer << "scaled_" << inputs_names[i];
-
-            scaled_inputs_name[i] = buffer.str();
-        }
-
-        // Principal components
-
-        Tensor<string, 1> principal_components_name(inputs_number);
-
-        for(Index i = 0; i < inputs_number; i++)
-        {
-            buffer.str("");
-
-            buffer << "principal_component_" <<(i+1);
-
-            principal_components_name[i] = buffer.str();
-        }
-
-        // Scaled outputs
-
-        Tensor<string, 1> scaled_outputs_name(outputs_names.size());
-
-        for(Index i = 0; i < outputs_names.size(); i++)
-        {
-            buffer.str("");
-
-            buffer << "scaled_" << outputs_names[i];
-
-            scaled_outputs_name[i] = buffer.str();
-        }
-
-        // Non probabilistic outputs
-
-        Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
-
-        for(Index i = 0; i < outputs_number; i++)
-        {
-            buffer.str("");
-
-            buffer << "non_probabilistic_" << outputs_names[i];
-
-            non_probabilistic_outputs_name[i] = buffer.str();
-        }
-
-        buffer.str("");
-
-        ///@todo write expression for each layer
-
-    //    // Scaling layer
-    //    if(has_scaling_layer())
-    //    {
-    //        buffer << scaling_layer_pointer->write_expression(inputs_name, scaled_inputs_name);
-    //    }
-    //    // Principal components layer
-    //    if(has_principal_components_layer())
-    //    {
-    //        buffer << principal_components_layer_pointer->write_expression(scaled_inputs_name, principal_components_name);
-    //    }
-    //    // Multilayer perceptron
-    //    if(has_multilayer_perceptron())
-    //    {
-    //        if(scaling_layer_pointer && unscaling_layer_pointer)
-    //        {
-    //            if(has_principal_components_layer() && principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(principal_components_name, scaled_outputs_name);
-    //            }
-    //            else
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, scaled_outputs_name);
-    //            }
-    //        }
-    //        else if(scaling_layer_pointer && probabilistic_layer_pointer)
-    //        {
-    //            if(has_principal_components_layer() && principal_components_layer_pointer->write_principal_components_method() != "NoPrincipalComponents")
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(principal_components_name, scaled_outputs_name);
-    //            }
-    //            else
-    //            {
-    //                buffer << multilayer_perceptron_pointer->write_expression(scaled_inputs_name, non_probabilistic_outputs_name);
-    //            }
-    //        }
-    //        else
-    //        {
-    //            buffer << multilayer_perceptron_pointer->write_expression(inputs_name, outputs_name);
-    //        }
-    //    }
-    //    // Outputs unscaling
-    //    if(has_unscaling_layer())
-    //    {
-    //        buffer << unscaling_layer_pointer->write_expression(scaled_outputs_name, outputs_name);
-    //    }
-    //    // Outputs trending layer
-    //    if(has_outputs_trending_layer())
-    //    {
-    //        buffer << outputs_trending_layer_pointer->write_expression(outputs_name, outputs_name);
-    //    }
-    //    // Probabilistic layer
-    //    if(has_probabilistic_layer())
-    //    {
-    //        buffer << probabilistic_layer_pointer->write_expression(non_probabilistic_outputs_name, outputs_name);
-    //    }
-    //    // Bounding layer
-    //    if(has_bounding_layer())
-    //    {
-    //        buffer << bounding_layer_pointer->write_expression(outputs_name, outputs_name);
-    //    }
-
-        string expression = buffer.str();
-
-        position = 0;
-
-        search = "--";
-        replace = "+";
-
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "+-";
-        replace = "-";
-
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "\n-";
-        replace = "-";
-
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "\n+";
-        replace = "+";
-
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "\"";
-        replace = "";
-
-        while((position = expression.find(search, position)) != string::npos)
-        {
-            expression.replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        return expression;
-        */
-
-    return "";
+    set_parameters(new_parameters);
 }
 
 
-/// Returns a string with the expression of the function represented by the neural network.
+/// Returns a string with the c function of the expression represented by the neural network.
 
-string NeuralNetwork::write_mathematical_expression_php() const
+string NeuralNetwork::write_expression_c() const
 {
+    const Index layers_number = get_layers_number();
+
+    Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+    Tensor<string, 1> layers_names = get_layers_names();
+
     ostringstream buffer;
 
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
+    buffer <<"/*"<<endl;
+    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
+    buffer <<"artelnics@artelnics.com\t"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Your model has been exported to this file." <<endl;
+    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
+    buffer <<"Example:"<<endl;
+    buffer <<""<<endl;
+    buffer <<"\tvector<float> sample(n);\t"<<endl;
+    buffer <<"\tsample[0] = 1;\t"<<endl;
+    buffer <<"\tsample[1] = 2;\t"<<endl;
+    buffer <<"\tsample[n] = 10;\t"<<endl;
+    buffer <<"\tvector<float> outputs = neural_network(sample);"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
+    buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"*/"<<endl;
+    buffer <<""<<endl;
 
-    Tensor<string, 1> inputs_names = get_inputs_names();
-    Tensor<string, 1> outputs_names = get_outputs_names();
 
-    Index position = 0;
+    buffer << "#include <vector>\n" << endl;
 
-    string search;
-    string replace;
+    buffer << "using namespace std;\n" << endl;
 
-    for(Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
-        position = 0;
 
-        search = "(";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
-        inputs_names[i].erase(end_pos, inputs_names[i].end());
-
-        position = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((position = inputs_names[i].find(search, position)) != string::npos)
-        {
-            inputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
+        buffer << layers_pointers[i]->write_expression_c() << endl;
     }
 
-    for(Index i = 0; i < outputs_number; i++)
+    buffer << "vector<float> neural_network(const vector<float>& inputs)\n{" << endl;
+
+    buffer << "\tvector<float> outputs;\n" << endl;
+
+    if(layers_number > 0)
     {
-        position = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
-        outputs_names[i].erase(end_pos, outputs_names[i].end());
-
-        position = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
-
-        position = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((position = outputs_names[i].find(search, position)) != string::npos)
-        {
-            outputs_names[i].replace(position, search.length(), replace);
-            position += replace.length();
-        }
+        buffer << "\toutputs = " << layers_names[0] << "(inputs);\n";
     }
 
-    // Scaled inputs
-
-    Tensor<string, 1> scaled_inputs_name(inputs_names.size());
-
-    for(Index i = 0; i < inputs_names.size(); i++)
+    for(Index i = 1; i < layers_number; i++)
     {
-        buffer.str("");
-
-        buffer << "$scaled_" << inputs_names[i];
-
-        scaled_inputs_name[i] = buffer.str();
+        buffer << "\toutputs = " << layers_names[i] << "(outputs);\n";
     }
 
-    // Principal components
-
-    Tensor<string, 1> principal_components_name(inputs_number);
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer.str("");
-
-        buffer << "$principal_component_" <<(i+1);
-
-        principal_components_name[i] = buffer.str();
-    }
-
-    // Scaled outputs
-
-    Tensor<string, 1> scaled_outputs_name(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        buffer.str("");
-
-        buffer << "$scaled_" << outputs_names[i];
-
-        scaled_outputs_name[i] = buffer.str();
-    }
-
-    // Non probabilistic outputs
-
-    Tensor<string, 1> non_probabilistic_outputs_name(outputs_number);
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        buffer.str("");
-
-        buffer << "$non_probabilistic_" << outputs_names[i];
-
-        non_probabilistic_outputs_name[i] = buffer.str();
-    }
-
-    buffer.str("");
-
-    for(Index i = 0; i < inputs_names.size(); i++)
-    {
-        inputs_names[i] = "$"+inputs_names[i];
-    }
-
-    for(Index i = 0; i < outputs_names.size(); i++)
-    {
-        outputs_names[i] = "$"+outputs_names[i];
-    }
+    buffer << "\n\treturn outputs;\n}" << endl;
 
     string expression = buffer.str();
 
-    position = 0;
-
-    search = "--";
-    replace = "+";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "+-";
-    replace = "-";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "\n-";
-    replace = "-";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "\n+";
-    replace = "+";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
-
-    position = 0;
-
-    search = "\"";
-    replace = "";
-
-    while((position = expression.find(search, position)) != string::npos)
-    {
-        expression.replace(position, search.length(), replace);
-        position += replace.length();
-    }
+    replace(expression, "+-", "-");
+    replace(expression, "-+", "-");
+    replace(expression, "--", "+");
 
     return expression;
+}
+
+
+/// @todo
+
+string NeuralNetwork::write_expression() const
+{
+    return string();
 }
 
 
@@ -2930,981 +2377,56 @@ string NeuralNetwork::write_mathematical_expression_php() const
 
 string NeuralNetwork::write_expression_python() const
 {
+    const Index layers_number = get_layers_number();
+
+    Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+    Tensor<string, 1> layers_names = get_layers_names();
+
     ostringstream buffer;
 
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
+    buffer <<"'''"<<endl;
+    buffer <<"Artificial Intelligence Techniques SL\t"<<endl;
+    buffer <<"artelnics@artelnics.com\t"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Your model has been exported to this python file." <<endl;
+    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
+    buffer <<"Example:"<<endl;
+    buffer <<""<<endl;
+    buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
+    buffer <<"\toutputs = neural_network(sample)"<<endl;
+    buffer <<""<<endl;
+    buffer <<"Notice that only one sample is allowed as input. Batch of inputs are not yet implement,\t"<<endl;
+    buffer <<"however you can loop throw neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"'''"<<endl;
+    buffer <<""<<endl;
+    buffer << "import numpy as np\n" << endl;
 
-    Tensor<string, 1> inputs_names = get_inputs_names();
-    Tensor<string, 1> outputs_names = get_outputs_names();
-
-    Index pos;
-
-    string search;
-    string replace;
-
-    for(Index i = 0; i < inputs_number; i++)
+    for(Index i = 0; i < layers_number; i++)
     {
-        string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
-        inputs_names[i].erase(end_pos, inputs_names[i].end());
-
-        pos = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "+";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "*";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
+        buffer << layers_pointers[i]->write_expression_python() << endl;
     }
 
-    for(Index i = 0; i < outputs_number; i++)
+    buffer << "def neural_network(inputs):\n" << endl;
+
+    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+
+    if(layers_number > 0)
     {
-        string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
-        outputs_names[i].erase(end_pos, outputs_names[i].end());
-
-        pos = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "+";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "*";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
+        buffer << "\toutputs = " << layers_names[0] << "(inputs)\n";
     }
 
-    Tensor<PerceptronLayer::ActivationFunction, 1> activations_2d;
-
-    //    const Index layers_number = get_layers_number();
-
-    //    for(Index i = 0; i < layers_number; i++)
-    //        activations_2d.push_back(layers_pointers[i].get_activation_function());
-
-    buffer.str("");
-
-    buffer << "#!/usr/bin/python\n\n";
-    /*
-        if(activations_2d.contains(PerceptronLayer::Threshold))
-        {
-            buffer << "def Threshold(x) : \n"
-                      "   if x < 0 : \n"
-                      "       return 0\n"
-                      "   else : \n"
-                      "       return 1\n\n";
-        }
-
-        if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
-        {
-            buffer << "def SymmetricThreshold(x) : \n"
-                      "   if x < 0 : \n"
-                      "       return -1\n"
-                      "   else : \n"
-                      "       return 1\n\n";
-        }
-
-        if(activations_2d.contains(PerceptronLayer::Logistic))
-        {
-            buffer << "from math import exp\n"
-                      "def Logistic(x) : \n"
-                      "   return 1/(1+exp(-x)) \n\n";
-        }
-
-        if(activations_2d.contains(PerceptronLayer::HyperbolicTangent))
-        {
-            buffer << "from math import tanh\n\n";
-        }
-    */
-    //    if(has_probabilistic_layer())
-    //    {
-    //        type decision_threshold = probabilistic_layer_pointer->get_decision_threshold();
-
-    //        switch(probabilistic_layer_pointer->get_activation_function())
-    //        {
-    //            case ProbabilisticLayer::Probability :
-    //            {
-    //                buffer << "def Binary(x) : \n"
-    //                          "   if x < " << decision_threshold << " : \n"
-    //                          "       return 0\n"
-    //                          "   else : \n"
-    //                          "       return 1\n\n";
-    //            }
-    //            break;
-    //        case ProbabilisticLayer::Binary :
-    //        {
-    //            buffer << "def Probability(x) : \n"
-    //                      "   if x < 0 :\n"
-    //                      "       return 0\n"
-    //                      "   elif x > 1 :\n"
-    //                      "       return 1\n"
-    //                      "   else : \n"
-    //                      "       return x\n\n";
-    //        }
-    //            break;
-    //        case ProbabilisticLayer::Competitive :
-    //        {
-    //            buffer << "def Competitive(";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
-
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << ") :\n";
-
-    //            buffer << "   inputs = [";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
-
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << "]\n";
-    //            buffer << "   competitive = [0 for i in range(" << outputs_number << ")]\n"
-    //                                                                                  "   maximal_index = inputs.index(max(inputs))\n"
-    //                                                                                  "   competitive[maximal_index] = 1\n"
-    //                                                                                  "   return competitive\n\n";
-    //        }
-
-    //            break;
-    //        case ProbabilisticLayer::Softmax :
-    //        {
-    //            buffer << "from math import exp\n"
-    //                      "def Softmax(";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
-
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << ") :\n";
-
-    //            buffer << "   inputs = [";
-    //            for(Index i = 0; i < outputs_number; i++)
-    //            {
-    //                buffer << "x" << i;
-
-    //                if(i != outputs_number - 1)
-    //                    buffer << ", ";
-    //            }
-    //            buffer << "]\n";
-    //            buffer << "   softmax = [0 for i in range(" << outputs_number << ")]\n"
-    //            "   sum = 0\n"
-    //            "   for i in range(" << outputs_number << ") :\n"
-    //            "       sum += exp(inputs[i])\n"
-    //            "   for i in range(" << outputs_number << ") :\n"
-    //                                                                                                                                                                    "       softmax[i] = exp(inputs[i])/sum\n";
-    //            buffer << "   return softmax\n\n";
-    //        }
-    //            break;
-
-    //        case ProbabilisticLayer::NoProbabilistic :
-    //            break;
-    //        }
-    //    }
-
-    buffer << "def expression(inputs) : \n\n    ";
-
-    buffer << "if type(inputs) != list:\n    "
-           << "   print('Argument must be a list')\n    "
-           << "   exit()\n    ";
-
-    buffer << "if len(inputs) != " << inputs_number << ":\n    "
-           << "   print('Incorrect number of inputs')\n    "
-           << "   exit()\n    ";
-
-    for(Index i = 0; i < inputs_number; i++)
+    for(Index i = 1; i < layers_number; i++)
     {
-        buffer << inputs_names[i] << "=inputs[" << i << "]\n    ";
+        buffer << "\toutputs = " << layers_names[i] << "(outputs)\n";
     }
 
-    string neural_network_expression = write_expression();
-
-    pos = 0;
-
-    search = "\n";
-    replace = "\n    ";
-
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
-    {
-        neural_network_expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    buffer << neural_network_expression;
-
-    buffer << "\n    return ";
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        buffer << outputs_names[i];
-
-        if(i != outputs_number - 1)
-            buffer << ", ";
-    }
-
-    buffer << " \n";
-    string expression = buffer.str();
-
-    pos = 0;
-
-    search = "\"";
-    replace = "";
-
-    while((pos = expression.find(search, pos)) != string::npos)
-    {
-        expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    pos = 0;
-
-    search = ";";
-    replace = "";
-
-    while((pos = expression.find(search, pos)) != string::npos)
-    {
-        expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    return expression;
-
-}
-
-
-/// Returns a string with the php function of the expression represented by the neural network.
-/// @todo
-
-string NeuralNetwork::write_expression_php() const
-{
-    ostringstream buffer;
-
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
-
-    Tensor<string, 1> inputs_names = get_inputs_names();
-    Tensor<string, 1> outputs_names = get_outputs_names();
-
-    Index pos;
-
-    string search;
-    string replace;
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
-        inputs_names[i].erase(end_pos, inputs_names[i].end());
-
-        pos = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "+";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ":";
-        replace = "_";
-
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "*";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-    }
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
-        outputs_names[i].erase(end_pos, outputs_names[i].end());
-
-        pos = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ":";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "+";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "*";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-    }
-
-    Tensor<PerceptronLayer::ActivationFunction, 1> activations_2d;
-
-    //    const Index layers_number = get_layers_number();
-
-    //    for(Index i = 0; i < layers_number; i++)
-    //        activations_2d.push_back(layers_pointers[i]->get_activation_function());
-
-    buffer.str("");
-    /*
-        if(activations_2d.contains(PerceptronLayer::Threshold))
-        {
-            buffer << "function Threshold($x)\n"
-                      "{\n"
-                      "   if($x < 0)\n"
-                      "   {\n"
-                      "       return 0;\n"
-                      "   }\n"
-                      "   else\n"
-                      "   {\n"
-                      "       return 1;\n"
-                      "   }\n"
-                      "}\n\n";
-        }
-
-        if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
-        {
-            buffer << "function SymmetricThreshold(&x)\n"
-                      "{\n"
-                      "   if($x < 0)\n"
-                      "   {\n"
-                      "       return -1;\n"
-                      "   }\n"
-                      "   else\n"
-                      "   {\n"
-                      "       return 1;\n"
-                      "   }\n"
-                      "}\n\n";
-        }
-
-        if(activations_2d.contains(PerceptronLayer::Logistic))
-        {
-            buffer << "function Logistic($x)\n"
-                      "{\n"
-                      "   return 1/(1+exp(-$x));"
-                      "}\n\n";
-        }
-    */
-    buffer << "function expression($inputs)\n"
-              "{\n";
-
-    buffer << "   if(!is_array($inputs))\n"
-              "   {\n"
-              "       throw new \\InvalidArgumentException('Argument must be a list.', 1);\n"
-              "   }\n";
-
-    buffer << "   if(count($inputs) != " << inputs_number << ")\n"
-                                                             "   {\n"
-                                                             "       throw new \\InvalidArgumentException('Incorrect number of inputs.', 2);\n"
-                                                             "   }\n\n";
-
-    for(Index i = 0; i < inputs_names.size(); i++)
-    {
-        inputs_names[i] = "$_"+inputs_names[i];
-    }
-
-    for(Index i = 0; i < outputs_names.size(); i++)
-    {
-        outputs_names[i] = "$"+outputs_names[i];
-    }
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer << "   " << inputs_names[i] << "=$inputs[" << i << "];\n";
-    }
-
-    string neural_network_expression = write_mathematical_expression_php();
-
-    pos = 0;
-
-    search = "\n";
-    replace = "\n    ";
-
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
-    {
-        neural_network_expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    buffer << neural_network_expression;
-
-    buffer << "\n    return ";
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        buffer << outputs_names[i];
-
-        if(i != outputs_number - 1)
-            buffer << ", ";
-        else
-            buffer << ";";
-    }
-
-    buffer << " \n";
-    buffer << "}";
+    buffer << "\n\treturn outputs;\n" << endl;
 
     string expression = buffer.str();
 
-    pos = 0;
-
-    search = "\"";
-    replace = "";
-
-    while((pos = expression.find(search, pos)) != string::npos)
-    {
-        expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    //    pos = 0;
-
-    //    search = ";";
-    //    replace = "";
-
-    //    while((pos = expression.find(search, pos)) != string::npos)
-    //    {
-    //        expression.replace(pos, search.length(), replace);
-    //        pos += replace.length();
-    //    }
-
-    return expression;
-}
-
-
-/// Returns a string with the R function of the expression represented by the neural network.
-/// @todo
-
-string NeuralNetwork::write_expression_R() const
-{
-    ostringstream buffer;
-
-    const Index inputs_number = get_inputs_number();
-    const Index outputs_number = get_outputs_number();
-
-    Tensor<string, 1> inputs_names = get_inputs_names();
-    Tensor<string, 1> outputs_names = get_outputs_names();
-
-    Index pos = 0;
-
-    string search;
-    string replace;
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        pos = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        string::iterator end_pos = remove(inputs_names[i].begin(), inputs_names[i].end(), ' ');
-        inputs_names[i].erase(end_pos, inputs_names[i].end());
-
-        pos = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ":";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "+";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "*";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ":";
-        replace = "_";
-
-        while((pos = inputs_names[i].find(search, pos)) != string::npos)
-        {
-            inputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-    }
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        pos = 0;
-
-        search = "-";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        string::iterator end_pos = remove(outputs_names[i].begin(), outputs_names[i].end(), ' ');
-        outputs_names[i].erase(end_pos, outputs_names[i].end());
-
-        pos = 0;
-
-        search = "(";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = ")";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "+";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "*";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-
-        pos = 0;
-
-        search = "/";
-        replace = "_";
-
-        while((pos = outputs_names[i].find(search, pos)) != string::npos)
-        {
-            outputs_names[i].replace(pos, search.length(), replace);
-            pos += replace.length();
-        }
-    }
-
-    Tensor<PerceptronLayer::ActivationFunction, 1> activations_2d;
-
-    //    const Index layers_number = get_layers_number();
-
-    //    for(Index i = 0; i < layers_number; i++)
-    //	{
-    //        activations_2d.push_back(layers_pointers[i]->get_activation_function());
-    //	}
-
-    buffer.str("");
-    /*
-        if(activations_2d.contains(PerceptronLayer::Threshold))
-        {
-            buffer << "Threshold <- function(x) { \n"
-                      "   if(x < 0)  0 \n"
-                      "   else 1 \n"
-                      "}\n\n";
-        }
-
-        if(activations_2d.contains(PerceptronLayer::SymmetricThreshold))
-        {
-            buffer << "SymmetricThreshold <- function(x) { \n"
-                      "   if(x < 0)  -1 \n"
-                      "   else 1 \n"
-                      "}\n\n";
-        }
-
-        if(activations_2d.contains(PerceptronLayer::Logistic))
-        {
-            buffer << "Logistic <- function(x) { \n"
-                      "   1/(1+exp(-x))\n"
-                      "}\n\n";
-        }
-    */
-    buffer << "expression <- function(inputs) {\n\n    ";
-
-    buffer << "if(length(inputs) != " << inputs_number << ") {\n    "
-           << "   print('Incorrect number of inputs')\n    "
-           << "   return )\n    "
-              "}\n    ";
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-        buffer << inputs_names[i] << "=inputs[" << i+1 << "]\n    ";
-    }
-
-    string neural_network_expression = write_expression();
-
-    pos = 0;
-
-    search = "\n";
-    replace = "\n    ";
-
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
-    {
-        neural_network_expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    pos = 0;
-
-    search = ";";
-    replace = "";
-
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
-    {
-        neural_network_expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    pos = 0;
-
-    search = "=";
-    replace = "<-";
-
-    while((pos = neural_network_expression.find(search, pos)) != string::npos)
-    {
-        neural_network_expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
-
-    ostringstream outputs;
-
-    outputs << "outputs <- c(";
-
-    for(Index i = 0; i < outputs_number; i++)
-    {
-        outputs << outputs_names[i];
-
-        if(i != outputs_number - 1)
-            outputs << ", ";
-    }
-
-    outputs << ")\n    ";
-
-    buffer << neural_network_expression;
-
-    buffer << outputs.str();
-
-    buffer << "outputs \n} \n";
-
-    string expression = buffer.str();
-
-    pos = 0;
-
-    search = "\"";
-    replace = "";
-
-    while((pos = expression.find(search, pos)) != string::npos)
-    {
-        expression.replace(pos, search.length(), replace);
-        pos += replace.length();
-    }
+    replace(expression, "+-", "-");
+    replace(expression, "-+", "-");
+    replace(expression, "--", "+");
 
     return expression;
 }
@@ -3913,7 +2435,7 @@ string NeuralNetwork::write_expression_R() const
 /// Saves the mathematical expression represented by the neural network to a text file.
 /// @param file_name Name of expression text file.
 
-void NeuralNetwork::save_expression(const string& file_name)
+void NeuralNetwork::save_expression_c(const string& file_name)
 {
     ofstream file(file_name.c_str());
 
@@ -3928,7 +2450,7 @@ void NeuralNetwork::save_expression(const string& file_name)
         throw logic_error(buffer.str());
     }
 
-    file << write_expression();
+    file << write_expression_c();
 
     file.close();
 }
@@ -3958,33 +2480,10 @@ void NeuralNetwork::save_expression_python(const string& file_name)
 }
 
 
-/// Saves the R function of the expression represented by the neural network to a text file.
-/// @param file_name Name of expression text file.
-
-void NeuralNetwork::save_expression_R(const string& file_name)
-{
-    ofstream file(file_name.c_str());
-
-    if(!file.is_open())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-               << "void  save_expression_R(const string&) method.\n"
-               << "Cannot open expression text file.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-    file << write_expression_R();
-
-    file.close();
-}
-
-
 /// Saves a set of input-output values from the neural network to a data file.
 /// @param file_name Name of data file.
 /// @todo
+
 void NeuralNetwork::save_data(const string& file_name) const
 {
     const Index inputs_number = get_inputs_number();

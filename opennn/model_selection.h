@@ -26,9 +26,6 @@
 #include "growing_inputs.h"
 #include "pruning_inputs.h"
 #include "genetic_algorithm.h"
-#include "tinyxml2.h"
-
-//Eigen includes
 
 namespace OpenNN
 {
@@ -51,10 +48,6 @@ public:
 
     explicit ModelSelection(TrainingStrategy*);
 
-    explicit ModelSelection(const string&);
-
-    explicit ModelSelection(const tinyxml2::XMLDocument&);
-
     // Destructor
 
     virtual ~ModelSelection();
@@ -74,8 +67,6 @@ public:
         /// Default constructor.
 
         explicit Results();
-
-        void save(const string&) const;
 
         /// Pointer to a structure with the results from the incremental order selection algorithm.
 
@@ -146,7 +137,7 @@ public:
 
     // Serialization methods
 
-    tinyxml2::XMLDocument* to_XML() const;
+    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;

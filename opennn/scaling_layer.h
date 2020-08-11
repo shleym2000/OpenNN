@@ -23,8 +23,6 @@
 #include "layer.h"
 #include "statistics.h"
 
-#include "tinyxml2.h"
-
 namespace OpenNN
 {
 
@@ -48,8 +46,6 @@ public:
 
    explicit ScalingLayer(const Tensor<Descriptives, 1>&);
 
-   ScalingLayer(const ScalingLayer&);
-
    // Destructors
 
    virtual ~ScalingLayer();
@@ -60,7 +56,7 @@ public:
 
    // Get methods
 
-   Tensor<Index, 1> get_input_variables_dimensions() const;
+   
    Tensor<Index, 1> get_outputs_dimensions() const;
 
    Index get_inputs_number() const;
@@ -136,10 +132,6 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-   Tensor<type, 2> calculate_minimum_maximum_outputs(const Tensor<type, 2>&) const;
-
-   Tensor<type, 2> calculate_mean_standard_deviation_outputs(const Tensor<type, 2>&) const;
-
    // Expression methods
 
    string write_no_scaling_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
@@ -152,11 +144,15 @@ public:
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
+   string write_expression_c() const;
+
+   string write_expression_python() const;
+
    // Serialization methods
 
-   string object_to_string() const;
+   
 
-   tinyxml2::XMLDocument* to_XML() const;
+   
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -176,10 +172,6 @@ protected:
    /// Display warning messages to screen. 
 
    bool display;
-
-#ifdef __OPENNN_CUDA__
-    #include "../../artelnics/opennn_cuda/opennn_cuda/scaling_layer_cuda.h"
-#endif
 
 };
 

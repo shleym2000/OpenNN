@@ -15,6 +15,7 @@
 #include <time.h>
 #include <stdexcept>
 
+#include <omp.h>
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
@@ -32,80 +33,49 @@ int main(void)
 
         // Device
 
-        Device device(Device::EigenSimpleThreadPool);
+        const int n = omp_get_max_threads();
+        NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+        ThreadPoolDevice* thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
         // Data set
 
-        DataSet data_set("D:/Artelnics/opennn/examples/simple_function_regression/data/simple_function_regression.csv", ';', true);
-        data_set.set_device_pointer(&device);
+        DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
-        // Variables
+        data_set.set_thread_pool_device(thread_pool_device);
 
-        const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
-        const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
-
-//        data_set.set_training();
-        data_set.split_instances_random(0.6,0.1,0.3);
-
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        data_set.set_training();
 
         // Neural network
 
         Tensor<Index, 1> neural_network_architecture(3);
-        neural_network_architecture.setValues({1, 2, 1});
+
+        neural_network_architecture.setValues({1, 3, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
-        neural_network.set_device_pointer(&device);
 
-        neural_network.set_inputs_names(inputs_names);
-        neural_network.set_outputs_names(targets_names);
+        neural_network.set_thread_pool_device(thread_pool_device);
 
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
-        scaling_layer_pointer->set_descriptives(inputs_descriptives);
-
-        UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
-        unscaling_layer_pointer->set_descriptives(targets_descriptives);
+        dynamic_cast<PerceptronLayer*>(neural_network.get_trainable_layers_pointers()(0))->set_activation_function(PerceptronLayer::Linear);
 
         // Training strategy
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::LossMethod::SUM_SQUARED_ERROR);
+        training_strategy.set_thread_pool_device(thread_pool_device);
 
-        QuasiNewtonMethod* quasi_Newton_method_pointer = training_strategy.get_quasi_Newton_method_pointer();
+        training_strategy.set_loss_method(TrainingStrategy::MINKOWSKI_ERROR);
 
-//        cout << training_strategy.get_loss_index_pointer()->calculate_training_loss_gradient() << endl;
-//        quasi_Newton_method_pointer->set_epochs_number(1000);
+        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
 
-//        quasi_Newton_method_pointer->set_training_initial_batch_size(11);
+        training_strategy.get_loss_index_pointer()->set_regularization_method("NO_REGULARIZATION");
 
-        quasi_Newton_method_pointer->set_display_period(10);
+        training_strategy.get_stochastic_gradient_descent_pointer()->set_display_period(1);
 
-//        quasi_Newton_method_pointer->set_maximum_iterations_number(1000);
+        training_strategy.perform_training();
 
-        const OptimizationAlgorithm::Results training_strategy_results = training_strategy.perform_training();
+        neural_network.save_expression_python("simple_function_regresion.py");
 
-        // Testing analysis
-
-//        data_set.set_testing();
-
-        TestingAnalysis testing_analysis(&neural_network, &data_set);
-
-        const TestingAnalysis::LinearRegressionAnalysis linear_regression_results = testing_analysis.perform_linear_regression_analysis()[0];
-        cout << "Correlation    : " << linear_regression_results.correlation << endl;
-
-        // Save results
-
-//        data_set.save("../data/data_set.xml");
-
-//        neural_network.save("../data/neural_network.xml");
-//        neural_network.save_expression("../data/expression.txt");
-
-//        training_strategy.save("../data/training_strategy.xml");
-//        training_strategy_results.save("../data/training_strategy_results.dat");
-
-//        linear_regression_results.save("../data/linear_regression_analysis_results.dat");
+        cout<<"bye";
 
         return 0;
     }

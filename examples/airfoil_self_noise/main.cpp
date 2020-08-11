@@ -16,6 +16,7 @@
 #include <sstream>
 #include <string>
 #include <time.h>
+#include <omp.h>
 
 // OpenNN includes
 
@@ -31,81 +32,84 @@ int main(void)
 
         srand(static_cast<unsigned>(time(nullptr)));
 
-        // Device
-
-        Device device(Device::EigenSimpleThreadPool);
-
         // Data set
 
         DataSet data_set("../data/airfoil_self_noise.csv", ';', true);
-        data_set.set_device_pointer(&device);
 
         const Tensor<string, 1> inputs_names = data_set.get_input_variables_names();
         const Tensor<string, 1> targets_names = data_set.get_target_variables_names();
 
-        data_set.split_instances_random();
+        data_set.split_samples_random();
 
-        const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_inputs_minimum_maximum();
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_targets_minimum_maximum();
+        const Index input_variables_number = data_set.get_input_variables_number();
+        const Index target_variables_number = data_set.get_target_variables_number();
 
-//        data_set.set_batch_instances_number(100);
+        Tensor<string, 1> scaling_inputs_methods(input_variables_number);
+        scaling_inputs_methods.setConstant("MinimumMaximum");
+
+        Tensor<string, 1> scaling_target_methods(target_variables_number);
+        scaling_target_methods.setConstant("MinimumMaximum");
+
+        const Tensor<Descriptives, 1> inputs_descriptives =  data_set.scale_input_variables(scaling_inputs_methods);
+        const Tensor<Descriptives, 1> target_descriptives = data_set.scale_target_variables(scaling_target_methods);
 
         // Neural network
 
-        const Index inputs_number = data_set.get_input_variables_number();
-        const Index hidden_neurons_number = 100;
-        const Index outputs_number = data_set.get_target_variables_number();
+        const Index hidden_neurons_number = 7;
 
         Tensor<Index, 1> neural_network_architecture(3);
-        neural_network_architecture.setValues({inputs_number, hidden_neurons_number, outputs_number});
+        neural_network_architecture.setValues({input_variables_number, hidden_neurons_number, target_variables_number});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
-        neural_network.set_device_pointer(&device);
 
         neural_network.set_inputs_names(inputs_names);
         neural_network.set_outputs_names(targets_names);
 
-        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
+        neural_network.set_parameters_random();
 
+        ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_descriptives(inputs_descriptives);
+        scaling_layer_pointer->set_scaling_methods(scaling_inputs_methods);
 
         UnscalingLayer* unscaling_layer_pointer = neural_network.get_unscaling_layer_pointer();
-
-        unscaling_layer_pointer->set_descriptives(targets_descriptives);
+        unscaling_layer_pointer->set_descriptives(target_descriptives);
+        unscaling_layer_pointer->set_unscaling_methods(scaling_target_methods);
 
         // Training strategy object
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_optimization_method(TrainingStrategy::STOCHASTIC_GRADIENT_DESCENT);
+        training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
 
-        training_strategy.get_stochastic_gradient_descent_pointer()->set_batch_size(5);
-
-        training_strategy.set_device_pointer(&device);
+        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
         const OptimizationAlgorithm::Results optimization_algorithm_results = training_strategy.perform_training();
 
+        data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
+        data_set.unscale_targets(scaling_target_methods, target_descriptives);
+
         // Testing analysis
 
-        data_set.unscale_inputs_minimum_maximum(inputs_descriptives);
-        data_set.unscale_targets_minimum_maximum(targets_descriptives);
-
-        const TestingAnalysis testing_analysis(&neural_network, &data_set);
+        TestingAnalysis testing_analysis(&neural_network, &data_set);
 
         const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
 
+        cout << "Intercept: " << linear_regression_analysis.intercept << endl;
+        cout << "Slope: " << linear_regression_analysis.slope << endl;
+        cout << "Correlation: " << linear_regression_analysis.correlation << endl;
+
         // Save results
 
-        data_set.save("../data/data_set.xml");
+//        data_set.save("../data/data_set.xml");
 
-        neural_network.save("../data/neural_network.xml");
-        neural_network.save_expression("../data/expression.txt");
+//        neural_network.save("../data/neural_network.xml");
 
-        training_strategy.save("../data/training_strategy.xml");
+//        training_strategy.save("../data/training_strategy.xml");
 
-        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
+//        optimization_algorithm_results.save("../data/optimization_algorithm_results.dat");
 
-        linear_regression_analysis.save("../data/linear_regression_analysis.dat");
+//        linear_regression_analysis.save("../data/linear_regression_analysis.dat");
 
         cout << "End" << endl;
 

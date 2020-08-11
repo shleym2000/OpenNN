@@ -25,8 +25,6 @@
 #include "config.h"
 #include "loss_index.h"
 
-#include "tinyxml2.h"
-
 using namespace std;
 using namespace Eigen;
 
@@ -35,8 +33,6 @@ namespace OpenNN
 {
 
 /// This abstract class represents the concept of optimization algorithm for a neural network in OpenNN library.
-
-///
 /// Any derived class must implement the perform_training() method.
 
 class OptimizationAlgorithm
@@ -48,14 +44,45 @@ public:
 
    explicit OptimizationAlgorithm(LossIndex*);
 
-   explicit OptimizationAlgorithm(const tinyxml2::XMLDocument&);
-
    virtual ~OptimizationAlgorithm();
 
     /// Enumeration of all possibles condition of stop for the algorithms.
 
     enum StoppingCondition{MinimumParametersIncrementNorm, MinimumLossDecrease, LossGoal, GradientNormGoal,
                            MaximumSelectionErrorIncreases, MaximumEpochsNumber, MaximumTime};
+
+    struct OptimizationData
+    {
+        explicit OptimizationData()
+        {
+        }
+
+        virtual ~OptimizationData()
+        {
+        }
+
+        void print() const
+        {
+            cout << "Parameters:" << endl;
+            cout << parameters << endl;
+
+            cout << "Potential parameters:" << endl;
+            cout << potential_parameters << endl;
+
+            cout << "Training direction:" << endl;
+            cout << training_direction << endl;
+
+            cout << "Initial learning rate:" << endl;
+            cout << initial_learning_rate << endl;
+        }
+
+        Tensor<type, 1> parameters;
+        Tensor<type, 1> potential_parameters;
+        Tensor<type, 1> training_direction;
+        type initial_learning_rate = 0;
+
+
+    };
 
    /// This structure contains the optimization algorithm results.    
 
@@ -77,7 +104,7 @@ public:
 
        /// Returns a string representation of the results structure.
 
-       string object_to_string() const;
+       
 
        void save(const string&) const;
 
@@ -89,9 +116,17 @@ public:
 
        void resize_training_history(const Index&);
 
-       /// Resizes the training and selection error history keeping the values.
+       /// Resizes selection history variables.
 
-       void resize_error_history(const Index&);
+       void resize_selection_history(const Index&);
+
+       /// Resizes the training error history keeping the values.
+
+       void resize_training_error_history(const Index&);
+
+       /// Resizes the selection error history keeping the values.
+
+       void resize_selection_error_history(const Index&);
 
        /// Writes final results of the training.
 /*
@@ -171,7 +206,7 @@ public:
 
    virtual void set_default();
 
-   void set_device_pointer(Device*);
+   virtual void set_thread_pool_device(ThreadPoolDevice*);
 
    virtual void set_loss_index_pointer(LossIndex*);
 
@@ -196,12 +231,12 @@ public:
 
    // Serialization methods
 
-   virtual string object_to_string() const;
+   virtual 
    void print() const;
 
    virtual Tensor<string, 2> to_string_matrix() const;
 
-   virtual tinyxml2::XMLDocument* to_XML() const;
+//   virtual
    virtual void from_XML(const tinyxml2::XMLDocument&);
 
    virtual void write_XML(tinyxml2::XMLPrinter&) const;
@@ -211,7 +246,7 @@ public:
 
 protected:
 
-   Device* device_pointer;
+   ThreadPoolDevice* thread_pool_device;
 
    /// Pointer to a loss index for a neural network object.
 
@@ -243,13 +278,11 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
-   Tensor<type, 1> normalized(const Tensor<type, 1>& tensor) const
-   {
+   void normalized(Tensor<type, 1>& tensor) const
+   {      
        const type norm = l2_norm(tensor);
 
-       const Tensor<type, 1> new_tensor = tensor/norm;
-
-       return new_tensor;
+       tensor.device(*thread_pool_device) = tensor/norm;
    }
 
 
@@ -257,36 +290,26 @@ protected:
    {
        Tensor<type, 0> norm;
 
-       switch(device_pointer->get_type())
-       {
-            case Device::EigenDefault:
-            {
-                DefaultDevice* default_device = device_pointer->get_eigen_default_device();
-
-                norm.device(*default_device) = tensor.square().sum().sqrt();
-
-                break;
-            }
-
-            case Device::EigenSimpleThreadPool:
-            {
-               ThreadPoolDevice* thread_pool_device = device_pointer->get_eigen_thread_pool_device();
-
-               norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
-
-                break;
-            }
-
-           case Device::EigenGpu:
-           {
-//                GpuDevice* gpu_device = device_pointer->get_eigen_gpu_device();
-
-                break;
-           }
-       }
+       norm.device(*thread_pool_device) = tensor.square().sum().sqrt();
 
        return norm(0);
    }
+
+   bool is_zero(const Tensor<type, 1>& tensor) const
+   {
+       const Index size = tensor.size();
+
+       for(Index i = 0; i < size; i++)
+       {
+           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
+       }
+
+       return true;
+   }
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"
+#endif
 
 };
 

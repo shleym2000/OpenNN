@@ -37,7 +37,7 @@ namespace OpenNN
 {
 
 /// This concrete class represents the adaptive moment estimation(Adam) training algorithm,
-/// based on adaptative estimates of lower-order moments.
+/// based on adaptive estimates of lower-order moments.
 
 ///
 /// For more information visit:
@@ -56,53 +56,15 @@ public:
     {
         /// Default constructor.
 
-        explicit OptimizationData()
-        {
-        }
+        explicit OptimizationData();
 
-        explicit OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer)
-        {
-            set(new_stochastic_gradient_descent_pointer);
-        }
+        explicit OptimizationData(AdaptiveMomentEstimation* new_stochastic_gradient_descent_pointer);
 
-        virtual ~OptimizationData() {}
+        virtual ~OptimizationData();
 
-        void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer)
-        {
-            adaptive_moment_estimation_pointer = new_adaptive_moment_estimation_pointer;
+        void set(AdaptiveMomentEstimation* new_adaptive_moment_estimation_pointer);
 
-            LossIndex* loss_index_pointer = new_adaptive_moment_estimation_pointer->get_loss_index_pointer();
-
-            NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-            const Index parameters_number = neural_network_pointer->get_parameters_number();
-
-            parameters.resize(parameters_number);
-            parameters = neural_network_pointer->get_parameters();
-
-            minimal_selection_parameters.resize(parameters_number);
-
-            gradient_exponential_decay.resize(parameters_number);
-            gradient_exponential_decay.setZero();
-
-            square_gradient_exponential_decay.resize(parameters_number);
-            square_gradient_exponential_decay.setZero();
-
-            last_gradient_exponential_decay.resize(parameters_number);
-            last_gradient_exponential_decay.setZero();
-
-            last_square_gradient_exponential_decay.resize(parameters_number);
-            last_square_gradient_exponential_decay.setZero();
-        }
-
-        void print() const
-        {
-            cout << "Gradien exponential decay:" << endl <<gradient_exponential_decay << endl;
-
-            cout << "Square gradient exponential decay:" << endl << square_gradient_exponential_decay << endl;
-
-            cout << "Parmeters:" << endl << parameters << endl;
-        }
+        void print() const;
 
         AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
 
@@ -130,27 +92,13 @@ public:
    explicit AdaptiveMomentEstimation(const tinyxml2::XMLDocument&);
 
    virtual ~AdaptiveMomentEstimation();
-
-   // Enumerations
-
-    ///@todo, to remove
-   /// Enumeration of Adam's variations.
    
-   /// Get methods in training operators
-
    // Training operators
 
    const type& get_initial_learning_rate() const;
    const type& get_beta_1() const;
    const type& get_beta_2() const;
    const type& get_epsilon() const;
-
-   // Training parameters
-
-   const type& get_warning_parameters_norm() const;
-   const type& get_warning_gradient_norm() const;
-   const type& get_error_parameters_norm() const;
-   const type& get_error_gradient_norm() const;
 
    // Stopping criteria
 
@@ -163,6 +111,10 @@ public:
    const bool& get_reserve_training_error_history() const;
    const bool& get_reserve_selection_error_history() const;
 
+   // Hardware use
+
+   const string& get_hardware_use() const;
+
    // Set methods
 
    void set_loss_index_pointer(LossIndex*);
@@ -171,10 +123,7 @@ public:
 
    void set_reserve_all_training_history(const bool&);
 
-   void set_batch_instances_number(const Index& new_batch_instances_number)
-   {
-       batch_instances_number = new_batch_instances_number;
-   }
+   void set_batch_samples_number(const Index& new_batch_samples_number);
 
    // Training operators
 
@@ -185,10 +134,6 @@ public:
 
    // Training parameters
 
-   void set_warning_parameters_norm(const type&);
-   void set_warning_gradient_norm(const type&);
-   void set_error_parameters_norm(const type&);
-   void set_error_gradient_norm(const type&);
    void set_maximum_epochs_number(const Index&);
 
    // Stopping criteria
@@ -202,9 +147,9 @@ public:
    void set_reserve_training_error_history(const bool&);
    void set_reserve_selection_error_history(const bool&);
 
-   // Utilities
+   // Hardware use
 
-   void set_display_period(const Index&);
+   void set_hardware_use(const string&);
 
    // Training methods
 
@@ -222,38 +167,12 @@ public:
 
    Tensor<string, 2> to_string_matrix() const;
 
-   tinyxml2::XMLDocument* to_XML() const;
-
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
-                                 OptimizationData& optimization_data)
-   {
-
-       const type learning_rate =
-               initial_learning_rate*sqrt(static_cast<type>(1.0)
-               - pow(beta_2, static_cast<type>(optimization_data.iteration)))/(static_cast<type>(1.0)
-               - pow(beta_1, static_cast<type>(optimization_data.iteration)));
-
-       optimization_data.gradient_exponential_decay
-               = optimization_data.last_gradient_exponential_decay*beta_1
-               + back_propagation.gradient*(1 - beta_1);
-
-       optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
-
-       optimization_data.square_gradient_exponential_decay
-               = optimization_data.last_square_gradient_exponential_decay*beta_2
-               + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
-
-       optimization_data.last_square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
-
-       // Update parameters
-
-       optimization_data.parameters -= optimization_data.gradient_exponential_decay*learning_rate/(optimization_data.square_gradient_exponential_decay.sqrt() + epsilon);
-   }
-
+                                 OptimizationData& optimization_data);
 
 private:
 
@@ -279,41 +198,11 @@ private:
 
    type epsilon;
 
-   // TRAINING PARAMETERS
-
-   /// Value for the parameters norm at which a warning message is written to the screen. 
-
-   type warning_parameters_norm;
-
-   /// Value for the gradient norm at which a warning message is written to the screen. 
-
-   type warning_gradient_norm;
-
-   /// Value for the parameters norm at which the training process is assumed to fail. 
-   
-   type error_parameters_norm;
-
-   /// Value for the gradient norm at which the training process is assumed to fail. 
-
-   type error_gradient_norm;
-
-   // Stopping criteria
+    // Stopping criteria
 
    /// Goal value for the loss. It is used as a stopping criterion.
 
    type training_loss_goal;
-
-   /// Maximum number of iterations to perform_training. It is used as a stopping criterion.
-
-   Index maximum_iterations_number;
-
-   /// Initial batch size
-
-   Index training_initial_batch_size;
-
-   /// Maximum training batch size
-
-   Index training_maximum_batch_size;
 
    /// Maximum epochs number
 
@@ -337,7 +226,19 @@ private:
 
    bool reserve_selection_error_history;
 
-   Index batch_instances_number = 1000;
+   Index batch_samples_number = 1000;
+
+   /// Hardware use.
+
+   string hardware_use;
+
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
+#endif
+
+#ifdef OPENNN_MKL
+    #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
+#endif
 
 };
 

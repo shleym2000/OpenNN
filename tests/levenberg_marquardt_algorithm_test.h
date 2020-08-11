@@ -24,24 +24,14 @@ class LevenbergMarquardtAlgorithmTest : public UnitTesting
 
 public:
 
-   
-
    explicit LevenbergMarquardtAlgorithmTest(); 
 
-
-   
-
-   virtual ~LevenbergMarquardtAlgorithmTest();
-
-
-   
+   virtual ~LevenbergMarquardtAlgorithmTest();   
 
    // Constructor and destructor methods
 
    void test_constructor();
    void test_destructor();
-
-   
 
    // Get methods
 
@@ -83,7 +73,6 @@ public:
 
    void test_perform_Householder_QR_decomposition();
 
-
    // Unit testing methods
 
    void run_test_case();
@@ -94,7 +83,7 @@ public:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2019 Artificial Intelligence Techniques, SL.
+// Copyright (C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
