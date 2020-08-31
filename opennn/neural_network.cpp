@@ -102,6 +102,28 @@ NeuralNetwork::~NeuralNetwork()
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
+
+    if(layer_pointer->get_type_string() == "Recurrent" || layer_pointer->get_type_string() == "LongShortTermMemory"){
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Long Short Term Memory Layer and Recurrent Layer are not available yet. Both of them will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+
+    }
+    if(layer_pointer->get_type_string() == "Convolutional"){
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Convolutional Layer is not available yet. It will be included in future versions.!!\n";
+
+        throw logic_error(buffer.str());
+
+    }
+
     const Layer::Type layer_type = layer_pointer->get_type();
 
     if(check_layer_type(layer_type))
@@ -146,10 +168,7 @@ bool NeuralNetwork::check_layer_type(const Layer::Type layer_type)
     {
         const Layer::Type first_layer_type = layers_pointers[0]->get_type();
 
-        if(first_layer_type != Layer::Scaling)
-        {
-            return false;
-        }
+        if(first_layer_type != Layer::Scaling) return false;
     }
 
     return true;
@@ -203,7 +222,20 @@ bool NeuralNetwork::has_long_short_term_memory_layer() const
     return false;
 }
 
+/// Returns true if the neural network object has a convolutional object inside,
+/// and false otherwise.
 
+bool NeuralNetwork::has_convolutional_layer() const
+{
+    const Index layers_number = get_layers_number();
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(layers_pointers[i]->get_type() == Layer::Convolutional) return true;
+    }
+
+    return false;
+}
 
 /// Returns true if the neural network object has a recurrent layer object inside,
 /// and false otherwise.
@@ -418,7 +450,13 @@ ScalingLayer* NeuralNetwork::get_scaling_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "ScalingLayer* get_scaling_layer_pointer() const method.\n"
+           << "No scaling layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -436,7 +474,13 @@ UnscalingLayer* NeuralNetwork::get_unscaling_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "UnscalingLayer* get_unscaling_layer_pointer() const method.\n"
+           << "No unscaling layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -454,7 +498,13 @@ BoundingLayer* NeuralNetwork::get_bounding_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "BoundingLayer* get_bounding_layer_pointer() const method.\n"
+           << "No bounding layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -472,7 +522,13 @@ ProbabilisticLayer* NeuralNetwork::get_probabilistic_layer_pointer() const
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "ProbabilisticLayer* get_probabilistic_layer_pointer() const method.\n"
+           << "No probabilistic layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -490,7 +546,13 @@ PrincipalComponentsLayer* NeuralNetwork::get_principal_components_layer_pointer(
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "PrincipalComponentsLayer* get_principal_components_layer_pointer() const method.\n"
+           << "No principal components layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -508,7 +570,13 @@ LongShortTermMemoryLayer* NeuralNetwork::get_long_short_term_memory_layer_pointe
         }
     }
 
-    return nullptr;
+    ostringstream buffer;
+
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const method.\n"
+           << "No long-short term memory layer in neural network.\n";
+
+    throw logic_error(buffer.str());
 }
 
 
@@ -526,9 +594,14 @@ RecurrentLayer* NeuralNetwork::get_recurrent_layer_pointer() const
         }
     }
 
-    return nullptr;
-}
+    ostringstream buffer;
 
+    buffer << "OpenNN Exception: NeuralNetwork class.\n"
+           << "RecurrentLayer* get_recurrent_layer_pointer() const method.\n"
+           << "No recurrent layer in neural network.\n";
+
+    throw logic_error(buffer.str());
+}
 
 
 /// Returns true if messages from this class are to be displayed on the screen, or false if messages
@@ -613,6 +686,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
 //        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
 
 //        this->add_layer(long_short_term_memory_layer_pointer);
+
 
         RecurrentLayer* recurrent_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
@@ -804,8 +878,14 @@ void NeuralNetwork::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_dev
 {
     const Index layers_number = get_layers_number();
 
+    cout << "Layers number: " << layers_number << endl;
+
     for(Index i = 0; i < layers_number; i++)
     {
+        cout << "i: " << i << ": ";
+
+        cout << layers_pointers(i)->get_type_string() << endl;
+
         layers_pointers(i)->set_thread_pool_device(new_thread_pool_device);
     }
 }
@@ -1376,15 +1456,78 @@ Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 2>& inputs)
 
 #endif
 
+    Tensor<type, 2> outputs;
+
     const Index layers_number = get_layers_number();
 
     if(layers_number == 0) return inputs;
 
-    Tensor<type, 2> outputs = layers_pointers(0)->calculate_outputs(inputs);
+    outputs = layers_pointers(0)->calculate_outputs(inputs);
 
     for(Index i = 1; i < layers_number; i++)
     {
         outputs = layers_pointers(i)->calculate_outputs(outputs);
+    }
+
+    return outputs;
+}
+
+
+
+
+Tensor<type, 2> NeuralNetwork::calculate_outputs(const Tensor<type, 4>& inputs)
+{
+#ifdef __OPENNN_DEBUG__
+
+    const Index inputs_dimensions_number = inputs.rank();
+
+    if(inputs_dimensions_number != 2 && inputs_dimensions_number != 4)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&) const method.\n"
+               << "Inputs dimensions number (" << inputs_dimensions_number << ") must be 2 or 4.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+#endif
+
+    Tensor<type, 4> outputs_4d;
+    Tensor<type, 2> outputs, inputs_2d;
+
+    const Index layers_number = get_layers_number();
+
+    if(layers_number == 0) return inputs_2d;
+
+    // First layer output
+    if(layers_pointers(1)->get_type() == Layer::Convolutional)
+    {
+        outputs_4d = layers_pointers(0)->calculate_outputs_4D(inputs);
+    }
+    else
+    {
+        outputs = layers_pointers(0)->calculate_outputs_from4D(inputs);
+    }
+
+    for(Index i = 1; i < layers_number; i++)
+    {
+        if(layers_pointers(i + 1)->get_type() == Layer::Convolutional)
+        {
+            outputs_4d = layers_pointers(i)->calculate_outputs_4D(outputs_4d);
+        }
+        else
+        {
+            if(layers_pointers(i)->get_type() != Layer::Convolutional && layers_pointers(i)->get_type() != Layer::Pooling)
+            {
+                outputs = layers_pointers(i)->calculate_outputs(outputs);
+            }
+            else
+            {
+                outputs = layers_pointers(i)->calculate_outputs_from4D(outputs_4d);
+            }
+        }
     }
 
     return outputs;
@@ -2365,11 +2508,54 @@ string NeuralNetwork::write_expression_c() const
 }
 
 
-/// @todo
-
-string NeuralNetwork::write_expression() const
+string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-    return string();
+    const Index layers_number = get_layers_number();
+
+    Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
+    Tensor<string, 1> layers_names = get_layers_names();
+
+    Tensor<string, 1> temporal_outputs_names;
+    Tensor<string, 1> temporal_inputs_names;
+    temporal_inputs_names = inputs_names;
+
+    Index layer_neurons_number;
+
+    ostringstream buffer;
+
+    for(Index i = 0; i < layers_number; i++)
+    {
+        if(i == layers_number-1)
+        {
+            temporal_outputs_names = outputs_names;
+            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+        }
+        else{
+            layer_neurons_number = layers_pointers[i]->get_neurons_number();
+            temporal_outputs_names.resize(layer_neurons_number);
+
+
+            for(Index j = 0; j < layer_neurons_number; j++)
+            {
+                if(layers_names(i) == "scaling_layer")
+                {
+                    temporal_outputs_names(j) = "scaled_" + inputs_names(j);
+                }
+                else{
+                    temporal_outputs_names(j) =  layers_names(i) + "_output_" + to_string(j);
+                }
+            }
+            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+
+            temporal_inputs_names = temporal_outputs_names;
+        }
+    }
+
+    string expression = buffer.str();
+
+    replace(expression, "+-", "-");
+
+    return expression;
 }
 
 

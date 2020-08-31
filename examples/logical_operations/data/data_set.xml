@@ -69,10 +69,10 @@
          <CategoriesUses>Target;Target</CategoriesUses>
       </Column>
    </Columns>
-   <Instances>
-      <InstancesNumber>4</InstancesNumber>
-      <InstancesUses>0 0 0 0</InstancesUses>
-   </Instances>
+   <Samples>
+      <SamplesNumber>4</SamplesNumber>
+      <SamplesUses>0 0 0 0</SamplesUses>
+   </Samples>
    <MissingValues>
       <MissingValuesMethod>Unuse</MissingValuesMethod>
       <MissingValuesNumber>0</MissingValuesNumber>

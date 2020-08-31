@@ -63,11 +63,15 @@ public:
 
   void test_calculate_outputs();
 
+  void test_calculate_outputs_2d();
+
   void test_insert_padding();
 
   // Forward propagate
 
   void test_forward_propagate();
+
+  void test_calculate_hidden_delta();
 
   // Unit testing methods
 

@@ -181,6 +181,8 @@ public:
 
    const Index& get_epochs_number() const;
 
+   string get_hardware_use() const;
+
    // Stopping criteria
 
    const type& get_minimum_parameters_increment_norm() const;
@@ -330,7 +332,7 @@ private:
 
    /// True if the selection error history vector is to be reserved, false otherwise.
 
-   bool reserve_selection_error_history = false;
+   bool reserve_selection_error_history = true;
 
    /// Hardware use.
 

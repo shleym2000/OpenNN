@@ -108,6 +108,12 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
 }
 
 
+string LevenbergMarquardtAlgorithm::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
 const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
@@ -179,24 +185,23 @@ void LevenbergMarquardtAlgorithm::set_default()
 
     minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
 
-    minimum_loss_decrease = static_cast<type>(1.0e-9);
-    training_loss_goal = static_cast<type>(1.0e-3);
-    gradient_norm_goal = static_cast<type>(1.0e-3);
+    minimum_loss_decrease = static_cast<type>(0.0);
+    training_loss_goal = 0;
+    gradient_norm_goal = 0;
     maximum_selection_error_increases = 1000;
 
     maximum_epochs_number = 1000;
-    maximum_time = 1000.0;
+    maximum_time = 3600.0;
 
     choose_best_selection = false;
 
     // TRAINING HISTORY
 
     reserve_training_error_history = false;
-    reserve_selection_error_history = false;
+    reserve_selection_error_history = true;
 
     // UTILITIES
 
-    display = true;
     display_period = 5;
 
     // Training parameters
@@ -626,6 +631,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+
         optimization_data.epoch = epoch;
 
         // Neural network
@@ -799,7 +805,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                 cout << "Parameters norm: " << parameters_norm << "\n"
                      << "Training loss: " << terms_second_order_loss.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
-                     << loss_index_pointer->write_information()
                      << "Damping parameter: " << damping_parameter << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -830,7 +835,6 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training loss: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
-                 << loss_index_pointer->write_information()
                  << "Damping parameter: " << damping_parameter << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -1168,7 +1172,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
 void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 {
-    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardtAlgorithm");
+    const tinyxml2::XMLElement* root_element = document.FirstChildElement("LevenbergMarquardt");
 
     if(!root_element)
     {

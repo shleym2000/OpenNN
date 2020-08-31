@@ -59,6 +59,12 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
 }
 
 
+string GradientDescent::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& GradientDescent::get_minimum_parameters_increment_norm() const
@@ -157,12 +163,12 @@ void GradientDescent::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(1.0e-3);;
+    minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
 
-    minimum_loss_decrease = static_cast<type>(1.0e-9);
+    minimum_loss_decrease = static_cast<type>(0.0);
 
-    training_loss_goal = static_cast<type>(1.0e-3);
-    gradient_norm_goal = static_cast<type>(1.0e-3);
+    training_loss_goal = 0;
+    gradient_norm_goal = 0;
     maximum_selection_error_increases = 100;
 
     maximum_epochs_number = 1000;
@@ -173,11 +179,10 @@ void GradientDescent::set_default()
     // TRAINING HISTORY
 
     reserve_training_error_history = true;
-    reserve_selection_error_history = false;
+    reserve_selection_error_history = true;
 
     // UTILITIES
 
-    display = true;
     display_period = 5;
 }
 
@@ -763,7 +768,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                 cout << "Parameters norm: " << parameters_norm << "\n"
                      << "Training error: " << training_back_propagation.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
-                     << loss_index_pointer->write_information()
                      << "Learning rate: " << optimization_data.learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -795,7 +799,6 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
-                 << loss_index_pointer->write_information()
                  << "Learning rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -1049,6 +1052,8 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Hardware use
 
     file_stream.OpenElement("HardwareUse");
+
+    cout << "hardware_use: " << hardware_use << endl;
 
     buffer.str("");
     buffer << hardware_use;

@@ -170,7 +170,10 @@ public:
    string write_softmax_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
-   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+//   string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
+   string write_combinations(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
+   string write_activations(const Tensor<string, 1>& outputs_names) const;
 
    string write_expression_c() const;
    string write_combinations_c() const;
@@ -181,10 +184,6 @@ public:
    string write_activations_python() const;
 
    // Serialization methods
-
-   
-
-   virtual 
 
    void from_XML(const tinyxml2::XMLDocument&);
 
@@ -209,7 +208,7 @@ protected:
 
    /// Display messages to screen.
 
-   bool display;
+   bool display = true;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/probabilistic_layer_cuda.h"

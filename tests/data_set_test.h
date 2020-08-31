@@ -187,6 +187,7 @@ public:
    void test_to_XML();
    void test_from_XML();
    void test_print();
+   void test_print_data_preview();
    void test_read_csv();
    void test_read_adult_csv();
    void test_read_airline_passengers_csv();
@@ -215,6 +216,10 @@ public:
    void test_calculate_selection_negatives();
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();
+
+   //Check if constant
+
+   void test_is_constant_numeric();
 
    // Unit testing methods
 

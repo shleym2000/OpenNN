@@ -209,6 +209,10 @@ void DataSet::Column::set_type(const string& new_column_type)
     {
         type = DateTime;
     }
+    else if(new_column_type == "Constant")
+    {
+        type = Constant;
+    }
     else
     {
         ostringstream buffer;
@@ -457,6 +461,10 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     else if (type == Categorical)
     {
         file_stream.PushText("Categorical");
+    }
+    else if(type == Constant)
+    {
+        file_stream.PushText("Constant");
     }
     else
     {
@@ -1468,9 +1476,16 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     Tensor<Index, 1> indices;
 
-    intialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
+    initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
 
     random_shuffle(indices.data(), indices.data() + indices.size());
+
+    Index count = 0;
+
+    for(Index i = 0; i < samples_uses.size(); i++)
+    {
+        if(samples_uses(i) == UnusedSample) count ++;
+    }
 
     Index i = 0;
     Index index;
@@ -1525,6 +1540,14 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
         }
 
         i++;
+    }
+
+    for(Index i = 0; i < samples_uses.size(); i++)
+    {
+        if(samples_uses(i) == UnusedSample)
+        {
+            cout << "Sample " << i << " is unused" << endl;
+        }
     }
 
 
@@ -1613,22 +1636,6 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 }
 
 
-/// Changes samples for selection by samples for testing.
-
-void DataSet::set_selection_to_testing_samples()
-{
-    std::replace(samples_uses.data(), samples_uses.data() + samples_uses.size(), Selection, Testing);
-}
-
-
-/// Changes samples for testing by samples for selection.
-
-void DataSet::set_testing_to_selection_samples()
-{
-    std::replace(samples_uses.data(), samples_uses.data() + samples_uses.size(), Testing, Selection);
-}
-
-
 /// This method separates the dataset into n-groups to validate a model with limited data.
 /// @param k Number of folds that a given data sample is given to be split into.
 /// @param fold_index.
@@ -1677,8 +1684,6 @@ void DataSet::set_default_columns_uses()
         const Index targets_number = get_target_variables_number();
 
         input_variables_dimensions.resize(inputs_number);
-
-        target_variables_dimensions.resize(targets_number);
     }
 }
 
@@ -1746,8 +1751,6 @@ void DataSet::set_default_classification_columns_uses()
         const Index targets_number = get_target_variables_number();
 
         input_variables_dimensions.resize(inputs_number);
-
-        target_variables_dimensions.resize(targets_number);
     }
 }
 
@@ -1946,7 +1949,7 @@ Tensor<string, 1> DataSet::get_variables_names() const
                 variables_names(index) = columns(i).categories(j);
 
                 index++;
-            }            
+            }
         }
         else
         {
@@ -2026,14 +2029,6 @@ Tensor<string, 1> DataSet::get_target_variables_names() const
 const Tensor<Index, 1>& DataSet::get_input_variables_dimensions() const
 {
     return input_variables_dimensions;
-}
-
-
-/// Returns the dimesions of the target variables.
-
-const Tensor<Index, 1>& DataSet::get_target_variables_dimensions() const
-{
-    return target_variables_dimensions;
 }
 
 
@@ -2754,9 +2749,6 @@ void DataSet::set_columns_uses(const Tensor<string, 1>& new_columns_uses)
 
     input_variables_dimensions.resize(1);
     input_variables_dimensions.setConstant(get_input_variables_number());
-
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -2786,9 +2778,6 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
 
     input_variables_dimensions.resize(1);
     input_variables_dimensions.setConstant(get_input_variables_number());
-
-    target_variables_dimensions.resize(1);
-    target_variables_dimensions.setConstant(get_target_variables_number());
 }
 
 
@@ -3025,6 +3014,28 @@ void DataSet::set_columns_number(const Index& new_variables_number)
 }
 
 
+void DataSet::binarize_input_data(const type& threshold)
+{
+    const Index samples_number = get_samples_number();
+
+    const Index input_variables_number = get_input_variables_number();
+
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = 0; j < input_variables_number; i++)
+        {
+            const Index input_variable_index = input_variables_indices[j];
+
+            data(i,input_variable_index) < threshold
+                    ? data(i,input_variable_index) = 0
+                    : data(i,input_variable_index) = 1;
+        }
+    }
+}
+
+
 void DataSet::set_binary_simple_columns()
 {
     bool is_binary = true;
@@ -3126,14 +3137,6 @@ void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_
 }
 
 
-/// Sets new target dimensions in the data set.
-
-void DataSet::set_target_variables_dimensions(const Tensor<Index, 1>& new_targets_dimensions)
-{
-    target_variables_dimensions = new_targets_dimensions;
-}
-
-
 /// Returns true if the data set is a binary classification problem, false otherwise.
 /// @todo
 
@@ -3152,7 +3155,7 @@ bool DataSet::is_binary_classification() const
 /// @todo
 
 bool DataSet::is_multiple_classification() const
-{   
+{
     return true;
 }
 
@@ -3195,6 +3198,12 @@ bool DataSet::is_less_than(const Tensor<type, 1>& column, const type& value) con
 const Tensor<type, 2>& DataSet::get_data() const
 {
     return data;
+}
+
+
+Tensor<type, 2>* DataSet::get_data_pointer()
+{
+    return &data;
 }
 
 
@@ -3434,7 +3443,7 @@ Tensor<type, 2> DataSet::get_selection_data() const
     const Index variables_number = get_variables_number();
 
     Tensor<Index, 1> variables_indices;
-    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
     return get_subtensor_data(selection_indices, variables_indices);
 }
@@ -3449,7 +3458,7 @@ Tensor<type, 2> DataSet::get_testing_data() const
     const Index variables_number = get_variables_number();
 
     Tensor<Index, 1> variables_indices;
-    intialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
+    initialize_sequential_eigen_tensor(variables_indices, 0, 1, variables_number-1);
 
     const Tensor<Index, 1> testing_indices = get_testing_samples_indices();
 
@@ -3466,7 +3475,7 @@ Tensor<type, 2> DataSet::get_input_data() const
     const Index samples_number = get_samples_number();
 
     Tensor<Index, 1> indices;
-    intialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
+    initialize_sequential_eigen_tensor(indices, 0, 1, samples_number-1);
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -4101,8 +4110,6 @@ void DataSet::set()
     data_file_name = "";
 
     data.resize(0,0);
-
-    display = true;
 }
 
 
@@ -4119,8 +4126,6 @@ void DataSet::set(const Tensor<type, 2>& new_data)
     set(samples_number, variables_number);
 
     data = new_data;
-
-    display = true;
 
     set_default_columns_uses();
 }
@@ -4177,9 +4182,6 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
-
-    display = true;
-
 }
 
 
@@ -4219,12 +4221,9 @@ void DataSet::set(const Index& new_samples_number,
     }
 
     input_variables_dimensions.resize(new_inputs_number);
-    target_variables_dimensions.resize(new_targets_number);
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
-
-    display = true;
 }
 
 
@@ -4299,8 +4298,6 @@ void DataSet::set_default()
     lags_number = 0;
 
     steps_ahead = 0;
-
-    display = true;
 
     set_default_columns_uses();
 
@@ -4526,7 +4523,8 @@ void DataSet::set_time_index(const Index& new_time_index)
 
 void DataSet::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+//    //if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
 
     thread_pool_device = new_thread_pool_device;
 }
@@ -5578,7 +5576,7 @@ bool DataSet::has_nan_row(const Index& row_index) const
 /// @todo implement with indices of variables and samples?
 
 void DataSet::print_missing_values_information() const
-{  
+{
 //    const Index missing_values_number = data.count_nan();
 
 //    cout << "Missing values number: " << missing_values_number << " (" << missing_values_number*100/data.size() << "%)" << endl;
@@ -6504,21 +6502,32 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 }
 
 
+
 /// Scales the given input variable with given minimum and maximum values.
 /// It updates the input variables of the data matrix.
 /// @param input_statistics vector with the descriptives of the input variable.
 /// @param input_index Index of the input to be scaled.
 
-void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
+void DataSet::scale_input_minimum_maximum(const Descriptives& input_statistics, const Index& input_index)
 {
-    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : static_cast<type>(2)/(input_statistics.maximum-input_statistics.minimum);
+//    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : static_cast<type>(2)/(input_statistics.maximum-input_statistics.minimum);
 
-    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : -(input_statistics.maximum + input_statistics.minimum)/(input_statistics.maximum - input_statistics.minimum);
+//    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : -(input_statistics.maximum + input_statistics.minimum)/(input_statistics.maximum - input_statistics.minimum);
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        data(i, input_index) = data(i, input_index)*slope + intercept;
+//    }
+
+    const type slope = (max_range-min_range)/(input_statistics.maximum-input_statistics.minimum);
+
+    const type intercept = -(input_statistics.minimum*(max_range-min_range))/(input_statistics.maximum - input_statistics.minimum) + min_range;
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
         data(i, input_index) = data(i, input_index)*slope + intercept;
     }
+
 }
 
 
@@ -6721,23 +6730,31 @@ void DataSet::scale_target_variables_minimum_maximum(const Tensor<Descriptives, 
 
 #endif
 
+//    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+//    const Index target_variables_number = target_variables_indices.size();
+
+//    Index variable_index;
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        for(Index j = 0; j < target_variables_number; j++)
+//        {
+//            variable_index = target_variables_indices(j);
+
+//            if(!::isnan(data(i,variable_index)))
+//            {
+//                data(i, variable_index) =
+//                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).minimum)/(targets_descriptives(j).maximum-targets_descriptives(j).minimum)-static_cast<type>(1.0);
+//            }
+//        }
+//    }
+
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
     const Index target_variables_number = target_variables_indices.size();
 
-    Index variable_index;
-
-    for(Index i = 0; i < data.dimension(0); i++)
+    for(Index i = 0; i < target_variables_number; i++)
     {
-        for(Index j = 0; j < target_variables_number; j++)
-        {
-            variable_index = target_variables_indices(j);
-
-            if(!::isnan(data(i,variable_index)))
-            {
-                data(i, variable_index) =
-                        static_cast<type>(2.0)*(data(i, variable_index)-targets_descriptives(j).minimum)/(targets_descriptives(j).maximum-targets_descriptives(j).minimum)-static_cast<type>(1.0);
-            }
-        }
+        scale_target_minimum_maximum(targets_descriptives[i], target_variables_indices[i]);
     }
 }
 
@@ -6859,18 +6876,28 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const string& scaling_un
 
 void DataSet::scale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                static_cast<type>(2)/(target_statistics.maximum-target_statistics.minimum);
+//    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+//                0 :
+//                static_cast<type>(2)/(target_statistics.maximum-target_statistics.minimum);
 
-    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                -(target_statistics.maximum + target_statistics.minimum)/(target_statistics.maximum - target_statistics.minimum);
+//    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
+//                0 :
+//                -(target_statistics.maximum + target_statistics.minimum)/(target_statistics.maximum - target_statistics.minimum);
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        data(i, target_index) = data(i, target_index)*slope + intercept;
+//    }
+
+    const type slope = (max_range-min_range)/(target_statistics.maximum-target_statistics.minimum);
+
+    const type intercept = -(target_statistics.minimum*(max_range-min_range))/(target_statistics.maximum - target_statistics.minimum) + min_range;
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
         data(i, target_index) = data(i, target_index)*slope + intercept;
     }
+
 }
 
 
@@ -6957,9 +6984,18 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
 
 void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
 {
-    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
+//    const type slope = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum - input_statistics.minimum)/static_cast<type>(2);
 
-    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? input_statistics.minimum : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
+//    const type intercept = std::abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ? input_statistics.minimum : (input_statistics.minimum + input_statistics.maximum)/static_cast<type>(2);
+
+//    for(Index i = 0; i < data.dimension(0); i++)
+//    {
+//        data(i, input_index) = data(i, input_index)*slope + intercept;
+//    }
+
+    const type slope = (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
+
+    const type intercept = input_statistics.minimum - min_range*(input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -7056,13 +7092,9 @@ void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling
 
 void DataSet::unscale_target_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
 {
-    const type slope = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (target_statistics.maximum - target_statistics.minimum)/static_cast<type>(2);
+    const type slope = (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
 
-    const type intercept = std::abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                target_statistics.minimum :
-                (target_statistics.minimum + target_statistics.maximum)/static_cast<type>(2);
+    const type intercept = target_statistics.minimum - min_range*(target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
 
     for(Index i = 0; i < data.dimension(0); i++)
     {
@@ -7162,6 +7194,14 @@ void DataSet::set_data_random()
     data.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
 }
 
+/// Sets max and min scaling range for minmaxscaling.
+/// @param min and max for scaling range.
+
+void DataSet::set_min_max_range(const type min, const type max)
+{
+    min_range = min;
+    max_range = max;
+}
 
 /// Serializes the data set object into a XML document of the TinyXML library without keep the DOM tree in memory.
 
@@ -8037,7 +8077,7 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
         {
             cerr << e.what() << endl;
         }
-    }    
+    }
 }
 
 
@@ -8130,6 +8170,8 @@ void DataSet::print_columns_types() const
         else if(columns(i).type == Binary) cout << "Binary ";
         else if(columns(i).type == Categorical) cout << "Categorical ";
         else if(columns(i).type == DateTime) cout << "DateTime ";
+        else if(columns(i).type == Constant) cout << "Constant ";
+
     }
 
     cout << endl;
@@ -8149,33 +8191,54 @@ void DataSet::print_data() const
 
 void DataSet::print_data_preview() const
 {
-    if(display)
+    if(!display) return;
+
+    const Index samples_number = get_samples_number();
+
+    if(samples_number > 0)
     {
-        const Index samples_number = get_samples_number();
+        const Tensor<type, 1> first_sample = data.chip(0, 0);
 
-        if(samples_number > 0)
+        cout << "First sample:  \n";
+
+        for(int i; i< first_sample.dimension(0); i++)
         {
-            const Tensor<type, 1> first_sample = data.chip(0, 0);
 
-            cout << "First sample:\n"
-                 << first_sample << endl;
+            cout  << first_sample(i) << "  ";
         }
 
-        if(samples_number > 1)
-        {
-            const Tensor<type, 1> second_sample = data.chip(1, 0);
+    cout << endl;
+    }
 
-            cout << "Second sample:\n"
-                 << second_sample << endl;
+    if(samples_number > 1)
+    {
+        const Tensor<type, 1> second_sample = data.chip(1, 0);
+
+        cout << "Second sample:  \n";
+
+        for(int i; i< second_sample.dimension(0); i++)
+        {
+
+            cout  << second_sample(i) << "  ";
         }
 
-        if(samples_number > 2)
-        {
-            const Tensor<type, 1> last_sample = data.chip(samples_number-1, 0);
+        cout << endl;
+    }
 
-            cout << "Sample " << samples_number << ":\n"
-                 << last_sample << endl;
+
+    if(samples_number > 2)
+    {
+        const Tensor<type, 1> last_sample = data.chip(samples_number-1, 0);
+
+        cout << "Last sample:  \n";
+
+        for(int i; i< last_sample.dimension(0); i++)
+        {
+
+            cout  << last_sample(i) << "  ";
         }
+
+        cout << endl;
     }
 }
 
@@ -8299,7 +8362,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
 
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
-/// @todo
 
 void DataSet::transform_time_series()
 {
@@ -8749,7 +8811,7 @@ Tensor<type, 2> DataSet::calculate_lag_plot(const Index& maximum_lags_number)
 /// @todo
 
 void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number)
-{    
+{
     set(samples_number, variables_number);
 
 //    data.setRandom(-5.12, 5.12);
@@ -9369,6 +9431,8 @@ void DataSet::read_csv_1()
 
         check_separators(line);
 
+        check_special_characters(line);
+
         data_file_preview(lines_count) = get_tokens(line, separator_char);
 
         lines_count++;
@@ -9397,8 +9461,6 @@ void DataSet::read_csv_1()
 
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
-
-    cout << "First name: " << first_name << endl;
 
     if(contains_substring(first_name, "id"))
     {
@@ -9462,12 +9524,13 @@ void DataSet::read_csv_1()
             columns(column_index).type = DateTime;
             column_index++;
         }
-        else
-        {
+
+        else{
             columns(column_index).type = Categorical;
             column_index++;
         }
     }
+
 }
 
 
@@ -9518,8 +9581,6 @@ void DataSet::read_csv_2_simple()
     const Index columns_number = get_columns_number();
     const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
 
-    cout << "Columns number: " << get_columns_number() << endl;
-
     while(file.good())
     {
         line_number++;
@@ -9557,6 +9618,7 @@ void DataSet::read_csv_2_simple()
     set_default_columns_uses();
 
     samples_uses.resize(samples_count);
+    samples_uses.setConstant(Training);
 
     split_samples_random();
 }
@@ -9672,6 +9734,19 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+    // Check Constant
+
+    cout << "Checking constant columns..." << endl;
+
+    for(Index column = 0; column < columns_number; column++)
+    {
+        if(is_constant_numeric(data.chip(column, 1)))
+        {
+            columns(column).type = Constant;
+            columns(column).column_use = UnusedVariable;
+        }
+    }
 }
 
 
@@ -9981,6 +10056,19 @@ void DataSet::read_csv_3_complete()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
+
+    // Check Constant
+
+    cout << "Checking constant columns..." << endl;
+
+    for(Index column = 0; column < get_columns_number(); column++)
+    {
+        if(is_constant_numeric(data.chip(column, 1)))
+        {
+            columns(column).type = Constant;
+            columns(column).column_use = UnusedVariable;
+        }
+    }
 }
 
 
@@ -10053,10 +10141,22 @@ void DataSet::check_separators(const string& line) const
         if(line.find(",") != string::npos)
         {
             const string message =
-                "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';').";
+                "Error: Found comma (',') in data file " + data_file_name + ", but separator is semicolon (';'). " + line;
 
             throw logic_error(message);
         }
+    }
+}
+
+
+void DataSet::check_special_characters(const string & line) const
+{
+    if(line.find_first_of("|@#~€¬^*") != std::string::npos)
+    {
+        const string message =
+            "Error: found special characters in line: " + line + ". Please, review the document.";
+
+        throw logic_error(message);
     }
 }
 
@@ -10217,7 +10317,7 @@ Tensor<string, 1> DataSet::push_back(const Tensor<string, 1>& old_vector, const 
 }
 
 
-void DataSet::intialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
+void DataSet::initialize_sequential_eigen_tensor(Tensor<Index, 1>& new_tensor,
         const Index& start, const Index& step, const Index& end) const
 {
     const Index new_size = (end-start)/step+1;
@@ -10294,32 +10394,63 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
+    const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
+
     const Index rows_number = samples.size();
     const Index inputs_number = inputs.size();
-    const Index targets_number = targets.size();
-
     const Index total_rows = data.dimension(0);
 
-    const type* data_pointer = data.data();
-    type* inputs_2d_pointer = inputs_2d.data();
-    type* targets_2d_pointer = targets_2d.data();
+    Index variable = 0;
 
     Index rows_number_j = 0;
     Index total_rows_variable = 0;
 
-    Index variable = 0;
+    const type* data_pointer = data.data();
 
-    for(int j = 0; j < inputs_number; j++)
+    if(input_variables_dimensions.rank() == 1)
     {
-        variable = inputs[j];
-        rows_number_j = rows_number*j;
-        total_rows_variable = total_rows*variable;
+        type* inputs_2d_pointer = inputs_2d.data();
 
-        for(int i = 0; i < rows_number; i++)
+        for(int j = 0; j < inputs_number; j++)
         {
-            inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+samples[i]];
+            variable = inputs[j];
+            rows_number_j = rows_number*j;
+            total_rows_variable = total_rows*variable;
+
+            for(int i = 0; i < rows_number; i++)
+            {
+                inputs_2d_pointer[rows_number_j+i] = data_pointer[total_rows_variable+samples[i]];
+            }
         }
     }
+    else if(input_variables_dimensions.rank() == 3)
+    {
+        Index channels_number = 0;
+        Index rows_number = 0;
+        Index columns_number = 0;
+
+        Index index = 0;
+
+        for(Index image = 0; image < samples_number; image++)
+        {
+            index = 0;
+
+            for(Index channel = 0; channel < channels_number; channel++)
+            {
+                for(Index row = 0; row < rows_number; row++)
+                {
+                    for(Index column = 0; column < columns_number; column++)
+                    {
+                        inputs_4d(image, channel, row, column) = data(image, index);
+                        index++;
+                    }
+                }
+            }
+        }
+    }
+
+    type* targets_2d_pointer = targets_2d.data();
+    const Index targets_number = targets.size();
 
     for(int j = 0; j < targets_number; j++)
     {
@@ -10345,9 +10476,21 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
     const Index target_variables_number = data_set_pointer->get_target_variables_number();
 
     const Tensor<Index, 1> input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-    const Tensor<Index, 1> target_variables_dimensions = data_set_pointer->get_target_variables_dimensions();
 
-    inputs_2d = Tensor<type, 2>(samples_number, input_variables_number);
+    if(input_variables_dimensions.rank() == 1)
+    {
+        inputs_2d = Tensor<type, 2>(samples_number, input_variables_number);
+    }
+    else if(input_variables_dimensions.rank() == 3)
+    {
+        const Index channels_number = input_variables_dimensions(0);
+        const Index rows_number = input_variables_dimensions(1);
+        const Index columns_number = input_variables_dimensions(2);
+
+        inputs_4d = Tensor<type, 4>(samples_number, channels_number, rows_number, columns_number);
+    }
+
+
     targets_2d = Tensor<type, 2>(samples_number, target_variables_number);
 }
 
@@ -10416,7 +10559,7 @@ void DataSet::shuffle()
 
     samples_indices.resize(samples_number);
 
-    intialize_sequential_eigen_tensor(samples_indices, 0, 1, samples_number - 1);
+    initialize_sequential_eigen_tensor(samples_indices, 0, 1, samples_number - 1);
 
     random_shuffle(&samples_indices(0), &samples_indices(samples_number - 1));
 

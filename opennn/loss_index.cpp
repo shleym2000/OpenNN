@@ -173,7 +173,7 @@ void LossIndex::set(const LossIndex& other_error_term)
 
 void LossIndex::set_thread_pool_device(ThreadPoolDevice* new_thread_pool_device)
 {
-    if(thread_pool_device != nullptr) delete thread_pool_device;
+    if(thread_pool_device != nullptr) thread_pool_device = nullptr;
 
     thread_pool_device = new_thread_pool_device;
 }
@@ -205,7 +205,6 @@ void LossIndex::set_default()
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
     regularization_method = L2;
-    display = true;
 }
 
 
@@ -382,14 +381,14 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
 
     const Tensor<type, 2>& inputs = batch.inputs_2d;
 
-    Tensor<type, 2> error_Jacobian(samples_number, parameters_number);
-    error_Jacobian.setZero();
+    Tensor<type, 2> error_terms_Jacobian(samples_number, parameters_number);
+    error_terms_Jacobian.setZero();
 
     Index index = 0;
 
     const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(0).delta, inputs);
 
-    memcpy(error_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+    memcpy(error_terms_Jacobian.data(), error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
     index += layers_parameters_number[0]*samples_number;
 
@@ -398,12 +397,12 @@ void LossIndex::calculate_error_terms_Jacobian(const DataSet::Batch& batch,
         const Tensor<type, 2> error_layer = calculate_layer_error_terms_Jacobian(back_propagation.neural_network.layers(i).delta,
                                                                                  forward_propagation.layers(i-1).activations_2d);
 
-        memcpy(error_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
+        memcpy(error_terms_Jacobian.data() + index, error_layer.data(), static_cast<size_t>(error_layer.size())*sizeof(type));
 
         index += layers_parameters_number[i]*samples_number;
     }
 
-    second_order_loss.error_Jacobian = error_Jacobian;
+    second_order_loss.error_terms_Jacobian = error_terms_Jacobian;
 }
 
 /// Calculates the <i>Jacobian</i> matrix of the error terms of the layer.
@@ -529,11 +528,26 @@ void LossIndex::calculate_error_terms_output_gradient(const DataSet::Batch& batc
                                            BackPropagation& back_propagation,
                                            SecondOrderLoss& second_order_loss) const
 {
+
     const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
     const Tensor<type, 2>& outputs = forward_propagation.layers(trainable_layers_number-1).activations_2d;
     const Tensor<type, 2>& targets = batch.targets_2d;
-    back_propagation.output_gradient.device(*thread_pool_device) = (outputs-targets)/second_order_loss.error_terms;
+
+    // Gives Eigen error in debug
+
+#ifndef __OPENNN_DEBUG__
+
+    back_propagation.output_gradient = (outputs-targets)/second_order_loss.error_terms;
+
+#else
+
+    back_propagation.output_gradient = (outputs-targets);
+
+    for(Index i = 0; i < back_propagation.output_gradient.size(); i++)
+        back_propagation.output_gradient(i) /= second_order_loss.error_terms(i);
+
+#endif
 
 }
 
@@ -551,16 +565,6 @@ string LossIndex::get_error_type() const
 string LossIndex::get_error_type_text() const
 {
     return "USER_ERROR_TERM";
-}
-
-
-/// Returns a string with the default information of the error term.
-/// It will be used by the training strategy to monitor the training process.
-/// By default this information is empty.
-
-string LossIndex::write_information() const
-{
-    return string();
 }
 
 

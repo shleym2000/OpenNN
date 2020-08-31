@@ -22,6 +22,7 @@
 
 #include "layer.h"
 #include "statistics.h"
+#include "opennn_strings.h"
 
 namespace OpenNN
 {
@@ -112,6 +113,8 @@ public:
    void set_mean(const Index&, const type&);
    void set_standard_deviation(const Index&, const type&);
 
+   void set_min_max_range(const type min, const type max);
+
    // Scaling method
 
    void set_scaling_methods(const Tensor<ScalingMethod, 1>&);
@@ -169,9 +172,14 @@ protected:
 
    Tensor<ScalingMethod, 1> scaling_methods;
 
+   /// min and max range for minmaxscaling
+
+   float min_range;
+   float max_range;
+
    /// Display warning messages to screen. 
 
-   bool display;
+   bool display = true;
 
 };
 

@@ -143,9 +143,10 @@ public:
 
    virtual ~GradientDescent();   
 
-
    const LearningRateAlgorithm& get_learning_rate_algorithm() const;
    LearningRateAlgorithm* get_learning_rate_algorithm_pointer();
+
+   string get_hardware_use() const;
 
    // Stopping criteria
 
@@ -222,7 +223,6 @@ public:
 
    Tensor<string, 2> to_string_matrix() const;
 
-   
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;

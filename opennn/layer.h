@@ -227,7 +227,9 @@ public:
 
     virtual Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
-    virtual Tensor<type, 4> calculate_outputs(const Tensor<type, 4>&) {return Tensor<type, 4>();}
+    virtual Tensor<type, 2> calculate_outputs_from4D(const Tensor<type, 4>&) {return Tensor<type, 2>();}
+
+    virtual Tensor<type, 4> calculate_outputs_4D(const Tensor<type, 4>&) {return Tensor<type, 4>();}
 
     virtual void calculate_error_gradient(const Tensor<type, 2>&,
                                           const Layer::ForwardPropagation&, Layer::BackPropagation&) const {}
@@ -274,6 +276,8 @@ public:
     virtual void write_XML(tinyxml2::XMLPrinter&) const {}
 
     // Expression methods
+
+    virtual string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const {return string();}
 
     virtual string write_expression_c() const {return string();}
 
@@ -379,9 +383,8 @@ protected:
     void hard_sigmoid_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
     void exponential_linear_derivatives(const Tensor<type, 4>&, Tensor<type, 4>&, Tensor<type, 4>&) const;
 
-
     const Eigen::array<IndexPair<Index>, 1> A_BT = {IndexPair<Index>(1, 1)};
-    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0) };
+    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
     const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
 
 #ifdef OPENNN_CUDA

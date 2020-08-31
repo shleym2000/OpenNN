@@ -97,6 +97,12 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
+string QuasiNewtonMethod::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
@@ -265,9 +271,9 @@ void QuasiNewtonMethod::set_default()
 
     minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
 
-    minimum_loss_decrease = static_cast<type>(1.0e-9);
-    training_loss_goal = static_cast<type>(1.0e-3);
-    gradient_norm_goal = static_cast<type>(1.0e-3);
+    minimum_loss_decrease = static_cast<type>(0.0);
+    training_loss_goal = 0;
+    gradient_norm_goal = 0;
     maximum_selection_error_increases = 1000000;
 
     maximum_epochs_number = 1000;
@@ -278,7 +284,7 @@ void QuasiNewtonMethod::set_default()
     // TRAINING HISTORY
 
     reserve_training_error_history = true;
-    reserve_selection_error_history = false;
+    reserve_selection_error_history = true;
 
     // UTILITIES
 
@@ -1002,7 +1008,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                 cout << "Parameters norm: " << parameters_norm << "\n"
                      << "Training error: " << training_back_propagation.error <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
-                     << loss_index_pointer->write_information()
                      << "Learning rate: " << optimization_data.learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
@@ -1020,7 +1025,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
                  << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
-                 << loss_index_pointer->write_information()
                  << "Learning rate: " << optimization_data.learning_rate << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 

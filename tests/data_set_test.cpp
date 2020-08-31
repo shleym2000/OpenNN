@@ -715,15 +715,25 @@ void DataSetTest::test_scale_inputs_minimum_maximum()
    DataSet data_set;
 
    Tensor<Descriptives, 1> inputs_descriptives;
+   Tensor<Descriptives, 1> target_descriptives;
 
    // Test
 
-   data_set.set(2, 2, 2);
-   data_set.set_data_random();
+   data_set.set(2, 3, 2);
 
-//   data_set.scale_input_variables_minimum_maximum();
+   Tensor<type, 2> data(3, 3);
+   data.setValues({{1, 2, 3}, {3, 4, 5}, {5, 5, 5}});
+   data_set.set_data(data);
+
+//   data_set.set_min_max_range(-10,10);
 
    inputs_descriptives = data_set.calculate_input_variables_descriptives();
+   target_descriptives = data_set.calculate_target_variables_descriptives();
+
+   data_set.scale_input_variables_minimum_maximum();
+   data_set.scale_target_variables_minimum_maximum();
+
+//   data_set.unscale_input_variables_minimum_maximum(inputs_descriptives);
 
    assert_true(inputs_descriptives[0].has_minimum_minus_one_maximum_one(), LOG);
 }
@@ -758,13 +768,17 @@ void DataSetTest::test_scale_data_minimum_maximum()
 
    Tensor<Descriptives, 1> data_descriptives;
 
-   Tensor<type, 2> data;
+   Tensor<type, 2> data(2, 2);
+
    Tensor<type, 2> scaled_data;
 
     // Test
 
    data_set.set(2,2,2);
-   data_set.initialize_data(0.0);
+//   data_set.initialize_data(0.0);
+
+   data.setValues({{1, 2}, {3, 4}});
+   data_set.set_data(data);
 
    data_set.set_display(false);
 
@@ -1666,6 +1680,8 @@ void DataSetTest::test_generate_data_binary_classification()
 }
 
 
+
+
 void DataSetTest::test_generate_data_multiple_classification()
 {
     cout << "test_generate_data_multiple_classification\n";
@@ -1729,6 +1745,26 @@ void DataSetTest::test_from_XML()
 //   assert_true(data_set.get_sample_use(1) == DataSet::Testing, LOG);
 }
 
+void DataSetTest::test_is_constant_numeric()
+{
+    cout << "test_read_csv\n";
+
+    DataSet data_set;
+
+    data_set.set_data_file_name("../../datasets/constant_variables.csv");
+
+    data_set.set_separator(DataSet::Comma);
+
+    data_set.read_csv();
+
+    assert_true(data_set.get_column_type(0) == 0, LOG);
+    assert_true(data_set.get_column_type(1) == 4, LOG);
+    assert_true(data_set.get_column_type(2) == 1, LOG);
+    assert_true(data_set.get_column_type(3) == 4, LOG);
+    assert_true(data_set.get_column_type(4) == 1, LOG);
+    assert_true(data_set.get_column_type(5) == 4, LOG);
+    assert_true(data_set.get_column_type(6) == 0, LOG);
+}
 
 void DataSetTest::test_read_csv() 
 {
@@ -2361,6 +2397,16 @@ void DataSetTest::test_read_binary_csv()
 //    assert_true(data_set.get_column_type(2) == DataSet::Binary, LOG);
 }
 
+void DataSetTest::test_print_data_preview()
+{
+    cout << "test_print_data_preview\n";
+
+    DataSet data_set("../../datasets/iris.data",',',false);
+
+    data_set.print_data_preview();
+
+}
+
 void DataSetTest::test_transform_time_series()
 {
     cout << "test_transform_columns_time_series\n";
@@ -2929,7 +2975,6 @@ void DataSetTest::test_is_multiple_classification()
 void DataSetTest::run_test_case()
 {
    cout << "Running data set test case...\n";
-
    // Constructor and destructor methods
 
    test_constructor();
@@ -3118,6 +3163,12 @@ void DataSetTest::run_test_case()
    // Principal components mehtod
 
    test_perform_principal_components_analysis();
+
+   // test if constant variables
+   test_is_constant_numeric();
+
+   // test print data preview
+   test_print_data_preview();
 
    cout << "End of data set test case.\n\n";
 }

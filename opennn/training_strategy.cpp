@@ -79,35 +79,17 @@ LossIndex* TrainingStrategy::get_loss_index_pointer()
 {
     switch (loss_method)
     {
-    case SUM_SQUARED_ERROR:
-    {
-        return &sum_squared_error;
-    }
+        case SUM_SQUARED_ERROR: return &sum_squared_error;
 
-    case MEAN_SQUARED_ERROR:
-    {
-        return &mean_squared_error;
-    }
+        case MEAN_SQUARED_ERROR: return &mean_squared_error;
 
-    case NORMALIZED_SQUARED_ERROR:
-    {
-        return &normalized_squared_error;
-    }
+        case NORMALIZED_SQUARED_ERROR: return &normalized_squared_error;
 
-    case MINKOWSKI_ERROR:
-    {
-        return &Minkowski_error;
-    }
+        case MINKOWSKI_ERROR: return &Minkowski_error;
 
-    case WEIGHTED_SQUARED_ERROR:
-    {
-        return &weighted_squared_error;
-    }
+        case WEIGHTED_SQUARED_ERROR: return &weighted_squared_error;
 
-    case CROSS_ENTROPY_ERROR:
-    {
-        return &cross_entropy_error;
-    }
+        case CROSS_ENTROPY_ERROR: return &cross_entropy_error;
     }
 
     return nullptr;
@@ -120,35 +102,17 @@ OptimizationAlgorithm* TrainingStrategy::get_optimization_algorithm_pointer()
 {
     switch (optimization_method)
     {
-    case GRADIENT_DESCENT:
-    {
-        return &gradient_descent;
-    }
+        case GRADIENT_DESCENT: return &gradient_descent;
 
-    case CONJUGATE_GRADIENT:
-    {
-        return &conjugate_gradient;
-    }
+        case CONJUGATE_GRADIENT: return &conjugate_gradient;
 
-    case STOCHASTIC_GRADIENT_DESCENT:
-    {
-        return &stochastic_gradient_descent;
-    }
+        case STOCHASTIC_GRADIENT_DESCENT: return &stochastic_gradient_descent;
 
-    case ADAPTIVE_MOMENT_ESTIMATION:
-    {
-        return &adaptive_moment_estimation;
-    }
+        case ADAPTIVE_MOMENT_ESTIMATION: return &adaptive_moment_estimation;
 
-    case QUASI_NEWTON_METHOD:
-    {
-        return &quasi_Newton_method;
-    }
+        case QUASI_NEWTON_METHOD: return &quasi_Newton_method;
 
-    case LEVENBERG_MARQUARDT_ALGORITHM:
-    {
-        return &Levenberg_Marquardt_algorithm;
-    }
+        case LEVENBERG_MARQUARDT_ALGORITHM: return &Levenberg_Marquardt_algorithm;
     }
 
     return nullptr;
@@ -168,38 +132,6 @@ bool TrainingStrategy::has_data_set() const
     if(data_set_pointer == nullptr) return false;
 
     return true;
-}
-
-
-/// Return true if contain loss index, and false otherwise.
-
-bool TrainingStrategy::has_loss_index() const
-{
-    return true;
-
-//    if(get_loss_index_pointer() == nullptr)
-//    {
-//        return false;
-//    }
-//    else
-//    {
-//        return true;
-//    }
-}
-
-
-bool TrainingStrategy::has_optimization_algorithm() const
-{
-    return true;
-
-//    if(get_optimization_algorithm_pointer() == nullptr)
-//    {
-//        return false;
-//    }
-//    else
-//    {
-//        return true;
-//    }
 }
 
 
@@ -785,7 +717,6 @@ void TrainingStrategy::set_maximum_time(const type & maximum_time)
 
 void TrainingStrategy::set_default()
 {
-    display = true;
 }
 
 
@@ -806,6 +737,14 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
 
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Long Short Term Memory Layer and Recurrent Layer are not available yet. Both of them will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+
         if(!check_forecasting())
         {
 
@@ -818,6 +757,20 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
             throw logic_error(buffer.str());
         }
     }
+
+    if(neural_network_pointer->has_convolutional_layer())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: TrainingStrategy class.\n"
+               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+
+
     OptimizationAlgorithm::Results results;
     // Main
 
@@ -1299,13 +1252,13 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             // Levenberg Marquardt
 
-            const tinyxml2::XMLElement* Levenberg_Marquardt_element = element->FirstChildElement("LevenbergMarquardtAlgorithm");
+            const tinyxml2::XMLElement* Levenberg_Marquardt_element = element->FirstChildElement("LevenbergMarquardt");
 
             if(Levenberg_Marquardt_element)
             {
                 tinyxml2::XMLDocument new_document;
 
-                tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = new_document.NewElement("LevenbergMarquardtAlgorithm");
+                tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = new_document.NewElement("LevenbergMarquardt");
 
                 for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
                 {

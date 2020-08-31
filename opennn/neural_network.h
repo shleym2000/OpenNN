@@ -187,7 +187,7 @@ public:
    bool has_unscaling_layer() const;
    bool has_bounding_layer() const;
    bool has_probabilistic_layer() const;
-
+   bool has_convolutional_layer() const;
    bool is_empty() const;  
 
    const Tensor<string, 1>& get_inputs_names() const;
@@ -291,6 +291,8 @@ public:
 
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
+   Tensor<type, 2> calculate_outputs(const Tensor<type, 4>&);
+
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
    Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
@@ -337,7 +339,7 @@ public:
 
    // Expression methods
 
-   string write_expression() const;
+   string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
    string write_expression_python() const;
    string write_expression_c() const;
 
