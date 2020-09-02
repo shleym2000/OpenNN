@@ -255,7 +255,7 @@ private:
 
    type gradient_norm_goal;
 
-   /// Maximum number of iterations at which the selection error increases.
+   /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
    Index maximum_selection_error_increases;
@@ -270,7 +270,7 @@ private:
 
    /// True if the final model will be the neural network with the minimum selection error, false otherwise.
 
-   bool choose_best_selection;
+   bool choose_best_selection = false;
 
    // TRAINING HISTORY 
 
