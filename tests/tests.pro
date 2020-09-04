@@ -23,6 +23,7 @@ DESTDIR = "$$PWD/bin"
 
 SOURCES += \
     data_set_test.cpp \
+    growing_neurons_test.cpp \
     unscaling_layer_test.cpp \
     scaling_layer_test.cpp \
     probabilistic_layer_test.cpp \
@@ -45,7 +46,6 @@ SOURCES += \
     conjugate_gradient_test.cpp \
     model_selection_test.cpp \
     neurons_selection_test.cpp \
-    incremental_neurons_test.cpp \
     inputs_selection_test.cpp \
     growing_inputs_test.cpp \
     pruning_inputs_test.cpp \
@@ -60,6 +60,7 @@ SOURCES += \
     main.cpp
 
 HEADERS += \
+    growing_neurons_test.h \
     unit_testing.h \
     data_set_test.h \
     unscaling_layer_test.h \
@@ -84,7 +85,6 @@ HEADERS += \
     conjugate_gradient_test.h \
     model_selection_test.h \
     neurons_selection_test.h \
-    incremental_neurons_test.h \
     inputs_selection_test.h \
     growing_inputs_test.h \
     pruning_inputs_test.h \
@@ -126,15 +126,12 @@ else:unix: PRE_TARGETDEPS += $$OUT_PWD/../opennn/libopennn.a
 # OpenMP library
 
 win32:!win32-g++{
-QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp
-
-QMAKE_LFLAGS += -fopenmp -pthread #-lgomp
+QMAKE_CXXFLAGS += -std=c++11 -fopenmp -pthread #-lgomp -openmp
+QMAKE_LFLAGS += -fopenmp -pthread #-lgomp -openmp
 LIBS += -fopenmp -pthread #-lgomp
-}else:!macx{
-QMAKE_CXXFLAGS+= -fopenmp #-lgomp
-QMAKE_LFLAGS += -fopenmp #-lgomp
-LIBS += -openmp -pthread #-lgomp
+}else:!macx{QMAKE_CXXFLAGS+= -fopenmp -lgomp -std=c++11
+QMAKE_LFLAGS += -fopenmp -lgomp
+LIBS += -fopenmp -pthread -lgomp
 }else: macx{
 INCLUDEPATH += /usr/local/opt/libomp/include
-LIBS += /usr/local/opt/libomp/lib/libomp.dylib
-}
+LIBS += /usr/local/opt/libomp/lib/libomp.dylib}
