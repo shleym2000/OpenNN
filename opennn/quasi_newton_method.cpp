@@ -97,6 +97,8 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 string QuasiNewtonMethod::get_hardware_use() const
 {
     return hardware_use;
@@ -436,6 +438,8 @@ void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_se
 }
 
 
+/// Set hardware to use. Default: Multi-core.
+
 void QuasiNewtonMethod::set_hardware_use(const string & new_hardware_use)
 {
     hardware_use = new_hardware_use;
@@ -460,30 +464,6 @@ void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_rese
     reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
-
-/// Sets a new number of epochs between the training showing progress.
-/// @param new_display_period
-/// Number of epochs between the training showing progress.
-
-void QuasiNewtonMethod::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period == 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: QuasiNewtonMethod class.\n"
-               << "void set_display_period(const Index&) method.\n"
-               << "Display period must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
 
 
 void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimizationData& optimization_data) const
@@ -676,6 +656,12 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndex::BackProp
 }
 
 
+
+////// \brief QuasiNewtonMethod::update_epoch
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+////// \param optimization_data
 void QuasiNewtonMethod::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -853,7 +839,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -978,7 +964,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
-        else if(epoch == maximum_epochs_number)
+        else if(epoch == maximum_epochs_number-1)
         {
             if(display)
             {
@@ -1574,82 +1560,6 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
             {
                 cerr << e.what() << endl;
             }
-        }
-    }
-
-    // Display period
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("DisplayPeriod");
-
-        if(element)
-        {
-           const Index new_display_period = static_cast<Index>(atoi(element->GetText()));
-
-           try
-           {
-              set_display_period(new_display_period);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Save period
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("SavePeriod");
-
-        if(element)
-        {
-           const Index new_save_period = static_cast<Index>(atoi(element->GetText()));
-
-           try
-           {
-              set_save_period(new_save_period);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Neural network file name
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuralNetworkFileName");
-
-        if(element)
-        {
-           const string new_neural_network_file_name = element->GetText();
-
-           try
-           {
-              set_neural_network_file_name(new_neural_network_file_name);
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
-        }
-    }
-
-    // Display
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Display");
-
-        if(element)
-        {
-           const string new_display = element->GetText();
-
-           try
-           {
-              set_display(new_display != "0");
-           }
-           catch(const logic_error& e)
-           {
-              cerr << e.what() << endl;
-           }
         }
     }
 

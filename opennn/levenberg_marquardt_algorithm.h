@@ -147,8 +147,6 @@ public:
    const type& get_minimum_damping_parameter() const;
    const type& get_maximum_damping_parameter() const;
 
-   const Tensor<type, 1>& get_damping_parameter_history() const;
-
    // Set methods
 
    void set_default();
@@ -184,10 +182,6 @@ public:
    /// Makes the training history of all variables to be reseved or not in memory.
 
    virtual void set_reserve_all_training_history(const bool&);
-
-   // Utilities
-
-   void set_display_period(const Index&);
 
    // Training methods
 
@@ -286,7 +280,7 @@ private:
 
    /// Hardware use.
 
-   string hardware_use;
+   string hardware_use = "Multi-core";
 };
 
 }

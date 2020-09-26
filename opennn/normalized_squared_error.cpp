@@ -188,6 +188,11 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
 
 
+///
+////// \brief NormalizedSquaredError::calculate_error
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
 void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const
@@ -214,6 +219,11 @@ void NormalizedSquaredError::calculate_error(const DataSet::Batch& batch,
 }
 
 
+///
+////// \brief NormalizedSquaredError::calculate_error_terms
+////// \param batch
+////// \param forward_propagation
+////// \param second_order_loss
 void NormalizedSquaredError::calculate_error_terms(const DataSet::Batch& batch,
                                                    const NeuralNetwork::ForwardPropagation& forward_propagation,
                                                    SecondOrderLoss& second_order_loss) const
@@ -334,10 +344,6 @@ void NormalizedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("NormalizedSquaredError");
 
     file_stream.CloseElement();
-
-    // Regularization
-
-//    write_regularization_XML(file_stream);
 }
 
 
@@ -358,19 +364,6 @@ void NormalizedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
 
         throw logic_error(buffer.str());
     }
-
-    // Regularization
-
-    tinyxml2::XMLDocument regularization_document;
-    tinyxml2::XMLNode* element_clone;
-
-    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-
-    element_clone = regularization_element->DeepClone(&regularization_document);
-
-    regularization_document.InsertFirstChild(element_clone);
-
-    regularization_from_XML(regularization_document);
 }
 
 }

@@ -89,8 +89,6 @@ public:
 
    explicit AdaptiveMomentEstimation(LossIndex*);   
 
-   explicit AdaptiveMomentEstimation(const tinyxml2::XMLDocument&);
-
    virtual ~AdaptiveMomentEstimation();
    
    // Training operators
@@ -238,7 +236,7 @@ private:
 
    /// Hardware use.
 
-   string hardware_use;
+   string hardware_use = "Multi-core";
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"

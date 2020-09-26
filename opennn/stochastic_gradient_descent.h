@@ -183,10 +183,6 @@ public:
 
    void set_hardware_use(const string&);
 
-   // Utilities
-
-   void set_display_period(const Index&);
-
    // Training methods
 
    void update_iteration(const LossIndex::BackPropagation& back_propagation,
@@ -268,7 +264,7 @@ private:
 
    /// Hardware use.
 
-   string hardware_use;
+   string hardware_use = "Multi-core";
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/stochastic_gradient_descent_cuda.h"

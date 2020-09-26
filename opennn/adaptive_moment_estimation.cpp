@@ -114,6 +114,8 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 const string& AdaptiveMomentEstimation::get_hardware_use() const
 {
     return hardware_use;
@@ -279,6 +281,8 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 }
 
 
+/// Set hardware to use. Default: Multi-core.
+
 void AdaptiveMomentEstimation::set_hardware_use(const string & new_hardware_use)
 {
     hardware_use = new_hardware_use;
@@ -380,7 +384,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
 
@@ -477,7 +481,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
-        if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
@@ -583,7 +587,8 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     if(choose_best_selection)
     {
-        optimization_data.parameters = optimization_data.minimal_selection_parameters;
+        neural_network_pointer->set_parameters(minimal_selection_parameters);
+
         parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
@@ -982,11 +987,15 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+/// Set number of samples in each batch. Default 1000.
+
 void AdaptiveMomentEstimation::set_batch_samples_number(const Index& new_batch_samples_number)
 {
     batch_samples_number = new_batch_samples_number;
 }
 
+
+/// Update iteration parameters
 
 void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation& back_propagation,
                               OptimizationData& optimization_data)

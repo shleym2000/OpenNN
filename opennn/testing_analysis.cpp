@@ -308,9 +308,6 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
 
     Tensor<LinearRegressionAnalysis, 1> linear_regression_results(outputs_number);
 
-//    cout<<outputs_number<<endl;
-
-
     for(Index i = 0;  i < outputs_number; i++)
     {
         const Tensor<type, 1> targets = testing_targets.chip(i,1);
@@ -3998,11 +3995,15 @@ void TestingAnalysis::from_XML(const tinyxml2::XMLDocument& document)
 
 void TestingAnalysis::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE *pFile;
 
-//    document->SaveFile(file_name.c_str());
+    pFile = fopen(file_name.c_str(), "w");
 
-//    delete document;
+    tinyxml2::XMLPrinter document(pFile);
+
+    write_XML(document);
+
+    fclose(pFile);
 }
 
 

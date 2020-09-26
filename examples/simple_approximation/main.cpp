@@ -35,12 +35,7 @@ int main(void)
 
         // Data set
 
-        DataSet data_set("../data/simple_function_regression2.csv", ';', true);
-
-        Tensor<string, 1> uses(3);
-        uses.setValues({ "Input","Input","Target"});
-
-        data_set.set_columns_uses(uses);
+        DataSet data_set("../data/simple_function_regression.csv", ';', true);
 
         data_set.split_samples_random();
 
@@ -58,13 +53,13 @@ int main(void)
 
         const Tensor<Descriptives, 1> inputs_descriptives = data_set.scale_input_variables(scaling_inputs_methods);
 
-        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_targets_methods);
+        const Tensor<Descriptives, 1> targets_descriptives = data_set.scale_target_variables(scaling_inputs_methods);
 
         // Neural network
 
         Tensor<Index, 1> neural_network_architecture(3);
 
-        neural_network_architecture.setValues({ input_variables_number, 3, target_variables_number });
+        neural_network_architecture.setValues({1, 3, 1});
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, neural_network_architecture);
 

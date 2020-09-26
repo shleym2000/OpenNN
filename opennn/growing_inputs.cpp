@@ -91,6 +91,7 @@ void GrowingInputs::set_default()
     maximum_epochs_number = 1000;
 
     maximum_time = 3600.0;
+
 }
 
 
@@ -266,7 +267,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         const Index input_variables_number = data_set_pointer->get_input_variables_number();
 
-        data_set_pointer->set_input_variables_dimensions({input_variables_number});
+        data_set_pointer->set_input_variables_dimensions(Tensor<Index, 1>(1).setConstant(input_variables_number));
 
         neural_network_pointer->set_inputs_number(input_variables_number);
 
@@ -274,10 +275,11 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
         type optimum_selection_error_trial = numeric_limits<type>::max();
         type optimum_training_error_trial = numeric_limits<type>::max();
-        Tensor<type, 1> optimum_parameters_trial;
+        Tensor<type, 1> optimum_parameters_trial(neural_network_pointer->get_parameters_number());
 
         for(Index i = 0; i < trials_number; i++)
         {
+            neural_network_pointer->set_parameters_random();
             OptimizationAlgorithm::Results training_results = training_strategy_pointer->perform_training();
 
             type current_training_error_trial = training_results.final_training_error;
@@ -299,7 +301,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
                 optimum_training_error_trial = current_training_error_trial;
             }
         }
-
         current_selection_error = optimum_selection_error_trial;
         current_training_error = optimum_training_error_trial;
         current_parameters = optimum_parameters_trial;
@@ -310,6 +311,7 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
             optimal_parameters = current_parameters;
             optimum_selection_error = current_selection_error;
             optimum_training_error = current_training_error;
+
         }
         else if (previus_selection_error < current_selection_error)
         {
@@ -401,7 +403,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         if(end_algorithm == true)
         {
             // Save results
-
             results->optimal_inputs_indices = optimal_columns_indices;
             results->final_selection_error = optimum_selection_error;
             results->final_training_error = optimum_training_error;
@@ -444,7 +445,6 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
         cout << "Optimum selection error: " << optimum_selection_error << endl;
         cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
     }
-
     return results;
 }
 
@@ -453,100 +453,118 @@ GrowingInputs::GrowingInputsResults* GrowingInputs::perform_inputs_selection()
 
 Tensor<string, 2> GrowingInputs::to_string_matrix() const
 {
-    /*
         ostringstream buffer;
 
-        Tensor<string, 1> labels;
-        Tensor<string, 1> values;
+        Tensor<string, 1> labels(11);
+        Tensor<string, 1> values(11);
 
        // Trials number
 
-       labels.push_back("Trials number");
+//       labels.push_back("Trials number");
+       labels(0) = "Trials number";
 
        buffer.str("");
        buffer << trials_number;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(0) = buffer.str();
 
        // Tolerance
 
-       labels.push_back("Tolerance");
+//       labels.push_back("Tolerance");
+       labels(1) = "Tolerance";
 
        buffer.str("");
        buffer << tolerance;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(1) = buffer.str();
 
        // Selection loss goal
 
-       labels.push_back("Selection loss goal");
+//       labels.push_back("Selection loss goal");
+       labels(2) = "Selection loss goal";
 
        buffer.str("");
        buffer << selection_error_goal;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(2) = buffer.str();
 
        // Maximum selection failures
 
-       labels.push_back("Maximum selection failures");
+//       labels.push_back("Maximum selection failures");
+       labels(3) = "Maximum selection failures";
 
        buffer.str("");
        buffer << maximum_selection_failures;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(3) = buffer.str();
 
        // Maximum inputs number
 
-       labels.push_back("Maximum inputs number");
+//       labels.push_back("Maximum inputs number");
+       labels(4) = "Maximum inputs number";
 
        buffer.str("");
        buffer << maximum_inputs_number;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(4) = buffer.str();
 
        // Minimum correlation
 
-       labels.push_back("Minimum correlation");
+//       labels.push_back("Minimum correlation");
+       labels(5) = "Minimum correlations";
 
        buffer.str("");
        buffer << minimum_correlation;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(5) = buffer.str();
 
        // Maximum correlation
 
-       labels.push_back("Maximum correlation");
+//       labels.push_back("Maximum correlation");
+       labels(6) = "Maximum correlation";
 
        buffer.str("");
        buffer << maximum_correlation;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(6) = buffer.str();
 
        // Maximum iterations number
 
-       labels.push_back("Maximum iterations number");
+//       labels.push_back("Maximum iterations number");
+       labels(7) = "Maximum iterations number";
 
        buffer.str("");
        buffer << maximum_epochs_number;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(7) = buffer.str();
 
        // Maximum time
 
-       labels.push_back("Maximum time");
+//       labels.push_back("Maximum time");
+       labels(8) = "Maximum time";
 
        buffer.str("");
        buffer << maximum_time;
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(8) = buffer.str();
 
        // Plot training loss history
 
-       labels.push_back("Plot training loss history");
+//       labels.push_back("Plot training loss history");
+       labels(9) = "Plot training loss history";
 
        buffer.str("");
 
-       if(reserve_error_data)
+       if(reserve_training_error_data)
        {
            buffer << "true";
        }
@@ -555,11 +573,13 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
            buffer << "false";
        }
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(9) = buffer.str();
 
        // Plot selection error history
 
-       labels.push_back("Plot selection error history");
+//       labels.push_back("Plot selection error history");
+       labels(10) = "Plot selection error history";
 
        buffer.str("");
 
@@ -572,19 +592,21 @@ Tensor<string, 2> GrowingInputs::to_string_matrix() const
            buffer << "false";
        }
 
-       values.push_back(buffer.str());
+//       values.push_back(buffer.str());
+       values(10) = buffer.str();
 
        const Index rows_number = labels.size();
        const Index columns_number = 2;
 
        Tensor<string, 2> string_matrix(rows_number, columns_number);
 
-       string_matrix.set_column(0, labels, "name");
-       string_matrix.set_column(1, values, "value");
+//       string_matrix.set_column(0, labels, "name");
+       string_matrix.chip(0, 1) = labels;
+//       string_matrix.set_column(1, values, "value");
+       string_matrix.chip(1, 1) = values;
 
         return string_matrix;
-    */
-    return Tensor<string, 2>();
+//    return Tensor<string, 2>();
 }
 
 

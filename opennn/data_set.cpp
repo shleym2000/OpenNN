@@ -87,7 +87,6 @@ DataSet::DataSet(const string& data_file_name, const char& separator, const bool
     set_has_columns_names(new_has_columns_names);
 
     read_csv();
-
 }
 
 
@@ -1680,8 +1679,8 @@ void DataSet::set_default_columns_uses()
 
         columns(size-1).set_use(Target);
 
-        const Index inputs_number = get_input_variables_number();
-        const Index targets_number = get_target_variables_number();
+//        const Index inputs_number = get_input_variables_number();
+//        const Index targets_number = get_target_variables_number();
 
         input_variables_dimensions.resize(1);
     }
@@ -1707,48 +1706,19 @@ void DataSet::set_default_classification_columns_uses()
     {
         set_input();
 
-        const Index binary_columns_number = count_binary_columns();
-        const Index categorical_columns_number = count_categorical_columns();
-
-        if(categorical_columns_number > 0)
+        for(Index i = columns.size()-1; i >= 0; i--)
         {
-            Index counter = 0;
-
-            for(Index i = 0; i < columns.size(); i++)
+            if(columns(i).type == Binary)
             {
-                if(columns(i).type == Categorical)
-                {
-                    counter++;
-                }
-
-                if(counter == categorical_columns_number)
-                {
-                    columns(i).set_use(Target);
-                    break;
-                }
+                columns(i).set_use(Target);
+                break;
+            }
+            else if(columns(i).type == Categorical)
+            {
+                columns(i).set_use(Target);
+                break;
             }
         }
-        else if(binary_columns_number > 0)
-        {
-            Index counter = 0;
-
-            for(Index i = 0; i < columns.size(); i++)
-            {
-                if(columns(i).type == Binary)
-                {
-                    counter++;
-                }
-
-                if(counter == binary_columns_number)
-                {
-                    columns(i).set_use(Target);
-                    break;
-                }
-            }
-        }
-
-        const Index inputs_number = get_input_variables_number();
-        const Index targets_number = get_target_variables_number();
 
         input_variables_dimensions.resize(1);
     }
@@ -3096,36 +3066,6 @@ void DataSet::set_binary_simple_columns()
             variable_index++;
         }
     }
-}
-
-
-/// Counts the number of binary columns.
-
-Index DataSet::count_binary_columns() const
-{
-    Index binary_columns_number = 0;
-
-    for(Index i = 0; i < columns.size(); i++)
-    {
-        if(columns(i).type == Binary) binary_columns_number++;
-    }
-
-    return binary_columns_number;
-}
-
-
-/// Counts the number of categorical columns.
-
-Index DataSet::count_categorical_columns() const
-{
-    Index categorical_columns_number = 0;
-
-    for(Index i = 0; i < columns.size(); i++)
-    {
-        if(columns(i).type == Categorical) categorical_columns_number++;
-    }
-
-    return categorical_columns_number;
 }
 
 
@@ -5049,8 +4989,6 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
 {
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> used_variables_indices = get_used_variables_indices();
-
-    cout << "Used variables indices: " << used_variables_indices << endl;
 
     return descriptives(data, used_samples_indices, used_variables_indices);
 }
@@ -8944,7 +8882,7 @@ void DataSet::generate_inputs_selection_data(const Index& samples_number, const 
 {
     set(samples_number,variables_number);
 
-//    data.setRandom(0.0, 1.0);
+    data.setRandom();
 
     for(Index i = 0; i < samples_number; i++)
     {
@@ -9284,7 +9222,7 @@ void DataSet::impute_missing_values_mean()
 
     for(Index j = 0; j < variables_number; j++)
     {
-        for(Index i = 0 ; i < samples_number - 1 ; i++)
+        for(Index i = 0; i < samples_number; i++)
         {
             if(::isnan(data(i,j))) data(i,j) = means(j);
         }
@@ -10404,7 +10342,6 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
                           const Tensor<Index, 1>& targets)
 {
 //    samples_number = samples.size();
-
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();

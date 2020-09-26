@@ -114,6 +114,8 @@ const bool& StochasticGradientDescent::get_reserve_selection_error_history() con
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 const string& StochasticGradientDescent::get_hardware_use() const
 {
     return hardware_use;
@@ -366,30 +368,7 @@ void StochasticGradientDescent::set_hardware_use(const string& new_hardware_use)
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void StochasticGradientDescent::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: StochasticGradientDescent class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First learning rate must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
-
+/// Set hardware to use. Default: Multi-core.
 
 void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
                       SGDOptimizationData& optimization_data)
@@ -523,7 +502,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
 
@@ -620,7 +599,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
-        if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 

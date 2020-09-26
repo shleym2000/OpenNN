@@ -7,6 +7,7 @@
 //   artelnics@artelnics.com
 
 #include "conjugate_gradient.h"
+#include "training_strategy.h"
 
 namespace OpenNN
 {
@@ -58,6 +59,7 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
     return &learning_rate_algorithm;
 }
 
+/// Returns the hardware used. Default: Multi-core
 
 string ConjugateGradient::get_hardware_use() const
 {
@@ -183,6 +185,8 @@ void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer
     learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
 }
 
+
+/// Set hardware to use. Default: Multi-core.
 
 void ConjugateGradient::set_hardware_use(const string & new_hardware_use)
 {
@@ -476,31 +480,6 @@ void ConjugateGradient::set_reserve_training_error_history(const bool& new_reser
 void ConjugateGradient::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
 {
     reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void ConjugateGradient::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: ConjugateGradient class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "Display period must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
 }
 
 
@@ -830,6 +809,11 @@ void ConjugateGradient::calculate_FR_training_direction(const Tensor<type, 1>& o
 }
 
 
+///
+////// \brief ConjugateGradient::calculate_gradient_descent_training_direction
+////// \param gradient
+////// \param training_direction
+
 void ConjugateGradient::calculate_gradient_descent_training_direction(const Tensor<type, 1>& gradient,
                                                                       Tensor<type, 1>& training_direction) const
 {
@@ -1000,7 +984,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -1121,7 +1105,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number)
+        else if(epoch == maximum_epochs_number-1)
         {
             if(display)
             {
@@ -1871,6 +1855,11 @@ void ConjugateGradient::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+////// \brief ConjugateGradient::update_epoch
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+////// \param optimization_data
 void ConjugateGradient::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,

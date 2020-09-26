@@ -107,6 +107,7 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
     return choose_best_selection;
 }
 
+/// Returns the hardware used. Default: Multi-core
 
 string LevenbergMarquardtAlgorithm::get_hardware_use() const
 {
@@ -306,6 +307,7 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
     maximum_damping_parameter = new_maximum_damping_parameter;
 }
 
+/// Set hardware to use. Default: Multi-core.
 
 void LevenbergMarquardtAlgorithm::set_hardware_use(const string & new_hardware_use)
 {
@@ -469,30 +471,6 @@ void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void LevenbergMarquardtAlgorithm::set_display_period(const Index& new_display_period)
-{
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First learning rate must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
-
 /// Checks that the Levenberg-Marquard object is ok for training.
 /// In particular, it checks that:
 /// <ul>
@@ -561,7 +539,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     Results results;
 
     results.resize_training_history(maximum_epochs_number);
-
+    results.resize_selection_history(maximum_epochs_number);
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -629,7 +607,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
 
         optimization_data.epoch = epoch;
@@ -772,7 +750,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number)
+        else if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached." << endl;
 
@@ -815,6 +793,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             }
 
             results.resize_training_error_history(1+epoch);
+            results.resize_selection_error_history(1+epoch);
 
             results.final_parameters = optimization_data.parameters;
             results.final_parameters_norm = parameters_norm;
@@ -867,6 +846,8 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
     return results;
 }
 
+/// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
+/// Training occurs according to the training parameters.
 
 void LevenbergMarquardtAlgorithm::perform_training_void()
 {
@@ -874,6 +855,13 @@ void LevenbergMarquardtAlgorithm::perform_training_void()
 }
 
 
+
+////// \brief LevenbergMarquardtAlgorithm::update_epoch
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+////// \param terms_second_order_loss
+////// \param optimization_data
 void LevenbergMarquardtAlgorithm::update_epoch(const DataSet::Batch& batch,
                                                NeuralNetwork::ForwardPropagation& forward_propagation,
                                                LossIndex::BackPropagation& back_propagation,
@@ -928,6 +916,7 @@ void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
     reserve_selection_error_history = true;
 }
 
+/// Writes the optimization algorithm type.
 
 string LevenbergMarquardtAlgorithm::write_optimization_algorithm_type() const
 {

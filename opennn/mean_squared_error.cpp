@@ -41,6 +41,10 @@ MeanSquaredError::~MeanSquaredError()
 }
 
 
+////// \brief MeanSquaredError::calculate_error
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
 void MeanSquaredError::calculate_error(const DataSet::Batch& batch,
                      const NeuralNetwork::ForwardPropagation& forward_propagation,
                      LossIndex::BackPropagation& back_propagation) const
@@ -179,10 +183,6 @@ void MeanSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("MeanSquaredError");
 
     file_stream.CloseElement();
-
-    // Regularization
-
-//    write_regularization_XML(file_stream);
 }
 
 }

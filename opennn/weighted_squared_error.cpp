@@ -77,10 +77,10 @@ void WeightedSquaredError::set_default()
     }
     else
     {
-        negatives_weight = 1.0;
-        positives_weight = 1.0;
+        negatives_weight = -1.0;
+        positives_weight = -1.0;
 
-        normalization_coefficient = 1.0;
+        normalization_coefficient = -1.0;
     }
 }
 
@@ -126,7 +126,7 @@ void WeightedSquaredError::set_weights()
 
 #endif
 
-    if(data_set_pointer)
+    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
     {
         const Tensor<Index, 1> target_distribution = data_set_pointer->calculate_target_distribution();
 
@@ -167,11 +167,33 @@ void WeightedSquaredError::set_normalization_coefficient()
 
 #endif
 
-    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
+    if(data_set_pointer && data_set_pointer->get_target_columns()(0).type == DataSet::Binary)
+    {
+        const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
+        const Index negatives = data_set_pointer->calculate_used_negatives(target_variables_indices[0]);
 
-    normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+        normalization_coefficient = negatives*negatives_weight*static_cast<type>(0.5);
+    }
+    else
+    {
+        normalization_coefficient = static_cast<type>(1);
+    }
+
+}
+
+
+///
+/// \brief set_data_set_pointer
+/// \param new_data_set_pointer
+
+void WeightedSquaredError::set_data_set_pointer(DataSet* new_data_set_pointer)
+{
+    data_set_pointer = new_data_set_pointer;
+
+//    set_weights();
+
+//    set_normalization_coefficient();
 }
 
 
@@ -433,10 +455,6 @@ void WeightedSquaredError::write_XML(tinyxml2::XMLPrinter& file_stream) const
     // Close error
 
     file_stream.CloseElement();
-
-    // Regularization
-
-//    write_regularization_XML(file_stream);
 }
 
 
@@ -459,8 +477,6 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
     }
 
     // Positives weight
-
-//    const tinyxml2::XMLElement* error_element = root_element->FirstChildElement("Error");
 
     const tinyxml2::XMLElement* positives_weight_element = root_element->FirstChildElement("PositivesWeight");
 
@@ -495,19 +511,6 @@ void WeightedSquaredError::from_XML(const tinyxml2::XMLDocument& document)
             cerr << e.what() << endl;
         }
     }
-
-    // Regularization
-
-//    tinyxml2::XMLDocument regularization_document;
-//    tinyxml2::XMLNode* element_clone;
-
-//    const tinyxml2::XMLElement* regularization_element = root_element->FirstChildElement("Regularization");
-
-//    element_clone = regularization_element->DeepClone(&regularization_document);
-
-//    regularization_document.InsertFirstChild(element_clone);
-
-//    regularization_from_XML(regularization_document);
 }
 
 }

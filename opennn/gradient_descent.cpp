@@ -59,6 +59,8 @@ LearningRateAlgorithm* GradientDescent::get_learning_rate_algorithm_pointer()
 }
 
 
+/// Returns the hardware used. Default: Multi-core
+
 string GradientDescent::get_hardware_use() const
 {
     return hardware_use;
@@ -209,6 +211,8 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
     reserve_selection_error_history = new_reserve_all_training_history;
 }
 
+
+/// Set hardware to use. Default: Multi-core.
 
 void GradientDescent::set_hardware_use(const string & new_hardware_use)
 {
@@ -406,33 +410,6 @@ void GradientDescent::set_reserve_selection_error_history(const bool& new_reserv
 }
 
 
-/// Sets a new number of iterations between the training showing progress.
-/// @param new_display_period
-/// Number of iterations between the training showing progress.
-
-void GradientDescent::set_display_period(const Index& new_display_period)
-{
-
-
-#ifdef __OPENNN_DEBUG__
-
-    if(new_display_period <= 0)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_display_period(const type&) method.\n"
-               << "First learning rate must be greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    display_period = new_display_period;
-}
-
-
 /// Returns the gradient descent training direction,
 /// which is the negative of the normalized gradient.
 /// @param gradient Loss index gradient.
@@ -474,6 +451,12 @@ void GradientDescent::calculate_training_direction(const Tensor<type, 1>& gradie
 }
 
 
+
+////// \brief GradientDescent::update_epoch
+////// \param batch
+////// \param forward_propagation
+////// \param back_propagation
+////// \param optimization_data
 void GradientDescent::update_epoch(
         const DataSet::Batch& batch,
         NeuralNetwork::ForwardPropagation& forward_propagation,
@@ -621,7 +604,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -738,7 +721,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(epoch == maximum_epochs_number)
+        else if(epoch == maximum_epochs_number-1)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
@@ -1053,8 +1036,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("HardwareUse");
 
-    cout << "hardware_use: " << hardware_use << endl;
-
     buffer.str("");
     buffer << hardware_use;
 
@@ -1143,6 +1124,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
+            cout << "MinimumLossDecrease" << endl;
             const type new_minimum_loss_decrease = static_cast<type>(atof(element->GetText()));
 
             try
@@ -1257,6 +1239,7 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
         if(element)
         {
+            cout << "ReserveTrainingErrorHistory" << endl;
             const string new_reserve_training_error_history = element->GetText();
 
             try
@@ -1296,7 +1279,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         if(element)
         {
             const string new_hardware_use = element->GetText();
-
             try
             {
                 set_hardware_use(new_hardware_use);
