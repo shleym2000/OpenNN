@@ -7,6 +7,9 @@
 //   artelnics@artelnics.com
 
 #include "correlations.h"
+#include "data_set.h"
+#include "neural_network.h"
+#include "training_strategy.h"
 
 namespace OpenNN
 {
@@ -16,12 +19,12 @@ namespace OpenNN
 /// @param y Vector for computing the linear correlation with the x vector.
 
 type linear_correlation(const ThreadPoolDevice* thread_pool_device,
-                        const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+                        const Tensor<type, 1>& x, const Tensor<type, 1>& y, const bool & scale_vectors)
 {
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = scale_vectors ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
+    const Tensor<type, 1> new_y = scale_vectors ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
 
     const Index x_size = new_x.size();
 
@@ -170,7 +173,7 @@ type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const T
         if(!::isnan(y(i)) && y(i) <= 0) return NAN;
     }
 
-    return linear_correlation(thread_pool_device, x, y.log());
+    return linear_correlation(thread_pool_device, x, y.log(), false);
 }
 
 
@@ -203,7 +206,7 @@ type logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
         if(!::isnan(x(i)) && x(i) <= 0) return NAN;
     }
 
-    return linear_correlation(thread_pool_device, x.log(), y);
+    return linear_correlation(thread_pool_device, x.log(), y, false);
 }
 
 
@@ -250,7 +253,7 @@ type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<
         if(!::isnan(y(i)) && y(i) <= 0) return NAN;
     }
 
-    return linear_correlation(thread_pool_device, x.log(), y.log());
+    return linear_correlation(thread_pool_device, x.log(), y.log(), false);
 }
 
 
@@ -635,7 +638,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 /// @param x Vector of the independent variable.
 /// @param y Vector of the dependent variable.
 
-RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,const Tensor<type, 1>& x, const Tensor<type, 1>& y, const bool& scale_data)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -656,8 +659,8 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,c
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
+    const Tensor<type, 1> new_x = scale_data ? scale_minimum_maximum(filter_vectors.first) : filter_vectors.first;
+    const Tensor<type, 1> new_y = scale_data ? scale_minimum_maximum(filter_vectors.second) : filter_vectors.second;
 
     const Index new_size = new_x.size();
 
@@ -759,7 +762,7 @@ RegressionResults logarithmic_regression(const ThreadPoolDevice* thread_pool_dev
         }
     }
 
-    logarithmic_regression = linear_regression(thread_pool_device, x.log(), y);
+    logarithmic_regression = linear_regression(thread_pool_device, x.log(), y, false);
 
     logarithmic_regression.regression_type = Logarithmic;
 
@@ -805,7 +808,7 @@ RegressionResults exponential_regression(const ThreadPoolDevice* thread_pool_dev
         }
     }
 
-    exponential_regression = linear_regression(thread_pool_device, x, y.log());
+    exponential_regression = linear_regression(thread_pool_device, x, y.log(), false);
 
     exponential_regression.regression_type = Exponential;
     exponential_regression.a = exp(exponential_regression.a);
@@ -861,7 +864,7 @@ RegressionResults power_regression(const ThreadPoolDevice* thread_pool_device, c
         }
     }
 
-    power_regression = linear_regression(thread_pool_device, x.log(), y.log());
+    power_regression = linear_regression(thread_pool_device, x.log(), y.log(), false);
 
     power_regression.regression_type = Power;
 
@@ -899,60 +902,64 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
     const Tensor<type, 1>& new_x = filter_vectors.first;
     const Tensor<type, 1>& new_y = filter_vectors.second;
 
-    const Index new_size = new_x.size();
-
     // Scale data
 
     const Tensor<type, 1> scaled_x = scale_minimum_maximum(new_x);
 
-    // Calculate coefficients
+    // Inputs: scaled_x; Targets: sorted_y
 
-    Tensor<type, 1> coefficients(2);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-//    coefficients.setRandom();
+    const Index input_variables_number = 1;
+    const Index target_variables_number = 1;
+    const Index samples_number = scaled_x.dimension(0);
 
-    const Index epochs_number = 10000;
-    const type step_size = static_cast<type>(0.01);
+    Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
-    const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = 0;
-
-    Tensor<type, 0> mean_squared_error;
-    Tensor<type, 0> gradient_norm;
-
-    Tensor<type, 1> gradient(2);
-
-    Tensor<type, 1> combination(new_size);
-    Tensor<type, 1> activation(new_size);
-    Tensor<type, 1> error(new_size);
-
-    for(Index i = 0; i < epochs_number; i++)
+    for(Index j = 0; j < input_variables_number+target_variables_number; j++)
     {
-        combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
-
-        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
-
-        error.device(*thread_pool_device) = activation - new_y;
-
-        mean_squared_error.device(*thread_pool_device) = error.square().sum();
-
-        if(mean_squared_error() < error_goal) break;
-
-        Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
-        Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
-
-        gradient(0) = sum_a();
-        gradient(1) = sum_b();
-
-        gradient_norm = gradient.square().sum().sqrt();
-
-        if(gradient_norm() < gradient_norm_goal) break;
-
-        coefficients += gradient*step_size;
-
+        if(j < input_variables_number)
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = scaled_x(i);
+            }
+        }
+        else
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = new_y(i);
+            }
+        }
     }
+
+    DataSet data_set(data);
+    data_set.set_training();
+
+    NeuralNetwork neural_network;
+
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+
+    neural_network.add_layer(perceptron_layer);
+
+    neural_network.set_parameters_random();
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method("L2_NORM");
+    training_strategy.get_loss_index_pointer()->set_regularization_weight(static_cast<type>(0.01));
+
+    training_strategy.set_display(false);
+    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+
+    training_strategy.perform_training();
+
+    // Logistic correlation
+
+    const Tensor<type, 1> coefficients = neural_network.get_parameters();
 
     // Regression results
 
@@ -963,7 +970,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> logistic_y = logistic(regression_results.a,regression_results.b, scaled_x);
 
-    regression_results.correlation = linear_correlation(thread_pool_device, logistic_y, new_y);
+    regression_results.correlation = linear_correlation(thread_pool_device, logistic_y, new_y, false);
 
     if(regression_results.b < 0) regression_results.correlation *= (-1);
 
@@ -1000,8 +1007,8 @@ CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<typ
 
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
-    const Tensor<type, 1> new_vector_x = filter_vectors.first;
-    const Tensor<type, 1> new_vector_y = filter_vectors.second;
+    const Tensor<type, 1> new_vector_x = scale_minimum_maximum(filter_vectors.first);
+    const Tensor<type, 1> new_vector_y = scale_minimum_maximum(filter_vectors.second);
 
     n = new_vector_x.size();
 
@@ -1178,7 +1185,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
 
     const Tensor<type, 1>& new_x = filter_vectors.first;
-    const Tensor<type, 1>& new_y = filter_vectors.second;
+    Tensor<type, 1>& new_y = filter_vectors.second;
 
     const Index new_size = new_x.size();
 
@@ -1193,7 +1200,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
     Tensor<type,1> x_sorted(x.dimension(0));
     Tensor<type,1> y_sorted(y.dimension(0));
 
-    for(Index i =0; i<scaled_x.dimension(0); i++)
+    for(Index i = 0; i < scaled_x.dimension(0); i++)
     {
         x_sorted(i) = scaled_x(sorted_index[i]);
         y_sorted(i) = new_y(sorted_index[i]);
@@ -1201,15 +1208,15 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
 
     Index counter = 0;
 
-    for(Index i=0; i<scaled_x.dimension(0)-1; i++)
+    for(Index i=0; i< scaled_x.dimension(0)-1; i++)
     {
-        if(y_sorted(i) != y_sorted(i+1))
+        if((y_sorted(i) - y_sorted(i+1)) > std::numeric_limits<type>::min())
         {
             counter++;
         }
     }
 
-    if(counter == 1 && new_y(sorted_index[0]) == 0)
+    if(counter == 1 && (new_y(sorted_index[0]) - 0) < std::numeric_limits<type>::min())
     {
         CorrelationResults logistic_correlations;
 
@@ -1220,7 +1227,7 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         return logistic_correlations;
     }
 
-    if(counter == 1 && new_y(sorted_index[0]) == 1)
+    if(counter == 1 && (new_y(sorted_index[0]) - 1) < std::numeric_limits<type>::min())
     {
         CorrelationResults logistic_correlations;
 
@@ -1231,60 +1238,66 @@ CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_dev
         return logistic_correlations;
     }
 
-    // Calculate coefficients
 
-    Tensor<type, 1> coefficients(2);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    // Inputs: scaled_x; Targets: sorted_y
 
-    const Index epochs_number = 100000;
-    const type step_size = static_cast<type>(0.01);
+    const Index input_variables_number = 1;
+    const Index target_variables_number = 1;
+    const Index samples_number = scaled_x.dimension(0);
 
-    const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = 0;
+    Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
-    Tensor<type, 0> mean_squared_error;
-    Tensor<type, 0> gradient_norm;
-
-    Tensor<type, 1> gradient(2);
-
-    Tensor<type, 1> combination(new_size);
-    Tensor<type, 1> activation(new_size);
-    Tensor<type, 1> error(new_size);
-
-    for(Index i = 0; i < epochs_number; i++)
+    for(Index j = 0; j <input_variables_number+target_variables_number; j++)
     {
-        combination.device(*thread_pool_device) = (coefficients(1)*scaled_x + coefficients(0));
-
-        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
-
-        error.device(*thread_pool_device) = activation - new_y;
-
-        mean_squared_error.device(*thread_pool_device) = error.square().sum();
-
-        if(mean_squared_error() < error_goal) break;
-
-        Tensor<type, 0> sum_a;
-        sum_a.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum();
-        Tensor<type, 0> sum_b;
-        sum_b.device(*thread_pool_device) = (2*error*activation*(-1+activation)*(scaled_x)).sum();
-
-        gradient(0) = sum_a();
-        gradient(1) = sum_b();
-
-        gradient_norm = gradient.square().sum().sqrt();
-
-        if(gradient_norm() < gradient_norm_goal) break;
-
-        coefficients += gradient*step_size;
+        if(j < input_variables_number)
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = scaled_x(i);
+            }
+        }
+        else
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = new_y(i);
+            }
+        }
     }
+
+    DataSet data_set(data);
+    data_set.set_training();
+
+    NeuralNetwork neural_network;
+
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+
+    neural_network.add_layer(perceptron_layer);
+
+    neural_network.set_parameters_random();
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method("L2_NORM");
+    training_strategy.get_loss_index_pointer()->set_regularization_weight(static_cast<type>(0.01));
+
+    training_strategy.set_display(false);
+    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+    training_strategy.perform_training();
 
     // Logistic correlation
 
     CorrelationResults logistic_correlations;
 
+    const Tensor<type, 1> coefficients = neural_network.get_parameters();
+
     const Tensor<type, 1> logistic_y = logistic(coefficients(0), coefficients(1), scaled_x);
 
-    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y, new_y);
+    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y, new_y, false);
 
     if(coefficients(1) < 0) logistic_correlations.correlation *= (-1);
 
@@ -1313,7 +1326,7 @@ vector<int> get_indices_sorted(Tensor<type,1>& x)
 
 CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread_pool_device,
                                                   const Tensor<type, 2>& x,
-                                                  const Tensor<type, 1>& y)
+                                                  const Tensor<type, 2>& y)
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -1337,77 +1350,71 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
     const Tensor<type, 2>& new_x = filter_vectors.first;
     const Tensor<type, 2>& new_y = filter_vectors.second;
 
-    const Index new_rows = new_x.dimension(0);
-    const Index new_columns = new_x.dimension(1);
-
     // Scale data
 
     Tensor<type, 2> scaled_x = scale_minimum_maximum(new_x);
     Tensor<type, 2> scaled_y = scale_minimum_maximum(new_y);
 
-    // Calculate coefficients
+    // Inputs: scaled_x; Targets: sorted_y
 
-    Tensor<type, 2> weights(new_columns, 1);
-    weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    const Index input_variables_number = scaled_x.dimension(1);
+    const Index target_variables_number = new_y.dimension(1);
+    const Index samples_number = scaled_x.dimension(0);
 
-    Tensor<type, 1> bias(1);
-    bias.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    Tensor<type, 2> data(samples_number, input_variables_number+target_variables_number);
 
-    const Index epochs_number = 10000;
-    const type step_size = static_cast<type>(0.01);
-
-    const type error_goal = static_cast<type>(1.0e-3);
-    const type gradient_norm_goal = 0;
-
-    Tensor<type, 0> sum_squared_error;
-    Tensor<type, 0> gradient_norm;
-
-    Tensor<type, 1> gradient(new_columns+1);
-
-    Tensor<type, 2> combination(new_rows, 1);
-    Tensor<type, 2> activation(new_rows, 1);
-    Tensor<type, 2> error(new_rows, 1);
-
-    Tensor<type, 1> bias_derivative(1);
-    Tensor<type, 2> weights_derivative(1, new_columns);
-
-    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
-
-    for(Index i = 0; i < epochs_number; i++)
+    for(Index j = 0; j <input_variables_number+target_variables_number; j++)
     {
-        combination.setConstant(bias(0));
-
-        combination.device(*thread_pool_device) = scaled_x.contract(weights, A_B);
-
-        activation.device(*thread_pool_device) = (1 + combination.exp().inverse()).inverse();
-
-        error.device(*thread_pool_device) = activation - scaled_y;
-
-        sum_squared_error.device(*thread_pool_device) = error.square().sum();
-
-        if(sum_squared_error() < error_goal) break;
-
-        bias_derivative.device(*thread_pool_device) = (2*error*activation*(-1+activation)).sum(Eigen::array<Index, 1>({0}));
-
-        weights_derivative.device(*thread_pool_device) = scaled_x.contract((2*error*activation*(-1+activation)), AT_B);
-
-        gradient_norm = bias_derivative.square().sum().sqrt() + weights_derivative.square().sum().sqrt();
-
-        if(gradient_norm() < gradient_norm_goal) break;
-
-        bias += bias_derivative*step_size;
-
-        weights += weights_derivative*step_size;
+        if(j < input_variables_number)
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = scaled_x(i,j);
+            }
+        }
+        else
+        {
+            for(Index i = 0; i < samples_number; i++)
+            {
+                data(i,j) = new_y(i,j-input_variables_number);
+            }
+        }
     }
+
+    DataSet data_set(data);
+    data_set.set_training();
+
+    NeuralNetwork neural_network;
+
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+
+    neural_network.add_layer(perceptron_layer);
+
+    neural_network.set_parameters_random();
+
+    TrainingStrategy training_strategy(&neural_network, &data_set);
+
+    training_strategy.set_optimization_method(TrainingStrategy::OptimizationMethod::LEVENBERG_MARQUARDT_ALGORITHM);
+    training_strategy.set_loss_method(TrainingStrategy::LossMethod::NORMALIZED_SQUARED_ERROR);
+    training_strategy.get_normalized_squared_error_pointer()->set_normalization_coefficient();
+
+    training_strategy.get_loss_index_pointer()->set_regularization_method("L2_NORM");
+    training_strategy.get_loss_index_pointer()->set_regularization_weight(static_cast<type>(0.01));
+
+    training_strategy.set_display(false);
+    training_strategy.get_optimization_algorithm_pointer()->set_display(false);
+    training_strategy.perform_training();
 
     // Logistic correlation
 
     CorrelationResults logistic_correlations;
 
+    const Tensor<type, 1> bias = perceptron_layer->get_biases().chip(0,1);
+    const Tensor<type, 2> weights = perceptron_layer->get_synaptic_weights();
+
     const Tensor<type, 2> logistic_y = logistic(thread_pool_device,bias, weights, scaled_x);
 
-    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1));
+    logistic_correlations.correlation = linear_correlation(thread_pool_device, logistic_y.chip(0,1), scaled_y.chip(0,1), false);
 
     logistic_correlations.correlation_type = Logistic_correlation;
 
@@ -1595,7 +1602,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
 
     Tensor<type, 1> coefficients(2);
     Tensor<type, 1> last_coefficients(2);
-    coefficients.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+    coefficients.setRandom();
     last_coefficients.setConstant(0.0);
 
     const Index epochs_number = 10000;
@@ -1653,7 +1660,7 @@ CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device
 
     const Tensor<type, 1> gaussian_y = gaussian(coefficients(0), coefficients(1), scaled_x);
 
-    gaussian_correlations.correlation = abs(linear_correlation(thread_pool_device, gaussian_y, new_y));
+    gaussian_correlations.correlation = abs(linear_correlation(thread_pool_device, gaussian_y, new_y, false));
 
     gaussian_correlations.correlation_type = Gauss_correlation;
 
@@ -2007,7 +2014,6 @@ Tensor<Index, 2> contingency_table(const Tensor<type, 2>& matrix, const Tensor<I
 
 type chi_square_test(const Tensor<type, 2>& matrix)
 {
-
     // Eigen stuff
 
     Eigen::array<int, 1> rows = {Eigen::array<int, 1>({1})};
@@ -2143,10 +2149,11 @@ pair <Tensor<type, 1>, Tensor<type, 1>> filter_missing_values (const Tensor<type
 }
 
 
-pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
     Index rows_number = x.dimension(0);
-    Index columns_number = x.dimension(1);
+    Index x_columns_number = x.dimension(1);
+    Index y_columns_number = y.dimension(1);
 
     Index new_rows_number = 0;
 
@@ -2162,7 +2169,7 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
         }
         else
         {
-            for(Index j = 0; j < columns_number; j++)
+            for(Index j = 0; j < x_columns_number; j++)
             {
                 if(isnan(x(i,j)))
                 {
@@ -2180,9 +2187,9 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
         return make_pair(x, Tensor<type, 2>(y));
     }*/
 
-    Tensor<type, 2> new_x(new_rows_number, columns_number);
+    Tensor<type, 2> new_x(new_rows_number, x_columns_number);
 
-    Tensor<type, 2> new_y(new_rows_number,1);
+    Tensor<type, 2> new_y(new_rows_number,y_columns_number);
 
     Index index = 0;
 
@@ -2190,9 +2197,12 @@ pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 
     {
         if(not_NAN_row(i))
         {
-            new_y(index, 0) = y(i);
+            for(Index j = 0; j < y_columns_number; j++)
+            {
+                new_y(index, j) = y(i,j);
+            }
 
-            for(Index j = 0; j < columns_number; j++)
+            for(Index j = 0; j < x_columns_number; j++)
             {
                 new_x(index, j) = x(i, j);
             }
@@ -2224,11 +2234,17 @@ Tensor<type, 1> scale_minimum_maximum(const Tensor<type, 1>& x)
     const Tensor<type, 0> minimum = x.minimum();
     const Tensor<type, 0> maximum = x.maximum();
 
+    const type min_range = -1;
+    const type max_range = 1;
+
+    const type slope = (max_range-min_range)/(maximum()-minimum());
+    const type intercept = (min_range*maximum()-max_range*minimum())/(maximum()-minimum());
+
     Tensor<type, 1> scaled_x(x.size());
 
     for(Index i = 0; i < scaled_x.size(); i++)
     {
-        scaled_x(i) = static_cast<type>(2.0)*(x(i)-minimum())/(maximum()-minimum())-static_cast<type>(1.0);
+        scaled_x(i) = slope*x(i)+intercept;
     }
 
     return scaled_x;
@@ -2246,14 +2262,20 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 
     const Tensor<type, 1> columns_maximums = OpenNN::columns_maximums(x);
 
+    const type min_range = -1;
+    const type max_range = 1;
+
     for(Index j = 0; j < columns_number; j++)
     {
         const type minimum = columns_minimums(j);
-        const type maximum = columns_maximums(j);        
+        const type maximum = columns_maximums(j);
+
+        const type slope = (max_range-min_range)/(maximum-minimum);
+        const type intercept = (min_range*maximum-max_range*minimum)/(maximum-minimum);
 
         for(Index i = 0; i < rows_number; i++)
         {
-            scaled_x(i,j) = static_cast<type>(2.0)*(x(i,j)-minimum)/(maximum-minimum)-static_cast<type>(1.0);
+            scaled_x(i,j) = slope*x(i,j)+intercept;
         }
     }
 

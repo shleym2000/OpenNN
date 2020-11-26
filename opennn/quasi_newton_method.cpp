@@ -97,14 +97,6 @@ const Index& QuasiNewtonMethod::get_epochs_number() const
 }
 
 
-/// Returns the hardware used. Default: Multi-core
-
-string QuasiNewtonMethod::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
 /// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
 
 const type& QuasiNewtonMethod::get_minimum_parameters_increment_norm() const
@@ -438,14 +430,6 @@ void QuasiNewtonMethod::set_choose_best_selection(const bool& new_choose_best_se
 }
 
 
-/// Set hardware to use. Default: Multi-core.
-
-void QuasiNewtonMethod::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
-
 /// Makes the error history vector to be reseved or not in memory.
 /// @param new_reserve_training_error_history True if the loss history vector is to be reserved, false otherwise.
 
@@ -686,10 +670,8 @@ void QuasiNewtonMethod::update_epoch(
     || is_zero(optimization_data.parameters_difference)
     || is_zero(optimization_data.gradient_difference))
     {
-        cout << optimization_data.epoch << endl;
-
-        if(is_zero(optimization_data.parameters_difference)) cout << "parameters_difference" << endl;
-        if(is_zero(optimization_data.gradient_difference)) cout << "gradient_difference" << endl;
+//        if(is_zero(optimization_data.parameters_difference)) cout << "parameters_difference" << endl;
+//        if(is_zero(optimization_data.gradient_difference)) cout << "gradient_difference" << endl;
 
         initialize_inverse_hessian_approximation(optimization_data);
     }
@@ -735,6 +717,19 @@ void QuasiNewtonMethod::update_epoch(
 
     /// @todo ?
     // Reset training direction when learning rate is 0
+
+    if(optimization_data.epoch != 0 && abs(optimization_data.learning_rate) < numeric_limits<type>::min())
+    {
+        optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
+
+        directional_point = learning_rate_algorithm.calculate_directional_point(
+                    batch,
+                    forward_propagation,
+                    back_propagation,
+                    optimization_data);
+
+        optimization_data.learning_rate = directional_point.first;
+    }
 
     optimization_data.parameters_increment.device(*thread_pool_device)
             = optimization_data.training_direction*optimization_data.learning_rate;
@@ -839,7 +834,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -964,7 +959,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
-        else if(epoch == maximum_epochs_number-1)
+        else if(epoch == maximum_epochs_number)
         {
             if(display)
             {
@@ -1001,7 +996,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 

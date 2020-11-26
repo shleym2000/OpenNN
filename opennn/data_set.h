@@ -185,6 +185,11 @@ public:
 
        void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
 
+//       void fill_submatrix(const Tensor<type, 2>& matrix,
+//                 const Tensor<Index, 1>& rows_indices,
+//                 const Tensor<Index, 1>& columns_indices, Tensor<type, 2>& submatrix);
+
+
        Index samples_number = 0;
 
        DataSet* data_set_pointer = nullptr;
@@ -219,6 +224,8 @@ public:
 
    Tensor<Index, 1> get_samples_uses_numbers() const;
    Tensor<type, 1> get_samples_uses_percentages() const;
+
+   string get_sample_string(const Index&, const string& = ",") const;
 
    // Columns get methods
 
@@ -428,6 +435,10 @@ public:
 
    void binarize_input_data(const type&);
 
+   // Columns other methods
+
+   Tensor<type,2> transform_binary_column(const Tensor<type,1>&) const;
+
    // Variables set methods
 
    void set_variables_names(const Tensor<string, 1>&);
@@ -509,6 +520,7 @@ public:
    void initialize_data(const type&);
 
    void set_data_random();
+   void set_data_binary_random();
 
    // Descriptives methods
 
@@ -596,6 +608,7 @@ public:
    Tensor<string, 1> calculate_default_scaling_methods() const;
    Tensor<string, 1> calculate_default_unscaling_methods() const;
    void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
+   void scale_minimum_maximum_binary(const type&, const type&, const Index&);
    void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
    Tensor<Descriptives, 1> scale_data_minimum_maximum();
    Tensor<Descriptives, 1> scale_data_mean_standard_deviation();
@@ -714,6 +727,9 @@ public:
 
    void load_time_series_data_binary();
 
+   void check_input_csv(const string&, const char&) const;
+   Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
+
    // Trasform methods
 
    void transform_time_series();
@@ -741,6 +757,19 @@ public:
    Index count_rows_with_nan() const;
    Index count_nan() const;
 
+   void set_missing_values_number(const Index&);
+   void set_missing_values_number();
+
+   void set_columns_missing_values_number(const Tensor<Index, 1>&);
+   void set_columns_missing_values_number();
+
+   void set_rows_missing_values_number(const Index&);
+   void set_rows_missing_values_number();
+
+   // Other methods
+
+   void fix_repeated_names();
+
    // scaling
 
    void set_min_max_range(const type min, const type max);
@@ -754,6 +783,10 @@ public:
    void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
+
+   void fill_submatrix(const Tensor<type, 2>& matrix,
+             const Tensor<Index, 1>& rows_indices,
+             const Tensor<Index, 1>& columns_indices, type*submatrix);
 
    bool get_has_rows_labels() const;
 
@@ -853,6 +886,14 @@ private:
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
    Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+
+   /// Missing values
+
+   Index missing_values_number;
+
+   Tensor<Index, 1> columns_missing_values_number;
+
+   Index rows_missing_values_number;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"

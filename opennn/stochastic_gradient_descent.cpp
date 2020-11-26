@@ -114,14 +114,6 @@ const bool& StochasticGradientDescent::get_reserve_selection_error_history() con
 }
 
 
-/// Returns the hardware used. Default: Multi-core
-
-const string& StochasticGradientDescent::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -362,12 +354,6 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 }
 
 
-void StochasticGradientDescent::set_hardware_use(const string& new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
-
 /// Set hardware to use. Default: Multi-core.
 
 void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
@@ -502,7 +488,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
 
@@ -599,7 +585,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
         if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
-        if(epoch == maximum_epochs_number-1)
+        if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
@@ -677,7 +663,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             if(has_selection) results.final_selection_error = selection_error;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 

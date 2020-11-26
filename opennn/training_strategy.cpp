@@ -764,6 +764,7 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
 
     OptimizationAlgorithm::Results results;
+
     // Main
 
     switch(optimization_method)
@@ -952,7 +953,15 @@ void TrainingStrategy::write_XML(tinyxml2::XMLPrinter& file_stream) const
     cross_entropy_error.write_XML(file_stream);
     weighted_squared_error.write_XML(file_stream);
 
-    mean_squared_error.write_regularization_XML(file_stream);
+    switch(loss_method)
+    {
+    case MEAN_SQUARED_ERROR : mean_squared_error.write_regularization_XML(file_stream); break;
+    case NORMALIZED_SQUARED_ERROR : normalized_squared_error.write_regularization_XML(file_stream); break;
+    case MINKOWSKI_ERROR : Minkowski_error.write_regularization_XML(file_stream); break;
+    case CROSS_ENTROPY_ERROR : cross_entropy_error.write_regularization_XML(file_stream); break;
+    case WEIGHTED_SQUARED_ERROR : weighted_squared_error.write_regularization_XML(file_stream); break;
+    case SUM_SQUARED_ERROR : sum_squared_error.write_regularization_XML(file_stream); break;
+    }
 
     file_stream.CloseElement();
 
@@ -1100,10 +1109,9 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             regularization_document.InsertFirstChild(element_clone);
 
-            mean_squared_error.regularization_from_XML(regularization_document);
+            get_loss_index_pointer()->regularization_from_XML(regularization_document);
         }
     }
-
 
     cout << "Loss index loaded" << endl;
 
@@ -1138,8 +1146,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             gradient_descent.from_XML(gradient_descent_document);
         }
 
-        cout << "GD" << endl;
-
         // Conjugate gradient
 
         const tinyxml2::XMLElement* conjugate_gradient_element = optimization_algorithm_element->FirstChildElement("ConjugateGradient");
@@ -1160,54 +1166,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
             conjugate_gradient.from_XML(conjugate_gradient_document);
         }
-
-        cout << "CG" << endl;
-
-        // Quasi-Newton method
-
-        const tinyxml2::XMLElement* quasi_Newton_method_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
-
-        if(quasi_Newton_method_element)
-        {
-            tinyxml2::XMLDocument quasi_Newton_document;
-
-            tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
-
-            for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&quasi_Newton_document );
-                quasi_newton_method_element_copy->InsertEndChild(copy );
-            }
-
-            quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
-
-            quasi_Newton_method.from_XML(quasi_Newton_document);
-        }
-
-        cout << "QN" << endl;
-
-        // Levenberg Marquardt
-
-        const tinyxml2::XMLElement* Levenberg_Marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
-
-        if(Levenberg_Marquardt_element)
-        {
-            tinyxml2::XMLDocument Levenberg_Marquardt_document;
-
-            tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = Levenberg_Marquardt_document.NewElement("LevenbergMarquardt");
-
-            for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
-            {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&Levenberg_Marquardt_document );
-                levenberg_marquardt_algorithm_element_copy->InsertEndChild(copy );
-            }
-
-            Levenberg_Marquardt_document.InsertEndChild(levenberg_marquardt_algorithm_element_copy);
-
-            Levenberg_Marquardt_algorithm.from_XML(Levenberg_Marquardt_document);
-        }
-
-        cout << "LM" << endl;
 
         // Stochastic gradient
 
@@ -1230,8 +1188,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             stochastic_gradient_descent.from_XML(stochastic_gradient_descent_document);
         }
 
-        cout << "SG" << endl;
-
         // Adaptive moment estimation
 
         const tinyxml2::XMLElement* adaptive_moment_estimation_element = optimization_algorithm_element->FirstChildElement("AdaptiveMomentEstimation");
@@ -1253,7 +1209,47 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             adaptive_moment_estimation.from_XML(adaptive_moment_estimation_document);
         }
 
-        cout << "ADAM" << endl;
+        // Quasi-Newton method
+
+        const tinyxml2::XMLElement* quasi_Newton_method_element = optimization_algorithm_element->FirstChildElement("QuasiNewtonMethod");
+
+        if(quasi_Newton_method_element)
+        {
+            tinyxml2::XMLDocument quasi_Newton_document;
+
+            tinyxml2::XMLElement* quasi_newton_method_element_copy = quasi_Newton_document.NewElement("QuasiNewtonMethod");
+
+            for(const tinyxml2::XMLNode* nodeFor=quasi_Newton_method_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            {
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&quasi_Newton_document );
+                quasi_newton_method_element_copy->InsertEndChild(copy );
+            }
+
+            quasi_Newton_document.InsertEndChild(quasi_newton_method_element_copy);
+
+            quasi_Newton_method.from_XML(quasi_Newton_document);
+        }
+
+        // Levenberg Marquardt
+
+        const tinyxml2::XMLElement* Levenberg_Marquardt_element = optimization_algorithm_element->FirstChildElement("LevenbergMarquardt");
+
+        if(Levenberg_Marquardt_element)
+        {
+            tinyxml2::XMLDocument Levenberg_Marquardt_document;
+
+            tinyxml2::XMLElement* levenberg_marquardt_algorithm_element_copy = Levenberg_Marquardt_document.NewElement("LevenbergMarquardt");
+
+            for(const tinyxml2::XMLNode* nodeFor=Levenberg_Marquardt_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            {
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&Levenberg_Marquardt_document );
+                levenberg_marquardt_algorithm_element_copy->InsertEndChild(copy );
+            }
+
+            Levenberg_Marquardt_document.InsertEndChild(levenberg_marquardt_algorithm_element_copy);
+
+            Levenberg_Marquardt_algorithm.from_XML(Levenberg_Marquardt_document);
+        }
     }
 
     // Display

@@ -27,8 +27,9 @@
 #include "statistics.h"
 #include "config.h"
 
-using namespace std;
-using namespace Eigen;
+
+//using namespace std;
+//using namespace Eigen;
 
 namespace OpenNN
 {
@@ -101,6 +102,7 @@ struct CorrelationResults
             case Power_correlation: return "Power";
             case KarlPearson_correlation: return "Karl-Pearson";
             case OneWayAnova_correlation: return "One-way Anova";
+            case Gauss_correlation: return "Gauss";
         }
 
         return "";
@@ -116,7 +118,7 @@ struct CorrelationResults
 };
     // Linear
 
-    type linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    type linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const bool& = true);
 
     // Rank linear
 
@@ -161,7 +163,7 @@ struct CorrelationResults
 
     // Regression methods
 
-    RegressionResults linear_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
+    RegressionResults linear_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&, const bool& = true);
 
     RegressionResults logarithmic_regression(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -183,7 +185,7 @@ struct CorrelationResults
 
     CorrelationResults logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
 
-    CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 1>&);
+    CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
@@ -212,7 +214,7 @@ struct CorrelationResults
     // Missing values methods
 
     pair<Tensor<type, 1>, Tensor<type, 1>> filter_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>&, const Tensor<type, 1>&);
+    pair<Tensor<type, 2>, Tensor<type, 2>> filter_missing_values(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     Index count_NAN(const Tensor<type, 1>&);
 

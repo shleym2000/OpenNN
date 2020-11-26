@@ -626,14 +626,35 @@ type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
     return maximum;
 }
 
+/// Returns the largest element of a index vector.
+/// @param vector Vector to obtain the maximum value.
 
-
-time_t maximum(const Tensor<time_t, 1>& vector)
+Index maximum(const Tensor<Index, 1>& vector)
 {
-    const Tensor<time_t,0> max_element = vector.maximum();
+    const Index size = vector.size();
 
-    return max_element(0);
+    if(size == 0) return 0;
+
+    Index maximum = -numeric_limits<Index>::max();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(vector(i) > maximum)
+        {
+            maximum = vector(i);
+        }
+    }
+
+    return maximum;
 }
+
+
+//time_t maximum(const Tensor<time_t, 1>& vector)
+//{
+//    const Tensor<time_t,0> max_element = vector.maximum();
+
+//    return max_element(0);
+//}
 
 
 /// Returns the maximums values of given columns.
@@ -780,9 +801,6 @@ type mean(const Tensor<type, 1>& vector)
         }
     }
 
-    cout << "sum: " << sum << endl;
-    cout << "count: " << count << endl;
-
     const type mean = sum /static_cast<type>(count);
 
     return mean;
@@ -833,10 +851,9 @@ type variance(const Tensor<type, 1>& vector)
         return 0.0;
     }
 
-    const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
-    const type denominator = static_cast<type>(count - 1);
+    const type variance = squared_sum/static_cast<type>(count - 1) -(sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
 
-    return numerator/denominator;
+    return variance;
 }
 
 
@@ -888,10 +905,9 @@ type variance(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
         return 0.0;
     }
 
-    const type numerator = squared_sum -(sum * sum) /static_cast<type>(count);
-    const type denominator = static_cast<type>(count - 1);
+    const type variance = squared_sum/static_cast<type>(count - 1) -(sum/static_cast<type>(count))*(sum/static_cast<type>(count))*static_cast<type>(count)/static_cast<type>(count-1);
 
-    return numerator/denominator;
+    return variance;
 }
 
 
@@ -916,8 +932,11 @@ type standard_deviation(const Tensor<type, 1>& vector)
     }
 
 #endif
-
-    return sqrt(variance(vector));
+    if(variance(vector)<static_cast<double>(1e-9)){
+        return static_cast<double>(0);
+    }else{
+        return sqrt(variance(vector));
+    }
 }
 
 
@@ -942,8 +961,11 @@ type standard_deviation(const Tensor<type, 1>& vector, const Tensor<Index, 1>& i
     }
 
 #endif
-
-    return sqrt(variance(vector, indices));
+    if(variance(vector, indices)<static_cast<double>(1e-9)){
+        return static_cast<double>(0);
+    }else{
+        return sqrt(variance(vector, indices));
+    }
 }
 
 
@@ -1848,8 +1870,8 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
     Tensor<type, 1> maximums(columns_indices_size);
     maximums.setConstant(numeric_limits<type>::min());
 
-    Tensor<type, 1> sums(columns_indices_size);
-    Tensor<type, 1> squared_sums(columns_indices_size);
+    Tensor<double, 1> sums(columns_indices_size);
+    Tensor<double, 1> squared_sums(columns_indices_size);
     Tensor<Index, 1> count(columns_indices_size);
 
     sums.setZero();
@@ -1884,20 +1906,23 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         }
     }
 
-    const Tensor<type, 1> mean = sums/count;
+    const Tensor<double, 1> mean = sums/count;
 
-    Tensor<type, 1> standard_deviation(columns_indices_size);
+    Tensor<double, 1> standard_deviation(columns_indices_size);
 
     if(row_indices_size > 1)
     {
         for(Index i = 0; i < columns_indices_size; i++)
         {
-            const type numerator = squared_sums(i) -(sums(i) * sums(i)) / count(i);
-            const type denominator = static_cast<type>(count(i) - 1);
+            const double variance = squared_sums(i)/static_cast<double>(count(i)-1) -(sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>((count(i)-1));
 
-            standard_deviation(i) = numerator / denominator;
+            standard_deviation(i) = variance;
 
-            standard_deviation(i) = sqrt(standard_deviation(i));
+//            if(standard_deviation(i)<static_cast<double>(5e-3)){
+//                standard_deviation(i) = static_cast<double>(0);
+//            }else{
+                standard_deviation(i) = sqrt(standard_deviation(i));
+//            }
         }
     }
 
@@ -2568,6 +2593,8 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     for(Index j = 0; j < columns_indices_size; j++)
     {
         column_index = columns_indices(j);
+
+        count = 0;
 
         for(Index i = 0; i < row_indices_size; i++)
         {

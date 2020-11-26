@@ -21,6 +21,10 @@ OptimizationAlgorithm::OptimizationAlgorithm()
     NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
 
+#ifdef OPENNN_MKL
+    mkl_set_num_threads(n);
+#endif
+
     set_default();
 }
 
@@ -34,6 +38,10 @@ OptimizationAlgorithm::OptimizationAlgorithm(LossIndex* new_loss_index_pointer)
     const int n = omp_get_max_threads();
     NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+#ifdef OPENNN_MKL
+    mkl_set_num_threads(n);
+#endif
 
     set_default();
 }
@@ -69,6 +77,21 @@ LossIndex* OptimizationAlgorithm::get_loss_index_pointer() const
     return loss_index_pointer;
 }
 
+
+/// Returns the hardware used. Default: Multi-core
+
+string OptimizationAlgorithm::get_hardware_use() const
+{
+    return hardware_use;
+}
+
+
+/// Set hardware to use. Default: Multi-core.
+
+void OptimizationAlgorithm::set_hardware_use(const string& new_hardware_use)
+{
+    hardware_use = new_hardware_use;
+}
 
 /// Returns true if this optimization algorithm object has an associated loss index object,
 /// and false otherwise.

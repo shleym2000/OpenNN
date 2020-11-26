@@ -107,13 +107,6 @@ const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
     return choose_best_selection;
 }
 
-/// Returns the hardware used. Default: Multi-core
-
-string LevenbergMarquardtAlgorithm::get_hardware_use() const
-{
-    return hardware_use;
-}
-
 
 /// Returns true if the error history vector is to be reserved, and false otherwise.
 
@@ -305,13 +298,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_damping_parameter(const type& new_
 #endif
 
     maximum_damping_parameter = new_maximum_damping_parameter;
-}
-
-/// Set hardware to use. Default: Multi-core.
-
-void LevenbergMarquardtAlgorithm::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
 }
 
 
@@ -607,7 +593,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
 
         optimization_data.epoch = epoch;
@@ -750,7 +736,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number-1)
+        else if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached." << endl;
 
@@ -781,7 +767,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << terms_second_order_loss.error << "\n"
+                     << "Training error: " << terms_second_order_loss.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << "Damping parameter: " << damping_parameter << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -802,7 +788,7 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 
@@ -812,12 +798,12 @@ OptimizationAlgorithm::Results LevenbergMarquardtAlgorithm::perform_training()
         {
             cout << "Epoch " << epoch+1 << ";\n"
                  << "Parameters norm: " << parameters_norm << "\n"
-                 << "Training loss: " << terms_second_order_loss.loss << "\n"
+                 << "Training error: " << terms_second_order_loss.loss << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << "Damping parameter: " << damping_parameter << "\n"
                  << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(abs(selection_back_propagation.error - 0) < numeric_limits<type>::epsilon())
+            if(has_selection)
             {
                 cout << "Selection error: " << selection_back_propagation.error << endl;
             }

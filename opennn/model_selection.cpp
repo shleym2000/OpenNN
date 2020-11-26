@@ -409,6 +409,8 @@ ModelSelection::Results ModelSelection::perform_neurons_selection()
 {
     Results results;
 
+    TrainingStrategy* ts = get_training_strategy_pointer();
+
     switch(neurons_selection_method)
     {
     case NO_NEURONS_SELECTION:
@@ -418,8 +420,6 @@ ModelSelection::Results ModelSelection::perform_neurons_selection()
     case GROWING_NEURONS:
     {
         growing_neurons.set_display(display);
-
-        TrainingStrategy* ts = get_training_strategy_pointer();
 
         growing_neurons.set_training_strategy_pointer(ts);
 
@@ -440,6 +440,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
 {
     Results results;
 
+    TrainingStrategy* ts = get_training_strategy_pointer();
+
     switch(inputs_selection_method)
     {
     case NO_INPUTS_SELECTION:
@@ -450,6 +452,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
     {
         growing_inputs.set_display(display);
 
+        growing_inputs.set_training_strategy_pointer(ts);
+
         results.growing_inputs_results_pointer = growing_inputs.perform_inputs_selection();
 
         break;
@@ -458,6 +462,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
     {
         pruning_inputs.set_display(display);
 
+        pruning_inputs.set_training_strategy_pointer(ts);
+
         results.pruning_inputs_results_pointer = pruning_inputs.perform_inputs_selection();
 
         break;
@@ -465,6 +471,8 @@ ModelSelection::Results ModelSelection::perform_inputs_selection()
     case GENETIC_ALGORITHM:
     {
         genetic_algorithm.set_display(display);
+
+        genetic_algorithm.set_training_strategy_pointer(ts);
 
         results.genetic_algorithm_results_pointer = genetic_algorithm.perform_inputs_selection();
 
@@ -548,101 +556,115 @@ void ModelSelection::from_XML(const tinyxml2::XMLDocument& document)
 
     // Neurons Selection
 
+    const tinyxml2::XMLElement* neurons_selection_element = root_element->FirstChildElement("NeuronsSelection");
+
+    if(neurons_selection_element)
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("NeuronsSelection");
+        // Neurons selection method
 
-        if(element)
+        const tinyxml2::XMLElement* neurons_selection_method_element = neurons_selection_element->FirstChildElement("NeuronsSelectionMethod");
+
+        set_neurons_selection_method(neurons_selection_method_element->GetText());
+
+        // Growing neurons
+
+        const tinyxml2::XMLElement* growing_neurons_element = neurons_selection_element->FirstChildElement("GrowingNeurons");
+
+        if(growing_neurons_element)
         {
-            // Neurons selection method
+            tinyxml2::XMLDocument growing_neurons_document;
 
-            const tinyxml2::XMLElement* neurons_selection_method_element = element->FirstChildElement("NeuronsSelectionMethod");
+            tinyxml2::XMLElement* growing_neurons_element_copy = growing_neurons_document.NewElement("GrowingNeurons");
 
-            set_neurons_selection_method(neurons_selection_method_element->GetText());
-
-            // Growing neurons
-
-            tinyxml2::XMLDocument new_growing_neurons_document;
-
-            tinyxml2::XMLElement* growing_element = new_growing_neurons_document.NewElement("GrowingNeurons");
-
-            for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            for(const tinyxml2::XMLNode* nodeFor=growing_neurons_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
             {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_growing_neurons_document);
-                growing_element->InsertEndChild(copy );
+                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&growing_neurons_document );
+                growing_neurons_element_copy->InsertEndChild(copy );
             }
 
-            new_growing_neurons_document.InsertEndChild(growing_element);
+            growing_neurons_document.InsertEndChild(growing_neurons_element_copy);
 
-            growing_neurons.from_XML(new_growing_neurons_document);
-
-            cout << "growing neurons" << endl;
+            growing_neurons.from_XML(growing_neurons_document);
         }
+
     }
 
     // Inputs Selection
 
     {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("InputsSelection");
+        const tinyxml2::XMLElement* inputs_selection_element = root_element->FirstChildElement("InputsSelection");
 
-        if(element)
+        if(inputs_selection_element)
         {
-            const tinyxml2::XMLElement* inputs_selection_method_element = element->FirstChildElement("InputsSelectionMethod");
+            const tinyxml2::XMLElement* inputs_selection_method_element = inputs_selection_element->FirstChildElement("InputsSelectionMethod");
 
             set_inputs_selection_method(inputs_selection_method_element->GetText());
 
             // Growing inputs
 
-            tinyxml2::XMLDocument new_growing_inputs_document;
+            const tinyxml2::XMLElement* growing_inputs_element = inputs_selection_element->FirstChildElement("GrowingInputs");
 
-            tinyxml2::XMLElement* growing_element = new_growing_inputs_document.NewElement("GrowingInputs");
-
-            for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            if(growing_inputs_element)
             {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_growing_inputs_document );
-                growing_element->InsertEndChild(copy );
+                tinyxml2::XMLDocument growing_inputs_document;
+
+                tinyxml2::XMLElement* growing_inputs_element_copy = growing_inputs_document.NewElement("GrowingInputs");
+
+                for(const tinyxml2::XMLNode* nodeFor=growing_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&growing_inputs_document );
+                    growing_inputs_element_copy->InsertEndChild(copy );
+                }
+
+                growing_inputs_document.InsertEndChild(growing_inputs_element_copy);
+
+                growing_inputs.from_XML(growing_inputs_document);
             }
 
-            new_growing_inputs_document.InsertEndChild(growing_element);
-
-            growing_inputs.from_XML(new_growing_inputs_document);
-
-            cout << "growing inputs" << endl;
 
             // Pruning inputs
 
-            tinyxml2::XMLDocument new_pruning_inputs_document;
+            const tinyxml2::XMLElement* pruning_inputs_element = inputs_selection_element->FirstChildElement("PruningInputs");
 
-            tinyxml2::XMLElement* pruning_element = new_pruning_inputs_document.NewElement("PruningInputs");
-
-            for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            if(pruning_inputs_element)
             {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_pruning_inputs_document );
-                pruning_element->InsertEndChild(copy );
+                tinyxml2::XMLDocument pruning_inputs_document;
+
+                tinyxml2::XMLElement* pruning_inputs_element_copy = pruning_inputs_document.NewElement("PruningInputs");
+
+                for(const tinyxml2::XMLNode* nodeFor=pruning_inputs_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&pruning_inputs_document );
+                    pruning_inputs_element_copy->InsertEndChild(copy );
+                }
+
+                pruning_inputs_document.InsertEndChild(pruning_inputs_element_copy);
+
+                pruning_inputs.from_XML(pruning_inputs_document);
             }
 
-            new_pruning_inputs_document.InsertEndChild(pruning_element);
-
-            pruning_inputs.from_XML(new_pruning_inputs_document);
-
-            cout << "pruning inputs" << endl;
 
             // Genetic algorithm
 
-            tinyxml2::XMLDocument new_document;
+            const tinyxml2::XMLElement* genetic_algorithm_element = inputs_selection_element->FirstChildElement("GeneticAlgorithm");
 
-            tinyxml2::XMLElement* genetic_element = new_document.NewElement("GeneticAlgorithm");
-
-            for(const tinyxml2::XMLNode* nodeFor=element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+            if(genetic_algorithm_element)
             {
-                tinyxml2::XMLNode* copy = nodeFor->DeepClone(&new_document );
-                genetic_element->InsertEndChild(copy );
+                tinyxml2::XMLDocument genetic_algorithm_document;
+
+                tinyxml2::XMLElement* genetic_algorithm_element_copy = genetic_algorithm_document.NewElement("GeneticAlgorithm");
+
+                for(const tinyxml2::XMLNode* nodeFor=genetic_algorithm_element->FirstChild(); nodeFor; nodeFor=nodeFor->NextSibling())
+                {
+                    tinyxml2::XMLNode* copy = nodeFor->DeepClone(&genetic_algorithm_document );
+                    genetic_algorithm_element_copy->InsertEndChild(copy );
+                }
+
+                genetic_algorithm_document.InsertEndChild(genetic_algorithm_element_copy);
+
+                genetic_algorithm.from_XML(genetic_algorithm_document);
             }
 
-            new_document.InsertEndChild(genetic_element);
-
-            genetic_algorithm.from_XML(new_document);
-
-            cout << "genetic algorithm" << endl;
         }
     }
 }

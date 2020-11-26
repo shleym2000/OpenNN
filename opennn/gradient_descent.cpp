@@ -211,15 +211,6 @@ void GradientDescent::set_reserve_all_training_history(const bool& new_reserve_a
     reserve_selection_error_history = new_reserve_all_training_history;
 }
 
-
-/// Set hardware to use. Default: Multi-core.
-
-void GradientDescent::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
-
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
@@ -604,7 +595,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
     time(&beginning_time);
     type elapsed_time = 0;
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -721,7 +712,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(epoch == maximum_epochs_number-1)
+        else if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
@@ -770,7 +761,7 @@ OptimizationAlgorithm::Results GradientDescent::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 

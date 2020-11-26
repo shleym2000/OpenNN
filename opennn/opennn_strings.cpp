@@ -7,7 +7,6 @@
 //   artelnics@artelnics.com
 
 #include "opennn_strings.h"
-
 namespace OpenNN
 {
 
@@ -73,7 +72,6 @@ Index count_tokens(const string& s, const char& c)
 Tensor<string, 1> get_tokens(const string& str, const char& separator)
 {
 //    const string new_string = get_trimmed(str);
-
     const Index tokens_number = count_tokens(str, separator);
 
     Tensor<string, 1> tokens(tokens_number);
@@ -85,78 +83,93 @@ Tensor<string, 1> get_tokens(const string& str, const char& separator)
     // Find first "non-delimiter"
 
     Index index = 0;
+    Index old_pos;
+    Index old_last_pos;
 
     string::size_type pos = str.find_first_of(separator, lastPos);
 
     while(string::npos != pos || string::npos != lastPos)
     {
-        // Found a token, add it to the vector
 
+        if((lastPos-old_pos != 1) && index!= 0){
+            tokens[index] = "";
+            index++;
+            old_pos = old_pos+1;
+            continue;
+        }
+        else{
+        // Found a token, add it to the vector
         tokens[index] = str.substr(lastPos, pos - lastPos);
+        }
+
+        old_pos = pos;
+        old_last_pos = lastPos;
 
         // Skip delimiters. Note the "not_of"
-
         lastPos = str.find_first_not_of(separator, pos);
 
         // Find next "non-delimiter"
-
         pos = str.find_first_of(separator, lastPos);
 
         index++;
-    }
 
-//    for(Index i = 0; i < tokens.size(); i++)
-//    {
-//        trim(tokens[i]);
-//    }
+    }
 
     return tokens;
 }
+
 
 /// Splits the string into substrings(tokens) wherever separator occurs, and returns a vector with those strings.
 /// If separator does not match anywhere in the string, this method returns a single-element list containing this string.
 /// @param str String to be tokenized.
 
-void get_tokens(const string& str, const char& separator, Tensor<string, 1>& tokens)
+void fill_tokens(const string& str, const char& separator, Tensor<string, 1>& tokens)
 {
-
-//    const Index tokens_number = count_tokens(str, separator);
-
-//    Tensor<string, 1> tokens(tokens_number);
+    tokens.setConstant("");
 
     // Skip delimiters at beginning.
 
-    string::size_type lastPos = str.find_first_not_of(separator, 0);
+    string::size_type last_position = str.find_first_not_of(separator, 0);
+
+    string::size_type position = str.find_first_of(separator, last_position);
 
     // Find first "non-delimiter"
 
     Index index = 0;
+    Index old_pos;
+    Index old_last_pos;
 
-    string::size_type pos = str.find_first_of(separator, lastPos);
-
-    while(string::npos != pos || string::npos != lastPos)
+    while(string::npos != position || string::npos != last_position)
     {
         // Found a token, add it to the vector
 
-        tokens[index] = str.substr(lastPos, pos - lastPos);
+        if((last_position-old_pos != 1) && index!= 0)
+        {
+            tokens[index] = "";
+            index++;
+            old_pos = old_pos+1;
+            continue;
+        }
+        else
+        {
+            // Found a token, add it to the vector
+
+            tokens[index] = str.substr(last_position, position - last_position);
+        }
+
+        old_pos = position;
+        old_last_pos = last_position;
 
         // Skip delimiters. Note the "not_of"
 
-        lastPos = str.find_first_not_of(separator, pos);
+        last_position = str.find_first_not_of(separator, position);
 
         // Find next "non-delimiter"
 
-        pos = str.find_first_of(separator, lastPos);
+        position = str.find_first_of(separator, last_position);
 
         index++;
     }
-
-//    for(Index i = 0; i < tokens.size(); i++)
-//    {
-//        trim(tokens[i]);
-//    }
-
-//    return tokens;
 }
 
 
@@ -195,7 +208,8 @@ Tensor<type, 1> to_type_vector(const string& str, const char& separator)
 
 bool is_numeric_string(const string& str)
 {
-    /*
+    std::string::size_type index;
+
     std::istringstream iss(str.data());
 
     type dTestSink;
@@ -212,26 +226,33 @@ bool is_numeric_string(const string& str)
     // was all the input successfully consumed/converted?
     try
     {
-        stod(str);
+        stod(str, &index);
 
-        return true;
+        if(index == str.size())
+        {
+            return true;
+        }
+        else
+        {
+            return  false;
+        }
     }
     catch (exception)
     {
         return false;
     }
-    */
 
-    return !str.empty() && std::find_if(str.begin(),
-        str.end(), [](unsigned char c) { return (!std::isdigit(c) && c != '-' && c != '+' && c != '.' && c != 'e'/* && c != 'E'*/); }) == str.end();
+//    if(!std::isdigit(str[0])) return false;
+//    return !str.empty() && std::find_if(str.begin(),
+//        str.end(), [](unsigned char c) { return (!std::isdigit(c) && !std::isspace(c) && c != '-' && c != '+' && c != '.' && c != 'e' && c != 'E'); }) == str.end();
 }
 
 
 /// Returns true if given string vector is constant, false otherwise.
 /// @param str vector to be checked.
 ///
-bool is_constant_string(const Tensor<string, 1>& str){
-
+bool is_constant_string(const Tensor<string, 1>& str)
+{
     const string str0 = str[0];
     string str1;
 
@@ -247,13 +268,13 @@ bool is_constant_string(const Tensor<string, 1>& str){
 /// Returns true if given numeric vector is constant, false otherwise.
 /// @param str vector to be checked.
 
-bool is_constant_numeric(const Tensor<type, 1>& str){
-
+bool is_constant_numeric(const Tensor<type, 1>& str)
+{
     const type a0 = str[0];
 
     for (int i = 1; i < str.size(); i++)
     {
-        if (str[i] != a0)
+        if (abs(str[i]-a0)>1e-3 || ::isnan(str[i]) || ::isnan(a0))
             return false;
     }
     return true;
@@ -270,13 +291,15 @@ bool is_date_time_string(const string& str)
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
-                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
+                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
+                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
+                                   "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
+                                   "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.] (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
                                    "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
                                    "|([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])"
+                                   "|([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])"
+                                   "|([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M"
                                   );
 
     if(regex_match(str,regular_expression))
@@ -308,24 +331,27 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
     const string format_1 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_2 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
     const string format_3 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
-    const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
-    const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
-    const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])";
+    const string format_4 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_5 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
+    const string format_6 = "(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])";
     const string format_7 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])";
     const string format_8 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])";
     const string format_9 = "(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])";
     const string format_10 = "([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj]un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+ (0[1-9]|1[0-9]|2[0-9]|3[0-1])+[| ][,|.| ](201[0-9]|202[0-9]|19[0-9][0-9])";
     const string format_11 = "(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])";
+    const string format_12 = "([0-2][0-9])+[:]([0-5][0-9])+[:]([0-5][0-9])";
+    const string format_13 = "([1-9]|0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+[,| ||-]([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])+[,| ||-][AP]M";
+
 
     const regex regular_expression(format_1 + "|" + format_2 + "|" + format_3 + "|" + format_4 + "|" + format_5 + "|" + format_6 + "|" + format_7 + "|" + format_8
-                                   + "|" + format_9 + "|" + format_10 + "|" + format_11);
+                                   + "|" + format_9 + "|" + format_10 + "|" + format_11 +"|" + format_12  +"|" + format_13);
 
     const regex regular("(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
                         "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
                         "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
-                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|/|.](0[1-9]|1[0-2])+[-|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
+                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
+                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
+                        "|(0[1-9]|1[0-9]|2[0-9]|3[0-1])+[-|\\s|/|.](0[1-9]|1[0-2])+[-|\\s|/|.](201[0-9]|202[0-9]|19[0-9][0-9])"
                         "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])+[:]([0-5][0-9])"
                         "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])+ ([0-1][0-9]|2[0-3])+[:]([0-5][0-9])"
                         "|(201[0-9]|202[0-9]|19[0-9][0-9])+[-|/|.]([Jj]an(?:uary)?|[Ff]eb(?:ruary)?|[Mm]ar(?:ch)?|[Aa]pr(?:il)?|[Mm]ay|[Jj}un(?:e)?|[Jj]ul(?:y)|[Aa]ug(?:gust)?|[Ss]ep(?:tember)?|[Oo]ct(?:ober)?|[Nn]ov(?:ember)?|[Dd]ec(?:ember)?)+[-|/|.](0[1-9]|1[0-9]|2[0-9]|3[0-1])"
@@ -333,6 +359,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
                         "|(20[0-9][0-9]|19[0-9][0-9])+[-|/|.](0[1-9]|1[0-2])");
 
     regex_search(date, matchs, regular_expression);
+
 
     if(matchs[1] != "") // yyyy/mm/dd hh:mm:ss
     {
@@ -348,12 +375,14 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         }
         else
         {
+
             time_structure.tm_year = stoi(matchs[1].str())-1900;
             time_structure.tm_mon = stoi(matchs[2].str())-1;
             time_structure.tm_mday = stoi(matchs[3].str());
             time_structure.tm_hour = stoi(matchs[4].str()) - static_cast<int>(gmt);
             time_structure.tm_min = stoi(matchs[5].str());
             time_structure.tm_sec = stoi(matchs[6].str());
+
         }
     }
     else if (matchs[7] != "") // yyyy/mm/dd hh:mm
@@ -398,6 +427,7 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_hour = 0;
             time_structure.tm_min = 0;
             time_structure.tm_sec = 0;
+
         }
     }
     else if (matchs[15] != "") // dd/mm/yyyy hh:mm:ss
@@ -622,6 +652,33 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
             time_structure.tm_sec = 0;
         }
     }
+    else if(matchs[48] != "") // hh:mm:ss
+    {
+        time_structure.tm_year = 70;
+        time_structure.tm_mon = 0;
+        time_structure.tm_mday = 1;
+        time_structure.tm_hour = stoi(matchs[48].str());
+        time_structure.tm_min = stoi(matchs[49].str());
+        time_structure.tm_sec = stoi(matchs[50].str());
+
+    }
+    else if(matchs[51] != "") // mm/dd/yyyy hh:mm:ss [AP]M
+    {
+        time_structure.tm_year = stoi(matchs[53].str())-1900;
+        time_structure.tm_mon = stoi(matchs[51].str());
+        time_structure.tm_mday = stoi(matchs[52].str());
+        time_structure.tm_min = stoi(matchs[55].str());
+        time_structure.tm_sec = stoi(matchs[56].str());
+        if(matchs[57].str()=="PM"){
+            time_structure.tm_hour = stoi(matchs[54].str())+12;
+        }
+        else{
+            time_structure.tm_hour = stoi(matchs[54].str());
+        }
+
+    }
+    else if(is_numeric_string(date)){
+    }
     else
     {
         ostringstream buffer;
@@ -633,7 +690,13 @@ time_t date_to_timestamp(const string& date, const Index& gmt)
         throw logic_error(buffer.str());
     }
 
+    if(is_numeric_string(date)){
+        time_t time_t_date = stoi(date);
+        return(time_t_date);
+    }
+    else{
     return mktime(&time_structure);
+    }
 }
 
 

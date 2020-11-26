@@ -43,6 +43,7 @@ UnscalingLayer::~UnscalingLayer()
 
 
 /// Returns the number of inputs
+
 Index UnscalingLayer::get_inputs_number() const
 {
     return descriptives.size();
@@ -289,6 +290,8 @@ void UnscalingLayer::set()
 {
     descriptives.resize(0);
 
+    unscaling_methods.resize(0);
+
     set_default();
 }
 
@@ -310,10 +313,11 @@ void UnscalingLayer::set_neurons_number(const Index& new_neurons_number)
 
 void UnscalingLayer::set(const Index& new_neurons_number)
 {
-
     descriptives.resize(new_neurons_number);
 
     unscaling_methods.resize(new_neurons_number);
+
+    unscaling_methods.setConstant(MinimumMaximum);
 
     set_default();
 }
@@ -326,7 +330,6 @@ void UnscalingLayer::set(const Index& new_neurons_number)
 
 void UnscalingLayer::set(const Tensor<Descriptives, 1>& new_descriptives)
 {
-
     descriptives = new_descriptives;
 
     unscaling_methods.resize(new_descriptives.size());
@@ -530,15 +533,15 @@ void UnscalingLayer::set_unscaling_methods(const string& new_scaling_methods_str
     }
     else if(new_scaling_methods_string == "MinimumMaximum")
     {
-        set_unscaling_methods(UnscalingLayer::NoUnscaling);
+        set_unscaling_methods(UnscalingLayer::MinimumMaximum);
     }
     else if(new_scaling_methods_string == "MeanStandardDeviation")
     {
-        set_unscaling_methods(UnscalingLayer::NoUnscaling);
+        set_unscaling_methods(UnscalingLayer::MeanStandardDeviation);
     }
     else if(new_scaling_methods_string == "Logarithmic")
     {
-        set_unscaling_methods(UnscalingLayer::NoUnscaling);
+        set_unscaling_methods(UnscalingLayer::Logarithmic);
     }
     else
     {
@@ -758,10 +761,9 @@ Tensor<type, 2> UnscalingLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 
                     else if(unscaling_methods(j) == MinimumMaximum)
                     {
-
                         const type slope = (descriptives(j).maximum-descriptives(j).minimum)/(max_range-min_range);
 
-                        const type intercept = descriptives(j).minimum - min_range*(descriptives(j).maximum-descriptives(j).minimum)/(max_range-min_range);
+                        const type intercept = -(min_range*descriptives(j).maximum-max_range*descriptives(j).minimum)/(max_range-min_range);
 
                         outputs(i,j) = inputs(i,j)*slope + intercept;
                     }
@@ -1043,20 +1045,30 @@ void UnscalingLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         // Unscaling method
 
-        const tinyxml2::XMLElement* unscaling_method_element = root_element->FirstChildElement("UnscalingMethod");
+        const tinyxml2::XMLElement* unscaling_method_element = descriptives_element->FirstChildElement("UnscalingMethod");
 
-        if(unscaling_method_element)
+        if(!unscaling_method_element)
         {
-            const string new_method = unscaling_method_element->GetText();
+            buffer << "OpenNN Exception: UnscalingLayer class.\n"
+                   << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+                   << "Unscaling method element " << i+1 << " is nullptr.\n";
 
-            try
-            {
-                set_unscaling_methods(new_method);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
+            throw logic_error(buffer.str());
+        }
+
+        const string new_method = unscaling_method_element->GetText();
+
+        if(new_method == "MinimumMaximum")
+        {
+            unscaling_methods[i] = MinimumMaximum;
+        }
+        else if(new_method == "MeanStandardDeviation")
+        {
+            unscaling_methods[i] = MeanStandardDeviation;
+        }
+        else if(new_method == "Logarithmic")
+        {
+            unscaling_methods[i] = Logarithmic;
         }
     }
 

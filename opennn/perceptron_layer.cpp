@@ -269,11 +269,9 @@ void PerceptronLayer::set(const Index& new_inputs_number, const Index& new_neuro
 {
     biases = Tensor<type, 2>(1, new_neurons_number);
 
-    biases.setRandom();
-
     synaptic_weights = Tensor<type, 2>(new_inputs_number, new_neurons_number);
 
-    set_synaptic_weights_glorot();
+    set_parameters_random();
 
     activation_function = new_activation_function;
 
@@ -295,6 +293,11 @@ void PerceptronLayer::set_default()
     display = true;
 
     layer_type = Perceptron;
+}
+
+void PerceptronLayer::set_layer_name(const string& new_layer_name)
+{
+    layer_name = new_layer_name;
 }
 
 
@@ -525,13 +528,25 @@ void PerceptronLayer::set_parameters_constant(const type& value)
 
 void PerceptronLayer::set_parameters_random()
 {
+    const type minimum = -1;
+    const type maximum = 1;
 
-    biases.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
-    synaptic_weights.setRandom<Eigen::internal::NormalRandomGenerator<type>>();
+//    biases.setRandom();
+//    synaptic_weights.setRandom();
 
-    biases = 1e-3*biases;
-    synaptic_weights = 1e-3*synaptic_weights;
+    for(Index i = 0; i < biases.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
 
+        biases(i) = minimum +(maximum-minimum)*random;
+    }
+
+    for(Index i = 0; i < synaptic_weights.size(); i++)
+    {
+        const type random = static_cast<type>(rand()/(RAND_MAX+1.0));
+
+        synaptic_weights(i) = minimum +(maximum-minimum)*random;
+    }
 }
 
 
@@ -1005,6 +1020,25 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
         throw logic_error(buffer.str());
     }
 
+
+    // Layer name
+
+    const tinyxml2::XMLElement* layer_name_element = perceptron_layer_element->FirstChildElement("LayerName");
+
+    if(!layer_name_element)
+    {
+        buffer << "OpenNN Exception: PerceptronLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "LayerName element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(layer_name_element->GetText())
+    {
+        set_layer_name(layer_name_element->GetText());
+    }
+
     // Inputs number
 
     const tinyxml2::XMLElement* inputs_number_element = perceptron_layer_element->FirstChildElement("InputsNumber");
@@ -1089,8 +1123,14 @@ void PerceptronLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     file_stream.OpenElement("PerceptronLayer");
 
-    // Inputs number
+    // Layer name
+    file_stream.OpenElement("LayerName");
+    buffer.str("");
+    buffer << layer_name;
+    file_stream.PushText(buffer.str().c_str());
+    file_stream.CloseElement();
 
+    // Inputs number
     file_stream.OpenElement("InputsNumber");
 
     buffer.str("");

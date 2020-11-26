@@ -59,13 +59,6 @@ LearningRateAlgorithm* ConjugateGradient::get_learning_rate_algorithm_pointer()
     return &learning_rate_algorithm;
 }
 
-/// Returns the hardware used. Default: Multi-core
-
-string ConjugateGradient::get_hardware_use() const
-{
-    return hardware_use;
-}
-
 
 /// Returns the conjugate gradient training direction method used for training.
 
@@ -96,7 +89,7 @@ string ConjugateGradient::write_training_direction_method() const
 
 const type& ConjugateGradient::get_minimum_parameters_increment_norm() const
 {
-    return minimum_parameters_increment_norm;
+    return minimum_parameters_increment_norm;    
 }
 
 
@@ -183,14 +176,6 @@ void ConjugateGradient::set_loss_index_pointer(LossIndex* new_loss_index_pointer
     loss_index_pointer = new_loss_index_pointer;
 
     learning_rate_algorithm.set_loss_index_pointer(new_loss_index_pointer);
-}
-
-
-/// Set hardware to use. Default: Multi-core.
-
-void ConjugateGradient::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
 }
 
 
@@ -984,7 +969,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         optimization_data.epoch = epoch;
 
@@ -1105,7 +1090,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number-1)
+        else if(epoch == maximum_epochs_number)
         {
             if(display)
             {
@@ -1139,7 +1124,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
             if(display)
             {
                 cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training loss: " << training_back_propagation.loss << "\n"
+                     << "Training error: " << training_back_propagation.error << "\n"
                      << "Gradient norm: " << gradient_norm << "\n"
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -1158,7 +1143,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
             results.final_gradient_norm = gradient_norm;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 
@@ -1209,7 +1194,7 @@ OptimizationAlgorithm::Results ConjugateGradient::perform_training()
 
     results.final_gradient_norm = gradient_norm;
 
-    results.elapsed_time = elapsed_time;
+    results.elapsed_time = write_elapsed_time(elapsed_time);
 
     return results;
 }

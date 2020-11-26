@@ -113,15 +113,6 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
     return reserve_selection_error_history;
 }
 
-
-/// Returns the hardware used. Default: Multi-core
-
-const string& AdaptiveMomentEstimation::get_hardware_use() const
-{
-    return hardware_use;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -280,15 +271,6 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
     reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
-
-/// Set hardware to use. Default: Multi-core.
-
-void AdaptiveMomentEstimation::set_hardware_use(const string & new_hardware_use)
-{
-    hardware_use = new_hardware_use;
-}
-
-
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -384,7 +366,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
     // Main loop
 
-    for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, is_forecasting);
 
@@ -481,7 +463,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
         if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
-        if(epoch == maximum_epochs_number-1)
+        if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch+1 << ": Maximum number of epochs reached.\n";
 
@@ -559,7 +541,7 @@ OptimizationAlgorithm::Results AdaptiveMomentEstimation::perform_training()
 
             if(has_selection) results.final_selection_error = selection_error;
 
-            results.elapsed_time = elapsed_time;
+            results.elapsed_time = write_elapsed_time(elapsed_time);
 
             results.epochs_number = epoch;
 
@@ -806,7 +788,7 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("HardwareUse");
 
     buffer.str("");
-    buffer << hardware_use;
+    buffer << this->get_hardware_use();
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1006,16 +988,12 @@ void AdaptiveMomentEstimation::update_iteration(const LossIndex::BackPropagation
             (1 - pow(beta_1, static_cast<type>(optimization_data.iteration)));
 
     optimization_data.gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.last_gradient_exponential_decay*beta_1
+            = optimization_data.gradient_exponential_decay*beta_1
             + back_propagation.gradient*(1 - beta_1);
 
-    optimization_data.last_gradient_exponential_decay = optimization_data.gradient_exponential_decay;
-
     optimization_data.square_gradient_exponential_decay.device(*thread_pool_device)
-            = optimization_data.last_square_gradient_exponential_decay*beta_2
+            = optimization_data.square_gradient_exponential_decay*beta_2
             + back_propagation.gradient*back_propagation.gradient*(1 - beta_2);
-
-    optimization_data.last_square_gradient_exponential_decay = optimization_data.square_gradient_exponential_decay;
 
     // Update parameters
 
@@ -1062,11 +1040,8 @@ void AdaptiveMomentEstimation::OptimizationData::set(AdaptiveMomentEstimation* n
     square_gradient_exponential_decay.resize(parameters_number);
     square_gradient_exponential_decay.setZero();
 
-    last_gradient_exponential_decay.resize(parameters_number);
-    last_gradient_exponential_decay.setZero();
-
-    last_square_gradient_exponential_decay.resize(parameters_number);
-    last_square_gradient_exponential_decay.setZero();
+    aux.resize(parameters_number);
+    aux.setZero();
 }
 
 

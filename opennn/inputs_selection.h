@@ -68,8 +68,6 @@ public:
 
        string write_stopping_condition() const;
 
-       
-
        /// Inputs of the different neural networks.
 
        Tensor<bool, 2> inputs_data;
@@ -112,7 +110,7 @@ public:
 
        /// Elapsed time during the loss of the algortihm.
 
-       type elapsed_time;
+       string elapsed_time;
     };
 
     // Get methods
@@ -190,8 +188,6 @@ public:
 
     virtual Results* perform_inputs_selection() = 0;
 
-    //
-
     /// Writes the time from seconds in format HH:mm:ss.
 
     const string write_elapsed_time(const type&) const;
@@ -224,13 +220,9 @@ protected:
 
     /// Number of trials for each neural network.
 
-    Index trials_number;
+    Index trials_number = 1;
 
     // Inputs selection results
-
-    /// True if the parameters of all neural networks are to be reserved.
-
-    
 
     /// True if the loss of all neural networks are to be reserved.
 
