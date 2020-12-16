@@ -64,7 +64,21 @@ DataSet::DataSet(const Index& new_samples_number, const Index& new_inputs_number
 {
     set(new_samples_number, new_inputs_number, new_targets_number);
 
-    set_default();
+    //set_default();
+
+    const int n = omp_get_max_threads();
+    NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
+    thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
+
+    has_columns_names = false;
+
+    separator = Comma;
+
+    missing_values_label = "NA";
+
+    lags_number = 0;
+
+    steps_ahead = 0;
 }
 
 
@@ -4240,7 +4254,7 @@ void DataSet::set(const Index& new_samples_number, const Index& new_variables_nu
 
 #endif
 
-    data = Tensor<type, 2>(new_samples_number, new_variables_number);
+    data.resize(new_samples_number, new_variables_number);
 
     columns.resize(new_variables_number);
 
@@ -4363,10 +4377,6 @@ void DataSet::set_default()
     const int n = omp_get_max_threads();
     NonBlockingThreadPool* non_blocking_thread_pool = new NonBlockingThreadPool(n);
     thread_pool_device = new ThreadPoolDevice(non_blocking_thread_pool, n);
-
-#ifdef OPENNN_MKL
-    mkl_set_num_threads(n);
-#endif
 
     has_columns_names = false;
 
@@ -5334,11 +5344,11 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_selection_sample
 
 Tensor<Descriptives, 1> DataSet::calculate_input_variables_descriptives() const
 {
-    const Tensor<Index, 1> used_indices = get_used_samples_indices();
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
 
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    return descriptives(data, used_indices, input_variables_indices);
+    return descriptives(data, used_samples_indices, input_variables_indices);
 }
 
 
@@ -5503,6 +5513,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
     for(Index i = 0; i < input_columns_number; i++)
     {
+
         const Index input_index = input_columns_indices(i);
 
         Tensor<type, 2> input = get_column_data(input_index);
@@ -5575,11 +5586,17 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target/*input_column*/);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input/*input_column*/);
+
+
             }
             else if(input_type == Binary && target_type == Categorical)
             {
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                const TensorMap<Tensor<type, 1>> input_column(input.data(), input.dimension(0));
+
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input/*input_column*/);
+
+//                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
 
 //                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
@@ -5613,6 +5630,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
 
             cout << "Correlation: " << correlations(i,j).correlation << endl;
+
         }
     }
 
@@ -5653,16 +5671,6 @@ bool DataSet::has_nan() const
     for(Index i = 0; i < data.size(); i++) if(::isnan(data(i))) return true;
 
     return false;
-
-//    for(Index i = 0; i < data.dimension(0); i++)
-//    {
-//        for(Index j = 0; j < data.dimension(1); j++)
-//        {
-//            if(::isnan(data(i,j))) return true;
-//        }
-//    }
-
-//    return false;
 }
 
 
@@ -6659,7 +6667,6 @@ Descriptives DataSet::scale_input_standard_deviation(const Index& input_index)
 }
 
 
-
 /// Scales the given input variable with given minimum and maximum values.
 /// It updates the input variables of the data matrix.
 /// @param input_statistics vector with the descriptives of the input variable.
@@ -6757,14 +6764,8 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables(const Tensor<string, 1>& 
 
     const Tensor<Descriptives, 1> inputs_descriptives = calculate_input_variables_descriptives();
 
-//    Index column_index ;
-
     for(Index i = 0; i < scaling_unscaling_methods.dimension(0); i++)
     {
-//        column_index = get_column_index(input_variables_indices(i));
-
-//        if(columns(column_index).type == Binary || columns(column_index).type == Categorical) continue;
-
         switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
         {
         case NoScaling:
@@ -8564,7 +8565,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     cout << "Saving binary data file..." << endl;
 
-
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
@@ -8583,6 +8583,29 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     }
 
     file.close();
+
+
+/*
+    file.write(reinterpret_cast<char*>(&columns_number), size);
+    file.write(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    for(int i = 0; i < columns_number*rows_number; i++)
+    {
+//        for(int j = 0; j < rows_number; j++)
+//        {
+            value = data(i);
+
+            file.write(reinterpret_cast<char*>(&value), size);
+//        }
+    }
+
+    file.close();
+*/
+
 
     cout << "Binary data file saved." << endl;
 }
@@ -8736,24 +8759,27 @@ void DataSet::load_data_binary()
 
     type value;
 
-    data = Tensor<type, 2>(rows_number, columns_number);
+    data.resize(rows_number, columns_number);
 
-    Index row_index = 0;
-    Index column_index = 0;
+//    Index row_index = 0;
+//    Index column_index = 0;
 
     for(Index i = 0; i < rows_number*columns_number; i++)
     {
         file.read(reinterpret_cast<char*>(&value), size);
 
+        data(i) = value;
+/*
         data(row_index, column_index) = value;
 
         row_index++;
 
         if((i+1)%rows_number == 0)
         {
-            column_index++;
             row_index = 0;
+            column_index++;
         }
+*/
     }
 
     file.close();
@@ -9505,16 +9531,15 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 
         for(Index j = 0; j < inputs_number-1; j++)
         {
-            rosenbrock +=
-                (1 - data(i,j))*(1 - data(i,j))
-                + 100*(data(i,j+1)-data(i,j)*data(i,j))*
-                (data(i,j+1)-data(i,j)*data(i,j));
+            const type value = data(i,j);
+            const type next_value = data(i,j+1);
+
+            rosenbrock += (1 - value)*(1 - value)
+                + 100*(next_value-value*value)*(next_value-value*value);
         }
 
         data(i, inputs_number) = rosenbrock;
     }
-
-//    scale_range(data, -1.0, 1.0);
 
     set_default_columns_uses();
 }
@@ -10181,7 +10206,7 @@ void DataSet::read_csv_2_simple()
 
         trim(line);
 
-        erase(line, '"');
+        //erase(line, '"');
 
         if(line.empty()) continue;
 
@@ -10213,8 +10238,6 @@ void DataSet::read_csv_2_simple()
     samples_uses.setConstant(Training);
 
     split_samples_random();
-
-
 }
 
 
@@ -10334,7 +10357,25 @@ void DataSet::read_csv_3_simple()
     {
         if(columns(column).type == Numeric)
         {
-            if(is_constant_numeric(data.chip(variable_index, 1)))
+            // @todo avoid chip
+
+//            if(is_constant_numeric(data.chip(variable_index, 1)))
+//            {
+//                columns(column).type = Constant;
+//                columns(column).column_use = UnusedVariable;
+//            }
+
+            const type a = data(0, variable_index);
+
+            bool constant = true;
+
+            for (int i = 1; i < data.dimension(0); i++)
+            {
+                if (abs(data(i, variable_index)-a) > 1e-3 || ::isnan(data(i, variable_index)) || ::isnan(a))
+                    constant = false;
+            }
+
+            if(constant)
             {
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
@@ -10929,7 +10970,6 @@ Tensor<Index, 1> DataSet::count_nan_columns() const
                 nan_columns(column_index) = nan_columns(column_index) + 1;
             }
         }
-
     }
 
     return nan_columns;
@@ -10970,20 +11010,19 @@ Index DataSet::count_nan() const
     const Index rows_number = data.dimension(0);
     const Index columns_number = data.dimension(1);
 
-    Index nan_number = 0;
+    Index count = 0;
+
+    #pragma omp parallel for reduction(+: count)
 
     for(Index row_index = 0; row_index < rows_number; row_index++)
     {
         for(Index column_index = 0; column_index < columns_number; column_index++)
         {
-            if(isnan(data(row_index, column_index)))
-            {
-                nan_number++;
-            }
+            if(isnan(data(row_index, column_index))) count++;
         }
     }
 
-    return nan_number;
+    return count;
 }
 
 
@@ -11269,6 +11308,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
     data_set_pointer->fill_submatrix(data, samples, targets, targets_2d.data());
 }
 
+
 DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_pointer)
 {
     samples_number = new_samples_number;
@@ -11282,7 +11322,7 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
 
     if(input_variables_dimensions.rank() == 1)
     {
-        inputs_2d = Tensor<type, 2>(samples_number, input_variables_number);
+        inputs_2d.resize(samples_number, input_variables_number);
     }
     else if(input_variables_dimensions.rank() == 3)
     {
@@ -11290,11 +11330,11 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
         const Index rows_number = input_variables_dimensions(1);
         const Index columns_number = input_variables_dimensions(2);
 
-        inputs_4d = Tensor<type, 4>(samples_number, channels_number, rows_number, columns_number);
+        inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
     }
 
 
-    targets_2d = Tensor<type, 2>(samples_number, target_variables_number);
+    targets_2d.resize(samples_number, target_variables_number);
 }
 
 

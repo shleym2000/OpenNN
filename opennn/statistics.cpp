@@ -357,6 +357,13 @@ Tensor<type, 1> Histogram::calculate_minimal_centers() const
 
     Index minimal_indices_size = 0;
 
+    if (frequencies.size() == 0)
+    {
+        Tensor<type, 1> nan(1);
+        nan.setValues({static_cast<type>(NAN)});
+        return nan;
+    }
+
     for(Index i = 0; i < frequencies.size(); i++)
     {
         if(frequencies(i) == minimum_frequency)
@@ -391,6 +398,13 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
 
     Index maximal_indices_size = 0;
 
+    if (frequencies.size() == 0)
+    {
+        Tensor<type, 1> nan(1);
+        nan.setValues({static_cast<type>(NAN)});
+        return nan;
+    }
+
     for(Index i = 0; i < frequencies.size(); i++)
     {
         if(frequencies(i) == maximum_frequency)
@@ -423,6 +437,8 @@ Tensor<type, 1> Histogram::calculate_maximal_centers() const
 Index Histogram::calculate_bin(const type&value) const
 {
     const Index bins_number = get_bins_number();
+
+    if(bins_number == 0) return 0;
 
     const type minimum_center = centers[0];
     const type maximum_center = centers[bins_number - 1];
@@ -470,6 +486,10 @@ Index Histogram::calculate_bin(const type&value) const
 
 Index Histogram::calculate_frequency(const type&value) const
 {
+    const Index bins_number = get_bins_number();
+
+    if(bins_number == 0) return 0;
+
     const Index bin_number = calculate_bin(value);
 
     const Index frequency = frequencies[bin_number];
@@ -526,7 +546,7 @@ Index minimum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return 0;
+    if(size == 0) return NAN;
 
     Index minimum = numeric_limits<Index>::max();
 
@@ -549,6 +569,8 @@ Index minimum(const Tensor<Index, 1>& vector)
 type minimum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
     const Index size = indices.dimension(0);
+
+    if(size == 0) return NAN;
 
     type minimum = numeric_limits<type>::max();
 
@@ -587,6 +609,8 @@ type maximum(const Tensor<type, 1>& vector)
 {
     const Index size = vector.dimension(0);
 
+    if(size == 0) return NAN;
+
     type maximum = -numeric_limits<type>::max();
 
     for(Index i = 0; i < size; i++)
@@ -608,6 +632,8 @@ type maximum(const Tensor<type, 1>& vector)
 type maximum(const Tensor<type, 1>& vector, const Tensor<Index, 1>& indices)
 {
     const Index size = indices.dimension(0);
+
+    if(size == 0) return NAN;
 
     type maximum = -numeric_limits<type>::max();
 
@@ -633,7 +659,7 @@ Index maximum(const Tensor<Index, 1>& vector)
 {
     const Index size = vector.size();
 
-    if(size == 0) return 0;
+    if(size == 0) return NAN;
 
     Index maximum = -numeric_limits<Index>::max();
 
@@ -769,8 +795,9 @@ type mean(const Tensor<type, 1>& vector, const Index& begin, const Index& end)
 
 type mean(const Tensor<type, 1>& vector)
 {
-
     const Index size = vector.dimension(0);
+
+    if (size == 0) return 0;
 
 #ifdef __OPENNN_DEBUG__
 
@@ -932,6 +959,8 @@ type standard_deviation(const Tensor<type, 1>& vector)
     }
 
 #endif
+    if(vector.size() == 0) return 0;
+
     if(variance(vector)<static_cast<double>(1e-9)){
         return static_cast<double>(0);
     }else{
@@ -1027,7 +1056,7 @@ type asymmetry(const Tensor<type, 1>& vector)
 
 #endif
 
-    if(size == 1)
+    if(size == 0 || 1)
     {
         return 0.0;
     }
@@ -1177,7 +1206,7 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
+        if(!::isnan(vector(i)))
         {
             new_size++;
         }
@@ -1190,28 +1219,38 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
 
     for(Index i = 0; i < size; i++)
     {
-        if(!isnan(vector(i)))
+        if(!::isnan(vector(i)))
         {
             sorted_vector(sorted_index) = vector(i);
 
             sorted_index++;
-        }
+        }   
     }
+
+    sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
     // Calculate quartiles
 
     Tensor<type, 1> first_sorted_vector(new_size/2);
     Tensor<type, 1> last_sorted_vector(new_size/2);
 
-    for(Index i = 0; i < new_size/2 ; i++)
+    if (new_size % 2 == 0)
     {
-        first_sorted_vector(i) = sorted_vector(i);
+        for(Index i = 0; i < new_size/2 ; i++)
+        {
+            first_sorted_vector(i) = sorted_vector(i);
+            last_sorted_vector(i) = sorted_vector[i + new_size/2];
+        }
+    }
+    else
+    {
+        for(Index i = 0; i < new_size/2 ; i++)
+        {
+            first_sorted_vector(i) = sorted_vector(i);
+            last_sorted_vector(i) = sorted_vector[i + new_size/2 + 1];
+        }
     }
 
-    for(Index i = 0; i < new_size/2; i++)
-    {
-        last_sorted_vector(i) = sorted_vector[i + new_size - new_size/2];
-    }
 
     Tensor<type, 1> quartiles(3);
 
@@ -1233,24 +1272,12 @@ Tensor<type, 1> quartiles(const Tensor<type, 1>& vector)
         quartiles(1) = sorted_vector(1);
         quartiles(2) = (sorted_vector(2)+sorted_vector(1))/2;
     }
-    else if(new_size % 2 == 0)
-    {
-        Index median_index = static_cast<Index>(first_sorted_vector.size() / 2);
-        quartiles(0) = (first_sorted_vector(median_index-1) + first_sorted_vector(median_index)) / static_cast<type>(2.0);
-
-        median_index = static_cast<Index>(new_size / 2);
-        quartiles(1) = (sorted_vector(median_index-1) + sorted_vector(median_index)) / static_cast<type>(2.0);
-
-        median_index = static_cast<Index>(last_sorted_vector.size() / 2);
-        quartiles(2) = (last_sorted_vector(median_index-1) + last_sorted_vector(median_index)) / static_cast<type>(2.0);
-    }
     else
     {
-        quartiles(0) = sorted_vector(new_size/4);
-        quartiles(1) = sorted_vector(new_size/2);
-        quartiles(2) = sorted_vector(new_size*3/4);
+        quartiles(0) = median(first_sorted_vector);
+        quartiles(1) = median(sorted_vector);
+        quartiles(2) = median(last_sorted_vector);
     }
-
     return quartiles;
 }
 
@@ -1888,20 +1915,16 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
         {
             column_index = columns_indices(j);
 
-            if(isnan((matrix(row_index,column_index)))) continue;
+            const type value = matrix(row_index,column_index);
 
-            if(matrix(row_index,column_index) < minimums(j))
-            {
-                minimums(j) = matrix(row_index,column_index);
-            }
+            if(isnan(value)) continue;
 
-            if(matrix(row_index,column_index) > maximums(j))
-            {
-                maximums(j) = matrix(row_index,column_index);
-            }
+            if(value < minimums(j)) minimums(j) = value;
 
-            sums(j) += matrix(row_index,column_index);
-            squared_sums(j) += matrix(row_index,column_index)*matrix(row_index,column_index);
+            if(value > maximums(j)) maximums(j) = value;
+
+            sums(j) += value;
+            squared_sums(j) += value*value;
             count(j)++;
         }
     }
@@ -1912,17 +1935,14 @@ Tensor<Descriptives, 1> descriptives(const Tensor<type, 2>& matrix, const Tensor
 
     if(row_indices_size > 1)
     {
+        #pragma omp parallel for
+
         for(Index i = 0; i < columns_indices_size; i++)
         {
-            const double variance = squared_sums(i)/static_cast<double>(count(i)-1) -(sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>((count(i)-1));
+            const double variance = squared_sums(i)/static_cast<double>(count(i)-1)
+                    - (sums(i)/static_cast<double>(count(i)))*(sums(i)/static_cast<double>(count(i)))*static_cast<double>(count(i))/static_cast<double>(count(i)-1);
 
-            standard_deviation(i) = variance;
-
-//            if(standard_deviation(i)<static_cast<double>(5e-3)){
-//                standard_deviation(i) = static_cast<double>(0);
-//            }else{
-                standard_deviation(i) = sqrt(standard_deviation(i));
-//            }
+            standard_deviation(i) = sqrt(variance);
         }
     }
 
@@ -2503,6 +2523,8 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
     const Index row_indices_size = row_indices.size();
     const Index columns_indices_size = columns_indices.size();
 
+    if (row_indices_size == 0 && columns_indices_size == 0) return NAN;
+
 #ifdef __OPENNN_DEBUG__
 
     const Index rows_number = matrix.dimension(0);
@@ -2620,10 +2642,11 @@ Tensor<type, 1> mean(const Tensor<type, 2>& matrix, const Tensor<Index, 1>& row_
 type mean(const Tensor<type, 2>& matrix, const Index& column_index)
 {
     const Index rows_number = matrix.dimension(0);
+    const Index columns_number = matrix.dimension(1);
+
+    if (rows_number == 0 && columns_number == 0) return NAN;
 
 #ifdef __OPENNN_DEBUG__
-
-    const Index columns_number = matrix.dimension(1);
 
     if(rows_number == 0)
     {
@@ -2648,6 +2671,8 @@ type mean(const Tensor<type, 2>& matrix, const Index& column_index)
     }
 
 #endif
+
+    if (rows_number == 0 && columns_number == 0) return NAN;
 
     // Mean
 
@@ -3583,6 +3608,13 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
           }
       }
 
+      if(new_size == 0)
+      {
+          Tensor<type, 1> nan(1);
+          nan.setValues({static_cast<type>(NAN)});
+          return nan;
+      }
+
       Index index = 0;
       Tensor<type, 1> new_vector(new_size);
 
@@ -3599,34 +3631,19 @@ Tensor<type, 1> percentiles(const Tensor<type, 1>& vector)
 
       sort(sorted_vector.data(), sorted_vector.data() + new_size, less<type>());
 
+
+      /// Aempirical method
       Tensor<type, 1> percentiles(10);
 
-      if(new_size % 2 == 0)
+      for(Index i = 0; i < 9; i++)
       {
-        percentiles[0] = (sorted_vector[new_size * 1 / 10] + sorted_vector[new_size * 1 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[1] = (sorted_vector[new_size * 2 / 10] + sorted_vector[new_size * 2 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[2] = (sorted_vector[new_size * 3 / 10] + sorted_vector[new_size * 3 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[3] = (sorted_vector[new_size * 4 / 10] + sorted_vector[new_size * 4 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[4] = (sorted_vector[new_size * 5 / 10] + sorted_vector[new_size * 5 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[5] = (sorted_vector[new_size * 6 / 10] + sorted_vector[new_size * 6 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[6] = (sorted_vector[new_size * 7 / 10] + sorted_vector[new_size * 7 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[7] = (sorted_vector[new_size * 8 / 10] + sorted_vector[new_size * 8 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[8] = (sorted_vector[new_size * 9 / 10] + sorted_vector[new_size * 9 / 10 + 1]) /static_cast<type>(2.0);
-        percentiles[9] = maximum(new_vector);
+          if(new_size * (i + 1) % 10 == 0)
+              percentiles[i] = (sorted_vector[new_size * (i + 1) / 10 - 1] + sorted_vector[new_size * (i + 1) / 10]) / static_cast<type>(2.0);
+
+          else
+              percentiles[i] = static_cast<type>(sorted_vector[new_size * (i + 1) / 10]);
       }
-      else
-      {
-        percentiles[0] = static_cast<type>(sorted_vector[new_size * 1 / 10]);
-        percentiles[1] = static_cast<type>(sorted_vector[new_size * 2 / 10]);
-        percentiles[2] = static_cast<type>(sorted_vector[new_size * 3 / 10]);
-        percentiles[3] = static_cast<type>(sorted_vector[new_size * 4 / 10]);
-        percentiles[4] = static_cast<type>(sorted_vector[new_size * 5 / 10]);
-        percentiles[5] = static_cast<type>(sorted_vector[new_size * 6 / 10]);
-        percentiles[6] = static_cast<type>(sorted_vector[new_size * 7 / 10]);
-        percentiles[7] = static_cast<type>(sorted_vector[new_size * 8 / 10]);
-        percentiles[8] = static_cast<type>(sorted_vector[new_size * 9 / 10]);
-        percentiles[9] = maximum(new_vector);
-      }
+      percentiles[9] = maximum(new_vector);
 
       return percentiles;
 }

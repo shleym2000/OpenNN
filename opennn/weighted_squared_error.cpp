@@ -122,7 +122,7 @@ void WeightedSquaredError::set_weights()
 
 #ifdef __OPENNN_DEBUG__
 
-    check();
+//    check();
 
 #endif
 
@@ -186,7 +186,6 @@ void WeightedSquaredError::set_normalization_coefficient()
     {
         normalization_coefficient = static_cast<type>(1);
     }
-
 }
 
 
