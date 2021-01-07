@@ -888,6 +888,41 @@ void NeuralNetworkTest::test_get_parameters()
 
    // Test 3
 
+   architecture.resize(5);
+
+   architecture.setConstant(1);
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+
+   PerceptronLayer* pl20 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
+   pl20->set_biases_constant(0);
+   pl20->set_synaptic_weights_constant(1);
+
+   PerceptronLayer* pl21 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(2));
+   pl21->set_biases_constant(2);
+   pl21->set_synaptic_weights_constant(3);
+
+   PerceptronLayer* pl22 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(3));
+   pl22->set_biases_constant(4);
+   pl22->set_synaptic_weights_constant(5);
+
+   PerceptronLayer* pl23 = dynamic_cast<PerceptronLayer*>(neural_network.get_layer_pointer(4));
+   pl23->set_biases_constant(6);
+   pl23->set_synaptic_weights_constant(7);
+
+
+   parameters = neural_network.get_parameters();
+
+   assert_true(parameters.size() == 8, LOG);
+   assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
+   assert_true(abs(parameters(0) - 0) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(1) - 1) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(2) - 2) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(3) - 3) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(4) - 4) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(5) - 5) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(6) - 6) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(7) - 7) < static_cast<type>(1e-5), LOG);
 
 }
 
@@ -1008,9 +1043,7 @@ void NeuralNetworkTest::test_set_parameters()
    assert_true(parameters.size() == 6, LOG);
    assert_true(parameters.size() == parameters_number, LOG);
 
-   // Test 1
-
-   parameters.setValues({1,2,3,4, 5,6});
+   parameters.setValues({1,2,3,4,5,6});
 
    neural_network.set_parameters(parameters);
    parameters = neural_network.get_parameters();
@@ -1021,6 +1054,8 @@ void NeuralNetworkTest::test_set_parameters()
    assert_true(abs(parameters(3) - 4) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(4) - 5) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(5) - 6) < static_cast<type>(1e-5), LOG);
+
+
 }
 
 
@@ -1037,6 +1072,8 @@ void NeuralNetworkTest::test_set_parameters_constant()
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
+   // Test 0
+
    neural_network.set_parameters_constant(1);
    parameters = neural_network.get_parameters();
 
@@ -1044,6 +1081,17 @@ void NeuralNetworkTest::test_set_parameters_constant()
    assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
    assert_true(abs(parameters(1) - 1) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(5) - 1) < static_cast<type>(1e-5), LOG);
+
+   // Test 1
+
+   neural_network.set_parameters_constant(3);
+   parameters = neural_network.get_parameters();
+
+   assert_true(parameters.size() == 7, LOG);
+   assert_true(neural_network.get_parameters_number() == parameters.size(), LOG);
+   assert_true(abs(parameters(1) - 3) < static_cast<type>(1e-5), LOG);
+   assert_true(abs(parameters(5) - 3) < static_cast<type>(1e-5), LOG);
+
 }
 
 
@@ -1073,6 +1121,7 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 
    NeuralNetwork neural_network;
    type parameters_norm = 0;
+   type parameters_norm_1 = 0;
    Tensor<Index, 1> architecture;
 
    // Test  0
@@ -1095,11 +1144,29 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
    parameters_norm = neural_network.calculate_parameters_norm();
 
    assert_true(abs(parameters_norm - static_cast<type>(sqrt(6))) < static_cast<type>(1e-5), LOG);
+
+   // Test 2
+
+   architecture.resize(5);
+   architecture.setConstant(1);
+
+   neural_network.set(NeuralNetwork::Approximation, architecture);
+
+   neural_network.set_parameters_constant(1.0);
+
+   parameters_norm_1 = neural_network.calculate_parameters_norm();
+
+   assert_true(abs(parameters_norm_1 - static_cast<type>(sqrt(8))) < static_cast<type>(1e-5), LOG);
+
+
+
 }
 
 void NeuralNetworkTest::test_perturbate_parameters()
 {
    cout << "test_perturbate_parameters\n";
+
+   //Test 1
 
    Tensor<Index, 1> architecture(3);
    NeuralNetwork neural_network;
@@ -1125,6 +1192,22 @@ void NeuralNetworkTest::test_perturbate_parameters()
    assert_true(parameters.size() == parameters_number, LOG);
    assert_true(abs(parameters(0) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
    assert_true(abs(parameters(3) - static_cast<type>(1.5)) < static_cast<type>(1e-5), LOG);
+
+   // Test 2
+
+   Tensor<Index, 1> architecture1;
+   NeuralNetwork neural_network1;
+   Tensor<type, 1> parameters1;
+
+   parameters1.setConstant(0);
+
+   neural_network1.set_parameters(parameters1);
+   parameters1 = neural_network1.get_parameters();
+
+   neural_network1.perturbate_parameters(0.5);
+   parameters1 = neural_network1.get_parameters();
+
+   assert_true(parameters1.size() == 0, LOG);
 }
 
 void NeuralNetworkTest::test_calculate_outputs() // @todo
@@ -1197,16 +1280,17 @@ void NeuralNetworkTest::test_calculate_outputs() // @todo
 
    neural_network.set(NeuralNetwork::Approximation, architecture);
 
+
+   neural_network.set_parameters_constant(1);
+
    inputs.resize(1, 1);
 
    inputs.setConstant(2);
 
-   neural_network.set_parameters_constant(1);
-
    outputs = neural_network.calculate_outputs(inputs);
 
    assert_true(outputs.size() == 2, LOG);
-//   assert_true(abs(outputs(0,0) - tanh(3)) < static_cast<type>(1e-5), LOG);
+ // assert_true(abs(outputs(0,0) - 2) < static_cast<type>(1e-5), LOG);
 //   assert_true(abs(outputs(0,1) - tanh(3)) < static_cast<type>(1e-5), LOG);
 
    // Test 4
