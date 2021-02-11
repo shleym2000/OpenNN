@@ -115,7 +115,7 @@ public:
 
    void set_biases_constant(const type&);
    void set_synaptic_weights_constant(const type&);
-   void set_synaptic_weights_constant_Glorot(const type&,const type&);
+   void set_synaptic_weights_constant_Glorot();
 
    void set_parameters_constant(const type&);
 
@@ -143,9 +143,9 @@ public:
    Tensor<type, 2> calculate_outputs(const Tensor<type, 2>&);
 
 
-   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const;
+   void forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation);
 
-   void forward_propagate(const Tensor<type, 2>& inputs, Tensor<type, 1> potential_parameters, ForwardPropagation& forward_propagation) const;
+   void forward_propagate(const Tensor<type, 2>& inputs, Tensor<type, 1> potential_parameters, ForwardPropagation& forward_propagation);
 
    void calculate_output_delta(ForwardPropagation& forward_propagation,
                                const Tensor<type, 2>& output_gradient,

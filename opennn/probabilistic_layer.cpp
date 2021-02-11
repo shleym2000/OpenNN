@@ -575,7 +575,7 @@ void ProbabilisticLayer::set_synaptic_weights_constant(const type& value)
 }
 
 
-void ProbabilisticLayer::set_synaptic_weights_constant_Glorot(const type& minimum, const type& maximum)
+void ProbabilisticLayer::set_synaptic_weights_constant_Glorot()
 {
     synaptic_weights.setRandom();
 }
@@ -781,7 +781,7 @@ Tensor<type, 2> ProbabilisticLayer::calculate_outputs(const Tensor<type, 2>& inp
 }
 
 
-void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation) const
+void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation& forward_propagation)
 {
     calculate_combinations(inputs, biases, synaptic_weights, forward_propagation.combinations_2d);
     calculate_activations_derivatives(forward_propagation.combinations_2d,
@@ -792,7 +792,7 @@ void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs, Forwar
 
 void ProbabilisticLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                    Tensor<type, 1> potential_parameters,
-                                   ForwardPropagation& forward_propagation) const
+                                   ForwardPropagation& forward_propagation)
 {
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();

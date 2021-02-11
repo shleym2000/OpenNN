@@ -641,6 +641,10 @@ Tensor<string, 1> DataSet::Column::get_used_variables_names() const
 
 void DataSet::transform_time_series_columns()
 {
+    // Categorical columns?
+
+    time_series_columns = columns;
+
     const Index columns_number = get_columns_number();
 
     Tensor<Column, 1> new_columns;
@@ -702,6 +706,42 @@ void DataSet::transform_time_series_columns()
     }
 
     columns = new_columns;
+}
+
+
+void DataSet::transform_time_series_data()
+{
+    // Categorical / Time columns?
+
+    const Index old_samples_number = data.dimension(0);
+    const Index old_variables_number = data.dimension(1);
+
+    const Index new_samples_number = old_samples_number - (lags_number + steps_ahead - 1);
+    const Index new_variables_number = has_time_columns() ? (old_variables_number-1) * (lags_number + steps_ahead) : old_variables_number * (lags_number + steps_ahead);
+
+    time_series_data = data;
+
+    data.resize(new_samples_number, new_variables_number);
+
+    Index index = 0;
+
+    for(Index j = 0; j < old_variables_number; j++)
+    {
+        if(columns(get_column_index(j)).type == DateTime)
+        {
+            index++;
+            continue;
+        }
+
+        for(Index i = 0; i < lags_number+steps_ahead; i++)
+        {
+            memcpy(data.data() + i*(old_variables_number-index)*new_samples_number + (j-index)*new_samples_number,
+                   time_series_data.data() + i + j*old_samples_number,
+                   static_cast<size_t>(old_samples_number-lags_number-steps_ahead+1)*sizeof(type));
+        }
+    }
+
+    samples_uses.resize(new_samples_number);
 }
 
 
@@ -1014,7 +1054,6 @@ const Tensor<DataSet::SampleUse,1 >& DataSet::get_samples_uses() const
 /// Returns a vector, where each element is a vector that contains the indices of the different batches of the training samples.
 /// @param shuffle Is a boleean.
 /// If shuffle is true, then the indices are shuffled into batches, and false otherwise
-/// @todo In forecasting must be false.
 
 Tensor<Index, 2> DataSet::get_batches(const Tensor<Index,1>& samples_indices,
                                       const Index& batch_samples_number,
@@ -4297,7 +4336,7 @@ void DataSet::set(const Index& new_samples_number,
         }
     }
 
-    input_variables_dimensions.resize(new_inputs_number);
+    input_variables_dimensions.resize(/*new_inputs_number*/1);
 
     samples_uses.resize(new_samples_number);
     split_samples_random();
@@ -4398,7 +4437,6 @@ void DataSet::set_default()
 
 void DataSet::set_data(const Tensor<type, 2>& new_data)
 {
-
     const Index samples_number = new_data.dimension(0);
     const Index variables_number = new_data.dimension(1);
 
@@ -8549,9 +8587,6 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
     Index columns_number = data.dimension(1);
     Index rows_number = data.dimension(0);
 
-    cout << "Rows number: " << rows_number << endl;
-    cout << "Columns number: " << columns_number << endl;
-
     cout << "Saving binary data file..." << endl;
 
     file.write(reinterpret_cast<char*>(&columns_number), size);
@@ -8573,8 +8608,36 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     file.close();
 
+    cout << "Binary data file saved." << endl;
+}
 
-/*
+
+/// Saves to the data file the values of the time series data matrix in binary format.
+
+void DataSet::save_time_series_data_binary(const string& binary_data_file_name) const
+{
+    ofstream file(binary_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet template." << endl
+               << "void save_time_series_data_binary(const string) method." << endl
+               << "Cannot open data binary file." << endl;
+
+        throw logic_error(buffer.str());
+    }
+
+    // Write data
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number = time_series_data.dimension(1);
+    Index rows_number = time_series_data.dimension(0);
+
+    cout << "Saving binary data file..." << endl;
+
     file.write(reinterpret_cast<char*>(&columns_number), size);
     file.write(reinterpret_cast<char*>(&rows_number), size);
 
@@ -8582,88 +8645,34 @@ void DataSet::save_data_binary(const string& binary_data_file_name) const
 
     type value;
 
-    for(int i = 0; i < columns_number*rows_number; i++)
+    for(int i = 0; i < columns_number; i++)
     {
-//        for(int j = 0; j < rows_number; j++)
-//        {
-            value = data(i);
+        for(int j = 0; j < rows_number; j++)
+        {
+            value = time_series_data(j,i);
 
             file.write(reinterpret_cast<char*>(&value), size);
-//        }
+        }
     }
 
     file.close();
-*/
-
 
     cout << "Binary data file saved." << endl;
 }
+
 
 
 /// Arranges an input-target DataSet from a time series matrix, according to the number of lags.
 
 void DataSet::transform_time_series()
 {
-    if(lags_number == 0) return;
+    if(lags_number == 0 || steps_ahead == 0) return;
 
-    const Index variables_number = get_variables_number();
-    const Index samples_number = get_samples_number();
-
-    time_series_data = data;
-
-    time_series_columns = columns;
+    transform_time_series_data();
 
     transform_time_series_columns();
 
-    const Index time_series_samples_number = get_samples_number()-(lags_number-1+steps_ahead);
-    const Index time_series_variables_number = get_columns_number();
-
-    data.resize(time_series_samples_number, time_series_variables_number);
-
-    Tensor<type, 2> new_data(time_series_samples_number, time_series_variables_number);
-    Tensor<type, 1> variable_data;
-
-    Index new_data_variable = 0;
-
-    Index time_series_variable= 0;
-
-
-// lags
-
-    for(Index lag = lags_number; lag > 0; lag--)
-    {
-
-        for(Index variable = 0; variable < variables_number; variable++)
-            {
-
-            variable_data = time_series_data.chip(variable, 1);
-
-            for(Index j = 0; j <= time_series_samples_number; j++)
-            {
-
-                new_data(j, time_series_variable) = variable_data(j+lags_number-lag);
-            }
-            time_series_variable++;
-        }
-    }
-
-// steps ahead
-    for(Index ahead = 1; ahead <= steps_ahead; ahead++)
-    {
-        for(Index variable = 0; variable < variables_number; variable++)
-            {
-            variable_data = time_series_data.chip(variable, 1);
-
-            for(Index j = 0; j < time_series_samples_number; j++)
-            {
-                new_data(j, time_series_variable) = variable_data(j+ahead+lags_number-1);
-            }
-
-            time_series_variable++;
-        }
-    }
-
-    set_data(new_data);
+    split_samples_sequential();
 }
 
 
@@ -8750,37 +8759,58 @@ void DataSet::load_data_binary()
 
     data.resize(rows_number, columns_number);
 
-//    Index row_index = 0;
-//    Index column_index = 0;
-
     for(Index i = 0; i < rows_number*columns_number; i++)
     {
         file.read(reinterpret_cast<char*>(&value), size);
 
         data(i) = value;
-/*
-        data(row_index, column_index) = value;
-
-        row_index++;
-
-        if((i+1)%rows_number == 0)
-        {
-            row_index = 0;
-            column_index++;
-        }
-*/
     }
 
     file.close();
 }
 
 
-/// This method loads data from a binary data file for time series prediction methodata_set.
-/// @todo
+/// This method loads time series data from a binary data.
 
-void DataSet::load_time_series_data_binary()
+void DataSet::load_time_series_data_binary(const string& time_series_data_file_name)
 {
-//    time_series_data.load_binary(data_file_name);
+    ifstream file;
+
+    file.open(time_series_data_file_name.c_str(), ios::binary);
+
+    if(!file.is_open())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet template.\n"
+               << "void load_time_series_data_binary(const string&) method.\n"
+               << "Cannot open binary file: " << time_series_data_file_name << "\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    streamsize size = sizeof(Index);
+
+    Index columns_number;
+    Index rows_number;
+
+    file.read(reinterpret_cast<char*>(&columns_number), size);
+    file.read(reinterpret_cast<char*>(&rows_number), size);
+
+    size = sizeof(type);
+
+    type value;
+
+    time_series_data.resize(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number*columns_number; i++)
+    {
+        file.read(reinterpret_cast<char*>(&value), size);
+
+        time_series_data(i) = value;
+    }
+
+    file.close();
 }
 
 

@@ -673,6 +673,8 @@ public:
 
    // Time series methods
 
+   void transform_time_series();
+
    void transform_time_series_columns();
    void transform_time_series_data();
    void get_time_series_columns_number(const Index&);
@@ -718,21 +720,20 @@ public:
    void save_data() const;
 
    void save_data_binary(const string&) const;
+   void save_time_series_data_binary(const string&) const;
 
    // Data load methods
 
    void read_csv();
 
    void load_data_binary();
-
-   void load_time_series_data_binary();
+   void load_time_series_data_binary(const string&);
 
    void check_input_csv(const string&, const char&) const;
    Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
 
    // Trasform methods
 
-   void transform_time_series();
    void transform_association();
 
    void fill_time_series(const Index&);
@@ -829,7 +830,7 @@ private:
    Tensor<type, 2> data;
 
    /// Time series data matrix.
-   /// The number of rows is the number of samples before time series transfomration.
+   /// The number of rows is the number of samples before time series transformation.
    /// The number of columns is the number of variables before time series transformation.
 
    Tensor<type, 2> time_series_data;
