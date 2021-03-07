@@ -189,7 +189,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
    PerceptronLayer* output_perceptron_layer = new PerceptronLayer();
 
    ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer();
-/*
+
    // Test trivial
 {
    samples_number = 10;
@@ -198,7 +198,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    data_set.set(samples_number, inputs_number, outputs_number);
    data_set.initialize_data(0.0);
-   data_set.set_training();º
+   data_set.set_training();
 
    DataSet::Batch batch(samples_number, &data_set);
 
@@ -232,7 +232,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 }
 
    neural_network.set();
-
+/*
    // Test perceptron and probabilistic
 {
 
@@ -395,7 +395,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 }
 */
    neural_network.set();
-
+/*
    // Test recurrent
 {
    samples_number = 4;
@@ -445,78 +445,141 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient(void) // @todo
 
    assert_true(std::all_of(difference.data(), difference.data()+difference.size(), [](type i) { return (i)<static_cast<type>(1.0e-3); }), LOG);
 }
+*/
+   // Test convolutional
+{
+       neural_network.set();
 
-//   // Test convolutional
-//{
-//   samples_number = 5;
-//   inputs_number = 147;
-//   outputs_number = 1;
+   samples_number = 2;
 
-//   data_set.set(samples_number, inputs_number, outputs_number);
-//   data_set.set_input_variables_dimensions(Tensor<Index, 1>({3,7,7}));
-//   data_set.set_target_variables_dimensions(Tensor<Index, 1>({1}));
+   Index channels_number = 1;
+   Index rows_number = 3;
+   Index columns_number = 3;
+
+   Index kernels_number = 2;
+   Index kernels_rows_number = 2;
+   Index kernels_columns_number = 2;
+
+   inputs_number = channels_number*rows_number*columns_number;
+   outputs_number = kernels_number*kernels_rows_number*kernels_columns_number;
+
+   Tensor<Index, 1> input_variables_dimensions(4);
+   input_variables_dimensions[0] = samples_number;
+   input_variables_dimensions[1] = channels_number;
+   input_variables_dimensions[2] = rows_number;
+   input_variables_dimensions[3] = columns_number;
+
+   data_set.set(samples_number, inputs_number, outputs_number);
+   data_set.set_input_variables_dimensions(input_variables_dimensions);
 //   data_set.set_data_random();
-//   data_set.set_training();
+   data_set.initialize_data(0.5);
+   data_set.set_training();
 
-//   const type parameters_minimum = -100.0;
-//   const type parameters_maximum = 100.0;
+   Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
+   const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
+   const Tensor<Index, 1> target_indices = data_set.get_target_variables_indices();
 
-//   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer({3,7,7}, {2,2,2});
-//   Tensor<type, 2> filters_1({2,3,2,2}, 0);
-//   filters_1.setRandom(parameters_minimum,parameters_maximum);
-//   convolutional_layer_1->set_synaptic_weights(filters_1);
-//   Tensor<type, 1> biases_1(2, 0);
-//   biases_1.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_1->set_biases(biases_1);
+   DataSet::Batch batch(samples_number, &data_set);
+   batch.fill(samples_indices, input_indices, target_indices);
 
-//   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
-//   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-//   Tensor<type, 2> filters_2({2,2,2,2}, 0);
-//   filters_2.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_2->set_synaptic_weights(filters_2);
-//   Tensor<type, 1> biases_2(2, 0);
-//   biases_2.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_2->set_biases(biases_2);
+   cout << "Inputs4d: " << batch.inputs_4d << endl;
 
-//   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
+   Tensor<Index, 1> kernels_dimensions(4);
+   kernels_dimensions(0) = kernels_number;
+   kernels_dimensions(1) = channels_number;
+   kernels_dimensions(2) = kernels_rows_number;
+   kernels_dimensions(3) = kernels_columns_number;
 
-//   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
-//   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
-//   Tensor<type, 2> filters_3({1,2,2,2}, 0);
-//   filters_3.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_3->set_synaptic_weights(filters_3);
-//   Tensor<type, 1> biases_3(1, 0);
-//   biases_3.setRandom(parameters_minimum, parameters_maximum);
-//   convolutional_layer_3->set_biases(biases_3);
+   ConvolutionalLayer* convolutional_layer_1 = new ConvolutionalLayer(input_variables_dimensions, kernels_dimensions);
+   convolutional_layer_1->set_parameters_constant(static_cast<type>(0.7));
+   convolutional_layer_1->set_activation_function(ConvolutionalLayer::ActivationFunction::HyperbolicTangent);
 
-//   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
-//   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
 
-//   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
-//   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
+   neural_network.add_layer(convolutional_layer_1);
 
-//   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
-//   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+   nse.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
+   nse.set_normalization_coefficient(1);
 
-//   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
-//   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+   NeuralNetwork::ForwardPropagation forward_propagation(samples_number, &neural_network);
 
-//   neural_network.set();
-//   neural_network.add_layer(convolutional_layer_1);
-//   neural_network.add_layer(convolutional_layer_2);
-//   neural_network.add_layer(pooling_layer_1);
-//   neural_network.add_layer(convolutional_layer_3);
-//   neural_network.add_layer(pooling_layer_2);
-//   neural_network.add_layer(pooling_layer_3);
-//   neural_network.add_layer(perceptron_layer);
-//   neural_network.add_layer(probabilistic_layer);
+   LossIndex::BackPropagation back_propagation(samples_number, &nse);
 
-//   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation();
+   neural_network.forward_propagate(batch, forward_propagation);
 
-//   error_gradient = nse.calculate_error_gradient();
+   nse.back_propagate(batch, forward_propagation, back_propagation);
 
-//   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
-//}
+
+
+//   cout << "Combinations4d: " << forward_propagation.layers(0).combinations_4d << endl;
+//   cout << "Combinations2d: " << forward_propagation.layers(0).combinations_2d << endl;
+
+//   cout << "Activations4d:  " << forward_propagation.layers(0).activations_4d << endl;
+//   cout << "Activations2d:  " << forward_propagation.layers(0).activations_2d << endl;
+
+//   cout << "ActivationsDerivatives4d:  " << forward_propagation.layers(0).activations_derivatives_4d << endl;
+//   cout << "ActivationsDerivatives2d:  " << forward_propagation.layers(0).activations_derivatives_2d << endl;
+
+//   cout << "Error: " << back_propagation.error << endl;
+
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation(&nse);
+
+   cout << "numerical error gradient: " << numerical_error_gradient << endl;
+
+
+
+
+
+
+   /*
+   ConvolutionalLayer* convolutional_layer_2 = new ConvolutionalLayer(convolutional_layer_1->get_outputs_dimensions(), {2,2,2});
+   convolutional_layer_2->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+   Tensor<type, 2> filters_2({2,2,2,2}, 0);
+   filters_2.setRandom(parameters_minimum, parameters_maximum);
+   convolutional_layer_2->set_synaptic_weights(filters_2);
+   Tensor<type, 1> biases_2(2, 0);
+   biases_2.setRandom(parameters_minimum, parameters_maximum);
+   convolutional_layer_2->set_biases(biases_2);
+
+   PoolingLayer* pooling_layer_1 = new PoolingLayer(convolutional_layer_2->get_outputs_dimensions(), {2,2});
+
+   ConvolutionalLayer* convolutional_layer_3 = new ConvolutionalLayer(pooling_layer_1->get_outputs_dimensions(), {1,2,2});
+   convolutional_layer_3->set_padding_option(OpenNN::ConvolutionalLayer::Same);
+   Tensor<type, 2> filters_3({1,2,2,2}, 0);
+   filters_3.setRandom(parameters_minimum, parameters_maximum);
+   convolutional_layer_3->set_synaptic_weights(filters_3);
+   Tensor<type, 1> biases_3(1, 0);
+   biases_3.setRandom(parameters_minimum, parameters_maximum);
+   convolutional_layer_3->set_biases(biases_3);
+
+   PoolingLayer* pooling_layer_2 = new PoolingLayer(convolutional_layer_3->get_outputs_dimensions(), {2,2});
+   pooling_layer_2->set_pooling_method(PoolingLayer::MaxPooling);
+
+   PoolingLayer* pooling_layer_3 = new PoolingLayer(pooling_layer_2->get_outputs_dimensions(), {2,2});
+   pooling_layer_3->set_pooling_method(PoolingLayer::MaxPooling);
+
+   PerceptronLayer* perceptron_layer = new PerceptronLayer(pooling_layer_3->get_outputs_dimensions().calculate_product(), 3, OpenNN::PerceptronLayer::ActivationFunction::Linear);
+   perceptron_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+
+   ProbabilisticLayer* probabilistic_layer = new ProbabilisticLayer(perceptron_layer->get_neurons_number(), outputs_number);
+   probabilistic_layer->set_parameters_random(parameters_minimum, parameters_maximum);
+
+   neural_network.set();
+   neural_network.add_layer(convolutional_layer_1);
+   neural_network.add_layer(convolutional_layer_2);
+   neural_network.add_layer(pooling_layer_1);
+   neural_network.add_layer(convolutional_layer_3);
+   neural_network.add_layer(pooling_layer_2);
+   neural_network.add_layer(pooling_layer_3);
+   neural_network.add_layer(perceptron_layer);
+   neural_network.add_layer(probabilistic_layer);
+
+   numerical_error_gradient = nse.calculate_error_gradient_numerical_differentiation();
+
+   error_gradient = nse.calculate_error_gradient();
+
+   assert_true(absolute_value(numerical_error_gradient - error_gradient) < 1e-3, LOG);
+*/
+}
 }
 
 

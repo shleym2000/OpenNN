@@ -16,11 +16,16 @@ DEFINES += NDEBUG
 
 SUBDIRS += opennn
 
-SUBDIRS += tests
+#SUBDIRS += tests
 SUBDIRS += examples
 SUBDIRS += blank
 
 CONFIG += ordered
+
+win32:!win32-g++{
+QMAKE_CXXFLAGS+= -arch:AVX
+QMAKE_CFLAGS+= -arch:AVX
+}
 
 # OpenMP library
 
