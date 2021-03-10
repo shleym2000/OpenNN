@@ -647,7 +647,6 @@ void RecurrentLayer::calculate_combinations(const Tensor<type, 1>& inputs,
 void RecurrentLayer::calculate_activations(const Tensor<type, 1>& combinations_1d,
                                            Tensor<type, 1>& activations_1d) const
 {
-
 #ifdef __OPENNN_DEBUG__
 
 const Index neurons_number = get_neurons_number();
@@ -746,7 +745,7 @@ void RecurrentLayer::calculate_activations_derivatives(const Tensor<type, 1>& co
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPropagation* forward_propagation)
+void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, LayerForwardPropagation* forward_propagation)
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
@@ -779,7 +778,7 @@ void RecurrentLayer::forward_propagate(const Tensor<type, 2>& inputs, ForwardPro
 }
 
 
-void RecurrentLayer::forward_propagate(const Tensor<type, 2> &inputs, Tensor<type, 1> parameters, ForwardPropagation* forward_propagation)
+void RecurrentLayer::forward_propagate(const Tensor<type, 2> &inputs, Tensor<type, 1> parameters, LayerForwardPropagation* forward_propagation)
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
 
@@ -862,31 +861,10 @@ Tensor<type, 2> RecurrentLayer::calculate_outputs(const Tensor<type, 2>& inputs)
     return outputs;
 }
 
-/*
-void RecurrentLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-                                            const Tensor<type, 2>& output_jacobian,
-                                            BackPropagation* back_propagation) const
-{
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
-    RecurrentLayerBackPropagation* recurrent_layer_back_propagation = static_cast<RecurrentLayerBackPropagation*>(back_propagation);
 
-    recurrent_layer_back_propagation->delta.device(*thread_pool_device) = recurrent_layer_forward_propagation->activations_derivatives*output_jacobian;
-}
-*/
-
-//void RecurrentLayer::calculate_output_delta(ForwardPropagation* forward_propagation,
-//                                            const Tensor<type, 2>& output_jacobian,
-//                                            Tensor<type, 2>& output_delta) const
-//{
-//    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
-
-//    output_delta.device(*thread_pool_device) = recurrent_layer_forward_propagation->activations_derivatives*output_jacobian;
-//}
-
-
-void RecurrentLayer::calculate_hidden_delta(ForwardPropagation* forward_propagation,
-                                            BackPropagation* next_layer_back_propagation,
-                                            BackPropagation* current_layer_back_propagation) const
+void RecurrentLayer::calculate_hidden_delta(LayerForwardPropagation* forward_propagation,
+    LayerBackPropagation* next_layer_back_propagation,
+    LayerBackPropagation* current_layer_back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation =
             static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -898,8 +876,8 @@ void RecurrentLayer::calculate_hidden_delta(ForwardPropagation* forward_propagat
     {
     case Perceptron:
     {
-        PerceptronLayer::PerceptronLayerBackPropagation* next_layer_back_propagation =
-                static_cast<PerceptronLayer::PerceptronLayerBackPropagation*>(current_layer_back_propagation);
+        PerceptronLayerBackPropagation* next_layer_back_propagation =
+                static_cast<PerceptronLayerBackPropagation*>(current_layer_back_propagation);
 
         calculate_hidden_delta_perceptron(recurrent_layer_forward_propagation,
                                           next_layer_back_propagation,
@@ -909,8 +887,8 @@ void RecurrentLayer::calculate_hidden_delta(ForwardPropagation* forward_propagat
 
     case Probabilistic:
     {
-        ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
-                static_cast<ProbabilisticLayer::ProbabilisticLayerBackPropagation*>(current_layer_back_propagation);
+        ProbabilisticLayerBackPropagation* next_probabilistic_layer_back_propagation =
+                static_cast<ProbabilisticLayerBackPropagation*>(current_layer_back_propagation);
 
         calculate_hidden_delta_probabilistic(recurrent_layer_forward_propagation,
                                              next_probabilistic_layer_back_propagation,
@@ -924,7 +902,7 @@ void RecurrentLayer::calculate_hidden_delta(ForwardPropagation* forward_propagat
 
 
 void RecurrentLayer::calculate_hidden_delta_perceptron(RecurrentLayerForwardPropagation* forward_propagation,
-                                                       PerceptronLayer::PerceptronLayerBackPropagation* next_back_propagation,
+                                                       PerceptronLayerBackPropagation* next_back_propagation,
                                                        RecurrentLayerBackPropagation* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<PerceptronLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
@@ -936,7 +914,7 @@ void RecurrentLayer::calculate_hidden_delta_perceptron(RecurrentLayerForwardProp
 
 
 void RecurrentLayer::calculate_hidden_delta_probabilistic(RecurrentLayerForwardPropagation* forward_propagation,
-                                                          ProbabilisticLayer::ProbabilisticLayerBackPropagation* next_back_propagation,
+                                                          ProbabilisticLayerBackPropagation* next_back_propagation,
                                                           RecurrentLayerBackPropagation* back_propagation) const
 {
     const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(back_propagation->layer_pointer)->get_synaptic_weights();
@@ -946,63 +924,8 @@ void RecurrentLayer::calculate_hidden_delta_probabilistic(RecurrentLayerForwardP
     back_propagation->delta.device(*thread_pool_device) = back_propagation->delta*forward_propagation->activations_derivatives;
 }
 
-/*
-void RecurrentLayer::calculate_hidden_delta(Layer* next_layer_pointer,
-                                            ForwardPropagation* forward_propagation,
-                                            const Tensor<type, 2>& next_layer_delta,
-                                            Tensor<type, 2>& hidden_delta) const
-{
 
-    RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
-
-    const Type next_layer_type = next_layer_pointer->get_type();
-
-    switch (next_layer_type)
-    {
-    case Perceptron:
-        calculate_hidden_delta_perceptron(next_layer_pointer, recurrent_layer_forward_propagation->activations_derivatives, next_layer_delta, hidden_delta);
-
-        return;
-
-    case Probabilistic:
-        calculate_hidden_delta_probabilistic(next_layer_pointer, recurrent_layer_forward_propagation->activations, next_layer_delta, hidden_delta);
-
-        return;
-
-    default:
-        return;
-    }
-
-}
-
-
-void RecurrentLayer::calculate_hidden_delta_perceptron(Layer* next_layer_pointer,
-                                                       const Tensor<type, 2>& ,
-                                                       const Tensor<type, 2>& next_layer_delta,
-                                                       Tensor<type, 2>& hidden_delta) const
-{
-    const PerceptronLayer* next_perceptron_layer = dynamic_cast<PerceptronLayer*>(next_layer_pointer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_perceptron_layer->get_synaptic_weights();
-
-    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-}
-
-
-void RecurrentLayer::calculate_hidden_delta_probabilistic(Layer* next_layer_pointer,
-                                                          const Tensor<type, 2>& ,
-                                                          const Tensor<type, 2>& next_layer_delta,
-                                                          Tensor<type, 2>& hidden_delta) const
-{
-    const ProbabilisticLayer* next_probabilistic_layer = dynamic_cast<ProbabilisticLayer*>(next_layer_pointer);
-
-    const Tensor<type, 2>& next_synaptic_weights = next_probabilistic_layer->get_synaptic_weights();
-
-    hidden_delta.device(*thread_pool_device) = next_layer_delta.contract(next_synaptic_weights, A_BT);
-}
-*/
-
-void RecurrentLayer::insert_gradient(BackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
+void RecurrentLayer::insert_gradient(LayerBackPropagation* back_propagation, const Index& index, Tensor<type, 1>& gradient) const
 {
     const Index inputs_number = get_inputs_number();
     const Index neurons_number = get_neurons_number();
@@ -1031,8 +954,8 @@ void RecurrentLayer::insert_gradient(BackPropagation* back_propagation, const In
 
 
 void RecurrentLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
-                                              ForwardPropagation* forward_propagation,
-                                              BackPropagation* back_propagation) const
+                                              LayerForwardPropagation* forward_propagation,
+    LayerBackPropagation* back_propagation) const
 {
     RecurrentLayerBackPropagation* recurrent_layer_back_propagation =
             static_cast<RecurrentLayerBackPropagation*>(back_propagation);
@@ -1049,7 +972,7 @@ void RecurrentLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
 
 
 void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inputs,
-                                                     ForwardPropagation* forward_propagation,
+                                                     LayerForwardPropagation* forward_propagation,
                                                      RecurrentLayerBackPropagation* back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -1085,7 +1008,7 @@ void RecurrentLayer::calculate_biases_error_gradient(const Tensor<type, 2>& inpu
 
 
 void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2>& inputs,
-                                                            ForwardPropagation* forward_propagation,
+                                                            LayerForwardPropagation* forward_propagation,
                                                             RecurrentLayerBackPropagation* back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -1142,7 +1065,7 @@ void RecurrentLayer::calculate_input_weights_error_gradient(const Tensor<type, 2
 
 
 void RecurrentLayer::calculate_recurrent_weights_error_gradient(const Tensor<type, 2>& inputs,
-                                                                ForwardPropagation* forward_propagation,
+                                                                LayerForwardPropagation* forward_propagation,
                                                                 RecurrentLayerBackPropagation* back_propagation) const
 {
     RecurrentLayerForwardPropagation* recurrent_layer_forward_propagation = static_cast<RecurrentLayerForwardPropagation*>(forward_propagation);
@@ -1291,7 +1214,6 @@ string RecurrentLayer::write_activation_function_expression() const
         default: return write_activation_function();
     }
 }
-
 
 
 void RecurrentLayer::from_XML(const tinyxml2::XMLDocument& document)
@@ -1455,7 +1377,7 @@ void RecurrentLayer::write_XML(tinyxml2::XMLPrinter& file_stream) const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

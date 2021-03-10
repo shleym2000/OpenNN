@@ -24,7 +24,6 @@
 #include "loss_index.h"
 #include "data_set.h"
 
-
 namespace OpenNN
 {
 
@@ -74,14 +73,12 @@ public:
 
    // Error methods
 
-   type weighted_sum_squared_error(const Tensor<type, 2>&, const Tensor<type, 2>& ) const;
-
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetwork::ForwardPropagation& forward_propagation,
-                        LossIndex::BackPropagation& back_propagation) const;
+   void calculate_error(const DataSet::Batch&,
+                        const NeuralNetworkForwardPropagation&,
+                        BackPropagation&) const;
 
    void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetwork::ForwardPropagation&,
+                              const NeuralNetworkForwardPropagation&,
                               SecondOrderLoss&) const;
 
    string get_error_type() const;
@@ -90,8 +87,7 @@ public:
    // Gradient methods
 
    void calculate_output_delta(const DataSet::Batch&,
-                               Layer::ForwardPropagation*,
-                               Layer::BackPropagation*,
+                               NeuralNetworkForwardPropagation&,
                                BackPropagation&) const;
 
    void calculate_Jacobian_gradient(const DataSet::Batch&,
@@ -138,7 +134,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

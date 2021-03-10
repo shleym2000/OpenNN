@@ -362,7 +362,7 @@ void StochasticGradientDescent::set_reserve_selection_error_history(const bool& 
 
 /// Set hardware to use. Default: Multi-core.
 
-void StochasticGradientDescent::update_iteration(const LossIndex::BackPropagation& back_propagation,
+void StochasticGradientDescent::update_iteration(const BackPropagation& back_propagation,
                       SGDOptimizationData& optimization_data)
 {
 
@@ -449,15 +449,15 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     const Index parameters_number = neural_network_pointer->get_parameters_number();
-    type parameters_norm = 0;
+    
 
-    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_training(batch_size_training, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_selection(batch_size_selection, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
 
-    LossIndex::BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
+    BackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
+    BackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
 
     type training_error = 0;
     type training_loss = 0;
@@ -493,19 +493,19 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         shuffle = false;
 
     // Calculate error before training
-    parameters_norm = l2_norm(optimization_data.parameters);
+
     training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
     batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
-    neural_network_pointer->forward_propagate(batch_training, neural_network_forward_propagation_training);
-    loss_index_pointer->calculate_error(batch_training, neural_network_forward_propagation_training, training_back_propagation);
+    neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
+    loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
     results.training_error_history(0)  = training_back_propagation.error;
 
     if(has_selection)
     {
         selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
         batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
-        neural_network_pointer->forward_propagate(batch_selection, neural_network_forward_propagation_selection);
-        loss_index_pointer->calculate_error(batch_selection, neural_network_forward_propagation_selection, selection_back_propagation);
+        neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
+        loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
         results.selection_error_history(0)  = selection_back_propagation.error;
     }
     // Main loop
@@ -515,8 +515,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
-
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         training_loss = 0;
         training_error = 0;
@@ -533,12 +531,12 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
             // Neural network
 
-            neural_network_pointer->forward_propagate(batch_training, neural_network_forward_propagation_training);
+            neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
             // Loss index
-/*
-            loss_index_pointer->back_propagate(batch_training, neural_network_forward_propagation_training, training_back_propagation);
-*/
+
+            loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
+
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
@@ -570,11 +568,11 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
 
                 // Neural network
 
-                neural_network_pointer->forward_propagate(batch_selection, neural_network_forward_propagation_selection);
+                neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
 
                 // Loss
 
-                loss_index_pointer->calculate_error(batch_selection, neural_network_forward_propagation_selection, selection_back_propagation);
+                loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
                 selection_error += selection_back_propagation.error;
             }
@@ -666,8 +664,7 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
         {
             if(display)
             {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_error << "\n"
+                cout << "Training error: " << training_error << "\n"
                      << "Learning rate: " << learning_rate << "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
 
@@ -679,8 +676,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
             if(has_selection) results.resize_selection_error_history(epoch + 1);
 
             results.final_parameters = optimization_data.parameters;
-
-            results.final_parameters_norm = parameters_norm;
 
             results.final_training_error = training_error;
 
@@ -715,7 +710,6 @@ OptimizationAlgorithm::Results StochasticGradientDescent::perform_training()
     if(choose_best_selection)
     {
         optimization_data.parameters = optimization_data.minimal_selection_parameters;
-        parameters_norm = l2_norm(optimization_data.parameters);
 
         neural_network_pointer->set_parameters(optimization_data.parameters);
 
@@ -1143,7 +1137,7 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

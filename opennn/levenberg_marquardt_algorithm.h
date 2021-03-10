@@ -73,9 +73,6 @@ public:
 
            // Neural network data
 
-           parameters.resize(parameters_number);
-           parameters = neural_network_pointer->get_parameters();
-
            old_parameters.resize(parameters_number);
 
            parameters_difference.resize(parameters_number);
@@ -189,8 +186,8 @@ public:
 
    void update_epoch(
            const DataSet::Batch& batch,
-           NeuralNetwork::ForwardPropagation& forward_propagation,
-           LossIndex::BackPropagation& back_propagation,
+           NeuralNetworkForwardPropagation& forward_propagation,
+           BackPropagation& back_propagation,
            LossIndex::SecondOrderLoss& second_order_loss_terms,
            LMOptimizationData& optimization_data);
 
@@ -281,7 +278,7 @@ private:
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -116,40 +116,6 @@ public:
            else return B;
        }
 
-       /// Returns true if the length of the interval(A,B) is zero,
-       /// and false otherwise.
-
-       inline bool has_length_zero() const
-       {
-           /*
-           if(abs(A.first - B.first) < numeric_limits<type>::min())
-           {
-              return true;
-           }
-           else
-           {
-              return false;
-           }
-           */
-           return false;
-       }
-
-       /// Returns true if the interval(A,B) is constant,
-       /// and false otherwise.
-
-       inline bool is_constant() const
-       {
-           /*if(abs(A.second - B.second) < numeric_limits<type>::min())
-           {
-              return true;
-           }
-           else
-           {
-              return false;
-           }*/
-           return false;
-       }
-
        /// Writes a string with the values of A, U and B.
 
        inline string struct_to_string() const
@@ -281,13 +247,13 @@ public:
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
    Triplet calculate_bracketing_triplet(const DataSet::Batch&,
-                                        NeuralNetwork::ForwardPropagation&,
-                                        LossIndex::BackPropagation&,
+                                        NeuralNetworkForwardPropagation&,
+                                        BackPropagation&,
                                         OptimizationAlgorithm::OptimizationData&) const;
 
    pair<type, type> calculate_directional_point(const DataSet::Batch&,
-                                                NeuralNetwork::ForwardPropagation&,
-                                                LossIndex::BackPropagation&,
+                                                NeuralNetworkForwardPropagation&,
+                                                BackPropagation&,
                                                 OptimizationAlgorithm::OptimizationData&) const;
 
    // Serialization methods

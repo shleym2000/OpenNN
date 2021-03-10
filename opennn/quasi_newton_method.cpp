@@ -454,7 +454,7 @@ void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimization
 {
     optimization_data.inverse_hessian.setZero();
 
-    const Index parameters_number = optimization_data.parameters.size();
+    const Index parameters_number = optimization_data.inverse_hessian.dimension(0);
 
     for(Index i = 0; i < parameters_number; i++) optimization_data.inverse_hessian(i,i) = 1.0;
 
@@ -467,7 +467,7 @@ void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimization
 /// @param gradient Gradient at the current point.
 /// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(const LossIndex::BackPropagation& back_propagation,
+void QuasiNewtonMethod::calculate_inverse_hessian_approximation(const BackPropagation& back_propagation,
                                                                 QNMOptimizationData& optimization_data) const
 {
     switch(inverse_hessian_approximation_method)
@@ -552,7 +552,7 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const LossIndex::BackPropagation& back_propagation,
+void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const BackPropagation& back_propagation,
                                                       QNMOptimizationData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -596,7 +596,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const LossIndex::BackPropa
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndex::BackPropagation& back_propagation,
+void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const BackPropagation& back_propagation,
                                                        QNMOptimizationData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
@@ -641,15 +641,15 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const LossIndex::BackProp
 
 
 
-////// \brief QuasiNewtonMethod::update_epoch
-////// \param batch
-////// \param forward_propagation
-////// \param back_propagation
-////// \param optimization_data
+// \brief QuasiNewtonMethod::update_epoch
+// \param batch
+// \param forward_propagation
+// \param back_propagation
+// \param optimization_data
 void QuasiNewtonMethod::update_epoch(
         const DataSet::Batch& batch,
-        NeuralNetwork::ForwardPropagation& forward_propagation,
-        LossIndex::BackPropagation& back_propagation,
+        NeuralNetworkForwardPropagation& forward_propagation,
+        BackPropagation& back_propagation,
         QNMOptimizationData& optimization_data)
 {
     #ifdef __OPENNN_DEBUG__
@@ -661,7 +661,7 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.old_training_loss = back_propagation.loss;
 
     optimization_data.parameters_difference.device(*thread_pool_device)
-            = optimization_data.parameters - optimization_data.old_parameters;
+            = back_propagation.parameters - optimization_data.old_parameters;
 
     optimization_data.gradient_difference.device(*thread_pool_device)
             = back_propagation.gradient - optimization_data.old_gradient;
@@ -736,9 +736,9 @@ void QuasiNewtonMethod::update_epoch(
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
-    optimization_data.old_parameters = optimization_data.parameters;
+    optimization_data.old_parameters = back_propagation.parameters;
 
-    optimization_data.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
+    back_propagation.parameters.device(*thread_pool_device) += optimization_data.parameters_increment;
 
     // Update stuff
 
@@ -800,13 +800,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
-    type parameters_norm = 0;
 
-    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_training(training_samples_number, neural_network_pointer);
-    NeuralNetwork::ForwardPropagation neural_network_forward_propagation_selection(selection_samples_number, neural_network_pointer);
 
-    NeuralNetwork::BackPropagation neural_network_back_propagation_training(training_samples_number, neural_network_pointer);
-    NeuralNetwork::BackPropagation neural_network_back_propagation_selection(selection_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
+    NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
 
     // Loss index
 
@@ -814,8 +811,8 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type old_selection_error = numeric_limits<type>::max();
 
-    LossIndex::BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    LossIndex::BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
 
@@ -836,16 +833,15 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
 
     // Calculate error before training
-    parameters_norm = l2_norm(optimization_data.parameters);
-    neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
-    loss_index_pointer->calculate_error(training_batch, neural_network_forward_propagation_training, training_back_propagation);
+
+    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
     results.training_error_history(0)  = training_back_propagation.error;
 
-    parameters_norm = l2_norm(optimization_data.parameters);
     if(has_selection)
     {
-        neural_network_pointer->forward_propagate(selection_batch, neural_network_forward_propagation_selection);
-        loss_index_pointer->calculate_error(selection_batch, neural_network_forward_propagation_selection, selection_back_propagation);
+        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
         results.selection_error_history(0)  = selection_back_propagation.error;
     }
 
@@ -857,22 +853,21 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Neural network
 
-        parameters_norm = l2_norm(optimization_data.parameters);
+        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
-/*
-        loss_index_pointer->back_propagate(training_batch, neural_network_forward_propagation_training, training_back_propagation);
-*/
+        loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
+
         gradient_norm = l2_norm(training_back_propagation.gradient);
 
         // Selection error
 
         if(has_selection)
         {
-            neural_network_pointer->forward_propagate(selection_batch, neural_network_forward_propagation_selection);
+            neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
 
             // Loss Index
-            loss_index_pointer->calculate_error(selection_batch, neural_network_forward_propagation_selection, selection_back_propagation);
+
+            loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_back_propagation.error > old_selection_error)
             {
@@ -882,7 +877,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             {
                 minimum_selection_error = selection_back_propagation.error;
 
-                minimal_selection_parameters = optimization_data.parameters;
+                minimal_selection_parameters = training_back_propagation.parameters;
             }
 
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
@@ -890,7 +885,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Optimization data
 
-        update_epoch(training_batch, neural_network_forward_propagation_training, training_back_propagation, optimization_data);
+        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         #ifdef __OPENNN_DEBUG__
 
@@ -905,7 +900,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         }
         #endif
 
-        neural_network_pointer->set_parameters(optimization_data.parameters);
+        neural_network_pointer->set_parameters(training_back_propagation.parameters);
 
         // Training history
 
@@ -1005,8 +1000,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         if(stop_training)
         {
-            results.final_parameters = optimization_data.parameters;
-            results.final_parameters_norm = parameters_norm;
+            results.final_parameters = training_back_propagation.parameters;
             results.final_training_error = training_back_propagation.error;
             results.final_selection_error = selection_back_propagation.error;
 
@@ -1021,8 +1015,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             if(display)
             {
-                cout << "Parameters norm: " << parameters_norm << "\n"
-                     << "Training error: " << training_back_propagation.error <<  "\n"
+                cout << "Training error: " << training_back_propagation.error <<  "\n"
                      << "Gradient norm: " << gradient_norm <<  "\n"
                      << "Learning rate: " << optimization_data.learning_rate <<  "\n"
                      << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
@@ -1038,7 +1031,6 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         else if((display && epoch == 0) || (display && (epoch) % display_period == 0))
         {
             cout << "Epoch " << epoch << ";\n"
-                 << "Parameters norm: " << parameters_norm << "\n"
                  << "Training error: " << training_back_propagation.error << "\n"
                  << "Gradient norm: " << gradient_norm << "\n"
                  << "Learning rate: " << optimization_data.learning_rate << "\n"
@@ -1062,9 +1054,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         neural_network_pointer->set_parameters(minimal_selection_parameters);
 
-        //neural_network_pointer->forward_propagate(training_batch, neural_network_forward_propagation_training);
+        //neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
 
-        //loss_index_pointer->back_propagate(training_batch, neural_network_forward_propagation_training, training_back_propagation);
+        //loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
 
         //training_loss = training_back_propagation.loss;
 
@@ -1597,7 +1589,7 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
