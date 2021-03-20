@@ -431,11 +431,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Input");
     }
-    else if(column_use == Target)
+    else if (column_use == Target)
     {
         file_stream.PushText("Target");
     }
-    else if(column_use == UnusedVariable)
+    else if (column_use == UnusedVariable)
     {
         file_stream.PushText("Unused");
     }
@@ -454,11 +454,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Numeric");
     }
-    else if(type == Binary)
+    else if (type == Binary)
     {
         file_stream.PushText("Binary");
     }
-    else if(type == Categorical)
+    else if (type == Categorical)
     {
         file_stream.PushText("Categorical");
     }
@@ -503,11 +503,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if(categories_uses(i) == Target)
+            else if (categories_uses(i) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if(categories_uses(i) == Time)
+            else if (categories_uses(i) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -544,11 +544,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if(categories_uses(0) == Target)
+            else if (categories_uses(0) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if(categories_uses(0) == Time)
+            else if (categories_uses(0) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -563,11 +563,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if(categories_uses(1) == Target)
+            else if (categories_uses(1) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if(categories_uses(1) == Time)
+            else if (categories_uses(1) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -1754,26 +1754,9 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
 }
 
 
-/// This method separates the dataset into n-groups to validate a model with limited data.
-/// @param k Number of folds that a given data sample is given to be split into.
-/// @param fold_index.
-/// @todo Low priority
-
-void DataSet::set_k_fold_cross_validation_samples_uses(const Index& k, const Index& fold_index)
+void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
 {
-    const Index samples_number = get_samples_number();
-
-    const Index fold_size = samples_number/k;
-
-    const Index start = fold_index*fold_size;
-    const Index end = start + fold_size;
-
-    split_samples_random(1, 0, 0);
-
-    for(Index i = start; i < end; i++)
-    {
-        samples_uses(i) = Testing;
-    }
+    columns = new_columns;
 }
 
 
@@ -1783,6 +1766,8 @@ void DataSet::set_k_fold_cross_validation_samples_uses(const Index& k, const Ind
 void DataSet::set_default_columns_uses()
 {
     const Index size = columns.size();
+
+    bool target = false;
 
     if(size == 0)
     {
@@ -1802,8 +1787,20 @@ void DataSet::set_default_columns_uses()
             if(columns(i).type == Binary) continue;
             if(columns(i).type == Categorical) continue;
 
-            columns(i).set_use(Target);
-            break;
+            if(columns(i).type == DateTime)
+            {
+                columns(i).set_use(UnusedVariable);
+                continue;
+            }
+
+            if(!target)
+            {
+                columns(i).set_use(Target);
+
+                target = true;
+
+                continue;
+            }
         }
 
         input_variables_dimensions.resize(1);
@@ -1817,6 +1814,8 @@ void DataSet::set_default_columns_uses()
 void DataSet::set_default_classification_columns_uses()
 {
     const Index size = columns.size();
+
+    bool target = false;
 
     if(size == 0)
     {
@@ -1834,15 +1833,22 @@ void DataSet::set_default_classification_columns_uses()
         {
             if(columns(i).type == Constant) continue;
 
-            if(columns(i).type == Binary)
+            if(columns(i).type == Binary && !target)
             {
                 columns(i).set_use(Target);
-                break;
+                target = true;
+                continue;
             }
-            else if(columns(i).type == Categorical)
+            else if(columns(i).type == Categorical && !target)
             {
                 columns(i).set_use(Target);
-                break;
+                target = true;
+                continue;
+            }
+            else if(columns(i).type == DateTime)
+            {
+                columns(i).set_use(UnusedVariable);
+                continue;
             }
         }
 
@@ -1910,7 +1916,7 @@ DataSet::VariableUse DataSet::get_variable_use(const Index& index) const
 
 /// Returns a vector containing the use of the column, without taking into account the categories.
 
-DataSet::VariableUse DataSet::get_column_use(const Index & index) const
+DataSet::VariableUse DataSet::get_column_use(const Index&  index) const
 {
     return columns(index).column_use;
 }
@@ -2507,10 +2513,12 @@ Tensor<DataSet::Column, 1> DataSet::get_columns() const
     return columns;
 }
 
+
 Tensor<DataSet::Column, 1> DataSet::get_time_series_columns() const
 {
     return time_series_columns;
 }
+
 
 /// Returns the input columns of the data set.
 
@@ -2531,6 +2539,26 @@ Tensor<DataSet::Column, 1> DataSet::get_input_columns() const
     }
 
     return input_columns;
+}
+
+
+/// Returns the input columns of the data set.
+
+Tensor<bool, 1> DataSet::get_input_columns_binary() const
+{
+    const Index columns_number = get_columns_number();
+
+    Tensor<bool, 1> input_columns_binary(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == Input)
+            input_columns_binary(i) = true;
+        else
+            input_columns_binary(i) = false;
+    }
+
+    return input_columns_binary;
 }
 
 
@@ -2557,15 +2585,21 @@ Tensor<DataSet::Column, 1> DataSet::get_target_columns() const
 
 
 /// Returns the used columns of the data set.
-/// @todo
 
 Tensor<DataSet::Column, 1> DataSet::get_used_columns() const
 {
+    const Index used_columns_number = get_used_columns_number();
+
     const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
 
-//    return columns.get_subvector(used_columns_indices);
+    Tensor<DataSet::Column, 1> used_columns(used_columns_number);
 
-    return Tensor<DataSet::Column, 1>();
+    for(Index i = 0; i < used_columns_number; i++)
+    {
+        used_columns(i) = columns(used_columns_indices(i));
+    }
+
+    return used_columns;
 }
 
 
@@ -2961,6 +2995,22 @@ void DataSet::set_columns_unused()
 }
 
 
+void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, const Tensor<Index, 1>& target_columns)
+{
+    set_columns_unused();
+
+    for(Index i = 0; i < input_columns.size(); i++)
+    {
+        set_column_use(i, Input);
+    }
+
+    for(Index i = 0; i < target_columns.size(); i++)
+    {
+        set_column_use(i, Target);
+    }
+}
+
+
 /// Sets all input columns in the dataset as unused columns.
 
 void DataSet::set_input_columns_unused()
@@ -2970,6 +3020,18 @@ void DataSet::set_input_columns_unused()
     for(Index i = 0; i < columns_number; i++)
     {
         if(columns(i).column_use == DataSet::Input) set_column_use(i, UnusedVariable);
+    }
+}
+
+
+
+void DataSet::set_input_columns_binary(const Tensor<bool, 1>& new_input_columns)
+{
+    const Index columns_number = get_columns_number();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(new_input_columns(i)) set_column_use(i, Input);
     }
 }
 
@@ -3187,28 +3249,6 @@ void DataSet::set_columns_number(const Index& new_variables_number)
 }
 
 
-void DataSet::binarize_input_data(const type& threshold)
-{
-    const Index samples_number = get_samples_number();
-
-    const Index input_variables_number = get_input_variables_number();
-
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        for(Index j = 0; j < input_variables_number; i++)
-        {
-            const Index input_variable_index = input_variables_indices[j];
-
-            data(i,input_variable_index) < threshold
-                    ? data(i,input_variable_index) = 0
-                    : data(i,input_variable_index) = 1;
-        }
-    }
-}
-
-
 Tensor<type,2> DataSet::transform_binary_column(const Tensor<type,1>& column) const
 {
     const Index rows_number = column.dimension(0);
@@ -3329,33 +3369,10 @@ void DataSet::set_input_variables_dimensions(const Tensor<Index, 1>& new_inputs_
 }
 
 
-/// Returns true if the data set is a binary classification problem, false otherwise.
-/// @todo
-
-bool DataSet::is_binary_classification() const
-{
-    if(get_target_variables_number() != 1)
-    {
-        return false;
-    }
-
-    return true;
-}
-
-
-/// Returns true if the data set is a multiple classification problem, false otherwise.
-/// @todo
-
-bool DataSet::is_multiple_classification() const
-{
-    return true;
-}
-
-
 /// Returns true if the data matrix is empty, and false otherwise.
 
 bool DataSet::is_empty() const
-{
+{  
     if(data.dimension(0) == 0 || data.dimension(1) == 0)
     {
         return true;
@@ -3369,7 +3386,7 @@ bool DataSet::is_empty() const
 
 bool DataSet::is_less_than(const Tensor<type, 1>& column, const type& value) const
 {
-    Tensor<bool, 1> if_sentence = column <= column.constant(value);
+    const Tensor<bool, 1> if_sentence = column <= column.constant(value);
 
     Tensor<bool, 1> sentence(column.size());
     sentence.setConstant(true);
@@ -3870,7 +3887,7 @@ Tensor<type, 1> DataSet::get_sample_data(const Index& sample_index, const Tensor
 /// Returns the inputs values of a single sample in the data set.
 /// @param sample_index Index of the sample.
 
-Tensor<type, 2> DataSet::get_sample_input_data(const Index & sample_index) const
+Tensor<type, 2> DataSet::get_sample_input_data(const Index&  sample_index) const
 {
     const Index input_variables_number = get_input_variables_number();
 
@@ -3888,7 +3905,7 @@ Tensor<type, 2> DataSet::get_sample_input_data(const Index & sample_index) const
 /// Returns the target values of a single sample in the data set.
 /// @param sample_index Index of the sample.
 
-Tensor<type, 2> DataSet::get_sample_target_data(const Index & sample_index) const
+Tensor<type, 2> DataSet::get_sample_target_data(const Index&  sample_index) const
 {
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
 
@@ -3992,18 +4009,6 @@ Tensor<Index, 1> DataSet::get_variable_indices(const Index& column_index) const
 }
 
 
-/// Returns the data from the data set of the given variables indices.
-/// @param variables_indices Variable indices.
-/// @todo
-
-Tensor<type, 2> DataSet::get_column_data(const Tensor<Index, 1>& variables_indices) const
-{
-//    return data.get_submatrix_columns(variables_indices);
-
-    return Tensor<type, 2>();
-}
-
-
 /// Returns the data from the data set column with a given index,
 /// these data can be stored in a matrix or a vector depending on whether the column is categorical or not(respectively).
 /// @param column_index Index of the column.
@@ -4018,11 +4023,12 @@ Tensor<type, 2> DataSet::get_column_data(const Index& column_index) const
         columns_number = columns(column_index).get_categories_number();
     }
 
-    Eigen::array<Index, 2> extents = {rows_number, columns_number};
-    Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
+    const Eigen::array<Index, 2> extents = {rows_number, columns_number};
+    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
 
     return data.slice(offsets, extents);
 }
+
 
 /// Returns the data from the time series column with a given index,
 /// @param column_index Index of the column.
@@ -4038,8 +4044,8 @@ Tensor<type, 2> DataSet::get_time_series_column_data(const Index& column_index) 
         columns_number = time_series_columns(column_index).get_categories_number();
     }
 
-    Eigen::array<Index, 2> extents = {rows_number, columns_number};
-    Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
+    const Eigen::array<Index, 2> extents = {rows_number, columns_number};
+    const Eigen::array<Index, 2> offsets = {0, get_variable_indices(column_index)(0)};
 
     return time_series_data.slice(offsets, extents);
 }
@@ -4422,6 +4428,7 @@ void DataSet::set(const Index& new_samples_number,
     input_variables_dimensions.resize(/*new_inputs_number*/1);
 
     samples_uses.resize(new_samples_number);
+
     split_samples_random();
 }
 
@@ -4532,6 +4539,8 @@ void DataSet::set_time_series_data(const Tensor<type, 2>& new_data)
 {
     time_series_data = new_data;
 }
+
+
 
 /// Sets the name of the data file.
 /// It also loads the data from that file.
@@ -5251,7 +5260,6 @@ Tensor<Descriptives, 1> DataSet::calculate_used_variables_descriptives() const
 
 
 /// Calculate the descriptives of the samples with positive targets in binary classification problems.
-/// @todo Low priority.
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples() const
 {
@@ -5274,7 +5282,6 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
 
     const Index target_index = get_target_variables_indices()(0);
 
-
     const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
@@ -5291,7 +5298,7 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
         if(abs(data(sample_index, target_index) - 1) < numeric_limits<type>::min()) positive_samples_number++;
     }
 
-        // Get used positive samples indices
+    // Get used positive samples indices
 
     Tensor<Index, 1> positive_used_samples_indices(positive_samples_number);
     Index positive_sample_index = 0;
@@ -5306,12 +5313,12 @@ Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_positive_samples
             positive_sample_index++;
         }
     }
+
     return descriptives(data, positive_used_samples_indices, input_variables_indices);
 }
 
 
 /// Calculate the descriptives of the samples with neagtive targets in binary classification problems.
-/// @todo Low priority.
 
 Tensor<Descriptives, 1> DataSet::calculate_columns_descriptives_negative_samples() const
 {
@@ -5576,7 +5583,6 @@ Tensor<type, 1> DataSet::calculate_used_targets_mean() const
 }
 
 
-
 /// Returns the mean values of the target variables on the selection
 
 Tensor<type, 1> DataSet::calculate_selection_targets_mean() const
@@ -5618,11 +5624,9 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
     const Index target_columns_number = get_target_columns_number();
 
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
-    Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
+    const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
     Tensor<CorrelationResults, 2> correlations(input_columns_number, target_columns_number);
-
-//    #pragma omp parallel for
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -5654,9 +5658,14 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
                 CorrelationResults strongest_correlation = linear_correlation;
 
-                if(abs(exponential_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = exponential_correlation;
-                if(abs(logarithmic_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = logarithmic_correlation;
-                if(abs(power_correlation.correlation) > abs(strongest_correlation.correlation)) strongest_correlation = power_correlation;
+                if(abs(exponential_correlation.correlation) > abs(strongest_correlation.correlation))
+                    strongest_correlation = exponential_correlation;
+
+                if(abs(logarithmic_correlation.correlation) > abs(strongest_correlation.correlation))
+                    strongest_correlation = logarithmic_correlation;
+
+                if(abs(power_correlation.correlation) > abs(strongest_correlation.correlation))
+                    strongest_correlation = power_correlation;
 
                 correlations(i,j) = strongest_correlation;
             }
@@ -5669,10 +5678,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
-                // @todo
                 correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
-
-//                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
@@ -5692,37 +5698,23 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             {
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target/*target_column*/);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input/*input_column*/);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input);
             }
             else if(input_type == Binary && target_type == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input/*input_column*/);
-
-//                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
-
-//                const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
-
-//                Tensor<type, 2> new_input = transform_binary_column(input_column);
-
-//                correlations(i,j) = karl_pearson_correlations(thread_pool_device, new_input, target);
+                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input);
             }
             else if(input_type == Categorical && target_type == Binary)
             {
                 correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
-
-//                const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
-
-//                Tensor<type, 2> new_target = transform_binary_column(target_column);
-
-//                correlations(i,j) = karl_pearson_correlations(thread_pool_device, input, new_target);
             }
             else if(input_type == DateTime || target_type == DateTime)
             {
@@ -5740,7 +5732,6 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
             }
 
             cout << "Correlation: " << correlations(i,j).correlation << endl;
-
         }
     }
 
@@ -5755,7 +5746,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
 Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() const
 {
-    Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index rows_number = correlations.dimension(0);
     const Index columns_number = correlations.dimension(1);
@@ -5803,21 +5794,22 @@ bool DataSet::has_nan_row(const Index& row_index) const
 /// <li> Number of variables with missing values.
 /// <li> Number of samples with missing values.
 /// </ul>
-/// @todo implement with indices of variables and samples?
 
 void DataSet::print_missing_values_information() const
 {
-//    const Index missing_values_number = data.count_nan();
+    const Index missing_values_number = count_nan();
 
-//    cout << "Missing values number: " << missing_values_number << " (" << missing_values_number*100/data.size() << "%)" << endl;
+    cout << "Missing values number: " << missing_values_number << " (" << missing_values_number*100/data.size() << "%)" << endl;
 
-//    const Index variables_with_missing_values = data.count_columns_with_nan();
+    const Tensor<Index, 0> columns_with_missing_values = count_nan_columns().sum();
 
-//    cout << "Variables with missing values: " << variables_with_missing_values << " (" << variables_with_missing_values*100/data.dimension(1) << "%)" << endl;
+    cout << "Columns with missing values: " << columns_with_missing_values(0)
+         << " (" << columns_with_missing_values(0)*100/data.dimension(1) << "%)" << endl;
 
-//    const Index samples_with_missing_values = data.count_rows_with_nan();
+    const Index samples_with_missing_values = count_rows_with_nan();
 
-//    cout << "Samples with missing values: " << samples_with_missing_values << " (" << samples_with_missing_values*100/data.dimension(0) << "%)" << endl;
+    cout << "Samples with missing values: "
+         << samples_with_missing_values << " (" << samples_with_missing_values*100/data.dimension(0) << "%)" << endl;
 }
 
 
@@ -5845,9 +5837,8 @@ void DataSet::print_input_target_columns_correlations() const
 
 /// This method print on screen the corretaliont between inputs and targets.
 /// @param number Number of variables to be printed.
-/// @todo
 
-void DataSet::print_top_input_target_columns_correlations(const Index& number) const
+void DataSet::print_top_input_target_columns_correlations() const
 {
     const Index inputs_number = get_input_columns_number();
     const Index targets_number = get_target_columns_number();
@@ -5855,7 +5846,7 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
     const Tensor<string, 1> inputs_names = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<RegressionResults, 2> correlations;// = calculate_input_target_columns_correlations();
+    const Tensor<type, 2> correlations = calculate_input_target_columns_correlations_values();
 
     Tensor<type, 1> target_correlations(inputs_number);
 
@@ -5867,13 +5858,13 @@ void DataSet::print_top_input_target_columns_correlations(const Index& number) c
     {
         for(Index j = 0 ; j < targets_number ; j++)
         {
-//            top_correlation.insert(pair<type,string>(correlations(i,j), inputs_names(i) + " - " + targets_name(j)));
+            top_correlation.insert(pair<type,string>(correlations(i,j), inputs_names(i) + " - " + targets_name(j)));
         }
     }
 
     map<type,string>::iterator it;
 
-    for(it = top_correlation.begin(); it!=top_correlation.end(); it++)
+    for(it = top_correlation.begin(); it != top_correlation.end(); it++)
     {
         cout << "Correlation:  " << (*it).first << "  between  " << (*it).second << "" << endl;
     }
@@ -5895,9 +5886,6 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
     Tensor<RegressionResults, 2> regressions(input_columns_number, target_columns_number);
 
-    //@todo check pragma, if uncommented, for does not work well.
-//#pragma omp parallel for
-
     for(Index i = 0; i < input_columns_number; i++)
     {
         cout << endl;
@@ -5908,7 +5896,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
         const ColumnType input_type = columns(input_index).type;
 
-        cout << "Calculating " << columns(input_index).name;
+        cout << "Calculating" << columns(input_index).name;
 
         for(Index j = 0; j < target_columns_number; j++)
         {
@@ -5925,16 +5913,28 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const RegressionResults linear_regression = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
-                const RegressionResults exponential_regression = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
-                const RegressionResults logarithmic_regression = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
-                const RegressionResults power_regression = OpenNN::power_regression(thread_pool_device, input_column, target_column);
+                const RegressionResults linear_regression
+                        = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
+
+                const RegressionResults exponential_regression
+                        = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
+
+                const RegressionResults logarithmic_regression
+                        = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
+
+                const RegressionResults power_regression
+                        = OpenNN::power_regression(thread_pool_device, input_column, target_column);
 
                 RegressionResults strongest_regression = linear_regression;
 
-                if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = exponential_regression;
-                if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = logarithmic_regression;
-                if(abs(power_regression.correlation) > abs(strongest_regression.correlation)) strongest_regression = power_regression;
+                if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = exponential_regression;
+
+                if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = logarithmic_regression;
+
+                if(abs(power_regression.correlation) > abs(strongest_regression.correlation))
+                    strongest_regression = power_regression;
 
                 regressions(i,j) = strongest_regression;
             }
@@ -6171,9 +6171,8 @@ void DataSet::print_data_file_preview() const
 
 /// This method print on screen the corretaliont between variables.
 /// @param number Number of variables to be printed.
-/// @todo Low priority.
 
-void DataSet::print_top_inputs_correlations(const Index& number) const
+void DataSet::print_top_inputs_correlations() const
 {
     const Index variables_number = get_input_variables_number();
 
@@ -6199,246 +6198,10 @@ void DataSet::print_top_inputs_correlations(const Index& number) const
 
     map<type,string> :: iterator it;
 
-    for(it=top_correlation.begin(); it!=top_correlation.end(); it++)
+    for(it = top_correlation.begin(); it != top_correlation.end(); it++)
     {
         cout << "Correlation: " << (*it).first << "  between  " << (*it).second << "" << endl;
     }
-}
-
-
-/// Returns the covariance matrix for the input data set.
-/// The number of rows of the matrix is the number of inputs.
-/// The number of columns of the matrix is the number of inputs.
-/// @todo
-
-Tensor<type, 2> DataSet::calculate_covariance_matrix() const
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-
-    const Index inputs_number = get_input_variables_number();
-
-    Tensor<type, 2> covariance_matrix(inputs_number, inputs_number);
-
-    for(Index i = 0; i < static_cast<Index>(inputs_number); i++)
-    {
-        const Index first_input_index = input_variables_indices(i);
-
-//        const Tensor<type, 1> first_inputs = data.get_column(first_input_index, used_samples_indices);
-
-        for(Index j = i; j < inputs_number; j++)
-        {
-            const Index second_input_index = input_variables_indices(j);
-
-//            const Tensor<type, 1> second_inputs = data.get_column(second_input_index, used_samples_indices);
-
-//            covariance_matrix(i,j) = covariance(first_inputs, second_inputs);
-            covariance_matrix(j,i) = covariance_matrix(i,j);
-        }
-    }
-
-    return covariance_matrix;
-}
-
-
-/// Performs the principal components analysis of the inputs.
-/// It returns a matrix containing the principal components getd in rows.
-/// This method deletes the unused samples of the original data set.
-/// @param minimum_explained_variance Minimum percentage of variance used to select a principal component.
-
-Tensor<type, 2> DataSet::perform_principal_components_analysis(const type& minimum_explained_variance)
-{
-    // Subtract off the mean
-
-    subtract_inputs_mean();
-
-    // Calculate covariance matrix
-
-    const Tensor<type, 2> covariance_matrix = this->calculate_covariance_matrix();
-
-    // Calculate eigenvectors
-
-//    const Tensor<type, 2> eigenvectors = OpenNN::eigenvectors(covariance_matrix);
-
-    // Calculate eigenvalues
-
-//    const Tensor<type, 2> eigenvalues = OpenNN::eigenvalues(covariance_matrix);
-
-    // Calculate explained variance
-
-//    const Tensor<type, 1> explained_variance = OpenNN::explained_variance(eigenvalues.chip(0,1));
-
-    // Sort principal components
-
-//    const Tensor<Index, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
-
-    // Choose eigenvectors
-
-    const Index inputs_number = covariance_matrix.dimension(1);
-
-    Tensor<Index, 1> principal_components_indices;
-
-    Index index;
-
-    for(Index i = 0; i < inputs_number; i++)
-    {
-//        index = sorted_principal_components_indices(i);
-
-//        if(explained_variance(index) >= minimum_explained_variance)
-        {
-//            principal_components_indices.push_back(i);
-        }
-//        else
-        {
-            continue;
-        }
-    }
-
-    const Index principal_components_number = principal_components_indices.size();
-
-    // Arrange principal components matrix
-
-    Tensor<type, 2> principal_components;
-
-    if(principal_components_number == 0)
-    {
-        return principal_components;
-    }
-    else
-    {
-        principal_components.resize(principal_components_number, inputs_number);
-    }
-
-    for(Index i = 0; i < principal_components_number; i++)
-    {
-//        index = sorted_principal_components_indices(i);
-
-//        principal_components.set_row(i, eigenvectors.chip(index,1));
-    }
-
-    // Return feature matrix
-
-//    return principal_components.get_submatrix_rows(principal_components_indices);
-
-    return Tensor<type, 2>();
-}
-
-
-/// Performs the principal components analysis of the inputs.
-/// It returns a matrix containing the principal components arranged in rows.
-/// This method deletes the unused samples of the original data set.
-/// @param covariance_matrix Matrix of covariances.
-/// @param explained_variance vector of the explained variances of the variables.
-/// @param minimum_explained_variance Minimum percentage of variance used to select a principal component.
-/// @todo
-
-Tensor<type, 2> DataSet::perform_principal_components_analysis(const Tensor<type, 2>& covariance_matrix,
-        const Tensor<type, 1>& explained_variance,
-        const type& minimum_explained_variance)
-{
-        // Subtract off the mean
-
-        subtract_inputs_mean();
-
-        // Calculate eigenvectors
-
-//        const Tensor<type, 2> eigenvectors = OpenNN::eigenvectors(covariance_matrix);
-
-        // Sort principal components
-
-//        const Tensor<Index, 1> sorted_principal_components_indices = explained_variance.sort_descending_indices();
-
-        // Choose eigenvectors
-
-        const Index inputs_number = covariance_matrix.dimension(1);
-
-        Tensor<Index, 1> principal_components_indices;
-
-        Index index;
-
-        for(Index i = 0; i < inputs_number; i++)
-        {
-//            index = sorted_principal_components_indices(i);
-
-//            if(explained_variance(index) >= minimum_explained_variance)
-            {
-//                principal_components_indices.push_back(i);
-            }
-//            else
-            {
-                continue;
-            }
-        }
-
-        const Index principal_components_number = principal_components_indices.size();
-
-        // Arrange principal components matrix
-
-        Tensor<type, 2> principal_components;
-
-        if(principal_components_number == 0)
-        {
-            return principal_components;
-        }
-        else
-        {
-            principal_components.resize(principal_components_number, inputs_number);
-        }
-
-        for(Index i = 0; i < principal_components_number; i++)
-        {
-//            index = sorted_principal_components_indices(i);
-
-//            principal_components.set_row(i, eigenvectors.chip(index,1));
-        }
-
-        // Return feature matrix
-
-//        return principal_components.get_submatrix_rows(principal_components_indices);
-
-    return Tensor<type, 2>();
-}
-
-
-/// Transforms the data according to the principal components.
-/// @param principal_components Matrix containing the principal components.
-/// @todo
-
-void DataSet::transform_principal_components_data(const Tensor<type, 2>& principal_components)
-{
-    const Tensor<type, 2> targets = get_target_data();
-
-    subtract_inputs_mean();
-
-    const Index principal_components_number = principal_components.dimension(0);
-
-    // Transform data
-
-    const Tensor<Index, 1> used_samples = get_used_samples_indices();
-
-    const Index new_samples_number = get_used_samples_number();
-
-    const Tensor<type, 2> inputs = get_input_data();
-
-    Tensor<type, 2> new_data(new_samples_number, principal_components_number);
-
-    Index sample_index;
-
-    for(Index i = 0; i < new_samples_number; i++)
-    {
-        sample_index = used_samples(i);
-
-        for(Index j = 0; j < principal_components_number; j++)
-        {
-            Tensor<type, 0> dot = (inputs.chip(sample_index, 0)).contract(principal_components.chip(j,0),product_vector_vector);
-
-            new_data(i,j) = dot(0);
-//            new_data(i,j) = dot(inputs.chip(sample_index, 0), principal_components.chip(j, 0));
-        }
-    }
-
-//        data = new_data.assemble_columns(targets);
-
 }
 
 
@@ -6484,7 +6247,6 @@ void DataSet::scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& 
     }
 
 //   scale_mean_standard_deviation(data, data_descriptives);
-
 }
 
 
@@ -6536,35 +6298,6 @@ void DataSet::scale_minimum_maximum_binary(const type& value_1, const type& valu
         data(i, column_index) = slope*data(i, column_index)+intercept;
     }
 
-}
-
-/// Subtracts off the mean to every of the input variables.
-
-void DataSet::subtract_inputs_mean()
-{
-    Tensor<Descriptives, 1> input_statistics = calculate_input_variables_descriptives();
-
-    Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-    Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
-
-    Index input_index;
-    Index sample_index;
-
-    type input_mean;
-
-    for(Index i = 0; i < input_variables_indices.size(); i++)
-    {
-        input_index = input_variables_indices(i);
-
-        input_mean = input_statistics(i).mean;
-
-        for(Index j = 0; j < used_samples_indices.size(); j++)
-        {
-            sample_index = used_samples_indices(j);
-
-            data(sample_index,input_index) -= input_mean;
-        }
-    }
 }
 
 
@@ -7246,7 +6979,7 @@ Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>&
 /// @param input_statistics vector with the descriptives of the input variable.
 /// @param input_index Index of the input to be scaled.
 
-void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index & input_index)
+void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index&  input_index)
 {
     const type slope = std::abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
 
@@ -7461,12 +7194,19 @@ void DataSet::set_data_binary_random()
     const Index variables_number = data.dimension(1);
 
     const Index input_variables_number = get_input_variables_number();
+    const Index target_variables_number = variables_number - input_variables_number;
+
+    Index target_variable_index = 0;
 
     for(Index i = 0; i < samples_number; i++)
     {
+        if(target_variables_number == 1) target_variable_index = rand()%2;
+        else target_variable_index = rand()%(variables_number-input_variables_number)+input_variables_number;
+
         for(Index j = input_variables_number; j < variables_number; j++)
         {
-            data(i,j) = (1+static_cast<type>(pow((-1),rand())))/2;
+            if(target_variables_number == 1) data(i,j) = static_cast<type>(target_variable_index);
+            else data(i,j) = j == target_variable_index ? 1 : 0;
         }
     }
 }
@@ -8438,16 +8178,10 @@ void DataSet::print_summary() const
 
 /// Saves the members of a data set object to a XML-type file in an XML-type format.
 /// @param file_name Name of data set XML-type file.
-///
-/// @todo
 
 void DataSet::save(const string& file_name) const
 {
-    FILE *pFile;
-//    int err;
-
-//    err = fopen_s(&pFile, file_name.c_str(), "w");
-    pFile = fopen(file_name.c_str(), "w");
+    FILE* pFile = fopen(file_name.c_str(), "w");
 
     tinyxml2::XMLPrinter document(pFile);
 
@@ -8759,56 +8493,6 @@ void DataSet::transform_time_series()
 }
 
 
-/// Arranges the data set for association.
-/// @todo Low priority. Variables and samples.
-
-void DataSet::transform_association()
-{
-// OpenNN::transform_association(data);
-}
-
-
-/// @todo
-
-void DataSet::fill_time_series(const Index& period )
-{
-    Index rows = static_cast<Index>((data(data.dimension(0)- 1, 0)- data(0,0)) / period) + 1 ;
-
-    Tensor<type, 2> new_data(rows, data.dimension(1));
-
-    new_data.setConstant(static_cast<type>(NAN));
-
-    Index j = 1;
-
-    //new_data.set_row(0, data.chip(0, 0));
-
-    cout.precision(20);
-
-    for(Index i = 1; i < rows ; i++)
-    {
-      if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(j - 1, 0)))
-      {
-
-          j = j + 1;
-      }
-      if(static_cast<Index>(data(j, 0)) == static_cast<Index>(data(0,0) + i * period))
-      {
-//          new_data.set_row(i, data.chip(j, 0));
-
-          j = j + 1;
-      }
-      else
-      {
-          new_data(i,0) = data(0,0) + i * period;
-      }
-    }
-
-    time_series_data = new_data;
-
-    data = new_data;
-}
-
-
 /// This method loads the data from a binary data file.
 
 void DataSet::load_data_binary()
@@ -8851,6 +8535,8 @@ void DataSet::load_data_binary()
 
     file.close();
 }
+
+
 
 
 /// This method loads time series data from a binary data.
@@ -9267,7 +8953,7 @@ Tensor<type, 2> DataSet::read_input_csv(const string& input_data_file_name,
 /// If the number of target variables is one then the number of classes is two.
 /// If the number of target variables is greater than one then the number of classes is equal to the number
 /// of target variables.
-/// @todo Low priority. Return class_distribution is wrong
+/// @todo Return class_distribution is wrong
 
 Tensor<Index, 1> DataSet::calculate_target_distribution() const
 {
@@ -9328,7 +9014,6 @@ Tensor<Index, 1> DataSet::calculate_target_distribution() const
 
 /// Calculate the outliers from the data set using the Tukey's test.
 /// @param cleaning_parameter Parameter used to detect outliers.
-/// @todo Low priority.
 
 Tensor<Tensor<Index, 1>, 1> DataSet::calculate_Tukey_outliers(const type& cleaning_parameter) const
 {
@@ -9421,7 +9106,6 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 //    const Tensor<Index, 1> outliers_samples = outliers_indices(0).get_indices_greater_than(0);
 
 //    set_samples_unused(outliers_samples);
-
 }
 
 
@@ -9429,33 +9113,6 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 /// The number of rows is equal to the number of
 /// The number of columns is the maximum lags number.
 /// @param maximum_lags_number Maximum lags number for which autocorrelation is calculated.
-/// @todo
-
-//Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& maximum_lags_number) const
-//{
-//    if(maximum_lags_number > get_used_samples_number())
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: DataSet class.\n"
-//               << "Tensor<type, 2> autocorrelations(const Index&) method.\n"
-//               << "Maximum lags number(" << maximum_lags_number << ") is greater than the number of samples("
-//               << get_used_samples_number() <<") \n";
-
-//        throw logic_error(buffer.str());
-//    }
-
-//    const Index variables_number = data.dimension(1);
-
-//    Tensor<type, 2> autocorrelations(variables_number, maximum_lags_number);
-
-//    for(Index j = 0; j < variables_number; j++)
-//    {
-//        autocorrelations.set_row(j, OpenNN::autocorrelations(data.chip(j,1), maximum_lags_number));
-//    }
-
-//    return autocorrelations;
-//}
 
 Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) const
 {
@@ -9490,7 +9147,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
     for(Index i = 0; i < inputs_targets_indices_number; i++)
     {
-        if(i < input_columns_number)
+        if (i < input_columns_number)
         {
             input_target_columns_indices(i) = input_columns_indices(i);
         }
@@ -9507,7 +9164,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     {
         new_lags_number = lags_number - 2;
     }
-    else if(samples_number == lags_number + 1)
+    else if (samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9517,6 +9174,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     }
 
     Tensor<type, 2> autocorrelations(input_target_columns_number, new_lags_number);
+
     Tensor<type, 1> autocorrelations_vector(new_lags_number);
 
     for(Index i = 0; i < input_target_columns_number; i++)
@@ -9537,7 +9195,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
             for(Index j = 0; j < new_lags_number; j++)
             {
-                autocorrelations (i, j) = autocorrelations_vector(j);
+                autocorrelations (i, j) = autocorrelations_vector(j) ;
             }
         }
     }
@@ -9546,29 +9204,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 }
 
 
-
 /// Calculates the cross-correlation between all the variables in the data set.
-
-//Tensor<Tensor<type, 1>, 2> DataSet::calculate_cross_correlations(const Index& lags_number) const
-//{
-//    const Index variables_number = get_variables_number();
-
-//    Tensor<Tensor<type, 1>, 2> cross_correlations(variables_number, variables_number);
-
-//    Tensor<type, 1> actual_column;
-
-//    for(Index i = 0; i < variables_number; i++)
-//    {
-//        actual_column = data.chip(i,1);
-
-//        for(Index j = 0; j < variables_number; j++)
-//        {
-//            cross_correlations(i,j) = OpenNN::cross_correlations(actual_column, data.chip(j,1), lags_number);
-//        }
-//    }
-
-//    return cross_correlations;
-//}
 
 Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) const
 {
@@ -9603,7 +9239,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
     for(Index i = 0; i < inputs_targets_indices_number; i++)
     {
-        if(i < input_columns_number)
+        if (i < input_columns_number)
         {
             input_target_columns_indices(i) = input_columns_indices(i);
         }
@@ -9620,7 +9256,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     {
         new_lags_number = lags_number - 2;
     }
-    else if(samples_number == lags_number + 1)
+    else if (samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9629,7 +9265,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
         new_lags_number = lags_number;
     }
 
-    Tensor<type,3> cross_correlations(input_target_columns_number, input_target_columns_number, new_lags_number);
+    Tensor<type, 3> cross_correlations(input_target_columns_number, input_target_columns_number, new_lags_number);
     Tensor<type, 1> cross_correlations_vector(new_lags_number);
 
     for(Index i = 0; i < input_target_columns_number; i++)
@@ -9659,7 +9295,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
                 for(Index k = 0; k < new_lags_number; k++)
                 {
-                    cross_correlations (i, j, k) = cross_correlations_vector(k);
+                    cross_correlations (i, j, k) = cross_correlations_vector(k) ;
                 }
             }
             else
@@ -9678,67 +9314,16 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 }
 
 
-/// @todo
-
-Tensor<type, 2> DataSet::calculate_lag_plot() const
-{
-    const Index samples_number = get_used_samples_number();
-
-    const Index columns_number = data.dimension(1) - 1;
-
-    Tensor<type, 2> lag_plot(samples_number, columns_number);
-
-//    lag_plot = data.get_submatrix_columns(columns_indices);
-
-    return lag_plot;
-}
-
-
-/// @todo, check
-
-Tensor<type, 2> DataSet::calculate_lag_plot(const Index& maximum_lags_number)
-{
-    const Index samples_number = get_used_samples_number();
-
-    if(maximum_lags_number > samples_number)
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<type, 2> calculate_lag_plot(const Index&) method.\n"
-               << "Maximum lags number(" << maximum_lags_number
-               << ") is greater than the number of samples("
-               << samples_number << ") \n";
-
-        throw logic_error(buffer.str());
-    }
-
-    //const Tensor<type, 2> lag_plot = time_series_data.calculate_lag_plot(maximum_lags_number, time_index);
-
-//    return lag_plot;
-
-    return Tensor<type, 2>();
-}
-
-
 /// Generates an artificial dataset with a given number of samples and number of variables
 /// by constant data.
 /// @param samples_number Number of samples in the dataset.
 /// @param variables_number Number of variables in the dataset.
-/// @todo
 
-void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number)
+void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number, const type& value)
 {
     set(samples_number, variables_number);
 
-//    data.setRandom(-5.12, 5.12);
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        data(i, variables_number-1) = 0;
-    }
-
-    scale_minimum_maximum(data);
+    data.setConstant(value);
 
     set_default_columns_uses();
 }
@@ -9755,9 +9340,6 @@ void DataSet::generate_random_data(const Index& samples_number, const Index& var
     set(samples_number, variables_number);
 
     data.setRandom();
-
-//        data.setRandom(0.0, 1.0);
-
 }
 
 
@@ -9843,26 +9425,6 @@ void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index&
 }
 
 
-/// @todo
-
-void DataSet::generate_inputs_selection_data(const Index& samples_number, const Index& variables_number)
-{
-    set(samples_number,variables_number);
-
-    data.setRandom();
-
-    for(Index i = 0; i < samples_number; i++)
-    {
-        for(Index j = 0; j < variables_number-2; j++)
-        {
-            data(i,variables_number-1) += data(i,j);
-        }
-    }
-
-    set_default_columns_uses();
-}
-
-
 void DataSet::generate_sum_data(const Index& samples_number, const Index& variables_number)
 {
     set(samples_number,variables_number);
@@ -9880,82 +9442,6 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
     set_default();
 
     scale_data_mean_standard_deviation();
-
-}
-
-
-/// Generate artificial data for a binary classification problem with a given number of samples and inputs.
-/// @param samples_number Number of the samples to generate.
-/// @param inputs_number Number of the variables that the data set will have.
-/// @todo
-
-void DataSet::generate_data_binary_classification(const Index& samples_number, const Index& inputs_number)
-{
-    const Index negatives = samples_number/2;
-    const Index positives = samples_number - negatives;
-
-    // Negatives data
-
-    Tensor<type, 1> target_0(negatives);
-
-    Tensor<type, 2> class_0(negatives, inputs_number+1);
-
-//        class_0.setRandom(-0.5, 1.0);
-
-//        class_0.set_column(inputs_number, target_0, "");
-
-        // Positives data
-
-//        Tensor<type, 1> target_1(positives, 1.0);
-
-//        Tensor<type, 2> class_1(positives, inputs_number+1);
-
-//        class_1.setRandom(0.5, 1.0);
-
-//        class_1.set_column(inputs_number, target_1, "");
-
-        // Assemble
-
-//        set(class_0.assemble_rows(class_1));
-}
-
-
-/// @todo Low priority.
-
-void DataSet::generate_data_multiple_classification(const Index& samples_number, const Index& inputs_number, const Index& outputs_number)
-{
-    Tensor<type, 2> new_data(samples_number, inputs_number);
-
-    new_data.setRandom();
-
-    Tensor<type, 2> targets(samples_number, outputs_number);
-
-    Index target_index = 0;
-
-    for(Index i = 0; i < samples_number; i ++)
-    {
-        target_index = static_cast<unsigned>(rand())%outputs_number;
-
-        targets(i, target_index) = 1.0;
-    }
-
-//        set(new_data.assemble_columns(targets));
-}
-
-
-/// Returns true if the data matrix is not empty(it has not been loaded),
-/// and false otherwise.
-
-bool DataSet::has_data() const
-{
-    if(is_empty())
-    {
-        return false;
-    }
-    else
-    {
-        return true;
-    }
 }
 
 
@@ -9964,7 +9450,7 @@ bool DataSet::has_data() const
 /// The size must be equal to the number of variables.
 /// @param maximums vector of maximum values in the range.
 /// The size must be equal to the number of variables.
-/// @todo Low priority.
+/// @todo
 
 Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Tensor<type, 1>& maximums)
 {
@@ -10037,6 +9523,7 @@ Tensor<Index, 1> DataSet::filter_data(const Tensor<type, 1>& minimums, const Ten
             static_cast<Index>(std::count_if(filtered_indices.data(), filtered_indices.data()+filtered_indices.size(), [](type value) {return value > static_cast<type>(0.5);}));
 
     Tensor<Index, 1> filtered_samples_indices(filtered_samples_number);
+
     Index index = 0;
 
     for(Index i = 0; i < samples_number; i++)
@@ -10265,8 +9752,6 @@ void DataSet::scrub_missing_values()
 }
 
 
-/// @todo Time series stuff?
-
 void DataSet::read_csv()
 {
     read_csv_1();
@@ -10279,9 +9764,6 @@ void DataSet::read_csv()
     }
     else
     {
-
-    //  categorical data
-
         read_csv_2_complete();
 
         read_csv_3_complete();
@@ -10332,7 +9814,6 @@ void DataSet::read_csv_1()
     string line;
 
     Index lines_count = 0;
-                cout << "here" << endl;
 
     while(file.good())
     {
@@ -10423,20 +9904,22 @@ void DataSet::read_csv_1()
     {
         if(has_rows_labels && i == 0) continue;
 
-        if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-        || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-        || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
-        || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
+        if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
+                || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label)
+                || data_file_preview(0)(i).find("time") != string::npos)
         {
-            columns(column_index).type = Numeric;
+
+            columns(column_index).type = DateTime;
             column_index++;
         }
-        else if((is_date_time_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label)
-             || (is_date_time_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label)
-             || (is_date_time_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label)
-             || (is_date_time_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label))
+        else if(((is_numeric_string(data_file_preview(1)(i)) && data_file_preview(1)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+                || ((is_numeric_string(data_file_preview(2)(i)) && data_file_preview(2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-2)(i)) && data_file_preview(lines_number-2)(i) != missing_values_label) || data_file_preview(1)(i).empty())
+                || ((is_numeric_string(data_file_preview(lines_number-1)(i)) && data_file_preview(lines_number-1)(i) != missing_values_label) || data_file_preview(1)(i).empty()))
         {
-            columns(column_index).type = DateTime;
+            columns(column_index).type = Numeric;
             column_index++;
         }
         else
@@ -10658,23 +10141,9 @@ void DataSet::read_csv_3_simple()
         {
             // @todo avoid chip
 
-//            if(is_constant_numeric(data.chip(variable_index, 1)))
-//            {
-//                columns(column).type = Constant;
-//                columns(column).column_use = UnusedVariable;
-//            }
+            const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            const type a = data(0, variable_index);
-
-            bool constant = true;
-
-            for (int i = 1; i < data.dimension(0); i++)
-            {
-                if(abs(data(i, variable_index)-a) > 1e-3 || ::isnan(data(i, variable_index)) || ::isnan(a))
-                    constant = false;
-            }
-
-            if(constant)
+            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
@@ -10723,8 +10192,6 @@ void DataSet::read_csv_3_simple()
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
-
-
 }
 
 
@@ -11059,9 +10526,8 @@ void DataSet::read_csv_3_complete()
         {
             const Tensor<type, 1> numeric_column = data.chip(variable_index, 1);
 
-            if(standard_deviation(numeric_column) - static_cast<type>(0) < static_cast<type>(1.0-3))
+            if(standard_deviation(numeric_column) < static_cast<type>(1.0e-3))
             {
-
                 columns(column).type = Constant;
                 columns(column).column_use = UnusedVariable;
             }
@@ -11191,15 +10657,14 @@ void DataSet::check_special_characters(const string & line) const
 
         throw logic_error(message);
     }
-
-#ifdef __unix__
-    if(line.find("\r") != std::string::npos)
-    {
-        const string message =
-                "Error: mixed break line characters in line: " + line + ". Please, review the document.";
-        throw logic_error(message);
-    }
-#endif
+//#ifdef __unix__
+//    if(line.find("\r") != std::string::npos)
+//    {
+//        const string message =
+//                "Error: mixed break line characters in line: " + line + ". Please, review the document.";
+//        throw logic_error(message);
+//    }
+//#endif
 }
 
 
@@ -11266,7 +10731,7 @@ Tensor<Index, 1> DataSet::count_nan_columns() const
         {
             if(isnan(data(row_index,current_variable_index)))
             {
-                nan_columns(column_index) = nan_columns(column_index) + 1;
+                nan_columns(column_index)++;
             }
         }
     }
@@ -11373,10 +10838,10 @@ void DataSet::fix_repeated_names()
     {
         auto result = columns_count_map.insert(std::pair<std::string, Index>(columns(i).name, 1));
 
-        if(!result.second) result.first->second++;
+        if (!result.second) result.first->second++;
     }
 
-    for (auto & element : columns_count_map)
+    for(auto & element : columns_count_map)
     {
         if(element.second > 1)
         {
@@ -11408,10 +10873,10 @@ void DataSet::fix_repeated_names()
         {
             auto result = variables_count_map.insert(std::pair<std::string, Index>(variables_names(i), 1));
 
-            if(!result.second) result.first->second++;
+            if (!result.second) result.first->second++;
         }
 
-        for (auto & element : variables_count_map)
+        for(auto & element : variables_count_map)
         {
             if(element.second > 1)
             {
@@ -11502,7 +10967,7 @@ void DataSet::intialize_sequential_eigen_type_tensor(Tensor<type, 1>& new_tensor
 }
 
 
-Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index & new_batch_size) const
+Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index&  new_batch_size) const
 {
     const Index samples_number = samples_indices.dimension(0);
 
@@ -11538,6 +11003,7 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
     return batches;
 }
 
+
 void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
           const Tensor<Index, 1>& rows_indices,
           const Tensor<Index, 1>& columns_indices, type* submatrix_pointer)
@@ -11547,7 +11013,7 @@ void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
 
     const type* matrix_pointer = matrix.data();
 
-#pragma omp parallel for
+    #pragma omp parallel for
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -11567,14 +11033,13 @@ void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
 }
 
 
-void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
+void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                           const Tensor<Index, 1>& inputs,
                           const Tensor<Index, 1>& targets)
 {
     const Tensor<type, 2>& data = data_set_pointer->get_data();
 
     const Tensor<Index, 1>& input_variables_dimensions = data_set_pointer->get_input_variables_dimensions();
-
 
     if(input_variables_dimensions.size() == 1)
     {
@@ -11613,7 +11078,7 @@ void DataSet::Batch::fill(const Tensor<Index, 1>& samples,
 }
 
 
-DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_pointer)
+DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer)
 {
     samples_number = new_samples_number;
 
@@ -11637,18 +11102,17 @@ DataSet::Batch::Batch(const Index& new_samples_number, DataSet* new_data_set_poi
         inputs_4d.resize(samples_number, channels_number, rows_number, columns_number);
     }
 
-
     targets_2d.resize(samples_number, target_variables_number);
 }
 
 
-Index DataSet::Batch::get_samples_number() const
+Index DataSetBatch::get_samples_number() const
 {
     return samples_number;
 }
 
 
-void DataSet::Batch::print()
+void DataSetBatch::print()
 {
     cout << "Batch structure" << endl;
 
@@ -11702,7 +11166,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

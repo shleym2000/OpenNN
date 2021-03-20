@@ -72,29 +72,31 @@ public:
 
    type calculate_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
+   type calculate_time_series_normalization_coefficient(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+
    // Error methods
      
-   void calculate_error(const DataSet::Batch& batch,
-                        const NeuralNetworkForwardPropagation& forward_propagation,
-                        BackPropagation& back_propagation) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagation&) const;
 
-   void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetworkForwardPropagation&,
-                              SecondOrderLoss&) const;
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagationLM&) const;
 
    // Gradient methods
 
-   void calculate_output_delta(const DataSet::Batch&,
+   void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               BackPropagation&) const;
+                               LossIndexBackPropagation&) const;
 
-   void calculate_Jacobian_gradient(const DataSet::Batch& batch,
-                                       LossIndex::SecondOrderLoss& second_order_loss) const;
+   void calculate_gradient(const DataSetBatch& batch,
+                           LossIndexBackPropagationLM&) const;
 
    // Hessian method
 
-   void calculate_hessian_approximation(const DataSet::Batch&,
-                                        LossIndex::SecondOrderLoss&) const;
+   void calculate_hessian_approximation(const DataSetBatch&,
+                                        LossIndexBackPropagationLM&) const;
 
 
    // Serialization methods

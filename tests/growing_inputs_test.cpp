@@ -68,9 +68,9 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 
 //    SumSquaredError sum_squared_error(&neural_network ,&ds);
 
-//    GrowingInputs::GrowingInputsResults* gir;
+//    InputsSelectionResults* gir;
 
-//    // Test
+    // Test
 
 //    ds.generate_inputs_selection_data(30,3);
 
@@ -100,7 +100,7 @@ void GrowingInputsTest::test_perform_inputs_selection() // @todo
 //    gi.delete_parameters_history();
 //    gi.delete_loss_history();
 
-//    // Test
+    // Test
 
 //    ds.generate_sum_data(20,3);
 

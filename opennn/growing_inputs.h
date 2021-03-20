@@ -48,25 +48,6 @@ public:
 
     virtual ~GrowingInputs();
 
-    // Structures
-
-    /// This structure contains the training results for the growing inputs method.
-
-    struct GrowingInputsResults : public InputsSelection::Results
-    {
-        /// Default constructor.
-
-        explicit GrowingInputsResults() : InputsSelection::Results() {}
-
-        /// Destructor.
-
-        virtual ~GrowingInputsResults() {}
-
-
-        Tensor<bool, 1> selected_inputs;
-    };
-
-
     // Get methods
 
     const Index& get_maximum_inputs_number() const;
@@ -87,13 +68,12 @@ public:
 
     // Order selection methods
 
-    GrowingInputsResults* perform_inputs_selection();
+    InputsSelectionResults* perform_inputs_selection();
 
     // Serialization methods
 
     Tensor<string, 2> to_string_matrix() const;
 
-    
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;

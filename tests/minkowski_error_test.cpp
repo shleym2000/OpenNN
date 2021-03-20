@@ -28,16 +28,16 @@ void MinkowskiErrorTest::test_constructor() // @todo
 
 //   MinkowskiError me1;
 
-//   assert_true(me1.has_neural_network() == false, LOG);
-//   assert_true(me1.has_data_set() == false, LOG);
+//   assert_true(!me1.has_neural_network(), LOG);
+//   assert_true(!me1.has_data_set(), LOG);
 
    // Neural network
 
 //   NeuralNetwork nn2;
 //   MinkowskiError me2(&nn2);
 
-//   assert_true(me2.has_neural_network() == true, LOG);
-//   assert_true(me2.has_data_set() == false, LOG);
+//   assert_true(me2.has_neural_network(), LOG);
+//   assert_true(!me2.has_data_set(), LOG);
 
    // Neural network and data set
 
@@ -45,8 +45,8 @@ void MinkowskiErrorTest::test_constructor() // @todo
 //   DataSet ds3;
 //   MinkowskiError me3(&nn3, &ds3);
 
-//   assert_true(me3.has_neural_network() == true, LOG);
-//   assert_true(me3.has_data_set() == true, LOG);
+//   assert_true(me3.has_neural_network(), LOG);
+//   assert_true(me3.has_data_set(), LOG);
 }
 
 
@@ -101,7 +101,7 @@ void MinkowskiErrorTest::test_calculate_error()
    inputs_number = 1;
    target_number = 1;
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -116,7 +116,7 @@ void MinkowskiErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(0);
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation(data_set.get_training_samples_number(), &minkowski_error);
+   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation);
    minkowski_error.back_propagate(batch, forward_propagation, training_back_propagation);
@@ -130,7 +130,7 @@ void MinkowskiErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(1);
 
    NeuralNetworkForwardPropagation forward_propagation_2(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation_2(data_set.get_training_samples_number(), &minkowski_error);
+   LossIndexBackPropagation training_back_propagation_2(data_set.get_training_samples_number(), &minkowski_error);
 
    neural_network.forward_propagate(batch, forward_propagation_2);
    minkowski_error.back_propagate(batch, forward_propagation_2, training_back_propagation_2);
@@ -190,7 +190,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -211,7 +211,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    me.set_Minkowski_parameter(1.5);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   BackPropagation training_back_propagation(samples_number, &me);
+   LossIndexBackPropagation training_back_propagation(samples_number, &me);
 
    me.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
@@ -221,7 +221,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    error_gradient = training_back_propagation.gradient;
 
-   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation(&me);
+   numerical_error_gradient = me.calculate_gradient_numerical_differentiation(&me);
 
    const Tensor<type, 1> difference = error_gradient-numerical_error_gradient;
 
@@ -243,7 +243,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
    data_set.initialize_data(0.0);
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
    const Tensor<Index, 1> input_indices = data_set.get_input_variables_indices();
@@ -257,11 +257,11 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
    neural_network.set_parameters_constant(0.0);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
-   BackPropagation training_back_propagation(samples_number, &me);
+   LossIndexBackPropagation training_back_propagation(samples_number, &me);
    me.back_propagate(batch, forward_propagation, training_back_propagation);
 
    neural_network.forward_propagate(batch, forward_propagation);
-   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation(&me);
+   numerical_error_gradient = me.calculate_gradient_numerical_differentiation(&me);
 
    me.calculate_error_gradient(batch, forward_propagation, training_back_propagation);
 
@@ -300,7 +300,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   error_gradient = me.calculate_error_gradient();
 
-//   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -329,7 +329,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 //   neural_network.set_parameters_random();
 //   error_gradient = me.calculate_error_gradient();
 
-//   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 //}
@@ -359,7 +359,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 
 //   error_gradient = me.calculate_error_gradient();
 
-//   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 //}
@@ -429,7 +429,7 @@ void MinkowskiErrorTest::test_calculate_error_gradient() // @todo
 //   neural_network.add_layer(perceptron_layer);
 //   neural_network.add_layer(probabilistic_layer);
 
-//   numerical_error_gradient = me.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = me.calculate_gradient_numerical_differentiation();
 
 //   error_gradient = me.calculate_error_gradient();
 

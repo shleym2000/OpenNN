@@ -75,8 +75,6 @@ void GeneticAlgorithmTest::test_initialize_population()
 
     ga.set_population_size(10);
 
-    ga.set_inicialization_method(GeneticAlgorithm::Random);
-
     ga.initialize_population();
 
     population = ga.get_population();
@@ -90,7 +88,7 @@ void GeneticAlgorithmTest::test_initialize_population()
 
 /// @todo
 
-void GeneticAlgorithmTest::test_calculate_fitness() // @todo
+void GeneticAlgorithmTest::test_calculate_fitness()
 {
     cout << "test_calculate_fitness\n";
 
@@ -262,7 +260,7 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
 //    crossover_population = ga.get_population();
 
-//    assert_true(crossover_population(2,1) == true, LOG);
+//    assert_true(crossover_population(2,1), LOG);
 
 //    ga.set_population(population);
 
@@ -282,7 +280,7 @@ void GeneticAlgorithmTest::test_perform_crossover() // @todo
 
 //    crossover_population = ga.get_population();
 
-//    assert_true(crossover_population(2,1) == true, LOG);
+//    assert_true(crossover_population(2,1), LOG);
 }
 
 
@@ -359,10 +357,10 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    SumSquaredError sum_squared_error(&neural_network,& data_set);
 
-//    GeneticAlgorithm::GeneticAlgorithmResults* ga_results;
-//    GeneticAlgorithm::GeneticAlgorithmResults* ga1_results;
+//    GeneticAlgorithmResults* ga_results;
+//    GeneticAlgorithmResults* ga1_results;
 
-//    // Test
+    // Test
 
 //    for(Index i = 0; i < 20; i++)
 //    {
@@ -394,14 +392,14 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 
 //    ga_results = ga.perform_inputs_selection();
 
-//    assert_true(ga_results->final_selection_error < 1, LOG);
+//    assert_true(ga_results->selection_error < 1, LOG);
 //    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
 //    ga.delete_selection_history();
 //    ga.delete_parameters_history();
 //    ga.delete_loss_history();
 
-//    // Test
+    // Test
 
 //    Index j = -10;
 
@@ -445,7 +443,7 @@ void GeneticAlgorithmTest::test_perform_inputs_selection() // @todo
 //    ga1_results = ga1.perform_inputs_selection();
 
 //    assert_true(ga1_results->iterations_number == 1, LOG);
-//    assert_true(ga1_results->final_selection_error < 1, LOG);
+//    assert_true(ga1_results->selection_error < 1, LOG);
 //    assert_true(ga_results->stopping_condition == InputsSelection::SelectionErrorGoal, LOG);
 
 //    ga1.delete_selection_history();

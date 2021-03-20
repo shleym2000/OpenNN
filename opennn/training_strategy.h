@@ -163,9 +163,7 @@ public:
 
    // Training methods
 
-   // This method trains a neural network which has a loss index associated.
-
-   OptimizationAlgorithm::Results perform_training();
+   TrainingResults perform_training();
    void perform_training_void();
 
    // Check methods

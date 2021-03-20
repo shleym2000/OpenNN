@@ -217,22 +217,7 @@ public:
    virtual void load(const string&);
    void load_parameters_binary(const string&);
 
-   void save_data(const string&) const;
-
-   Tensor<string, 1> get_layers_names() const
-   {
-       const Index layers_number = get_layers_number();
-
-       Tensor<string, 1> layers_names(layers_number);
-
-       for(Index i = 0; i < layers_number; i++)
-       {
-           layers_names[i] = layers_pointers[i]->get_name();
-       }
-
-       return layers_names;
-   }
-
+   Tensor<string, 1> get_layers_names() const;
 
    // Expression methods
 
@@ -247,8 +232,8 @@ public:
 
    /// Calculate de forward propagation in the neural network
 
-   void forward_propagate(const DataSet::Batch&, NeuralNetworkForwardPropagation&) const;
-   void forward_propagate(const DataSet::Batch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate(const DataSetBatch&, NeuralNetworkForwardPropagation&) const;
+   void forward_propagate(const DataSetBatch&, Tensor<type, 1>&, NeuralNetworkForwardPropagation&) const;
 
 protected:
 
@@ -299,7 +284,7 @@ struct NeuralNetworkForwardPropagation
 
         layers.resize(trainable_layers_number);
 
-        for (Index i = 0; i < trainable_layers_number; i++)
+        for(Index i = 0; i < trainable_layers_number; i++)
         {
             switch (trainable_layers_pointers(i)->get_type())
             {
@@ -350,7 +335,7 @@ struct NeuralNetworkForwardPropagation
 
         cout << "Layers number: " << layers_number << endl;
 
-        for (Index i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
         {
             cout << "Layer " << i + 1 << endl;
 
@@ -389,7 +374,7 @@ struct NeuralNetworkBackPropagation
 
         layers.resize(trainable_layers_number);
 
-        for (Index i = 0; i < trainable_layers_number; i++)
+        for(Index i = 0; i < trainable_layers_number; i++)
         {
             //layers(i).set(batch_samples_number, trainable_layers_pointers(i));
 
@@ -438,7 +423,7 @@ struct NeuralNetworkBackPropagation
 
         cout << "Layers number: " << layers_number << endl;
 
-        for (Index i = 0; i < layers_number; i++)
+        for(Index i = 0; i < layers_number; i++)
         {
             cout << "Layer " << i + 1 << endl;
         }

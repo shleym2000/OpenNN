@@ -40,7 +40,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    data_set.initialize_data(0);
    data_set.set_training();
 
-   DataSet::Batch batch(1, &data_set);
+   DataSetBatch batch(1, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -60,7 +60,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(0);
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
+   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
 
    neural_network.forward_propagate(batch, forward_propagation);
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
@@ -82,7 +82,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    neural_network.set_parameters_constant(1);
 
    NeuralNetworkForwardPropagation forward_propagation_1(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation_1(data_set.get_training_samples_number(), &cee);
+   LossIndexBackPropagation training_back_propagation_1(data_set.get_training_samples_number(), &cee);
 
    neural_network.forward_propagate(batch, forward_propagation_1);
    cee.back_propagate(batch, forward_propagation_1, training_back_propagation_1);
@@ -101,7 +101,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    data_set_2.initialize_data(0);
    data_set_2.set_training();
 
-   DataSet::Batch batch_1(1, &data_set_2);
+   DataSetBatch batch_1(1, &data_set_2);
 
    Tensor<Index,1> training_samples_indices_2 = data_set_2.get_training_samples_indices();
    Tensor<Index,1> inputs_indices_2 = data_set_2.get_input_variables_indices();
@@ -120,7 +120,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    CrossEntropyError cee_2(&neural_network_2, &data_set_2);
 
    NeuralNetworkForwardPropagation forward_propagation_2(data_set_2.get_training_samples_number(), &neural_network_2);
-   BackPropagation training_back_propagation_2(data_set_2.get_training_samples_number(), &cee_2);
+   LossIndexBackPropagation training_back_propagation_2(data_set_2.get_training_samples_number(), &cee_2);
 
    neural_network_2.forward_propagate(batch_1, forward_propagation_2);
    cee_2.back_propagate(batch_1, forward_propagation_2, training_back_propagation_2);
@@ -179,7 +179,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    data_set.set_training();
 
-   DataSet::Batch batch(samples_number, &data_set);
+   DataSetBatch batch(samples_number, &data_set);
 
    Tensor<Index,1> training_samples_indices = data_set.get_training_samples_indices();
    Tensor<Index,1> inputs_indices = data_set.get_input_variables_indices();
@@ -195,14 +195,14 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
    neural_network.set_parameters_random();
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
-   BackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
+   LossIndexBackPropagation training_back_propagation(data_set.get_training_samples_number(), &cee);
    cee.set_regularization_method(LossIndex::RegularizationMethod::NoRegularization);
 
    neural_network.forward_propagate(batch, forward_propagation);
 
    cee.back_propagate(batch, forward_propagation, training_back_propagation);
 
-   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation(&cee);
+   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation(&cee);
 
    const Tensor<type, 1> difference = training_back_propagation.gradient-numerical_error_gradient;
 
@@ -244,7 +244,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = cee.calculate_error_gradient();
 
-//   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -276,7 +276,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
 //   error_gradient = cee.calculate_error_gradient();
 
-//   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   assert_true(absolute_value(error_gradient - numerical_error_gradient) < 1.0e-3, LOG);
 }
@@ -346,7 +346,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 //   neural_network.add_layer(perceptron_layer);
 //   neural_network.add_layer(probabilistic_layer);
 
-//   numerical_error_gradient = cee.calculate_error_gradient_numerical_differentiation();
+//   numerical_error_gradient = cee.calculate_gradient_numerical_differentiation();
 
 //   error_gradient = cee.calculate_error_gradient();
 

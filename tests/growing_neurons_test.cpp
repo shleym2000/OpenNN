@@ -68,9 +68,9 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 
 //    GrowingNeurons io(&ts);
 
-//    GrowingNeurons::GrowingNeuronsResults* results = nullptr;
+//    GrowingNeuronsResults* results = nullptr;
 
-//    // Test
+    // Test
 
 //    str =   "-1 0\n"
 //            "-0.9 0\n"
@@ -129,7 +129,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection() // @todo
 //    assert_true(results->stopping_condition ==
 //                NeuronsSelection::SelectionErrorGoal, LOG);
 
-//    // Test
+    // Test
 
 //    str =
 //            "-1 -1\n"

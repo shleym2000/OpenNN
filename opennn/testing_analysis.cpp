@@ -620,10 +620,10 @@ void TestingAnalysis::print_error_data_descriptives() const
         cout << "Mean error: " << error_data_statistics[i][0].mean << " " << endl;
         cout << "Standard deviation error: " << error_data_statistics[i][0].standard_deviation << " " << endl;
 
-        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" <<  endl;
-        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" <<  endl;
-        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" <<  endl;
-        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" <<  endl;
+        cout << "Minimum percentage error: " << error_data_statistics[i][2].minimum << " %" << endl;
+        cout << "Maximum percentage error: " << error_data_statistics[i][2].maximum << " %" << endl;
+        cout << "Mean percentage error: " << error_data_statistics[i][2].mean << " %" << endl;
+        cout << "Standard deviation percentage error: " << error_data_statistics[i][2].standard_deviation << " %" << endl;
 
         cout << endl;
     }
@@ -3889,10 +3889,6 @@ type TestingAnalysis::calculate_logloss() const
 
     check();
 
-#endif
-
-#ifdef __OPENNN_DEBUG__
-
     if(!neural_network_pointer)
     {
         ostringstream buffer;
@@ -3903,10 +3899,6 @@ type TestingAnalysis::calculate_logloss() const
 
         throw logic_error(buffer.str());
     }
-
-#endif
-
-#ifdef __OPENNN_DEBUG__
 
     const Index inputs_number = neural_network_pointer->get_inputs_number();
 

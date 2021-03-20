@@ -652,7 +652,7 @@ void TrainingStrategy::set_loss_goal(const type & new_loss_goal)
 }
 
 
-void TrainingStrategy::set_maximum_selection_error_increases(const Index & maximum_selection_error_increases)
+void TrainingStrategy::set_maximum_selection_error_increases(const Index&  maximum_selection_error_increases)
 {
     gradient_descent.set_maximum_selection_error_increases(maximum_selection_error_increases);
     conjugate_gradient.set_maximum_selection_error_increases(maximum_selection_error_increases);
@@ -714,16 +714,8 @@ void TrainingStrategy::set_default()
 /// It optimizes the loss index of a neural network.
 /// This method also returns a structure with the results from training.
 
-OptimizationAlgorithm::Results TrainingStrategy::perform_training()
+TrainingResults TrainingStrategy::perform_training()
 {
-#ifdef __OPENNN_DEBUG__
-
-//    check_loss_index();
-
-//    check_optimization_algorithms();
-
-#endif
-
     if(neural_network_pointer->has_long_short_term_memory_layer() || neural_network_pointer->has_recurrent_layer())
     {
         fix_forecasting();
@@ -734,17 +726,11 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "OptimizationAlgorithm::Results TrainingStrategy::perform_training() const method.\n"
+               << "TrainingResults TrainingStrategy::perform_training() const method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
         throw logic_error(buffer.str());
     }
-
-
-
-    OptimizationAlgorithm::Results results;
-
-    // Main
 
     switch(optimization_method)
     {
@@ -752,54 +738,47 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
     {
         gradient_descent.set_display(display);
 
-        results = gradient_descent.perform_training();
-
+        return gradient_descent.perform_training();
     }
-    break;
 
     case CONJUGATE_GRADIENT:
     {
         conjugate_gradient.set_display(display);
 
-        results = conjugate_gradient.perform_training();
+        return conjugate_gradient.perform_training();
     }
-    break;
 
     case QUASI_NEWTON_METHOD:
     {
         quasi_Newton_method.set_display(display);
 
-        results = quasi_Newton_method.perform_training();
+        return quasi_Newton_method.perform_training();
     }
-    break;
 
     case LEVENBERG_MARQUARDT_ALGORITHM:
     {
         Levenberg_Marquardt_algorithm.set_display(display);
 
-        results = Levenberg_Marquardt_algorithm.perform_training();
+        return Levenberg_Marquardt_algorithm.perform_training();
     }
-    break;
 
     case STOCHASTIC_GRADIENT_DESCENT:
     {
         stochastic_gradient_descent.set_display(display);
 
-        results = stochastic_gradient_descent.perform_training();
+        return stochastic_gradient_descent.perform_training();
 
     }
-    break;
 
     case ADAPTIVE_MOMENT_ESTIMATION:
     {
         adaptive_moment_estimation.set_display(display);
 
-        results = adaptive_moment_estimation.perform_training();
+        return adaptive_moment_estimation.perform_training();
     }
-    break;
     }
 
-    return results;
+    return TrainingResults();
 }
 
 
@@ -807,14 +786,6 @@ OptimizationAlgorithm::Results TrainingStrategy::perform_training()
 
 void TrainingStrategy::perform_training_void()
 {
-#ifdef __OPENNN_DEBUG__
-
-//    check_loss_index();
-
-//    check_optimization_algorithms();
-
-#endif
-
     switch(optimization_method)
     {
     case GRADIENT_DESCENT:
@@ -1273,7 +1244,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             }
         }
     }
-
 }
 
 
@@ -1282,7 +1252,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
 void TrainingStrategy::save(const string& file_name) const
 {
-
     FILE *pFile;
 
     pFile = fopen(file_name.c_str(), "w");
@@ -1320,7 +1289,6 @@ void TrainingStrategy::load(const string& file_name)
 }
 
 }
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.

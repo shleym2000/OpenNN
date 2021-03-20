@@ -203,24 +203,24 @@ Index Layer::get_synaptic_weights_number() const
 }
 
 
-void Layer::set_inputs_number(const Index &)
+void Layer::set_inputs_number(const Index& )
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_inputs_number(const Index &) method.\n"
+           << "set_inputs_number(const Index& ) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
 }
 
 
-void Layer::set_neurons_number(const Index &)
+void Layer::set_neurons_number(const Index& )
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "set_neurons_number(const Index &) method.\n"
+           << "set_neurons_number(const Index& ) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
@@ -367,11 +367,9 @@ void Layer::exponential_linear(const Tensor<type, 1>& x, Tensor<type, 1>& y) con
     y.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
 
-/// @todo Ternary operator
 
 void Layer::binary(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
-
     const Tensor<bool, 1> if_sentence = x < x.constant(0.5);
 
     Tensor<type, 1> f_1(x.dimension(0));
@@ -386,13 +384,11 @@ void Layer::binary(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 }
 
 
-/// @todo exception with several maximum indices
-
 void Layer::competitive(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 {
     y.setZero();
 
-    Index index = maximal_index(x);
+    const Index index = maximal_index(x);
 
     y(index) = 1;
 }
@@ -408,13 +404,10 @@ void Layer::softmax(const Tensor<type, 1>& x, Tensor<type, 1>& y) const
 }
 
 
-// Activations derivatives 1d
-
 void Layer::hard_sigmoid_derivatives(const Tensor<type, 1>& combinations,
                                      Tensor<type, 1>& activations,
                                      Tensor<type, 1>& activations_derivatives) const
 {
-
     // Conditions
 
     const Tensor<bool, 1> if_sentence = combinations < combinations.constant(-2.5);
@@ -1315,10 +1308,10 @@ void Layer::soft_sign(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 }
 
 
+/// @todo Test this method.
+
 void Layer::hard_sigmoid(const Tensor<type, 4>& x, Tensor<type, 4>& y) const
 {
-    // @todo Test this method
-
     const Tensor<bool, 4> if_lower = x < x.constant(-2.5);
     const Tensor<bool, 4> if_greater = x > x.constant(2.5);
     const Tensor<bool, 4> if_middle = x < x.constant(-2.5) && x > x.constant(2.5);
@@ -1575,7 +1568,7 @@ void Layer::hard_sigmoid_derivatives(const Tensor<type, 4>& combinations,
 
     activations.device(*thread_pool_device) = if_sentence.select(f1, elif_sentence.select(f2, f3));
 
-    // Activations Derivatives
+    // Activations derivatives
 
     activations_derivatives.device(*thread_pool_device) = if_sentence_2.select(f4, f5);
 }
@@ -1611,6 +1604,23 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 4>& combinations,
     activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
 }
 
+
+void Layer::multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vector) const
+{
+    const Index columns_number = matrix.dimension(1);
+    const Index rows_number = matrix.dimension(0);
+
+    #pragma omp paralell for
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < columns_number; j++)
+        {
+           matrix(i,j) *= vector(j);
+        }
+    }
+}
+
 }
 
 // OpenNN: Open Neural Networks Library.
@@ -1629,4 +1639,3 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 4>& combinations,
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

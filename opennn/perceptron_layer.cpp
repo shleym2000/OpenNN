@@ -755,8 +755,8 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
 
 
 void PerceptronLayer::calculate_hidden_delta(LayerForwardPropagation* next_layer_forward_propagation,
-    LayerBackPropagation* next_layer_back_propagation,
-    LayerBackPropagation* layer_back_propagation) const
+                                             LayerBackPropagation* next_layer_back_propagation,
+                                             LayerBackPropagation* layer_back_propagation) const
 {
     PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
             static_cast<PerceptronLayerBackPropagation*>(layer_back_propagation);
@@ -811,10 +811,72 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
                                                            ProbabilisticLayerBackPropagation* next_back_propagation,
                                                            PerceptronLayerBackPropagation* back_propagation) const
 {
-    const Tensor<type, 2>& next_synaptic_weights = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer)->get_synaptic_weights();
+    const ProbabilisticLayer* probabilistic_layer_pointer = static_cast<ProbabilisticLayer*>(next_back_propagation->layer_pointer);
 
-    back_propagation->delta.device(*thread_pool_device) =
-            (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+    const Tensor<type, 2>& next_synaptic_weights = probabilistic_layer_pointer->get_synaptic_weights();
+
+    if(probabilistic_layer_pointer->get_neurons_number() == 1) // Binary
+    {
+        back_propagation->delta.device(*thread_pool_device) =
+                (next_back_propagation->delta*next_forward_propagation->activations_derivatives).contract(next_synaptic_weights, A_BT);
+    }
+    else // Multiple
+    {
+        const Index samples_number = next_back_propagation->delta.dimension(0);
+        const Index outputs_number = next_back_propagation->delta.dimension(1);
+        const Index next_layer_neurons_number = probabilistic_layer_pointer->get_neurons_number();
+
+        if(outputs_number != next_layer_neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
+                   << "Number of columns in delta (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(next_forward_propagation->activations_derivatives.dimension(1) != next_layer_neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
+                   << "Dimension 1 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        if(next_forward_propagation->activations_derivatives.dimension(2) != next_layer_neurons_number)
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: ProbabilisticLayer class.\n"
+                   << "void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,ProbabilisticLayerBackPropagation*,PerceptronLayerBackPropagation*) const.\n"
+                   << "Dimension 2 of activations derivatives (" << outputs_number << ") must be equal to number of neurons in probabilistic layer (" << next_layer_neurons_number << ").\n";
+
+            throw logic_error(buffer.str());
+        }
+
+        const Index step = next_layer_neurons_number*next_layer_neurons_number;
+
+        next_back_propagation->biases_derivatives.setZero();
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            next_back_propagation->delta_row = next_back_propagation->delta.chip(i,0);
+
+            TensorMap< Tensor<type, 2> > activations_derivatives_matrix(next_forward_propagation->activations_derivatives.data() + i*step,
+                                                                        next_layer_neurons_number, next_layer_neurons_number);
+
+            next_back_propagation->error_combinations_derivatives.chip(i,0) =
+                    next_back_propagation->delta_row.contract(activations_derivatives_matrix, AT_B);
+        }
+
+        back_propagation->delta.device(*thread_pool_device) =
+                (next_back_propagation->error_combinations_derivatives).contract(next_synaptic_weights, A_BT);
+    }
 }
 
 
@@ -908,24 +970,6 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
          }
     }
 
-//    ostringstream buffer;
-
-//    for(Index j = 0; j < outputs_names.size(); j++)
-//    {
-
-//      Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
-
-//               buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
-
-//               for(Index i = 0; i < inputs_names.size() - 1; i++)
-//               {
-
-//                   buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
-//               }
-
-//               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
-//    }
-
     return string();
 }
 
@@ -956,7 +1000,6 @@ string PerceptronLayer::write_hidden_layer_expression(const Tensor<string, 1> & 
 
 string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & inputs_names, const Tensor<string, 1> & outputs_names) const
 {
-
     ostringstream buffer;
 
     for(Index j = 0; j < outputs_names.size(); j++)

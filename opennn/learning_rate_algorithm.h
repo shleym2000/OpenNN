@@ -246,18 +246,17 @@ public:
    type calculate_golden_section_learning_rate(const Triplet&) const;
    type calculate_Brent_method_learning_rate(const Triplet&) const;
 
-   Triplet calculate_bracketing_triplet(const DataSet::Batch&,
+   Triplet calculate_bracketing_triplet(const DataSetBatch&,
                                         NeuralNetworkForwardPropagation&,
-                                        BackPropagation&,
-                                        OptimizationAlgorithm::OptimizationData&) const;
+                                        LossIndexBackPropagation&,
+                                        OptimizationAlgorithmData&) const;
 
-   pair<type, type> calculate_directional_point(const DataSet::Batch&,
+   pair<type, type> calculate_directional_point(const DataSetBatch&,
                                                 NeuralNetworkForwardPropagation&,
-                                                BackPropagation&,
-                                                OptimizationAlgorithm::OptimizationData&) const;
+                                                LossIndexBackPropagation&,
+                                                OptimizationAlgorithmData&) const;
 
    // Serialization methods
-
       
    void from_XML(const tinyxml2::XMLDocument&);   
 

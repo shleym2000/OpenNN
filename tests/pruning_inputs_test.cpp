@@ -69,9 +69,9 @@ void PruningInputsTest::test_perform_inputs_selection()
 
 //    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
-//    PruningInputs::PruningInputsResults* pir;
+//    InputsSelectionResults* pir;
 
-//    // Test
+    // Test
 
 //    data_set.generate_inputs_selection_data(40,3);
 
@@ -99,7 +99,7 @@ void PruningInputsTest::test_perform_inputs_selection()
 //    pi.delete_parameters_history();
 //    pi.delete_loss_history();
 
-//    // Test
+    // Test
 
 //    data_set.generate_sum_data(40,3);
 

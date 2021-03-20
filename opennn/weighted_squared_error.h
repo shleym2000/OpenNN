@@ -69,34 +69,31 @@ public:
 
    void set_normalization_coefficient();
 
-   void set_data_set_pointer(DataSet* new_data_set_pointer);
+   void set_data_set_pointer(DataSet*);
 
    // Error methods
 
-   void calculate_error(const DataSet::Batch&,
+   void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        BackPropagation&) const;
-
-   void calculate_error_terms(const DataSet::Batch&,
-                              const NeuralNetworkForwardPropagation&,
-                              SecondOrderLoss&) const;
+                        LossIndexBackPropagation&) const;
 
    string get_error_type() const;
+
    string get_error_type_text() const;
 
    // Gradient methods
 
-   void calculate_output_delta(const DataSet::Batch&,
+   void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               BackPropagation&) const;
+                               LossIndexBackPropagation&) const;
 
-   void calculate_Jacobian_gradient(const DataSet::Batch&,
-                                    LossIndex::SecondOrderLoss&) const;
+   void calculate_gradient(const DataSetBatch&,
+                           LossIndexBackPropagationLM&) const;
 
    // Hessian method
 
-   void calculate_hessian_approximation(const DataSet::Batch&,
-                                        LossIndex::SecondOrderLoss&) const;
+   void calculate_hessian_approximation(const DataSetBatch&,
+                                        LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 

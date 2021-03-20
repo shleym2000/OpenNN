@@ -269,10 +269,10 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 /// @param initial_learning_rate Initial learning rate to start the algorithm.
 
 pair<type,type> LearningRateAlgorithm::calculate_directional_point(
-    const DataSet::Batch& batch,
+    const DataSetBatch& batch,
     NeuralNetworkForwardPropagation& forward_propagation,
-    BackPropagation& back_propagation,
-    OptimizationAlgorithm::OptimizationData& optimization_data) const
+    LossIndexBackPropagation& back_propagation,
+    OptimizationAlgorithmData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -442,10 +442,10 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 /// @param initial_learning_rate Initial learning rate to start the algorithm.
 
 LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_triplet(
-    const DataSet::Batch& batch,
+    const DataSetBatch& batch,
     NeuralNetworkForwardPropagation& forward_propagation,
-    BackPropagation& back_propagation,
-    OptimizationAlgorithm::OptimizationData& optimization_data) const
+    LossIndexBackPropagation& back_propagation,
+    OptimizationAlgorithmData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 

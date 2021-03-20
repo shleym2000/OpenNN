@@ -29,12 +29,12 @@ void QuasiNewtonMethodTest::test_constructor() // @todo
    // Default constructor
 
    QuasiNewtonMethod qnm1;
-   assert_true(qnm1.has_loss_index() == false, LOG);
+   assert_true(!qnm1.has_loss_index(), LOG);
 
    // Loss index constructor
 
    QuasiNewtonMethod qnm2(&sum_squared_error);
-   assert_true(qnm2.has_loss_index() == true, LOG);
+   assert_true(qnm2.has_loss_index(), LOG);
 }
 
 
@@ -287,7 +287,7 @@ void QuasiNewtonMethodTest::test_perform_training() // @todo
 
 //   quasi_newton_method.set_reserve_all_training_history(true);
 
-//    // Test
+    // Test
 
 //   neural_network.set_parameters_constant(3.1415927);
 
@@ -397,11 +397,11 @@ void QuasiNewtonMethodTest::test_resize_training_history() // @todo
 
 //    QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
-//    OptimizationAlgorithm::Results results;
+//    TrainingResults results;
 
 //    quasi_newton_method.set_reserve_all_training_history(true);
 
-//    // Test
+    // Test
 
 //    results.resize_training_history(2);
 

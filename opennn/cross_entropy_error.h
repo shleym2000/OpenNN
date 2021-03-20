@@ -46,31 +46,31 @@ public:
 
    // Error methods
 
-   void calculate_error(const DataSet::Batch&,
+   void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        BackPropagation&) const;
+                        LossIndexBackPropagation&) const;
 
-   void calculate_binary_error(const DataSet::Batch&,
+   void calculate_binary_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
-                        BackPropagation&) const;
+                        LossIndexBackPropagation&) const;
 
-   void calculate_multiple_error(const DataSet::Batch& batch,
+   void calculate_multiple_error(const DataSetBatch& batch,
                         const NeuralNetworkForwardPropagation&,
-                        BackPropagation&) const;
+                        LossIndexBackPropagation&) const;
 
    // Gradient methods
 
-   void calculate_output_delta(const DataSet::Batch&,
+   void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
-                               BackPropagation&) const;
+                               LossIndexBackPropagation&) const;
 
-   void calculate_binary_output_delta(const DataSet::Batch&,
+   void calculate_binary_output_delta(const DataSetBatch&,
                                       NeuralNetworkForwardPropagation&,
-                                      BackPropagation&) const;
+                                      LossIndexBackPropagation&) const;
 
-   void calculate_multiple_output_delta(const DataSet::Batch&,
+   void calculate_multiple_output_delta(const DataSetBatch&,
                                         NeuralNetworkForwardPropagation&,
-                                        BackPropagation&) const;
+                                        LossIndexBackPropagation&) const;
 
    string get_error_type() const;
    string get_error_type_text() const;

@@ -449,8 +449,7 @@ void QuasiNewtonMethod::set_reserve_selection_error_history(const bool& new_rese
 }
 
 
-
-void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
 {
     optimization_data.inverse_hessian.setZero();
 
@@ -460,6 +459,7 @@ void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimization
 
 }
 
+
 /// Calculates an approximation of the inverse hessian, accoring to the method used.
 /// @param old_parameters Another point of the error function.
 /// @param parameters Current point of the error function
@@ -467,18 +467,17 @@ void QuasiNewtonMethod::initialize_inverse_hessian_approximation(QNMOptimization
 /// @param gradient Gradient at the current point.
 /// @param old_inverse_hessian Inverse hessian at the other point of the error function.
 
-void QuasiNewtonMethod::calculate_inverse_hessian_approximation(const BackPropagation& back_propagation,
-                                                                QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehtodData& optimization_data) const
 {
     switch(inverse_hessian_approximation_method)
     {
     case DFP:
-        calculate_DFP_inverse_hessian(back_propagation, optimization_data);
+        calculate_DFP_inverse_hessian(optimization_data);
 
         return;
 
     case BFGS:
-        calculate_BFGS_inverse_hessian(back_propagation, optimization_data);
+        calculate_BFGS_inverse_hessian(optimization_data);
 
         return;
     }
@@ -516,10 +515,10 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & lef
 }
 
 
-/// This method calculates the kronecker product between two matrix.
+/// This method calculates the kronecker product between two matrices.
 /// Its return a direct matrix.
-/// @param left_matrix Matrix to be porudct.
-/// @param right_matrix Matrix to be product.
+/// @param left_matrix Matrix.
+/// @param right_matrix Matrix.
 
 const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left_matrix, Tensor<type, 2>& right_matrix) const
 {
@@ -552,22 +551,17 @@ const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 2>& left
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const BackPropagation& back_propagation,
-                                                      QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::calculate_DFP_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-    const Index parameters_number = neural_network_pointer->get_parameters_number();
-
     // Dots
 
     Tensor<type, 0> parameters_difference_dot_gradient_difference;
 
     parameters_difference_dot_gradient_difference.device(*thread_pool_device)
-            = optimization_data.parameters_difference.contract(optimization_data.gradient_difference, AT_B); // Ok
+            = optimization_data.parameters_difference.contract(optimization_data.gradient_difference, AT_B);
 
     optimization_data.old_inverse_hessian_dot_gradient_difference.device(*thread_pool_device)
-            = optimization_data.old_inverse_hessian.contract(optimization_data.gradient_difference, A_B); // Ok
+            = optimization_data.old_inverse_hessian.contract(optimization_data.gradient_difference, A_B);
 
     Tensor<type, 0> gradient_dot_hessian_dot_gradient;
 
@@ -576,15 +570,15 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const BackPropagation& bac
 
     // Calculates Approximation
 
-    optimization_data.inverse_hessian = optimization_data.old_inverse_hessian; // TensorMap?
+    optimization_data.inverse_hessian = optimization_data.old_inverse_hessian;
 
     optimization_data.inverse_hessian
             += kronecker_product(optimization_data.parameters_difference, optimization_data.parameters_difference)
-            /parameters_difference_dot_gradient_difference(0); // Ok
+            /parameters_difference_dot_gradient_difference(0);
 
     optimization_data.inverse_hessian
             -= kronecker_product(optimization_data.old_inverse_hessian_dot_gradient_difference, optimization_data.old_inverse_hessian_dot_gradient_difference)
-            / gradient_dot_hessian_dot_gradient(0); // Ok
+            / gradient_dot_hessian_dot_gradient(0);
 }
 
 
@@ -596,8 +590,7 @@ void QuasiNewtonMethod::calculate_DFP_inverse_hessian(const BackPropagation& bac
 /// @param parameters Actual set of parameters.
 /// @param gradient The gradient of the error function for the actual set of parameters.
 
-void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const BackPropagation& back_propagation,
-                                                       QNMOptimizationData& optimization_data) const
+void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(QuasiNewtonMehtodData& optimization_data) const
 {
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
@@ -640,17 +633,17 @@ void QuasiNewtonMethod::calculate_BFGS_inverse_hessian(const BackPropagation& ba
 }
 
 
+/// \brief QuasiNewtonMethod::update_parameters
+/// \param batch
+/// \param forward_propagation
+/// \param back_propagation
+/// \param optimization_data
 
-// \brief QuasiNewtonMethod::update_epoch
-// \param batch
-// \param forward_propagation
-// \param back_propagation
-// \param optimization_data
-void QuasiNewtonMethod::update_epoch(
-        const DataSet::Batch& batch,
+void QuasiNewtonMethod::update_parameters(
+        const DataSetBatch& batch,
         NeuralNetworkForwardPropagation& forward_propagation,
-        BackPropagation& back_propagation,
-        QNMOptimizationData& optimization_data)
+        LossIndexBackPropagation& back_propagation,
+        QuasiNewtonMehtodData& optimization_data)
 {
     #ifdef __OPENNN_DEBUG__
 
@@ -670,14 +663,11 @@ void QuasiNewtonMethod::update_epoch(
     || is_zero(optimization_data.parameters_difference)
     || is_zero(optimization_data.gradient_difference))
     {
-//        if(is_zero(optimization_data.parameters_difference)) cout << "parameters_difference" << endl;
-//        if(is_zero(optimization_data.gradient_difference)) cout << "gradient_difference" << endl;
-
         initialize_inverse_hessian_approximation(optimization_data);
     }
     else
     {
-        calculate_inverse_hessian_approximation(back_propagation, optimization_data);
+        calculate_inverse_hessian_approximation(optimization_data);
     }
 
     // Optimization algorithm
@@ -715,9 +705,6 @@ void QuasiNewtonMethod::update_epoch(
 
     optimization_data.learning_rate = directional_point.first;
 
-    /// @todo ?
-    // Reset training direction when learning rate is 0
-
     if(optimization_data.epoch != 1 && abs(optimization_data.learning_rate) < numeric_limits<type>::min())
     {
         optimization_data.training_direction.device(*thread_pool_device) = -back_propagation.gradient;
@@ -749,13 +736,19 @@ void QuasiNewtonMethod::update_epoch(
     optimization_data.old_learning_rate = optimization_data.learning_rate;
 
     back_propagation.loss = directional_point.second;
+
+    // Set parameters
+
+    NeuralNetwork* neural_network_pointer = forward_propagation.neural_network_pointer;
+
+    neural_network_pointer->set_parameters(back_propagation.parameters);
 }
 
 
 /// Trains a neural network with an associated loss index according to the quasi-Newton method.
 /// Training occurs according to the training operators, training parameters and stopping criteria.
 
-OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
+TrainingResults QuasiNewtonMethod::perform_training()
 {
 #ifdef __OPENNN_DEBUG__
 
@@ -767,7 +760,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     if(display) cout << "Training with quasi-Newton method...\n";
 
-    Results results;
+    TrainingResults results;
 
     results.resize_training_history(maximum_epochs_number+1);
 
@@ -780,27 +773,20 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
     const bool has_selection = data_set_pointer->has_selection();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
-    Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
 
-    DataSet::Batch training_batch(training_samples_number, data_set_pointer);
-    DataSet::Batch selection_batch(selection_samples_number, data_set_pointer);
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
 
     training_batch.fill(training_samples_indices, inputs_indices, target_indices);
     selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
-    training_samples_indices.resize(0);
-    selection_samples_indices.resize(0);
-    inputs_indices.resize(0);
-    target_indices.resize(0);
-
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-
-
 
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
@@ -811,14 +797,10 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
     type old_selection_error = numeric_limits<type>::max();
 
-    BackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
-    BackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagation training_back_propagation(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagation selection_back_propagation(selection_samples_number, loss_index_pointer);
 
     // Optimization algorithm
-
-    Tensor<type, 1> minimal_selection_parameters;
-
-    type minimum_selection_error = numeric_limits<type>::max();
 
     bool stop_training = false;
 
@@ -828,7 +810,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
     time(&beginning_time);
     type elapsed_time;
 
-    QNMOptimizationData optimization_data(this);
+    QuasiNewtonMehtodData optimization_data(this);
 
     if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
 
@@ -873,11 +855,11 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             {
                 selection_failures++;
             }
-            else if(selection_back_propagation.error < minimum_selection_error)
+            else if(selection_back_propagation.error < results.optimum_selection_error)
             {
-                minimum_selection_error = selection_back_propagation.error;
+                results.optimum_selection_error = selection_back_propagation.error;
 
-                minimal_selection_parameters = training_back_propagation.parameters;
+                results.optimal_parameters = training_back_propagation.parameters;
             }
 
             if(reserve_selection_error_history) results.selection_error_history(epoch) = selection_back_propagation.error;
@@ -885,7 +867,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         // Optimization data
 
-        update_epoch(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
+        update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
         #ifdef __OPENNN_DEBUG__
 
@@ -898,9 +880,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
             throw logic_error(buffer.str());
         }
-        #endif
-
-        neural_network_pointer->set_parameters(training_back_propagation.parameters);
+        #endif        
 
         // Training history
 
@@ -929,7 +909,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             if(display)
             {
                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss <<  endl;
+                    << "Loss decrease: " << training_back_propagation.loss - optimization_data.old_training_loss << endl;
             }
 
             stop_training = true;
@@ -1000,9 +980,9 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
 
         if(stop_training)
         {
-            results.final_parameters = training_back_propagation.parameters;
-            results.final_training_error = training_back_propagation.error;
-            results.final_selection_error = selection_back_propagation.error;
+            results.parameters = training_back_propagation.parameters;
+            results.training_error = training_back_propagation.error;
+            results.selection_error = selection_back_propagation.error;
 
             results.final_gradient_norm = gradient_norm;
 
@@ -1011,6 +991,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
             results.epochs_number = epoch;
 
             results.resize_training_error_history(epoch+1);
+
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
             if(display)
@@ -1047,21 +1028,7 @@ OptimizationAlgorithm::Results QuasiNewtonMethod::perform_training()
         if(stop_training) break;
     }
 
-    if(choose_best_selection)
-    {
-        //optimization_data.parameters = minimal_selection_parameters;
-        //parameters_norm = l2_norm(parameters);
-
-        neural_network_pointer->set_parameters(minimal_selection_parameters);
-
-        //neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-
-        //loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
-
-        //training_loss = training_back_propagation.loss;
-
-        //selection_error = minimum_selection_error;
-    }
+    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     return results;
 }
@@ -1604,4 +1571,3 @@ void QuasiNewtonMethod::from_XML(const tinyxml2::XMLDocument& document)
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

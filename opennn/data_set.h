@@ -116,7 +116,11 @@ public:
 
        /// Values constructor
 
-       Column(const string&, const VariableUse&, const ColumnType& = Numeric, const Tensor<string, 1>& = Tensor<string, 1>(), const Tensor<VariableUse, 1>& = Tensor<VariableUse, 1>());
+       Column(const string&,
+              const VariableUse&,
+              const ColumnType& = Numeric,
+              const Tensor<string, 1>& = Tensor<string, 1>(),
+              const Tensor<VariableUse, 1>& = Tensor<VariableUse, 1>());
 
        /// Destructor.
 
@@ -166,36 +170,6 @@ public:
        void write_XML(tinyxml2::XMLPrinter&) const;
    };
 
-
-   struct Batch
-   {
-       /// Default constructor.
-
-       Batch() {}
-
-       Batch(const Index& new_samples_number, DataSet* new_data_set_pointer);
-
-       /// Destructor.
-
-       virtual ~Batch() {}
-
-       Index get_samples_number() const;
-
-       void print();
-
-       void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
-
-       Index samples_number = 0;
-
-       DataSet* data_set_pointer = nullptr;
-
-       Tensor<type, 2> inputs_2d;
-       Tensor<type, 4> inputs_4d;
-
-       Tensor<type, 2> targets_2d;
-   };
-
-
    // Samples get methods
 
    inline Index get_samples_number() const {return samples_uses.size();}
@@ -227,6 +201,7 @@ public:
    Tensor<Column, 1> get_columns() const;
    Tensor<Column, 1> get_time_series_columns() const;
    Tensor<Column, 1> get_input_columns() const;
+   Tensor<bool, 1> get_input_columns_binary() const;
    Tensor<Column, 1> get_target_columns() const;
    Tensor<Column, 1> get_used_columns() const;
 
@@ -258,7 +233,7 @@ public:
 
    ColumnType get_column_type(const Index& index) const {return columns[index].type;}
 
-   VariableUse get_column_use(const Index &) const;
+   VariableUse get_column_use(const Index& ) const;
    Tensor<VariableUse, 1> get_columns_uses() const;
 
    // Variables get methods
@@ -407,9 +382,9 @@ public:
    void set_samples_uses(const Tensor<SampleUse, 1>&);
    void set_samples_uses(const Tensor<string, 1>&);
 
-   void set_k_fold_cross_validation_samples_uses(const Index&, const Index&);
-
    // Columns set methods
+
+   void set_columns(const Tensor<Column, 1>&);
 
    void set_default_columns_uses();
    void set_default_classification_columns_uses();
@@ -421,7 +396,10 @@ public:
    void set_columns_uses(const Tensor<string, 1>&);
    void set_columns_uses(const Tensor<VariableUse, 1>&);
    void set_columns_unused();
+   void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
+
+   void set_input_columns_binary(const Tensor<bool, 1>&);
 
    void set_column_use(const Index&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
@@ -433,8 +411,6 @@ public:
    void set_columns_number(const Index&);
 
    void set_binary_simple_columns();
-
-   void binarize_input_data(const type&);
 
    // Columns other methods
 
@@ -480,17 +456,12 @@ public:
 
    // Check methods
 
-   bool is_binary_classification() const;
-   bool is_multiple_classification() const;
-
    bool is_empty() const;
 
    bool is_less_than(const Tensor<type, 1>&, const type&) const;
 
    bool is_sample_used(const Index&) const;
    bool is_sample_unused(const Index&) const;
-
-   bool has_data() const;
 
    bool has_binary_columns() const;
    bool has_categorical_columns() const;
@@ -570,7 +541,7 @@ public:
 
    void print_inputs_correlations() const;
 
-   void print_top_inputs_correlations(const Index& = 10) const;
+   void print_top_inputs_correlations() const;
 
    // Inputs-targets correlations
 
@@ -579,23 +550,11 @@ public:
 
    void print_input_target_columns_correlations() const;
 
-   void print_top_input_target_columns_correlations(const Index& = 10) const;
+   void print_top_input_target_columns_correlations() const;
 
    // Inputs-targets regressions
 
    Tensor<RegressionResults, 2> calculate_input_target_columns_regressions() const;
-
-   // Principal components
-
-   Tensor<type, 2> calculate_covariance_matrix() const;
-
-   Tensor<type, 2> perform_principal_components_analysis(const type& = 0.0);
-
-   Tensor<type, 2> perform_principal_components_analysis(const Tensor<type, 2>&, const Tensor<type, 1>&, const type& = 0.0);
-
-   void transform_principal_components_data(const Tensor<type, 2>&);
-
-   void subtract_inputs_mean();
 
    // Filtering methods
 
@@ -608,6 +567,7 @@ public:
 
    Tensor<string, 1> calculate_default_scaling_methods() const;
    Tensor<string, 1> calculate_default_unscaling_methods() const;
+
    void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
    void scale_minimum_maximum_binary(const type&, const type&, const Index&);
    void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
@@ -683,23 +643,16 @@ public:
 
    Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
-//   Tensor<Tensor<type, 1>, 2> calculate_cross_correlations(const Index& = 10) const;
    Tensor<type, 3> calculate_cross_correlations(const Index& = 10) const;
-   Tensor<type, 2> calculate_lag_plot() const;
-   Tensor<type, 2> calculate_lag_plot(const Index&);
 
    // Data generation
 
-   void generate_constant_data(const Index&, const Index&);
+   void generate_constant_data(const Index&, const Index&, const type&);
    void generate_random_data(const Index&, const Index&);
    void generate_sequential_data(const Index&, const Index&);
    void generate_paraboloid_data(const Index&, const Index&);
    void generate_Rosenbrock_data(const Index&, const Index&);
-   void generate_inputs_selection_data(const Index&, const Index&);
    void generate_sum_data(const Index&, const Index&);
-
-   void generate_data_binary_classification(const Index&, const Index&);
-   void generate_data_multiple_classification(const Index&, const Index&, const Index&);
 
    // Serialization methods
 
@@ -736,8 +689,6 @@ public:
    Tensor<type, 2> read_input_csv(const string&, const char&, const string&, const bool&, const bool&) const;
 
    // Trasform methods
-
-   void transform_association();
 
    void fill_time_series(const Index&);
 
@@ -905,6 +856,36 @@ private:
 #endif
 
 };
+
+
+struct DataSetBatch
+{
+    /// Default constructor.
+
+    DataSetBatch() {}
+
+    DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer);
+
+    /// Destructor.
+
+    virtual ~DataSetBatch() {}
+
+    Index get_samples_number() const;
+
+    void print();
+
+    void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+
+    Index samples_number = 0;
+
+    DataSet* data_set_pointer = nullptr;
+
+    Tensor<type, 2> inputs_2d;
+    Tensor<type, 4> inputs_4d;
+
+    Tensor<type, 2> targets_2d;
+};
+
 
 }
 
