@@ -20,11 +20,11 @@
 #include <ctype.h>
 #include <iostream>
 #include <vector>
-#include <omp.h>
 
 // OpenNN includes
 
 #include "config.h"
+//#include "tensor_utilities.h"
 #include "statistics.h"
 #include "data_set.h"
 
@@ -45,25 +45,17 @@ struct LayerForwardPropagation
     {
     }
 
-
-    explicit LayerForwardPropagation(Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-    }
-
     virtual ~LayerForwardPropagation() {}
 
-    virtual void set(const Index&) {}
+    virtual void set(const Index&, Layer*) {}
 
-    void print() const
-    {
-
-    }
+    virtual void print() const = 0;
 
     Index batch_samples_number = 0;
 
     Layer* layer_pointer = nullptr;
 };
+
 
 struct LayerBackPropagation
 {
@@ -71,14 +63,9 @@ struct LayerBackPropagation
 
     explicit LayerBackPropagation() {}
 
-    explicit LayerBackPropagation(Layer* new_layer_pointer)
-    {
-        layer_pointer = new_layer_pointer;
-    }
-
     virtual ~LayerBackPropagation() {}
 
-    virtual void set(const Index&) {}
+    virtual void set(const Index&, Layer*) {}
 
     virtual void print() const {}
 
@@ -103,7 +90,7 @@ public:
     /// This enumeration represents the possible types of layers.
 
     enum Type{Scaling, Convolutional, Perceptron, Pooling, Probabilistic,
-              LongShortTermMemory,Recurrent, Unscaling, Bounding, PrincipalComponents};
+              LongShortTermMemory,Recurrent, Unscaling, Bounding};
 
     // Constructor
 
@@ -187,10 +174,6 @@ public:
     Type get_type() const;
 
     string get_type_string() const;
-
-    // Utilities
-
-    void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&) const;
 
     // Serialization methods
 
@@ -312,10 +295,6 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/layer_cuda.h"
-#endif
-
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/layer_mkl.h"
 #endif
 
 };

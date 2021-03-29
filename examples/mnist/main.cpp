@@ -15,8 +15,6 @@
 #include <time.h>
 #include <stdexcept>
 
-#include <omp.h>
-
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
@@ -26,7 +24,7 @@ using namespace std;
 using namespace OpenNN;
 
 
-int main(void)
+int main()
 {
     try
     {

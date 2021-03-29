@@ -123,7 +123,6 @@ struct CorrelationResults
     // Rank linear
 
     type rank_linear_correlation(const ThreadPoolDevice*, const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type rank_linear_correlation_missing_values(const ThreadPoolDevice*, const Tensor<type, 1>&x, const Tensor<type, 1>&);
 
     // Exponential
 
@@ -143,14 +142,18 @@ struct CorrelationResults
 
     // Karl Pearson
 
-    type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>&, const Tensor<type,2>&);
+    type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>&, const Tensor<type, 2>&);
 
     // Time series correlation methods
 
-//    Tensor<type, 1> autocorrelations(const Tensor<type, 1>&, const Index&  = 10);
-    Tensor<type, 1> autocorrelations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>&, const Index&  = 10);
-//    Tensor<type, 1> cross_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&, const Index&  = 10);
-    Tensor<type ,1> cross_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y, const Index& maximum_lags_number);
+    Tensor<type, 1> autocorrelations(const ThreadPoolDevice*,
+                                     const Tensor<type, 1>&,
+                                     const Index&  = 10);
+
+    Tensor<type ,1> cross_correlations(const ThreadPoolDevice*,
+                                       const Tensor<type, 1>&,
+                                       const Tensor<type, 1>&,
+                                       const Index&);
 
     // Logistic error methods
 
@@ -196,7 +199,6 @@ struct CorrelationResults
     // Covariance
 
     type covariance(const Tensor<type, 1>&, const Tensor<type, 1>&);
-    type covariance_missing_values(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
     Tensor<type, 2> covariance_matrix(const Tensor<type, 2>&);
 

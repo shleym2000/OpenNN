@@ -67,7 +67,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
                                              NeuralNetworkForwardPropagation& forward_propagation,
                                              LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -127,7 +127,7 @@ void SumSquaredError::calculate_output_delta(const DataSetBatch& batch,
 void SumSquaredError::calculate_gradient(const DataSetBatch& ,
                                     LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -136,7 +136,7 @@ void SumSquaredError::calculate_gradient(const DataSetBatch& ,
     const type coefficient = (static_cast<type>(2.0));
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
-            = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
     loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
             = coefficient*loss_index_back_propagation_lm.gradient;
@@ -146,7 +146,7 @@ void SumSquaredError::calculate_gradient(const DataSetBatch& ,
 void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&,
                                                       LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -155,7 +155,7 @@ void SumSquaredError::calculate_hessian_approximation(const DataSetBatch&,
      const type coefficient = (static_cast<type>(2.0));
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
-             = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
+             = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
 
      loss_index_back_propagation_lm.hessian.device(*thread_pool_device)
              = coefficient*loss_index_back_propagation_lm.hessian;

@@ -16,7 +16,6 @@
 #include <sstream>
 #include <string>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -24,7 +23,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
     try
     {
@@ -81,15 +80,9 @@ int main(void)
 
         training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
-
-        AdaptiveMomentEstimation* adam = training_strategy.get_adaptive_moment_estimation_pointer();
-        adam->set_maximum_epochs_number(10000);
-        adam->set_display_period(1000);
+        training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
         const TrainingResults training_results = training_strategy.perform_training();
-
-        cout << "Bye!" << endl;
 
         data_set.unscale_input_variables(scaling_inputs_methods, inputs_descriptives);
         data_set.unscale_target_variables(scaling_target_methods, target_descriptives);
@@ -104,7 +97,7 @@ int main(void)
         cout << "Slope: " << linear_regression_analysis.slope << endl;
         cout << "Correlation: " << linear_regression_analysis.correlation << endl;
 
-//         Save results
+        // Save results
 
         data_set.save("../data/data_set.xml");
 
@@ -115,6 +108,8 @@ int main(void)
         training_results.save("../data/training_results.dat");
 
         linear_regression_analysis.save("../data/linear_regression_analysis.dat");
+
+        cout << "End Airfoil Self-Noise Example" << endl;
 
         return 0;
     }

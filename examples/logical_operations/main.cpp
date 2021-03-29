@@ -13,7 +13,6 @@
 #include <iostream>
 #include <math.h>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -21,7 +20,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
     try
     {
@@ -113,7 +112,6 @@ int main(void)
         training_strategy.save("../data/training_strategy.xml");
 
         return 0;
-
     }
     catch(exception& e)
     {

@@ -50,11 +50,7 @@ TrainingStrategy::TrainingStrategy(NeuralNetwork* new_neural_network_pointer, Da
     set_loss_index_neural_network_pointer(neural_network_pointer);
     set_loss_index_data_set_pointer(data_set_pointer);
 
-    LossIndex* loss_index_pointer = get_loss_index_pointer();
-    set_loss_index_pointer(loss_index_pointer);
-
     set_default();
-
 }
 
 
@@ -643,7 +639,7 @@ void TrainingStrategy::set_display(const bool& new_display)
 }
 
 
-void TrainingStrategy::set_loss_goal(const type & new_loss_goal)
+void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 {
     gradient_descent.set_loss_goal(new_loss_goal);
     conjugate_gradient.set_loss_goal(new_loss_goal);
@@ -689,7 +685,7 @@ void TrainingStrategy::set_display_period(const int & display_period)
 }
 
 
-void TrainingStrategy::set_maximum_time(const type & maximum_time)
+void TrainingStrategy::set_maximum_time(const type&  maximum_time)
 {
     gradient_descent.set_maximum_time(maximum_time);
     conjugate_gradient.set_maximum_time(maximum_time);
@@ -892,15 +888,16 @@ void TrainingStrategy::fix_forecasting()
             stochastic_gradient_descent.set_batch_samples_number(constant*timesteps);
         }
     }
-
-    return;
 }
 
 
 /// Prints to the screen the string representation of the training strategy object.
 
-void TrainingStrategy::print() const
+void TrainingStrategy::print_summary() const
 {
+    cout << "Training strategy object" << endl;
+    cout << "Loss index: " << write_loss_method() << endl;
+    cout << "Optimization algorithm: " << write_optimization_method() << endl;
 }
 
 
@@ -990,14 +987,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
 
         set_loss_method(loss_method_element->GetText());
 
-        // Mean squared error
-
-        //            const tinyxml2::XMLElement* mean_squared_error_element = loss_index_element->FirstChildElement("MeanSquaredError");
-
-        // Normalized squared error
-
-        //            const tinyxml2::XMLElement* normalized_squared_error_element = loss_index_element->FirstChildElement("NormalizedSquaredError");
-
         // Minkowski error
 
         const tinyxml2::XMLElement* Minkowski_error_element = loss_index_element->FirstChildElement("MinkowskiError");
@@ -1086,8 +1075,6 @@ void TrainingStrategy::from_XML(const tinyxml2::XMLDocument& document)
             get_loss_index_pointer()->regularization_from_XML(regularization_document);
         }
     }
-
-    cout << "Loss index loaded" << endl;
 
     // Optimization algorithm
 

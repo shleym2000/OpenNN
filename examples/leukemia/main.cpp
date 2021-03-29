@@ -16,7 +16,6 @@
 #include <string>
 #include <cstring>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -24,7 +23,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
     try
     {

@@ -35,7 +35,7 @@ public:
 
    // Assignment operators methods
 
-   void test_assignment_operator();
+   
 
    // Get methods
 
@@ -87,8 +87,7 @@ public:
    void test_remove_variable();
    void test_unuse_constant_columns();
    void test_unuse_repeated_samples();
-   void test_unuse_non_significant_inputs();
-   void test_unuse_columns_missing_values();
+   void test_unuse_uncorrelated_columns();
 
    // Initialization methods
 

@@ -16,7 +16,6 @@
 #include <string>
 #include <cstring>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -24,7 +23,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
     try
     {
@@ -95,11 +94,12 @@ int main(void)
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
+        const Tensor<Index, 2> confusion = testing_analysis.calculate_confusion();
 
-        Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
+        const Tensor<type, 1> binary_classification_tests = testing_analysis.calculate_binary_classification_tests();
 
-        cout << "Confusion:"<< endl << confusion << endl;
+        cout << "Confusion:"<< endl
+             << confusion << endl;
 
         cout << "Binary classification tests: " << endl;
         cout << "Classification accuracy         : " << binary_classification_tests[0] << endl;

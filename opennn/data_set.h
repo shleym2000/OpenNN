@@ -263,6 +263,7 @@ public:
    Tensor<VariableUse, 1> get_variables_uses() const;
 
    const Tensor<Index, 1>& get_input_variables_dimensions() const;
+   Index get_input_variables_rank() const;
 
    // Batches get methods
 
@@ -414,7 +415,7 @@ public:
 
    // Columns other methods
 
-   Tensor<type,2> transform_binary_column(const Tensor<type,1>&) const;
+   Tensor<type, 2> transform_binary_column(const Tensor<type,1>&) const;
 
    // Variables set methods
 
@@ -640,6 +641,7 @@ public:
    void transform_time_series_data();
    void get_time_series_columns_number(const Index&);
    void set_time_series_data(const Tensor<type, 2>&);
+   void set_time_series_columns_number(const Index&);
 
    Tensor<type, 2> get_time_series_column_data(const Index&) const;
    Tensor<type, 2> calculate_autocorrelations(const Index& = 10) const;
@@ -676,7 +678,6 @@ public:
 
    void save_data_binary(const string&) const;
    void save_time_series_data_binary(const string&) const;
-
 
    // Data load methods
 
@@ -734,8 +735,8 @@ public:
    Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
    Tensor<string, 1> push_back(const Tensor<string, 1>&, const string&) const;
 
-   void initialize_sequential_eigen_tensor(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
-   void intialize_sequential_eigen_type_tensor(Tensor<type, 1>&, const type&, const type&, const type&) const;
+   void initialize_sequential(Tensor<Index, 1>&, const Index&, const Index&, const Index&) const;
+   void intialize_sequential(Tensor<type, 1>&, const type&, const type&, const type&) const;
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
@@ -864,7 +865,7 @@ struct DataSetBatch
 
     DataSetBatch() {}
 
-    DataSetBatch(const Index& new_samples_number, DataSet* new_data_set_pointer);
+    DataSetBatch(const Index&, DataSet*);
 
     /// Destructor.
 
@@ -872,9 +873,11 @@ struct DataSetBatch
 
     Index get_samples_number() const;
 
-    void print();
+    void set(const Index&, DataSet*);
 
     void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+
+    void print() const;
 
     Index samples_number = 0;
 

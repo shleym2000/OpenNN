@@ -21,6 +21,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "layer.h"
 
 #include "probabilistic_layer.h"
@@ -244,21 +245,27 @@ protected:
 
 struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-
-    explicit RecurrentLayerForwardPropagation(Layer* new_layer_pointer) : LayerForwardPropagation(new_layer_pointer)
+    explicit RecurrentLayerForwardPropagation() : LayerForwardPropagation()
     {
     }
 
-    void set(const Index& new_batch_samples_number)
+    explicit RecurrentLayerForwardPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer) : LayerForwardPropagation()
     {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
 
         const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
 
         previous_activations.resize(neurons_number);
 
-        current_inputs.resize(neurons_number);
+        current_inputs.resize(inputs_number);
         current_combinations.resize(neurons_number);
         current_activations_derivatives.resize(neurons_number);
 
@@ -267,6 +274,10 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
         activations.resize(batch_samples_number, neurons_number);
 
         activations_derivatives.resize(batch_samples_number, neurons_number);
+    }
+
+    void print() const
+    {
     }
 
     Tensor<type, 1> previous_activations;
@@ -283,17 +294,25 @@ struct RecurrentLayerForwardPropagation : LayerForwardPropagation
 
 struct RecurrentLayerBackPropagation : LayerBackPropagation
 {
-    const Index neurons_number = layer_pointer->get_neurons_number();
-    const Index inputs_number = layer_pointer->get_inputs_number();
-
-    explicit RecurrentLayerBackPropagation(Layer* new_layer_pointer) : LayerBackPropagation(new_layer_pointer)
+    explicit RecurrentLayerBackPropagation() : LayerBackPropagation()
     {
-
     }
 
-    void set(const Index& new_batch_samples_number)
+    explicit RecurrentLayerBackPropagation(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagation()
     {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
         batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index inputs_number = layer_pointer->get_inputs_number();
 
         current_layer_deltas.resize(neurons_number);
 
@@ -308,6 +327,12 @@ struct RecurrentLayerBackPropagation : LayerBackPropagation
         combinations_biases_derivatives.resize(neurons_number, neurons_number);
         combinations_weights_derivatives.resize(inputs_number*neurons_number, neurons_number);
         combinations_recurrent_weights_derivatives.resize(neurons_number*neurons_number, neurons_number);
+    }
+
+
+    void print() const
+    {
+
     }
 
     Tensor<type, 1> current_layer_deltas;

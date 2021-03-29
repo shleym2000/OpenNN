@@ -31,14 +31,13 @@ PerceptronLayer::PerceptronLayer() : Layer()
 /// @param new_neurons_number Number of perceptrons in the layer.
 
 PerceptronLayer::PerceptronLayer(const Index& new_inputs_number, const Index& new_neurons_number,
-                                 const Index& layer_number, const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
+                                 const PerceptronLayer::ActivationFunction& new_activation_function) : Layer()
 {
     set(new_inputs_number, new_neurons_number, new_activation_function);
 
     layer_type = Perceptron;
 
-    layer_name = "perceptron_layer_" + to_string(layer_number);
-
+    layer_name = "perceptron_layer";
 }
 
 
@@ -148,7 +147,7 @@ Tensor<type, 2> PerceptronLayer::get_biases(const Tensor<type, 1>& parameters) c
 /// The format is a vector of real values.
 /// The size is the number of parameters in the layer.
 
-Tensor<type, 1> PerceptronLayer:: get_parameters() const
+Tensor<type, 1> PerceptronLayer::get_parameters() const
 {
     Tensor<type, 1> parameters(synaptic_weights.size() + biases.size());
 
@@ -279,7 +278,7 @@ void PerceptronLayer::set_default()
 }
 
 
-void PerceptronLayer::set_layer_name(const string& new_layer_name)
+void PerceptronLayer::set_name(const string& new_layer_name)
 {
     layer_name = new_layer_name;
 }
@@ -534,7 +533,7 @@ void PerceptronLayer::calculate_combinations(const Tensor<type, 2>& inputs,
 
 void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations, Tensor<type, 2>& activations) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      const Index neurons_number = get_neurons_number();
 
@@ -584,7 +583,7 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
                                                         Tensor<type, 2>& activations,
                                                         Tensor<type, 2>& activations_derivatives) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      const Index neurons_number = get_neurons_number();
 
@@ -634,7 +633,7 @@ void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& c
 Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs)
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
     const Index inputs_dimensions_number = inputs.rank();
 
     if(inputs_dimensions_number != 2)
@@ -681,7 +680,7 @@ Tensor<type, 2> PerceptronLayer::calculate_outputs(const Tensor<type, 2>& inputs
 void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
                                         LayerForwardPropagation* forward_propagation)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index inputs_number = get_inputs_number();
 
@@ -720,7 +719,7 @@ void PerceptronLayer::forward_propagate(const Tensor<type, 2>& inputs,
     const Index neurons_number = get_neurons_number();
     const Index inputs_number = get_inputs_number();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(inputs_number != inputs.dimension(1))
     {
@@ -924,7 +923,7 @@ void PerceptronLayer::insert_gradient(LayerBackPropagation* back_propagation,
 
 string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index neurons_number = get_neurons_number();
 
@@ -1054,7 +1053,7 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
     if(layer_name_element->GetText())
     {
-        set_layer_name(layer_name_element->GetText());
+        set_name(layer_name_element->GetText());
     }
 
     // Inputs number
@@ -1240,6 +1239,8 @@ string PerceptronLayer::write_activation_function_expression() const
     case HardSigmoid:
         return "hard_sigmoid";
     }
+
+    return string();
 }
 
 

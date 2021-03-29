@@ -23,6 +23,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "loss_index.h"
 
 using namespace std;
@@ -168,7 +169,6 @@ protected:
        tensor.device(*thread_pool_device) = tensor/norm;
    }
 
-
    type l2_norm(const Tensor<type, 1>& tensor) const
    {
        Tensor<type, 0> norm;
@@ -178,17 +178,6 @@ protected:
        return norm(0);
    }
 
-   bool is_zero(const Tensor<type, 1>& tensor) const
-   {
-       const Index size = tensor.size();
-
-       for(Index i = 0; i < size; i++)
-       {
-           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
-       }
-
-       return true;
-   }
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/optimization_algorithm_cuda.h"

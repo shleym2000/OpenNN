@@ -134,7 +134,7 @@ public:
 
    void write_XML(tinyxml2::XMLPrinter&) const;
 
-   void update_parameters(const LossIndexBackPropagation& ,
+   void update_parameters(LossIndexBackPropagation& ,
                          AdaptiveMomentEstimationData& );
 
 private:
@@ -209,10 +209,6 @@ private:
     #include "../../opennn-cuda/opennn_cuda/adaptive_moment_estimation_cuda.h"
 #endif
 
-#ifdef OPENNN_MKL
-    #include "../../opennn-mkl/opennn_mkl/adaptive_moment_estimation_mkl.h"
-#endif
-
 };
 
 
@@ -233,8 +229,6 @@ struct AdaptiveMomentEstimationData : public OptimizationAlgorithmData
     AdaptiveMomentEstimation* adaptive_moment_estimation_pointer = nullptr;
 
     Index learning_rate_iteration = 0;
-
-    Tensor<type, 1> parameters;
 
     Tensor<type, 1> gradient_exponential_decay;
     Tensor<type, 1> square_gradient_exponential_decay;

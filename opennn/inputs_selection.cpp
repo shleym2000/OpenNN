@@ -50,7 +50,7 @@ const bool& InputsSelection::get_approximation() const
 
 TrainingStrategy* InputsSelection::get_training_strategy_pointer() const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(!training_strategy_pointer)
     {
@@ -206,7 +206,7 @@ void InputsSelection::set_default()
 
 void InputsSelection::set_trials_number(const Index& new_trials_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_trials_number <= 0)
     {
@@ -258,7 +258,7 @@ void InputsSelection::set_display(const bool& new_display)
 
 void InputsSelection::set_selection_error_goal(const type& new_selection_error_goal)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_selection_error_goal < 0)
     {
@@ -291,7 +291,7 @@ void InputsSelection::set_maximum_iterations_number(const Index& new_maximum_ite
 
 void InputsSelection::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < 0)
     {
@@ -315,7 +315,7 @@ void InputsSelection::set_maximum_time(const type& new_maximum_time)
 
 void InputsSelection::set_maximum_correlation(const type& new_maximum_correlation)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_correlation < 0 || new_maximum_correlation > 1)
     {
@@ -339,7 +339,7 @@ void InputsSelection::set_maximum_correlation(const type& new_maximum_correlatio
 
 void InputsSelection::set_minimum_correlation(const type& new_minimum_correlation)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_correlation < 0 || new_minimum_correlation > 1)
     {
@@ -471,7 +471,7 @@ string InputsSelectionResults::write_stopping_condition() const
 const string InputsSelection::write_elapsed_time(const type& time) const
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(time > static_cast<type>(3600e5))
     {
@@ -511,21 +511,21 @@ const string InputsSelection::write_elapsed_time(const type& time) const
 }
 
 
-/// Return the index of uses where is the(input_number)-th input.
+/// Return the index of uses where is the(inputs_number)-th input.
 /// @param uses Vector of the uses of the variables.
-/// @param input_number Index of the input to find.
+/// @param inputs_number Index of the input to find.
 
-Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& input_number)
+Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& uses, const Index& inputs_number)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
-    if(uses.size() < input_number)
+    if(uses.size() < inputs_number)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: InputsSelection class.\n"
                << "const Index get_input_index(const Tensor<DataSet::VariableUse, 1>, const Index) method.\n"
-               << "Size of uses vector("<< uses.size() <<") must be greater than " <<  input_number << ".\n";
+               << "Size of uses vector("<< uses.size() <<") must be greater than " <<  inputs_number << ".\n";
 
         throw logic_error(buffer.str());
     }
@@ -538,7 +538,7 @@ Index InputsSelection::get_input_index(const Tensor<DataSet::VariableUse, 1>& us
     while(i < uses.size())
     {
         if(uses[i] == DataSet::Input &&
-                input_number == j)
+                inputs_number == j)
         {
             break;
         }

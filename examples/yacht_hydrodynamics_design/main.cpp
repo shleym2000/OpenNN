@@ -16,7 +16,6 @@
 #include <string>
 #include <cstring>
 #include <time.h>
-#include <omp.h>
 
 // OpenNN includes
 
@@ -24,7 +23,7 @@
 
 using namespace OpenNN;
 
-int main(void)
+int main()
 {
     try
     {
@@ -84,9 +83,12 @@ int main(void)
 
         TestingAnalysis testing_analysis(&neural_network, &data_set);
 
-        const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis = testing_analysis.perform_linear_regression_analysis()[0];
+        const TestingAnalysis::LinearRegressionAnalysis linear_regression_analysis
+                = testing_analysis.perform_linear_regression_analysis()[0];
 
-        cout<<"correlation: "<<linear_regression_analysis.correlation<<endl;
+
+        cout << "Linear regression analysis correlation: "
+             << linear_regression_analysis.correlation << endl;
 
         // Save results
 

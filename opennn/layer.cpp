@@ -34,9 +34,6 @@ string Layer::get_type_string() const
 {
     switch(layer_type)
     {
-    case PrincipalComponents:
-        return "PrincipalComponents";
-
     case Convolutional:
         return "Convolutional";
 
@@ -151,12 +148,12 @@ Tensor<type, 1> Layer::get_parameters() const
 }
 
 
-Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2> &)
+Tensor<type, 2> Layer::calculate_outputs(const Tensor<type, 2>&)
 {
     ostringstream buffer;
 
     buffer << "OpenNN Exception: Layer class.\n"
-           << "calculate_outputs(const Tensor<type, 2> &) method.\n"
+           << "calculate_outputs(const Tensor<type, 2>&) method.\n"
            << "This method is not implemented in the layer type (" << get_type_string() << ").\n";
 
     throw logic_error(buffer.str());
@@ -1602,23 +1599,6 @@ void Layer::exponential_linear_derivatives(const Tensor<type, 4>& combinations,
     f_2 = combinations.constant(1.);
 
     activations_derivatives.device(*thread_pool_device) = if_sentence.select(f_1, f_2);
-}
-
-
-void Layer::multiply_rows(Tensor<type, 2> & matrix, const Tensor<type, 1> & vector) const
-{
-    const Index columns_number = matrix.dimension(1);
-    const Index rows_number = matrix.dimension(0);
-
-    #pragma omp paralell for
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        for(Index j = 0; j < columns_number; j++)
-        {
-           matrix(i,j) *= vector(j);
-        }
-    }
 }
 
 }

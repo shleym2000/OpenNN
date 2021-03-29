@@ -292,7 +292,7 @@ void QuasiNewtonMethod::set_default()
 
 void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
     {
@@ -318,7 +318,7 @@ void QuasiNewtonMethod::set_minimum_parameters_increment_norm(const type& new_mi
 
 void QuasiNewtonMethod::set_minimum_loss_decrease(const type& new_minimum_loss_decrease)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_minimum_loss_decrease < static_cast<type>(0.0))
     {
@@ -355,7 +355,7 @@ void QuasiNewtonMethod::set_loss_goal(const type& new_loss_goal)
 
 void QuasiNewtonMethod::set_gradient_norm_goal(const type& new_gradient_norm_goal)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_gradient_norm_goal < static_cast<type>(0.0))
     {
@@ -399,7 +399,7 @@ void QuasiNewtonMethod::set_maximum_epochs_number(const Index& new_maximum_epoch
 
 void QuasiNewtonMethod::set_maximum_time(const type& new_maximum_time)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(new_maximum_time < static_cast<type>(0.0))
     {
@@ -493,7 +493,7 @@ void QuasiNewtonMethod::calculate_inverse_hessian_approximation(QuasiNewtonMehto
 }
 
 
-const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1> & left_matrix, Tensor<type, 1> & right_matrix) const
+const Tensor<type, 2> QuasiNewtonMethod::kronecker_product(Tensor<type, 1>& left_matrix, Tensor<type, 1>& right_matrix) const
 {
     // Transform Tensors into Dense matrix
 
@@ -645,7 +645,7 @@ void QuasiNewtonMethod::update_parameters(
         LossIndexBackPropagation& back_propagation,
         QuasiNewtonMehtodData& optimization_data)
 {
-    #ifdef __OPENNN_DEBUG__
+    #ifdef OPENNN_DEBUG
 
         check();
 
@@ -750,7 +750,7 @@ void QuasiNewtonMethod::update_parameters(
 
 TrainingResults QuasiNewtonMethod::perform_training()
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -818,13 +818,13 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0)  = training_back_propagation.error;
+    results.training_error_history(0) = training_back_propagation.error;
 
     if(has_selection)
     {
         neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0)  = selection_back_propagation.error;
+        results.selection_error_history(0) = selection_back_propagation.error;
     }
 
     // Main loop
@@ -849,6 +849,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
             // Loss Index
 
+            loss_index_pointer->calculate_errors(selection_batch, selection_forward_propagation, selection_back_propagation);
             loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_back_propagation);
 
             if(selection_back_propagation.error > old_selection_error)
@@ -869,7 +870,7 @@ TrainingResults QuasiNewtonMethod::perform_training()
 
         update_parameters(training_batch, training_forward_propagation, training_back_propagation, optimization_data);
 
-        #ifdef __OPENNN_DEBUG__
+        #ifdef OPENNN_DEBUG
 
         if(::isnan(training_back_propagation.error)){
             ostringstream buffer;

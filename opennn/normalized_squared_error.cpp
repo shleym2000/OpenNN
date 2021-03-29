@@ -129,7 +129,7 @@ void NormalizedSquaredError::set_time_series_normalization_coefficient()
 
 type NormalizedSquaredError::calculate_time_series_normalization_coefficient(const Tensor<type, 2>& targets_t_1, const Tensor<type, 2>& targets_t) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
 //    check();
 
@@ -220,8 +220,8 @@ void NormalizedSquaredError::set_default()
     }
     else
     {
-        normalization_coefficient = -1;
-        selection_normalization_coefficient = -1;
+        normalization_coefficient = NAN;
+        selection_normalization_coefficient = NAN;
     }
 }
 
@@ -231,12 +231,12 @@ void NormalizedSquaredError::set_default()
 /// @param targets Matrix with the targets values from dataset.
 /// @param targets_mean Vector with the means of the given targets.
 
-type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets, const Tensor<type, 1>& targets_mean) const
+type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<type, 2>& targets,
+                                                                 const Tensor<type, 1>& targets_mean) const
 {
+#ifdef OPENNN_DEBUG
 
-#ifdef __OPENNN_DEBUG__
-
-//    check();
+    check();
 
     const Index means_number = targets_mean.dimension(0);
     const Index targets_number = targets.dimension(1);
@@ -259,9 +259,9 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 
     for(Index i = 0; i < size; i++)
     {
-        Tensor<type, 0> norm_1 = (targets.chip(i,0) - targets_mean).square().sum();
+        const Tensor<type, 0> norm = (targets.chip(i,0) - targets_mean).square().sum();
 
-        normalization_coefficient += norm_1(0);
+        normalization_coefficient += norm(0);
     }
 
     return normalization_coefficient;
@@ -274,7 +274,7 @@ type NormalizedSquaredError::calculate_normalization_coefficient(const Tensor<ty
 /// \param back_propagation
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
+                     const NeuralNetworkForwardPropagation&,
                      LossIndexBackPropagation& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
@@ -284,13 +284,14 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    back_propagation.error = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    back_propagation.error
+    = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 }
 
 
 void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
-                     const NeuralNetworkForwardPropagation& forward_propagation,
-                     LossIndexBackPropagationLM& back_propagation) const
+                                             const NeuralNetworkForwardPropagation& forward_propagation,
+                                             LossIndexBackPropagationLM& back_propagation) const
 {
     Tensor<type, 0> sum_squared_error;
 
@@ -299,15 +300,16 @@ void NormalizedSquaredError::calculate_error(const DataSetBatch& batch,
     const Index batch_samples_number = batch.get_samples_number();
     const Index total_samples_number = data_set_pointer->get_samples_number();
 
-    back_propagation.error = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
+    back_propagation.error
+    = sum_squared_error(0)/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 }
 
 
 void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
-                                                    NeuralNetworkForwardPropagation& forward_propagation,
+                                                    NeuralNetworkForwardPropagation& ,
                                                     LossIndexBackPropagation& back_propagation) const
 {
-     #ifdef __OPENNN_DEBUG__
+     #ifdef OPENNN_DEBUG
 
      check();
 
@@ -315,14 +317,15 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 
      const Index trainable_layers_number = neural_network_pointer->get_trainable_layers_number();
 
-     Layer* output_layer_pointer = neural_network_pointer->get_output_layer_pointer();
-
      LayerBackPropagation* output_layer_back_propagation = back_propagation.neural_network.layers(trainable_layers_number-1);
+
+     Layer* output_layer_pointer = output_layer_back_propagation->layer_pointer;
 
      const Index batch_samples_number = batch.get_samples_number();
      const Index total_samples_number = data_set_pointer->get_samples_number();
 
-     const type coefficient = static_cast<type>(2.0)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
+     const type coefficient
+     = static_cast<type>(2)/(static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number)*normalization_coefficient);
 
      switch(output_layer_pointer->get_type())
      {
@@ -367,10 +370,16 @@ void NormalizedSquaredError::calculate_output_delta(const DataSetBatch& batch,
 }
 
 
+void NormalizedSquaredError::calculate_output_delta(const DataSetBatch &, NeuralNetworkForwardPropagation &, LossIndexBackPropagationLM &) const
+{
+
+}
+
+
 void NormalizedSquaredError::calculate_gradient(const DataSetBatch& batch,
                                     LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -381,16 +390,18 @@ void NormalizedSquaredError::calculate_gradient(const DataSetBatch& batch,
 
     const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors, AT_B);
 
-    loss_index_back_propagation_lm.gradient.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.gradient;
+    loss_index_back_propagation_lm.gradient.device(*thread_pool_device)
+            = coefficient*loss_index_back_propagation_lm.gradient;
 }
 
 
 void NormalizedSquaredError::calculate_hessian_approximation(const DataSetBatch& batch,
                                                              LossIndexBackPropagationLM& loss_index_back_propagation_lm) const
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     check();
 
@@ -401,7 +412,8 @@ void NormalizedSquaredError::calculate_hessian_approximation(const DataSetBatch&
 
     const type coefficient = 2/((static_cast<type>(batch_samples_number)/static_cast<type>(total_samples_number))*normalization_coefficient);
 
-    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = loss_index_back_propagation_lm.squared_errors_Jacobian.contract(loss_index_back_propagation_lm.squared_errors_Jacobian, AT_B);
+    loss_index_back_propagation_lm.hessian.device(*thread_pool_device) =
+            loss_index_back_propagation_lm.squared_errors_jacobian.contract(loss_index_back_propagation_lm.squared_errors_jacobian, AT_B);
 
     loss_index_back_propagation_lm.hessian.device(*thread_pool_device) = coefficient*loss_index_back_propagation_lm.hessian;
 }

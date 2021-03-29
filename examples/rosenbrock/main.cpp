@@ -15,8 +15,6 @@
 #include <string>
 #include <time.h>
 
-#include <omp.h>
-
 // OpenNN includes
 
 #include "../../opennn/opennn.h"
@@ -25,7 +23,7 @@ using namespace OpenNN;
 using namespace std;
 using namespace Eigen;
 
-int main(void)
+int main()
 {          
     try
     {
@@ -82,7 +80,6 @@ int main(void)
         system("pause");
 
         return 0;
-
     }
     catch(exception& e)
     {

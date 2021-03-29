@@ -28,7 +28,7 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
 
     const Index x_size = new_x.size();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index y_size = y.size();
 
@@ -37,7 +37,7 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
     if(y_size != x_size)
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size must be equal to X size.\n";
 
         throw logic_error(buffer.str());
@@ -100,17 +100,18 @@ type linear_correlation(const ThreadPoolDevice* thread_pool_device,
 /// Calculates the Rank-Order correlation coefficient (Spearman method) between two vectors.
 /// @param x Vector containing data.
 /// @param y Vector for computing the linear correlation with the x vector.
+/// @todo Missing values
 
 type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type rank_linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type rank_linear_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size must be equal to X size.\n";
 
         throw logic_error(buffer.str());
@@ -126,24 +127,6 @@ type rank_linear_correlation(const ThreadPoolDevice* thread_pool_device, const T
 }
 
 
-/// Calculates the Rank-Order correlation coefficient(Spearman method)(R-value) between two vectors.
-/// Takes into account possible missing values.
-/// @param x Vector containing input values.
-/// @param y Vector for computing the linear correlation with the x vector.
-/// @param missing Vector with the missing samples idices.
-
-type rank_linear_correlation_missing_values(const ThreadPoolDevice* thread_pool_device,
-                                            const Tensor<type, 1>& x, const Tensor<type, 1>& y)
-{
-    pair <Tensor<type, 1>, Tensor<type, 1>> filter_vectors = filter_missing_values(x,y);
-
-    const Tensor<type, 1> new_x = filter_vectors.first;
-    const Tensor<type, 1> new_y = filter_vectors.second;
-
-    return rank_linear_correlation(thread_pool_device, new_x, new_y);
-}
-
-
 /// Calculates the correlation between Y and exp(A*X + B).
 /// @param x Vector containing the input values.
 /// @param y Vector containing the target values.
@@ -151,14 +134,14 @@ type rank_linear_correlation_missing_values(const ThreadPoolDevice* thread_pool_
 
 type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type exponential_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
         throw logic_error(buffer.str());
@@ -184,14 +167,14 @@ type exponential_correlation(const ThreadPoolDevice* thread_pool_device, const T
 type logarithmic_correlation(const ThreadPoolDevice* thread_pool_device,
                              const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logarithmic_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size must be equal to X size.\n";
 
         throw logic_error(buffer.str());
@@ -230,14 +213,14 @@ type rank_logistic_correlation(const ThreadPoolDevice* thread_pool_device, const
 
 type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type power_correlation(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Size of Y (" << y.size() << ") must be equal to size of X (" << x.size() << ").\n";
 
         throw logic_error(buffer.str());
@@ -261,9 +244,9 @@ type power_correlation(const ThreadPoolDevice* thread_pool_device, const Tensor<
 /// @param x Matrix of the variable X.
 /// @param y Matrix of the variable Y.
 
-type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type,2>& x, const Tensor<type,2>& y)
+type karl_pearson_correlation(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-#ifdef  __OPENNN_DEBUG__
+#ifdef  OPENNN_DEBUG
 
     if(x.dimension(1) == 0)
     {
@@ -574,7 +557,7 @@ Tensor<type, 1> cross_correlations(const ThreadPoolDevice* thread_pool_device, c
 Tensor<type, 1> logistic_error_gradient(const type& a, const type& b, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index n = y.size();
     const Index x_size = x.size();
@@ -645,7 +628,7 @@ Tensor<type, 1> gaussian (const type& a, const type& b, const Tensor<type, 1>& x
 /// @param a Parameter a.
 /// @param b Parameter b.
 
-Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& a, const Tensor<type,2>& b, const Tensor<type, 2>& x)
+Tensor<type, 2> logistic(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& a, const Tensor<type, 2>& b, const Tensor<type, 2>& x)
 {
     const Index samples_number = x.dimension(0);
     const Index biases_number = a.dimension(0);
@@ -672,7 +655,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 {
     const Index n = y.size();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index x_size = x.size();
 
@@ -702,7 +685,7 @@ type logistic_error(const type& a, const type& b, const Tensor<type, 1>& x, cons
 
 RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,const Tensor<type, 1>& x, const Tensor<type, 1>& y, const bool& scale_data)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index x_size = x.size();
 
@@ -788,7 +771,7 @@ RegressionResults linear_regression(const ThreadPoolDevice* thread_pool_device,c
 
 RegressionResults logarithmic_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     Index n = y.size();
 
@@ -838,7 +821,7 @@ RegressionResults logarithmic_regression(const ThreadPoolDevice* thread_pool_dev
 
 RegressionResults exponential_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -885,7 +868,7 @@ RegressionResults exponential_regression(const ThreadPoolDevice* thread_pool_dev
 
 RegressionResults power_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
@@ -941,14 +924,14 @@ RegressionResults power_regression(const ThreadPoolDevice* thread_pool_device, c
 
 RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logistic_regression(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -998,7 +981,7 @@ RegressionResults logistic_regression(const ThreadPoolDevice* thread_pool_device
 
     NeuralNetwork neural_network;
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, PerceptronLayer::Logistic);
 
     neural_network.add_layer(perceptron_layer);
 
@@ -1049,7 +1032,7 @@ CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<typ
 {
     Index n = y.size();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index x_size = x.size();
 
@@ -1114,7 +1097,7 @@ CorrelationResults linear_correlations(const ThreadPoolDevice*, const Tensor<typ
 CorrelationResults logarithmic_correlations(const ThreadPoolDevice* thread_pool_device,
                                             const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     const Index x_size = x.size();
 
@@ -1151,7 +1134,7 @@ CorrelationResults exponential_correlations(const ThreadPoolDevice* thread_pool_
                                             const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
     Index n = y.size();
 
     const Index x_size = x.size();
@@ -1188,7 +1171,7 @@ CorrelationResults exponential_correlations(const ThreadPoolDevice* thread_pool_
 CorrelationResults power_correlations(const ThreadPoolDevice* thread_pool_device,
                                       const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     Index n = y.size();
 
@@ -1226,14 +1209,14 @@ CorrelationResults power_correlations(const ThreadPoolDevice* thread_pool_device
 CorrelationResults logistic_correlations(const ThreadPoolDevice* thread_pool_device,
                                          const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -1382,14 +1365,14 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
                                                   const Tensor<type, 2>& x,
                                                   const Tensor<type, 2>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.dimension(0))
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type logistic_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -1440,7 +1423,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
     NeuralNetwork neural_network;
 
-    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, 0, PerceptronLayer::Logistic);
+    PerceptronLayer* perceptron_layer = new PerceptronLayer(input_variables_number, target_variables_number, PerceptronLayer::Logistic);
 
     neural_network.add_layer(perceptron_layer);
 
@@ -1484,7 +1467,7 @@ CorrelationResults multiple_logistic_correlations(const ThreadPoolDevice* thread
 
 CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tensor<type, 2>& x, const Tensor<type, 2>& y)
 {
-#ifdef  __OPENNN_DEBUG__
+#ifdef  OPENNN_DEBUG
 
     if(x.dimension(1) == 0)
     {
@@ -1618,21 +1601,23 @@ CorrelationResults karl_pearson_correlations(const ThreadPoolDevice*, const Tens
 
     const Tensor<type, 0> contingency_table_sum = contingency_table.cast<type>().sum();
 
-    karl_pearson.correlation = sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
+    karl_pearson.correlation
+            = sqrt(static_cast<type>(k) / static_cast<type>(k - 1.0)) * sqrt(chi_squared/(chi_squared + contingency_table_sum(0)));
 
     return karl_pearson;
 }
 
+
 CorrelationResults gauss_correlations(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& x, const Tensor<type, 1>& y)
 {
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     ostringstream buffer;
 
     if(y.size() != x.size())
     {
         buffer << "OpenNN Exception: Correlations.\n"
-               << "static type gauss_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
+               << "type gauss_correlations(const Tensor<type, 1>&, const Tensor<type, 1>&) method.\n"
                << "Y size(" <<y.size()<<") must be equal to X size("<<x.size()<<").\n";
 
         throw logic_error(buffer.str());
@@ -1733,7 +1718,7 @@ type covariance(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2
     const Index size_1 = vector_1.size();
     const Index size_2 = vector_2.size();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(size_1 == 0)
     {
@@ -1793,7 +1778,7 @@ type covariance_missing_values(const Tensor<type, 1>& x, const Tensor<type, 1>& 
     const Index size_1 = new_x.size();
     const Index size_2 = new_y.size();
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(size_1 == 0)
     {
@@ -1849,7 +1834,7 @@ Tensor<type, 2> covariance_matrix(const Tensor<type, 2>& matrix)
 
     const Index size = columns_number;
 
-#ifdef __OPENNN_DEBUG__
+#ifdef OPENNN_DEBUG
 
     if(size == 0)
     {
@@ -1975,7 +1960,7 @@ Tensor<Index, 2> contingency_table(const Tensor<string, 1>& vector1, const Tenso
 
 Tensor<Index, 2> contingency_table(Tensor<string, 2>& matrix)
 {  
-    #ifdef __OPENNN_DEBUG__
+    #ifdef OPENNN_DEBUG
 
     if(matrix.dimension(1) == 0)
     {
@@ -2349,4 +2334,3 @@ Tensor<type, 2> scale_minimum_maximum(const Tensor<type, 2>& x)
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-
