@@ -464,17 +464,18 @@ void PerceptronLayer::set_synaptic_weights_glorot()
     fan_in = synaptic_weights.dimension(0);
     fan_out = synaptic_weights.dimension(1);
 
-    scale /= ((fan_in + fan_out) / static_cast<type>(2.0));
+    scale /= (fan_in + fan_out) / static_cast<type>(2.0);
     limit = sqrt(static_cast<type>(3.0) * scale);
 
     biases.setZero();
 
     synaptic_weights.setRandom<Eigen::internal::UniformRandomGenerator<type>>();
 
-    Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
-    Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
+    const Eigen::Tensor<type, 0> min_weight = synaptic_weights.minimum();
+    const Eigen::Tensor<type, 0> max_weight = synaptic_weights.maximum();
 
     synaptic_weights = (synaptic_weights - synaptic_weights.constant(min_weight(0))) / (synaptic_weights.constant(max_weight(0))- synaptic_weights.constant(min_weight(0)));
+
     synaptic_weights = (synaptic_weights * synaptic_weights.constant(2. * limit)) - synaptic_weights.constant(limit);
 }
 
@@ -578,6 +579,7 @@ void PerceptronLayer::calculate_activations(const Tensor<type, 2>& combinations,
          case ExponentialLinear: exponential_linear(combinations, activations); return;
      }
 }
+
 
 void PerceptronLayer::calculate_activations_derivatives(const Tensor<type, 2>& combinations,
                                                         Tensor<type, 2>& activations,
@@ -879,6 +881,58 @@ void PerceptronLayer::calculate_hidden_delta_probabilistic(ProbabilisticLayerFor
 }
 
 
+void PerceptronLayer::calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
+                                                              LayerForwardPropagation* forward_propagation,
+                                                              LayerBackPropagation* back_propagation)
+{
+    PerceptronLayerForwardPropagation* perceptron_layer_forward_propagation =
+            static_cast<PerceptronLayerForwardPropagation*>(forward_propagation);
+
+    PerceptronLayerBackPropagation* perceptron_layer_back_propagation =
+            static_cast<PerceptronLayerBackPropagation*>(back_propagation);
+
+    const Index samples_number = inputs.dimension(0);
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    Index parameter_index = 0;
+
+    cout << "Delta: " << endl << perceptron_layer_back_propagation->delta << endl;
+    cout << "Activations derivatives: " << endl << perceptron_layer_forward_propagation->activations_derivatives << endl;
+    cout << "Inputs: " << endl << inputs << endl;
+
+    for(Index sample = 0; sample < samples_number; sample++)
+    {
+        parameter_index = 0;
+
+        for(Index neuron = 0; neuron < neurons_number; neuron++)
+        {
+            for(Index input = 0; input <  inputs_number; input++)
+            {
+                perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+                        perceptron_layer_back_propagation->delta(sample, neuron) *
+                        perceptron_layer_forward_propagation->activations_derivatives(sample, neuron) *
+                        inputs(sample, input);
+
+                cout << "Index: " << neurons_number+parameter_index << endl;
+
+                parameter_index++;
+            }
+
+            cout << "Out Index: " << neuron << endl;
+
+            perceptron_layer_back_propagation->squared_errors_Jacobian(sample, neuron) =
+                    perceptron_layer_back_propagation->delta(sample, neuron) * perceptron_layer_forward_propagation->activations_derivatives(sample, neuron);
+        }
+    }
+
+    cout << "Squared errors Jacobian: " << endl << perceptron_layer_back_propagation->squared_errors_Jacobian << endl;
+
+    system("pause");
+}
+
+
 void PerceptronLayer::calculate_error_gradient(const Tensor<type, 2>& inputs,
                                                LayerForwardPropagation* forward_propagation,
                                                LayerBackPropagation* back_propagation) const
@@ -959,14 +1013,10 @@ string PerceptronLayer::write_expression(const Tensor<string, 1>& inputs_names, 
     switch(perceptron_layer_type)
     {
          case HiddenLayer:
-         {
             return write_hidden_layer_expression(inputs_names, outputs_names);
-         }
 
          case OutputLayer:
-         {
             return write_output_layer_expression(inputs_names, outputs_names);
-         }
     }
 
     return string();
@@ -979,18 +1029,17 @@ string PerceptronLayer::write_hidden_layer_expression(const Tensor<string, 1> & 
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
+        const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
-      Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
+        buffer << outputs_names[j] << to_string(j) << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
 
-               buffer << outputs_names[j] << to_string(j) << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
+        for(Index i = 0; i < inputs_names.size() - 1; i++)
+        {
 
-               for(Index i = 0; i < inputs_names.size() - 1; i++)
-               {
+           buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
+        }
 
-                   buffer << " (" << inputs_names[i] << "*" << synaptic_weights_column(i) << ")+";
-               }
-
-               buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
+        buffer << " (" << inputs_names[inputs_names.size() - 1] << "*" << synaptic_weights_column[inputs_names.size() - 1] << ") ];\n";
     }
 
     return buffer.str();
@@ -1003,8 +1052,7 @@ string PerceptronLayer::write_output_layer_expression(const Tensor<string, 1> & 
 
     for(Index j = 0; j < outputs_names.size(); j++)
     {
-
-        Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
+        const Tensor<type, 1> synaptic_weights_column =  synaptic_weights.chip(j,1);
 
         buffer << outputs_names[j] << " = " << write_activation_function_expression() << "[ " << biases(0,j) << " +";
 
@@ -1036,7 +1084,6 @@ void PerceptronLayer::from_XML(const tinyxml2::XMLDocument& document)
 
         throw logic_error(buffer.str());
     }
-
 
     // Layer name
 

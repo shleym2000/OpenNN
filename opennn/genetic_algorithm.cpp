@@ -151,7 +151,7 @@ void GeneticAlgorithm::set_default()
     population.resize(individuals_number, genes_number);
 
     training_errors.resize(individuals_number);
-    selection_errorss.resize(individuals_number);
+    selection_errors.resize(individuals_number);
 
     fitness.resize(individuals_number);
 
@@ -246,9 +246,9 @@ void GeneticAlgorithm::set_training_errors(const Tensor<type, 1>& new_training_e
 }
 
 
-void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection_errorss)
+void GeneticAlgorithm::set_selection_errors(const Tensor<type, 1>& new_selection_errors)
 {
-    selection_errorss = new_selection_errorss;
+    selection_errors = new_selection_errors;
 }
 
 
@@ -296,11 +296,11 @@ void GeneticAlgorithm::set_fitness(const Tensor<type, 1>& new_fitness)
 /// Sets a new population size. It must be greater than 4.
 /// @param new_population_size Size of the population.
 
-void GeneticAlgorithm::set_individuals_number(const Index& new_population_size)
+void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_number)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_population_size < 4)
+    if(new_individuals_number < 4)
     {
         ostringstream buffer;
 
@@ -315,6 +315,13 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_population_size)
 
 // @todo Set population and other matrices
 
+    const Index new_genes_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
+
+    population.resize(new_individuals_number, new_genes_number);
+
+    fitness.resize(new_individuals_number);
+
+    selection.resize(new_individuals_number);
 }
 
 
@@ -518,7 +525,7 @@ void GeneticAlgorithm::evaluate_population()
 
     for(Index i = 0; i < individuals_number; i++)
     {
-        individual = population.chip(i,0);
+        individual = population.chip(i, 0);
 
         const Tensor<Index, 0> input_columns_number = individual.cast<Index>().sum();
 
@@ -546,7 +553,14 @@ void GeneticAlgorithm::evaluate_population()
         parameters(i) = training_results.parameters;
 
         training_errors(i) = training_results.training_error;
-        selection_errorss(i) = training_results.selection_error;
+        selection_errors(i) = training_results.selection_error;
+
+        if(display)
+        {
+            cout << "Individual " << i+1 << endl;
+            cout << "   Training error: " << training_results.training_error << endl;
+            cout << "   Selection error: " << training_results.selection_error << endl;
+        }
     }
 }
 
@@ -561,7 +575,7 @@ void GeneticAlgorithm::perform_fitness_assignment()
 
     sort(selection_errors_rank.data(),
          selection_errors_rank.data() + selection_errors_rank.size(),
-         [&](Index i, Index j){return selection_errorss[i]<selection_errorss[j];});
+         [&](Index i, Index j){return selection_errors[i]<selection_errors[j];});
 
     for(Index i = 0; i < individuals_number; i++)
     {
@@ -785,6 +799,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
 #endif
 
+    if(population.size() == 0) set_individuals_number(10);
+
     if(display) cout << "Performing genetic inputs selection..." << endl;
 
     InputsSelectionResults results(maximum_epochs_number);
@@ -814,18 +830,22 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     initialize_population();
 
+    cout << population << endl;
+
+    system("pause");
+
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
     {
         cout << "Generation: " << epoch << endl;
 
         evaluate_population();
-
-        optimal_individual_index = minimal_index(selection_errorss);
+/*
+        optimal_individual_index = minimal_index(selection_errors);
 
         results.training_errors(epoch) = training_errors(optimal_individual_index);
         results.selection_errors(epoch) = training_errors(optimal_individual_index);
 
-        if(results.optimum_selection_error < selection_errorss(optimal_individual_index))
+        if(results.optimum_selection_error < selection_errors(optimal_individual_index))
         {
             // Neural network
 
@@ -837,7 +857,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             results.optimum_training_error = training_errors(optimal_individual_index);
 
-            results.optimum_selection_error = selection_errorss(optimal_individual_index);
+            results.optimum_selection_error = selection_errors(optimal_individual_index);
         }
 
         time(&current_time);
@@ -854,7 +874,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
             results.stopping_condition = InputsSelection::MaximumTime;
         }
-        else if(selection_errorss(optimal_individual_index) <= selection_error_goal)
+        else if(selection_errors(optimal_individual_index) <= selection_error_goal)
         {
             stop = true;
 
@@ -877,13 +897,13 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
             cout << "Generation optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << " " << endl;
             cout << "Generation optimal number of inputs: " << data_set_pointer->get_input_variables_names().size() << endl;
             cout << "Corresponding training error: " << training_errors(optimal_individual_index) << endl;
-            cout << "Generation optimum selection error: " << selection_errorss(optimal_individual_index) << endl;
+            cout << "Generation optimum selection error: " << selection_errors(optimal_individual_index) << endl;
             cout << "Generation selection mean: " << training_errors.mean() << endl;
             cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
             cout << endl;
         }
 
-        if(stop == true)
+        if(stop)
         {
             results.elapsed_time = write_elapsed_time(elapsed_time);
             break;
@@ -896,21 +916,12 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
         perform_crossover();
 
         perform_mutation();
+*/
     }
 
     time(&current_time);
-
+/*
     elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
-
-    if(display)
-    {
-        cout << "Optimal inputs: " << data_set_pointer->get_input_variables_names().cast<string>() << endl;
-        //cout << "Optimal generation: " << optimal_generation << endl;
-        //cout << "Optimal number of inputs: " << optimal_genes_number << endl;
-        cout << "Optimum training error: " << results.optimum_training_error << endl;
-        cout << "Optimum selection error: " << results.optimum_selection_error << endl;
-        cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-    }
 
     // Set data set stuff
 
@@ -923,6 +934,8 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
 
     neural_network_pointer->set_parameters(results.optimal_parameters);
+*/
+    if(display) results.print();
 
     return results;
 }
@@ -1198,25 +1211,6 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
                << "GeneticAlgorithm element is nullptr.\n";
 
         throw logic_error(buffer.str());
-    }
-
-    // Regression
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("Approximation");
-
-        if(element)
-        {
-            const string new_approximation = element->GetText();
-
-            try
-            {
-                set_approximation(new_approximation != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
     }
 
     // Population size
@@ -1506,16 +1500,26 @@ void GeneticAlgorithm::from_XML(const tinyxml2::XMLDocument& document)
 }
 
 
+void GeneticAlgorithm::print_summary() const
+{
+    cout << "Genetic algorithm" << endl;
+    cout << "Individuals number: " << get_individuals_number() << endl;
+    cout << "Genes number: " << get_genes_number() << endl;
+}
+
+
 /// Saves to a XML-type file the members of the genetic algorithm object.
 /// @param file_name Name of genetic algorithm XML-type file.
 
 void GeneticAlgorithm::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE * file = fopen(file_name.c_str(), "w");
 
-//    document->SaveFile(file_name.c_str());
+    tinyxml2::XMLPrinter printer(file);
 
-//    delete document;
+    write_XML(printer);
+
+    fclose(file);
 }
 
 

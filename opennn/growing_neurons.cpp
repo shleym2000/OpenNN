@@ -97,13 +97,13 @@ void GrowingNeurons::set_step(const Index& new_step)
 
 
 /// Sets the maximum selection failures for the growing order selection algorithm.
-/// @param new_maximum_loss_failures Maximum number of selection failures in the growing neurons selection algorithm.
+/// @param new_maximum_selection_failures Maximum number of selection failures in the growing neurons selection algorithm.
 
-void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_loss_failures)
+void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_selection_failures)
 {
 #ifdef OPENNN_DEBUG
 
-    if(new_maximum_loss_failures <= 0)
+    if(new_maximum_selection_failures <= 0)
     {
         ostringstream buffer;
 
@@ -116,7 +116,7 @@ void GrowingNeurons::set_maximum_selection_failures(const Index& new_maximum_los
 
 #endif
 
-    maximum_selection_failures = new_maximum_loss_failures;
+    maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
@@ -173,6 +173,8 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     TrainingResults training_results;
 
+    training_strategy_pointer->set_display(false);
+
     time(&beginning_time);
 
     // Main loop
@@ -191,6 +193,13 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
         // Loss index
 
+        if(display)
+        {
+            cout << endl
+                 << "Epoch: " << epoch+1 << endl;
+            cout << "Neurons number: " << neurons_number << endl;
+        }
+
         for(Index trial = 0; trial < trials_number; trial++)
         {
             neural_network->set_parameters_random();
@@ -200,12 +209,13 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
             if(display)
             {
                 cout << "Trial: " << trial+1 << endl;
-                cout << "Training error: " << results.optimum_training_error << endl;
-                cout << "Selection error: " << results.optimum_selection_error << endl;
+                cout << "Training error: " << training_results.training_error << endl;
+                cout << "Selection error: " << training_results.selection_error << endl;
             }
 
             if(training_results.selection_error < results.optimum_selection_error)
             {
+                results.optimal_neurons_number = neurons_number;
                 results.optimal_parameters = training_results.parameters;
 
                 results.optimum_training_error = training_results.training_error;
@@ -272,12 +282,14 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
         }
 
         if(display)
-        {
+        {            
+/*
             cout << "Epoch: " << epoch << endl
                  << "Neurons number: " << neurons_number << endl
                  << "Training error: " << training_results.selection_error << endl
-                 << "Selection error: " << training_results.selection_error << endl
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+                 << "Selection error: " << training_results.selection_error << endl;
+*/
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
         if(end)
@@ -291,10 +303,10 @@ NeuronsSelectionResults GrowingNeurons::perform_neurons_selection()
 
     if(display)
     {
-        cout << endl
-             << "Optimal neurons number: " << results.optimal_neurons_number << endl
-             << "Optimum selection error: " << results.optimum_selection_error << endl
-             << "Optimum training error: " << results.optimum_training_error << endl;
+        cout << endl;
+        cout << "Optimal neurons number: " << results.optimal_neurons_number << endl;
+        cout << "Optimum training error: " << results.optimum_training_error << endl;
+        cout << "Optimum selection error: " << results.optimum_selection_error << endl;
     }
 
     // Save neural network
@@ -738,11 +750,13 @@ void GrowingNeurons::from_XML(const tinyxml2::XMLDocument& document)
 
 void GrowingNeurons::save(const string& file_name) const
 {
-//    tinyxml2::XMLDocument* document = to_XML();
+    FILE * file = fopen(file_name.c_str(), "w");
 
-//    document->SaveFile(file_name.c_str());
+    tinyxml2::XMLPrinter printer(file);
 
-//    delete document;
+    write_XML(printer);
+
+    fclose(file);
 }
 
 

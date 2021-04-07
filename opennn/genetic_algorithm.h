@@ -133,6 +133,8 @@ public:
     void from_XML(const tinyxml2::XMLDocument&);
 
     void write_XML(tinyxml2::XMLPrinter&) const;
+
+    void print_summary() const;
     
     void save(const string&) const;
     void load(const string&);
@@ -148,18 +150,20 @@ private:
 
     Tensor<bool, 2> population;
 
-    /// Performance of population.
-
-    Tensor<Tensor<type, 1>, 1> parameters;
-
-    Tensor<type, 1> training_errors;
-    Tensor<type, 1> selection_errorss;
-
     /// Fitness of population.
 
     Tensor<type, 1> fitness;
 
     Tensor<bool, 1> selection;
+
+
+    /// Performance of population.
+
+    Tensor<Tensor<type, 1>, 1> parameters;
+
+    Tensor<type, 1> training_errors;
+    Tensor<type, 1> selection_errors;
+
 
     /// Mutation rate.
     /// The mutation rate value must be between 0 and 1.

@@ -32,6 +32,11 @@ namespace OpenNN
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
+#endif
+
+
 /// This class represents a layer of perceptrons.
 
 /// PerceptronLayer is a single-layer network with a hard-limit trabsfer function.
@@ -172,11 +177,17 @@ public:
                                              ProbabilisticLayerBackPropagation*,
                                              PerceptronLayerBackPropagation*) const;
 
+   // Squared errors methods
+
+   void calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>&,
+                                                LayerForwardPropagation*,
+                                                LayerBackPropagation*);
+
    // Gradient methods
 
    void calculate_error_gradient(const Tensor<type, 2>&,
                                  LayerForwardPropagation*,
-       LayerBackPropagation*) const;
+                                 LayerBackPropagation*) const;
 
    void insert_gradient(LayerBackPropagation*,
                         const Index&,
@@ -231,9 +242,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/perceptron_layer_cuda.h"
-#endif
-
+#else
 };
+#endif
 
 struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 {
@@ -308,6 +319,7 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
+        const Index parameters_number = layer_pointer->get_parameters_number();
 
         delta.resize(batch_samples_number, neurons_number);
 
@@ -316,6 +328,8 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
 
         delta.resize(batch_samples_number, neurons_number);
+
+        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
     }
 
     void print() const
@@ -334,7 +348,10 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
+
+    Tensor<type, 2> squared_errors_Jacobian;
 };
+
 
 
 }

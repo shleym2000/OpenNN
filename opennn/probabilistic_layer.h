@@ -33,6 +33,11 @@ namespace OpenNN
 struct ProbabilisticLayerForwardPropagation;
 struct ProbabilisticLayerBackPropagation;
 
+#ifdef OPENNN_CUDA
+    #include "../../opennn-cuda/opennn_cuda/struct_probabilistic_layer_cuda.h"
+#endif
+
+
 /// This class represents a layer of probabilistic neurons.
 
 ///
@@ -168,7 +173,7 @@ public:
    string write_no_probabilistic_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
 
    string write_expression(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
-   string write_combinations(const Tensor<string, 1>&, const Tensor<string, 1>&) const;
+   string write_combinations(const Tensor<string, 1>&) const;
    string write_activations(const Tensor<string, 1>&) const;
 
    string write_expression_c() const;
@@ -184,6 +189,7 @@ public:
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
+
 
 protected:
 
@@ -208,10 +214,9 @@ protected:
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/probabilistic_layer_cuda.h"
-#endif
-
+#else
 };
-
+#endif
 
 struct ProbabilisticLayerForwardPropagation : LayerForwardPropagation
 {

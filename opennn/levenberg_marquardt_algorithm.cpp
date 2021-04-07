@@ -526,6 +526,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     results.resize_training_history(maximum_epochs_number+1);
     results.resize_selection_history(maximum_epochs_number+1);
+
     // Data set
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
@@ -549,10 +550,10 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     // Neural network
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
-cout << "hello" << endl;
+
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
-cout << "forward propagation" << endl;
+
     // Loss index
 
     type old_training_loss = 0;
@@ -565,8 +566,8 @@ cout << "forward propagation" << endl;
     type gradient_norm = 0;
 
     LossIndexBackPropagationLM training_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
-cout << "back propagation" << endl;
+    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(selection_samples_number, loss_index_pointer);
+
     // Training strategy stuff
 
     bool stop_training = false;
@@ -576,15 +577,13 @@ cout << "back propagation" << endl;
     type elapsed_time = 0;
 
     LevenbergMarquardtAlgorithmData optimization_data(this);
-cout << "hello" << endl;
+
     // Calculate error before training
 
     neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
     loss_index_pointer->calculate_squared_errors(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
     results.training_error_history(0)  = training_loss_index_back_propagation_lm.error;
-
-    cout << "initial error" << endl;
 
     if(has_selection)
     {
@@ -593,8 +592,6 @@ cout << "hello" << endl;
         loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
         results.selection_error_history(0)  = selection_loss_index_back_propagation_lm.error;
     }
-
-    cout << "selection error" << endl;
 
     // Main loop
 
@@ -605,7 +602,8 @@ cout << "hello" << endl;
 
         // Neural network
 
-        neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
+        neural_network_pointer->forward_propagate(training_batch,
+                                                  training_forward_propagation);
 
         // Loss index
 
@@ -635,10 +633,16 @@ cout << "hello" << endl;
 
         if(has_selection)
         {
-          neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
+          neural_network_pointer->forward_propagate(selection_batch,
+                                                    selection_forward_propagation);
 
-          loss_index_pointer->calculate_squared_errors(selection_batch, selection_forward_propagation, training_loss_index_back_propagation_lm);
-          loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, training_loss_index_back_propagation_lm);
+          loss_index_pointer->calculate_squared_errors(selection_batch,
+                                                       selection_forward_propagation,
+                                                       training_loss_index_back_propagation_lm);
+
+          loss_index_pointer->calculate_error(selection_batch,
+                                              selection_forward_propagation,
+                                              training_loss_index_back_propagation_lm);
         }
 
         if(epoch == 1)
@@ -812,16 +816,9 @@ cout << "hello" << endl;
 
     if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
+    if(display) results.print();
+
     return results;
-}
-
-
-/// Trains a neural network with an associated loss index according to the Levenberg-Marquardt algorithm.
-/// Training occurs according to the training parameters.
-
-void LevenbergMarquardtAlgorithm::perform_training_void()
-{
-    perform_training();
 }
 
 
@@ -873,8 +870,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
 
              set_damping_parameter(damping_parameter*damping_parameter_factor);
          }
-    }
-    while(damping_parameter < maximum_damping_parameter);
+    }while(damping_parameter < maximum_damping_parameter);
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
 
@@ -909,49 +905,49 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
     labels_values(0,0) = "Damping parameter factor";
 
-    labels_values(0,1) = std::to_string(damping_parameter_factor);
+    labels_values(0,1) = to_string(damping_parameter_factor);
 
     // Minimum parameters increment norm
 
     labels_values(1,0) = "Minimum parameters increment norm";
 
-    labels_values(1,1) = std::to_string(minimum_parameters_increment_norm);
+    labels_values(1,1) = to_string(minimum_parameters_increment_norm);
 
     // Minimum loss decrease
 
     labels_values(2,0) = "Minimum loss decrease";
 
-    labels_values(2,1) = std::to_string(minimum_loss_decrease);
+    labels_values(2,1) = to_string(minimum_loss_decrease);
 
     // Loss goal
 
     labels_values(3,0) = "Loss goal";
 
-    labels_values(3,1) = std::to_string(training_loss_goal);
+    labels_values(3,1) = to_string(training_loss_goal);
 
     // Gradient norm goal
 
     labels_values(4,0) = "Gradient norm goal";
 
-    labels_values(4,1) = std::to_string(gradient_norm_goal);
+    labels_values(4,1) = to_string(gradient_norm_goal);
 
     // Maximum selection error increases
 
     labels_values(5,0) = "Maximum selection error increases";
 
-    labels_values(5,1) = std::to_string(maximum_selection_error_increases);
+    labels_values(5,1) = to_string(maximum_selection_error_increases);
 
     // Maximum iterations number
 
     labels_values(6,0) = "Maximum iterations number";
 
-    labels_values(6,1) = std::to_string(maximum_epochs_number);
+    labels_values(6,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
     labels_values(7,0) = "Maximum time";
 
-    labels_values(7,1) = std::to_string(maximum_time);
+    labels_values(7,1) = to_string(maximum_time);
 
     // Reserve training error history
 

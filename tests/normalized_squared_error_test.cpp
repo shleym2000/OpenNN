@@ -265,8 +265,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
        assert_true((error_gradient.dimension(0) == neural_network.get_parameters_number()) , LOG);
-       assert_true(std::all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
-                               [](type i) { return (i-static_cast<type>(0))<std::numeric_limits<type>::min(); }), LOG);
+       assert_true(all_of(error_gradient.data(), error_gradient.data()+error_gradient.size(),
+                               [](type i) { return (i-static_cast<type>(0))<numeric_limits<type>::min(); }), LOG);
    }
 
    neural_network.set();
@@ -334,7 +334,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -411,7 +411,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -421,7 +421,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        Tensor<string, 1> categories(outputs_number);
 
-       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + std::to_string(i+1);
+       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + to_string(i+1);
 
        columns(columns_number-1).name = "target";
        columns(columns_number-1).column_use = DataSet::Target;
@@ -588,7 +588,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -666,7 +666,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        for(Index i = 0; i < columns_number-1; i++)
        {
-           columns(i).name = "input_" + std::to_string(i+1);
+           columns(i).name = "input_" + to_string(i+1);
            columns(i).column_use = DataSet::Input;
            columns(i).type = DataSet::Numeric;
        }
@@ -676,7 +676,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        Tensor<string, 1> categories(outputs_number);
 
-       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + std::to_string(i+1);
+       for(Index i = 0; i < outputs_number; i++) categories(i) = "category_" + to_string(i+1);
 
        columns(columns_number-1).name = "target";
        columns(columns_number-1).column_use = DataSet::Target;
@@ -788,6 +788,9 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 }
 
 
+
+///@todo check for classification
+
 void NormalizedSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
@@ -831,8 +834,6 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
    neural_network.set(NeuralNetwork::Approximation, architecture);
    neural_network.set_parameters_random();
 
-   const Index parameters_number = neural_network.get_parameters_number();
-
    normalized_squared_error.set_normalization_coefficient();
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
@@ -841,11 +842,13 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors()
 
    neural_network.forward_propagate(batch, forward_propagation);
 
+   normalized_squared_error.calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
+   normalized_squared_error.calculate_error(batch, forward_propagation, loss_index_back_propagation_lm);
+
+   normalized_squared_error.calculate_errors(batch, forward_propagation, back_propagation);
    normalized_squared_error.calculate_error(batch, forward_propagation, back_propagation);
 
-   normalized_squared_error.calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
-
-   assert_true(abs(loss_index_back_propagation_lm.error - back_propagation.error) < 1.0e-3, LOG);
+   assert_true(static_cast<type>(abs(loss_index_back_propagation_lm.error - back_propagation.error)) < static_cast<type>(1.0e-3), LOG);
 }
 
 
@@ -903,7 +906,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
    const Index parameters_number = neural_network.get_parameters_number();
 
-   normalized_squared_error.set_normalization_coefficient();
+   normalized_squared_error.set_normalization_coefficient(1);
 
    NeuralNetworkForwardPropagation forward_propagation(samples_number, &neural_network);
    LossIndexBackPropagation back_propagation(samples_number, &normalized_squared_error);
@@ -912,20 +915,34 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
    neural_network.forward_propagate(batch, forward_propagation);
    normalized_squared_error.back_propagate(batch, forward_propagation, back_propagation);
 
-//   nse.calculate_squared_errors_jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
-
-   normalized_squared_error.calculate_error(batch, forward_propagation, back_propagation);
-
    normalized_squared_error.calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
 
-   assert_true(abs(loss_index_back_propagation_lm.error - back_propagation.error) < 1.0e-3, LOG);
+   normalized_squared_error.calculate_errors(batch, forward_propagation, loss_index_back_propagation_lm);
 
-//   nse.calculate_squared_errors_jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
+   normalized_squared_error.calculate_error(batch, forward_propagation, loss_index_back_propagation_lm);
+
+   normalized_squared_error.calculate_layers_delta(batch, forward_propagation, loss_index_back_propagation_lm);
+
+   normalized_squared_error.calculate_squared_errors_jacobian(batch, forward_propagation, loss_index_back_propagation_lm);
+
+   normalized_squared_error.calculate_gradient(batch, loss_index_back_propagation_lm);
 
    Tensor<type, 2> numerical_squared_errors_jacobian;
 
-   forward_propagation.print();
    numerical_squared_errors_jacobian = normalized_squared_error.calculate_Jacobian_numerical_differentiation();
+
+   cout << "Parameters number: " << neural_network.get_parameters_number() << endl;
+
+   cout << "squared_errors_jacobian: " << endl << loss_index_back_propagation_lm.squared_errors_jacobian << endl;
+   cout << "2*numerical_squared_errors_jacobian: " << endl << 2*numerical_squared_errors_jacobian << endl;
+
+   cout << "GradientLM: " << loss_index_back_propagation_lm.gradient << endl;
+   cout << "Gradient: " << back_propagation.gradient << endl;
+
+   cout << "Error: " << back_propagation.error << endl;
+   cout << "ErrorLM: " << loss_index_back_propagation_lm.error << endl;
+
+   assert_true(static_cast<type>(abs(loss_index_back_propagation_lm.error - back_propagation.error)) < static_cast<type>(1.0e-3), LOG);
 
    assert_true(are_equal(loss_index_back_propagation_lm.squared_errors_jacobian, numerical_squared_errors_jacobian, 1.0e-3), LOG);
 }
@@ -948,7 +965,7 @@ void NormalizedSquaredErrorTest::run_test_case()
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
@@ -965,9 +982,10 @@ void NormalizedSquaredErrorTest::run_test_case()
    // Squared errors methods
 
    test_calculate_squared_errors();
-
+*/
    test_calculate_squared_errors_jacobian();
 
+   /*
    // Squared errors methods
 
    test_calculate_squared_errors();
@@ -976,7 +994,7 @@ void NormalizedSquaredErrorTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-
+*/
    cout << "End of normalized squared error test case.\n\n";
 }
 

@@ -57,11 +57,11 @@ public:
 
     /// Enumeration of all the available order selection algorithms.
 
-    enum NeuronsSelectionMethod{NO_NEURONS_SELECTION, GROWING_NEURONS};
+    enum NeuronsSelectionMethod{GROWING_NEURONS};
 
     /// Enumeration of all the available inputs selection algorithms.
 
-    enum InputsSelectionMethod{NO_INPUTS_SELECTION, GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
+    enum InputsSelectionMethod{GROWING_INPUTS, PRUNING_INPUTS, GENETIC_ALGORITHM};
 
     // Get methods
 
@@ -90,8 +90,6 @@ public:
 
     void set_inputs_selection_method(const InputsSelectionMethod&);
     void set_inputs_selection_method(const string&);
-
-    void set_approximation(const bool&);
 
     // Model selection methods
 

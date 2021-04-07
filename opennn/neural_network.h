@@ -96,6 +96,7 @@ public:
    Index get_output_index(const string&) const;
 
    Tensor<Layer*, 1> get_layers_pointers() const;
+   Layer* get_layer_pointer(const Index&) const;
    Tensor<Layer*, 1> get_trainable_layers_pointers() const;
    Tensor<Index, 1> get_trainable_layers_indices() const;
 
@@ -107,7 +108,6 @@ public:
    RecurrentLayer* get_recurrent_layer_pointer() const;
 
    Layer* get_output_layer_pointer() const;
-   Layer* get_layer_pointer(const Index&) const;
    PerceptronLayer* get_first_perceptron_layer_pointer() const;
 
    const bool& get_display() const;
@@ -163,7 +163,6 @@ public:
    // Parameters
 
    Index get_parameters_number() const;
-   Index get_trainable_parameters_number() const;
    Tensor<type, 1> get_parameters() const;
 
    Tensor<Index, 1> get_trainable_layers_parameters_numbers() const;
@@ -289,18 +288,12 @@ struct NeuralNetworkForwardPropagation
         layers.resize(trainable_layers_number);
 
         for(Index i = 0; i < trainable_layers_number; i++)
-        {cout << "i: " << i << endl;
+        {
             switch (trainable_layers_pointers(i)->get_type())
             {
             case Layer::Perceptron:
             {
-                cout << "perceptron type" << endl;
-
                 layers(i) = new PerceptronLayerForwardPropagation(new_batch_samples_number, trainable_layers_pointers(i));
-
-
-
-                cout << "after perceptron type" << endl;
             }
             break;
 
@@ -428,6 +421,8 @@ struct NeuralNetworkBackPropagation
         for(Index i = 0; i < layers_number; i++)
         {
             cout << "Layer " << i + 1 << endl;
+
+            layers(i)->print();
         }
     }
 

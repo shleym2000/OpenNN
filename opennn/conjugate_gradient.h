@@ -135,13 +135,17 @@ public:
    void calculate_FR_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
    void calculate_gradient_descent_training_direction(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&, const Tensor<type, 1>&, const Tensor<type, 1>&, Tensor<type, 1>&) const;
+
+   void calculate_conjugate_gradient_training_direction(const Tensor<type, 1>&,
+                                                        const Tensor<type, 1>&,
+                                                        const Tensor<type, 1>&,
+                                                        Tensor<type, 1>&) const;
 
    // Training methods
 
    TrainingResults perform_training();
 
-   void perform_training_void();
+   
 
    string write_optimization_algorithm_type() const;
 

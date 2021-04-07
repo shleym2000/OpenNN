@@ -22,7 +22,7 @@ void multiply_rows(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     const Index columns_number = matrix.dimension(1);
     const Index rows_number = matrix.dimension(0);
 
-    #pragma omp parallel for
+//    #pragma omp parallel for
 
     for(Index i = 0; i < rows_number; i++)
     {
@@ -53,7 +53,20 @@ bool is_false(const Tensor<bool, 1>& tensor)
 
     for(Index i = 0; i < size; i++)
     {
-        if(tensor(i) == true) return false;
+        if(tensor(i)) return false;
+    }
+
+    return true;
+}
+
+
+bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
+{
+    const Index size = matrix.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(abs(matrix(i) - value) > tolerance) return false;
     }
 
     return true;

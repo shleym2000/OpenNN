@@ -60,8 +60,6 @@ public:
 
     // Get methods
 
-    const bool& get_approximation() const;
-
     TrainingStrategy* get_training_strategy_pointer() const;
 
     bool has_training_strategy() const;
@@ -82,7 +80,7 @@ public:
 
     // Set methods
 
-    void set_approximation(const bool&);
+    
 
     void set_training_strategy_pointer(TrainingStrategy*);
 
@@ -126,10 +124,6 @@ protected:
     /// Pointer to a training strategy object.
 
     TrainingStrategy* training_strategy_pointer = nullptr;
-
-    /// True if this is a function regression problem.
-
-    bool approximation;          
 
     /// Inputs of all the neural networks trained.
 
@@ -203,22 +197,38 @@ struct InputsSelectionResults
 
     // Maximum epochs number constructor
 
-   explicit InputsSelectionResults(const Index& maximum_epochs_number)
-   {
+    explicit InputsSelectionResults(const Index& maximum_epochs_number)
+    {
+        set(maximum_epochs_number);
+    }
+
+    void set(const Index& maximum_epochs_number)
+    {
         training_errors.resize(maximum_epochs_number);
 
         selection_errors.resize(maximum_epochs_number);
-   }
+    }
 
    virtual ~InputsSelectionResults() {}
 
    string write_stopping_condition() const;
 
+   void print()
+   {
+       cout << endl;
+       cout << "Inputs Selection Results" << endl;
+
+       cout << "Optimal inputs number: " << optimal_inputs_names.size() << endl;
+
+       cout << "Inputs: " << endl;
+
+       for(Index i = 0; i < optimal_inputs_names.size(); i++) cout << "   " << optimal_inputs_names(i) << endl;
+
+       cout << "Optimum training error: " << optimum_training_error << endl;
+       cout << "Optimum selection error: " << optimum_selection_error << endl;
+   }
+
    // Neural network
-
-   /// Inputs of the different neural networks.
-
-//   Tensor<bool, 2> inputs_data;
 
    /// Vector of parameters for the neural network with minimum selection error.
 
@@ -234,15 +244,17 @@ struct InputsSelectionResults
 
    Tensor<type, 1> selection_errors;
 
-   /// Value of loss for the neural network with minimum selection error.
+   /// Value of training for the neural network with minimum selection error.
 
-   type optimum_training_error;
+   type optimum_training_error = numeric_limits<type>::max();
 
    /// Value of minimum selection error.
 
-   type optimum_selection_error;
+   type optimum_selection_error = numeric_limits<type>::max();
 
    /// Inputs of the neural network with minimum selection error.
+
+   Tensor<string, 1> optimal_inputs_names;
 
    Tensor<bool, 1> optimal_inputs;
 
