@@ -46,7 +46,7 @@ int main()
 
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
 /*
         const Tensor<DataSet::Column, 1> columns = data_set.get_columns();
 
@@ -128,7 +128,7 @@ int main()
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright (C) 2005-2020 Artificial Intelligence Techniques SL
+// Copyright (C) 2005-2021 Artificial Intelligence Techniques SL
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

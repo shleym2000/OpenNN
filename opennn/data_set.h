@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "statistics.h"
+#include "scaling.h"
 #include "correlations.h"
 #include "opennn_strings.h"
 
@@ -81,10 +82,6 @@ public:
 
    enum MissingValuesMethod{Unuse, Mean, Median};
 
-   /// Enumeration of available methods for scaling and unscaling the data.
-
-   enum ScalingUnscalingMethod{NoScaling, NoUnscaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation, Logarithmic};
-
    /// Enumeration of the learning tasks.
 
    enum ProjectType{Approximation, Classification, Forecasting, ImageApproximation, ImageClassification};
@@ -119,6 +116,7 @@ public:
        Column(const string&,
               const VariableUse&,
               const ColumnType& = Numeric,
+              const Scaler& = MeanStandardDeviation,
               const Tensor<string, 1>& = Tensor<string, 1>(),
               const Tensor<VariableUse, 1>& = Tensor<VariableUse, 1>());
 
@@ -146,12 +144,19 @@ public:
 
        Tensor<VariableUse, 1> categories_uses;
 
+       Scaler scaler;
+
        // Methods
+
+       Index get_variables_number() const;
 
        Index get_categories_number() const;
        Index get_used_categories_number() const;
 
        Tensor<string, 1> get_used_variables_names() const;
+
+       void set_scaler(const Scaler&);
+       void set_scaler(const string&);
 
        void set_use(const VariableUse&);
        void set_use(const string&);
@@ -265,6 +270,13 @@ public:
    const Tensor<Index, 1>& get_input_variables_dimensions() const;
    Index get_input_variables_rank() const;
 
+   // Scalers get methods
+
+   Tensor<Scaler, 1> get_columns_scalers() const;
+
+   Tensor<Scaler, 1> get_input_variables_scalers() const;
+   Tensor<Scaler, 1> get_target_variables_scalers() const;
+
    // Batches get methods
 
    Tensor<Index, 2> get_batches(const Tensor<Index,1>&, const Index&, const bool&, const Index& buffer_size= 100) const;
@@ -342,7 +354,7 @@ public:
 
    static Tensor<string, 1> get_default_columns_names(const Index&);
 
-   static ScalingUnscalingMethod get_scaling_unscaling_method(const string&);
+   static Scaler get_scaling_unscaling_method(const string&);
 
    Index get_gmt() const;
 
@@ -400,7 +412,8 @@ public:
    void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
 
-   void set_input_columns_binary(const Tensor<bool, 1>&);
+
+   void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
    void set_column_use(const Index&, const VariableUse&);
    void set_column_use(const string&, const VariableUse&);
@@ -410,6 +423,9 @@ public:
    void set_columns_names(const Tensor<string, 1>&);
 
    void set_columns_number(const Index&);
+
+   void set_columns_scalers(const Scaler&);
+
 
    void set_binary_simple_columns();
 
@@ -566,70 +582,21 @@ public:
 
    // Scaling methods
 
-   Tensor<string, 1> calculate_default_scaling_methods() const;
-   Tensor<string, 1> calculate_default_unscaling_methods() const;
+   void set_default_columns_scalers();
 
    // Data scaling
 
-   void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&);
-   void scale_data_minimum_maximum_binary(const type&, const type&, const Index&);
-   void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&);
+   Tensor<Descriptives, 1> scale_data();
 
-   Tensor<Descriptives, 1> scale_data_minimum_maximum();
-   Tensor<Descriptives, 1> scale_data_mean_standard_deviation();
-
-   // Input variables scaling
-
-   void scale_input_variable_mean_standard_deviation(const Descriptives&, const Index&);
-   Descriptives scale_input_variable_mean_standard_deviation(const Index&);
-
-   void scale_input_variable_standard_deviation(const Descriptives&, const Index&);
-   Descriptives scale_input_variable_standard_deviation(const Index&);
-
-   void scale_input_variable_minimum_maximum(const Descriptives&, const Index&);
-   Descriptives scale_input_variable_minimum_maximum(const Index&);
-
-   void scale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_input_variables_minimum_maximum();
-
-   void scale_input_variables_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_input_variables_mean_standard_deviation();
-
-
-   // Input variables unscaling
-
-   void unscale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_input_variables(const Tensor<string, 1>&);
-
-   // Target variables scaling
-
-   void scale_target_variable_minimum_maximum(const Descriptives&, const Index&);
-   void scale_target_variable_mean_standard_deviation(const Descriptives&, const Index&);
-   void scale_target_variable_logarithmic(const Descriptives&, const Index&);
-
-   void scale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_target_variables_minimum_maximum();
-
-   void scale_target_variables_mean_standard_deviation(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_target_variables_mean_standard_deviation();
-
-   void scale_target_variables_logarithm(const Tensor<Descriptives, 1>&);
-   Tensor<Descriptives, 1> scale_target_variables_logarithm();
-
-   Tensor<Descriptives, 1> scale_target_variables(const string&);
-   Tensor<Descriptives, 1> scale_target_variables(const Tensor<string, 1>&);
+   Tensor<Descriptives, 1> scale_input_variables();
+   Tensor<Descriptives, 1> scale_target_variables();
 
    // Data unscaling
 
-   void unscale_input_variable_minimum_maximum(const Descriptives&, const Index&);
-   void unscale_input_variable_mean_standard_deviation(const Descriptives&, const Index&);
-   void unscale_input_variable_standard_deviation(const Descriptives&, const Index&);
-   void unscale_input_variables(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
+   void unscale_data(const Tensor<Descriptives, 1>&);
 
-   void unscale_target_variable_minimum_maximum(const Descriptives&, const Index&);
-   void unscale_target_variable_mean_standard_deviation(const Descriptives&, const Index&);
-   void unscale_target_variable_logarithmic(const Descriptives&, const Index&);
-   void unscale_target_variables(const Tensor<string,1>&, const Tensor<Descriptives, 1>&);
+   void unscale_input_variables(const Tensor<Descriptives, 1>&);
+   void unscale_target_variables(const Tensor<Descriptives, 1>&);
 
    // Classification methods
 
@@ -640,6 +607,14 @@ public:
    Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = 1.5) const;
 
    void unuse_Tukey_outliers(const type& = 1.5);
+
+   type calculate_euclidean_distance(const Index&, const Index&) const;
+   Tensor<type, 2> calculate_distance_matrix() const;
+   Tensor<Index, 2> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
+   Tensor<type, 1> calculate_average_reachability(const Tensor<type,2>&, const Tensor<Index, 2>&, const Index&) const;
+
+   Tensor<Index, 1> calculate_LOF_outliers(const Index& = 20, const type& = 1.5) const;
+   void unuse_LOF_outliers(const Index& = 20, const type& = 1.5);
 
    // Time series methods
 
@@ -675,6 +650,7 @@ public:
    void load(const string&);
 
    void print_columns_types() const;
+   void print_columns_uses() const;
 
    void print_data() const;
    void print_data_preview() const;
@@ -837,8 +813,6 @@ private:
 
    Tensor<Column, 1> columns;
 
-   Tensor<ScalingUnscalingMethod, 1> scalers;
-
    /// Header wihch contains the rows label.
 
    bool has_rows_labels = false;
@@ -858,13 +832,12 @@ private:
    Tensor<Index, 1> columns_missing_values_number;
 
    Index rows_missing_values_number;
+};
+
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/data_set_cuda.h"
 #endif
-
-};
-
 
 struct DataSetBatch
 {

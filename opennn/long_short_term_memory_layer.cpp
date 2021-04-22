@@ -435,7 +435,7 @@ void LongShortTermMemoryLayer::set(const LongShortTermMemoryLayer& other_neuron_
 
 void LongShortTermMemoryLayer::set_default()
 {
-    layer_name = "long_short_term_memory_layer";
+    layer_name = "long short term memory layer ";
     layer_type = LongShortTermMemory;
 }
 
@@ -879,7 +879,7 @@ void LongShortTermMemoryLayer::set_recurrent_activation_function(const string& n
 /// Sets the timesteps of the layer from a Index.
 /// @param new_timesteps New set of timesteps in the layer.
 
-void LongShortTermMemoryLayer::set_timesteps(const Index&  new_timesteps)
+void LongShortTermMemoryLayer::set_timesteps(const Index& new_timesteps)
 {
     timesteps = new_timesteps;
 }
@@ -4080,7 +4080,7 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
 {
     ostringstream buffer;
 
-    // Perceptron layer
+    // LongShortTermMemoryLayer layer
 
     const tinyxml2::XMLElement* long_short_term_memory_layer_element = document.FirstChildElement("LongShortTermMemoryLayer");
 

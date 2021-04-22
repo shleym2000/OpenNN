@@ -190,6 +190,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     DataSet* data_set_pointer = loss_index_pointer->get_data_set_pointer();
 
+    const Tensor<Index, 1> target_columns_indices = data_set_pointer->get_target_columns_indices();
+
     const Index original_input_columns_number = data_set_pointer->get_input_columns_number();
 
     const Tensor<string, 1> columns_names = data_set_pointer->get_columns_names();
@@ -269,7 +271,8 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
             {
                 // Neural network
 
-                results.optimal_inputs_names = data_set_pointer->get_input_columns_names();
+                results.optimal_input_columns_indices = data_set_pointer->get_input_columns_indices();
+                results.optimal_input_columns_names = data_set_pointer->get_input_columns_names();
                 results.optimal_parameters = training_results.parameters;
 
                 // Loss index
@@ -325,7 +328,6 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
             results.stopping_condition = InputsSelection::MaximumSelectionFailures;
         }
-
         else if(input_columns_number >= maximum_inputs_number || input_columns_number >= original_input_columns_number)
         {
             stop = true;
@@ -345,13 +347,20 @@ InputsSelectionResults GrowingInputs::perform_inputs_selection()
 
     // Set data set stuff
 
-//    data_set_pointer->set_input_columns_binary(results.optimal_inputs);
+    data_set_pointer->set_input_target_columns(results.optimal_input_columns_indices, target_columns_indices);
+
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
 
     // Set neural network stuff
 
     neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
 
     neural_network_pointer->set_inputs_names(data_set_pointer->get_input_variables_names());
+
+    if(neural_network_pointer->has_scaling_layer())
+        neural_network_pointer->get_scaling_layer_pointer()->set(input_variables_descriptives, input_variables_scalers);
 
     neural_network_pointer->set_parameters(results.optimal_parameters);
 

@@ -43,7 +43,7 @@ int main()
         const Index input_variables_number = data_set.get_input_variables_number();
         const Index target_variables_number = data_set.get_target_variables_number();
 
-        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables_minimum_maximum();
+        const Tensor<Descriptives, 1> input_variables_descriptives = data_set.scale_input_variables();
 
         // Neural network
 
@@ -56,7 +56,7 @@ int main()
 
         ScalingLayer* scaling_layer_pointer = neural_network.get_scaling_layer_pointer();
         scaling_layer_pointer->set_descriptives(input_variables_descriptives);
-        scaling_layer_pointer->set_scaling_methods(ScalingLayer::MinimumMaximum);
+        scaling_layer_pointer->set_scalers(MinimumMaximum);
 
         // Training strategy
 
@@ -87,7 +87,7 @@ int main()
         cout << "Outputs: " << endl;
         cout << neural_network.calculate_outputs(inputs) << endl;
 
-        data_set.unscale_input_variables_minimum_maximum(input_variables_descriptives);
+        data_set.unscale_input_variables(input_variables_descriptives);
 
         const TestingAnalysis testing_analysis(&neural_network, &data_set);
 

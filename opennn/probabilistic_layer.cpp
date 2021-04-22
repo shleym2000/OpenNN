@@ -822,6 +822,93 @@ void ProbabilisticLayer::insert_gradient(LayerBackPropagation* back_propagation,
 }
 
 
+void ProbabilisticLayer::calculate_squared_errors_Jacobian(const Tensor<type, 2>& inputs,
+                                                           LayerForwardPropagation* forward_propagation,
+                                                           LayerBackPropagationLM* back_propagation)
+{
+    ProbabilisticLayerForwardPropagation* probabilistic_layer_forward_propagation =
+            static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation);
+
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+            static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
+
+    const Index samples_number = inputs.dimension(0);
+
+    const Index inputs_number = get_inputs_number();
+    const Index neurons_number = get_neurons_number();
+
+    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.setZero();
+
+    if(neurons_number == 1) // Binary
+    {
+        Index parameter_index = 0;
+
+        for(Index sample = 0; sample < samples_number; sample++)
+        {
+            parameter_index = 0;
+
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                for(Index input = 0; input <  inputs_number; input++)
+                {
+                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+                            probabilistic_layer_back_propagation_lm->delta(sample, neuron) *
+                            probabilistic_layer_forward_propagation->activations_derivatives(sample, neuron, 0) *
+                            inputs(sample, input);
+
+                    parameter_index++;
+                }
+
+                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
+                        probabilistic_layer_back_propagation_lm->delta(sample, neuron) *
+                        probabilistic_layer_forward_propagation->activations_derivatives(sample, neuron, 0);
+            }
+        }
+    }
+    else // Multiple
+    {
+        Index parameter_index = 0;
+
+        for(Index sample = 0; sample < samples_number; sample++)
+        {
+            parameter_index = 0;
+
+            for(Index neuron = 0; neuron < neurons_number; neuron++)
+            {
+                for(Index input = 0; input <  inputs_number; input++)
+                {
+                    probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neurons_number+parameter_index) =
+                            probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron) *
+                            inputs(sample, input);
+
+                    parameter_index++;
+                }
+
+                probabilistic_layer_back_propagation_lm->squared_errors_Jacobian(sample, neuron) =
+                        probabilistic_layer_back_propagation_lm->error_combinations_derivatives(sample, neuron);
+            }
+        }
+    }
+}
+
+
+void ProbabilisticLayer::insert_squared_errors_Jacobian(LayerBackPropagationLM * back_propagation ,
+                                                        const Index & index,
+                                                        Tensor<type, 2> & squared_errors_Jacobian) const
+{
+    ProbabilisticLayerBackPropagationLM* probabilistic_layer_back_propagation_lm =
+            static_cast<ProbabilisticLayerBackPropagationLM*>(back_propagation);
+
+    const Index batch_samples_number = probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.dimension(0);
+    const Index layer_parameters_number = get_parameters_number();
+
+    memcpy(squared_errors_Jacobian.data() + index,
+           probabilistic_layer_back_propagation_lm->squared_errors_Jacobian.data(),
+           static_cast<size_t>(layer_parameters_number*batch_samples_number)*sizeof(type));
+}
+
+
+
 /// Serializes the probabilistic layer object into a XML document of the TinyXML library without keep the DOM tree in memory.
 /// See the OpenNN manual for more information about the format of this document.
 
@@ -1209,26 +1296,26 @@ string ProbabilisticLayer::write_combinations_python() const
 {
     ostringstream buffer;
 
-    const Index inputs_number = get_inputs_number();
-    const Index neurons_number = get_neurons_number();
+     const Index inputs_number = get_inputs_number();
+     const Index neurons_number = get_neurons_number();
 
-    buffer << "\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
+     buffer << "\t\tcombinations = [None] * "<<neurons_number<<"\n" << endl;
 
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        buffer << "\tcombinations[" << i << "] = " << biases(i);
+     for(Index i = 0; i < neurons_number; i++)
+     {
+         buffer << "\t\tcombinations[" << i << "] = " << biases(i);
 
-        for(Index j = 0; j < inputs_number; j++)
-        {
-             buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
-        }
+         for(Index j = 0; j < inputs_number; j++)
+         {
+              buffer << " +" << synaptic_weights(j, i) << "*inputs[" << j << "]";
+         }
 
-        buffer << " " << endl;
-    }
+         buffer << " " << endl;
+     }
 
-    buffer << "\t" << endl;
+     buffer << "\t\t" << endl;
 
-    return buffer.str();
+     return buffer.str();
 }
 
 
@@ -1238,33 +1325,33 @@ string ProbabilisticLayer::write_activations_python() const
 
     const Index neurons_number = get_neurons_number();
 
-    buffer << "\tactivations = [None] * "<<neurons_number<<"\n" << endl;
+    buffer << "\t\tactivations = [None] * "<<neurons_number<<"\n" << endl;
 
     for(Index i = 0; i < neurons_number; i++)
     {
         switch(activation_function)
         {
         case Binary:
-            buffer << "\tactivations[" << i << "] = 0.0 if combinations[" << i << "] < 0.5 else 1.0\n";
+            buffer << "\t\tactivations[" << i << "] = 0.0 if combinations[" << i << "] < 0.5 else 1.0\n";
             break;
 
         case Logistic:
-            buffer << "\tactivations[" << i << "] = 1.0/(1.0 + np.exp(-combinations[" << i << "]));\n";
+            buffer << "\t\tactivations[" << i << "] = 1.0/(1.0 + np.exp(-combinations[" << i << "]));\n";
             break;
 
         case Competitive:
 
             if(i == 0)
             {
-                buffer << "\tfor i, value in enumerate(combinations):"<<endl;
+                buffer << "\t\tfor i, value in enumerate(combinations):"<<endl;
 
-                buffer <<"\t\tif(max(combinations) == value):"<<endl;
+                buffer <<"\t\t\tif(max(combinations) == value):"<<endl;
 
-                buffer <<"\t\t\tactivations[i] = 1"<<endl;
+                buffer <<"\t\t\t\tactivations[i] = 1"<<endl;
 
-                buffer <<"\t\telse:"<<endl;
+                buffer <<"\t\t\telse:"<<endl;
 
-                buffer <<"\t\t\tactivations[i] = 0"<<endl;
+                buffer <<"\t\t\t\tactivations[i] = 0"<<endl;
             }
 
             break;
@@ -1273,13 +1360,13 @@ string ProbabilisticLayer::write_activations_python() const
 
             if(i == 0)
             {
-                buffer << "\tsum_ = 0;\n" << endl;
+                buffer << "\t\tsum_ = 0;\n" << endl;
 
-                buffer << "\tsum_ = ";
+                buffer << "\t\tsum_ = ";
 
                 for(Index i = 0; i < neurons_number; i++)
                 {
-                    buffer << "np.exp(combinations[" << i << "])";
+                    buffer << "\tnp.exp(combinations[" << i << "])";
 
                     if(i != neurons_number-1) buffer << " + ";
                 }
@@ -1288,7 +1375,7 @@ string ProbabilisticLayer::write_activations_python() const
 
                 for(Index i = 0; i < neurons_number; i++)
                 {
-                    buffer << "\tactivations[" << i << "] = np.exp(combinations[" << i << "])/sum_;\n";
+                    buffer << "\t\tactivations[" << i << "] = np.exp(combinations[" << i << "])/sum_;\n";
                 }
 
             }
@@ -1412,13 +1499,13 @@ string ProbabilisticLayer::write_expression_python() const
 {
     ostringstream buffer;
 
-    buffer << "def " << layer_name << "(inputs):\n" << endl;
+    buffer << "\tdef " << layer_name << "(self, inputs):\n" << endl;
 
     buffer << write_combinations_python();
 
     buffer << write_activations_python();
 
-    buffer << "\n\treturn activations;\n" << endl;
+    buffer << "\n\t\treturn activations;\n" << endl;
 
     return buffer.str();
 }
@@ -1441,7 +1528,7 @@ string ProbabilisticLayer::write_expression(const Tensor<string, 1>& inputs_name
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

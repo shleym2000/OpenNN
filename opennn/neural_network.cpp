@@ -618,7 +618,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         for(Index i = 0; i < size-1; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
-            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i));
+            perceptron_layer_pointer->set_name("Perceptron layer " + to_string(i));
 
             this->add_layer(perceptron_layer_pointer);
 
@@ -639,7 +639,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-            perceptron_layer_pointer->set_name("perceptron_layer" + to_string(i));
+            perceptron_layer_pointer->set_name("perceptron layer " + to_string(i));
 
             this->add_layer(perceptron_layer_pointer);
         }
@@ -650,9 +650,10 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Forecasting)
     {
-        cout<<"Recurrent"<<endl;
-//        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
+        cout<<"LSTM"<<endl;
+        LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
+//        cout<<"Recurrent"<<endl;
+//        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
         this->add_layer(long_short_term_memory_layer_pointer);
 
@@ -660,11 +661,11 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-            perceptron_layer_pointer->set_name("perceptron_layer" + to_string(i));
+            perceptron_layer_pointer->set_name("perceptron layer " + to_string(i));
 
             this->add_layer(perceptron_layer_pointer);
 
-            if(i == size-1) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
+            if(i == size-2) perceptron_layer_pointer->set_activation_function(PerceptronLayer::Linear);
         }
 
         UnscalingLayer* unscaling_layer_pointer = new UnscalingLayer(architecture[size-1]);
@@ -679,7 +680,15 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     outputs_names.resize(outputs_number);
 
     set_default();
+}
 
+
+void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const initializer_list<Index>& architecture_list)
+{
+    Tensor<Index, 1> architecture(architecture_list.size());
+    architecture.setValues(architecture_list);
+
+    set(model_type, architecture);
 }
 
 
@@ -2532,7 +2541,6 @@ string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, co
 
 
 /// Returns a string with the python function of the expression represented by the neural network.
-
 string NeuralNetwork::write_expression_python() const
 {
     const Index layers_number = get_layers_number();
@@ -2547,41 +2555,95 @@ string NeuralNetwork::write_expression_python() const
     buffer <<"artelnics@artelnics.com\t"<<endl;
     buffer <<""<<endl;
     buffer <<"Your model has been exported to this python file." <<endl;
-    buffer <<"You can manage it with the 'neural network' method.\t"<<endl;
+    buffer <<"You can manage it with the 'NeuralNetwork' class.\t"<<endl;
     buffer <<"Example:"<<endl;
     buffer <<""<<endl;
+    buffer <<"\tmodel = NeuralNetwork()\t"<<endl;
     buffer <<"\tsample = [input_1, input_2, input_3, input_4, ...] 	 \t"<<endl;
-    buffer <<"\toutputs = neural_network(sample)"<<endl;
+    buffer <<"\toutputs = model.calculate_output(sample)"<<endl;
     buffer <<""<<endl;
     buffer <<"\tInputs Names: \t"<<endl;
-    buffer <<"\t" << get_inputs_names() << endl;
+
+    const Tensor<string, 1> inputs =  get_inputs_names();
+
+    for(int i = 0; i < inputs.dimension(0); i++)
+    {
+        if(inputs[i] == "")
+        {
+            buffer <<"\t" << to_string(1+i) + " )" << "input_"+ to_string(1+i) << endl;
+        }
+        else
+        {
+            buffer <<"\t" << to_string(1+i) + " )" << inputs[i] << endl;
+        }
+    }
+
     buffer <<""<<endl;
-    buffer <<"Notice that only one sample is allowed as input. DataSetBatch of inputs are not yet implement,\t"<<endl;
-    buffer <<"however you can loop through neural network function in order to get multiple outputs.\t"<<endl;
+    buffer <<"You can predict with a batch of samples using calculate_batch_output method\t" <<endl;
+    buffer <<"IMPORTANT: input batch must be <class 'numpy.ndarray'> type\t" <<endl;
+    buffer <<"Example_1:\t" <<endl;
+    buffer <<"\tmodel = NeuralNetwork()\t"<<endl;
+    buffer <<"\tinput_batch = np.array([[1, 2], [4, 5]], np.int32)\t" <<endl;
+    buffer <<"\toutputs = model.calculate_batch_output(input_batch)"<<endl;
+    buffer <<"Example_2:\t" <<endl;
+    buffer <<"\tinput_batch = pd.DataFrame( {'col1': [1, 2], 'col2': [3, 4]})\t" <<endl;
+    buffer <<"\toutputs = model.calculate_batch_output(input_batch.values)"<<endl;
     buffer <<"'''"<<endl;
     buffer <<""<<endl;
     buffer << "import numpy as np\n" << endl;
+    buffer << "class NeuralNetwork:\n " << endl;
+    buffer << "\tdef __init__(self):\n " << endl;
+
+    if(has_recurrent_layer())
+    {
+        buffer << "\t\tself.timestep = "+to_string(get_recurrent_layer_pointer()->get_timesteps())+"\n " << endl;
+        buffer << "\t\tself.hidden_states = " + to_string(get_recurrent_layer_pointer()->get_neurons_number()) + "*[0]\n " << endl;
+    }
+
+    buffer << "\t\tself.parameters_number = " + to_string(get_parameters_number()) + "\n " << endl;
 
     for(Index i = 0; i  < layers_number; i++)
     {
         buffer << layers_pointers[i]->write_expression_python() << endl;
     }
 
-    buffer << "def neural_network(inputs):\n" << endl;
+    buffer << "\tdef calculate_output(self, inputs):\n" << endl;
 
-    buffer << "\toutputs = [None] * len(inputs)\n" << endl;
+    buffer << "\t\toutput_" + layers_pointers[0]->get_name() + " = self." +layers_pointers[0]->get_name() + "(inputs)\n" << endl;
 
-    if(layers_number > 0)
+    for(Index i = 1; i  < layers_number; i++)
     {
-        buffer << "\toutputs = " << layers_names[0] << "(inputs)\n";
+        buffer << "\t\toutput_" + layers_pointers[i]->get_name() + " = self." +layers_pointers[i]->get_name() + "(output_"+layers_pointers[i-1]->get_name() + ")\n" << endl;
     }
 
-    for(Index i = 1; i < layers_number; i++)
+    buffer << "\t\treturn output_" + layers_pointers[layers_number-1]->get_name()<<endl;
+
+    buffer << "\n\n\tdef calculate_batch_output(self, input_batch):\n" << endl;
+
+    buffer << "\t\toutput = []\n" << endl;
+
+    buffer << "\t\tfor i in range(input_batch.shape[0]):\n" << endl;
+
+    if(has_recurrent_layer())
     {
-        buffer << "\toutputs = " << layers_names[i] << "(outputs)\n";
+
+        buffer << "\t\t\tif(i%self.timestep==0):\n" << endl;
+
+        buffer << "\t\t\t\tself.hidden_states = "+to_string(get_recurrent_layer_pointer()->get_neurons_number())+"*[0]\n" << endl;
     }
 
-    buffer << "\n\treturn outputs;\n" << endl;
+    buffer << "\t\t\tinputs = list(input_batch[i])\n" << endl;
+
+    buffer << "\t\t\toutput_" + layers_pointers[0]->get_name() + " = self." +layers_pointers[0]->get_name() + "(inputs)\n" << endl;
+
+    for(Index i = 1; i  < layers_number; i++)
+    {
+        buffer << "\t\t\toutput_" + layers_pointers[i]->get_name() + " = self." +layers_pointers[i]->get_name() + "(output_"+layers_pointers[i-1]->get_name() + ")\n" << endl;
+    }
+
+    buffer << "\t\t\toutput = np.append(output,output_" + layers_pointers[layers_number-1]->get_name()+ ", axis=0)\n"<< endl;
+
+    buffer << "\t\treturn output"<<endl;
 
     string expression = buffer.str();
 
@@ -2615,6 +2677,30 @@ void NeuralNetwork::save_expression_c(const string& file_name)
 
     file.close();
 }
+
+
+///// Saves the mathematical expression represented by the neural network to a text file.
+///// @param file_name Name of expression text file.
+
+//void NeuralNetwork::save_expression_c(const string& file_name)
+//{
+//    ofstream file(file_name.c_str());
+
+//    if(!file.is_open())
+//    {
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+//               << "void  save_expression(const string&) method.\n"
+//               << "Cannot open expression text file.\n";
+
+//        throw logic_error(buffer.str());
+//    }
+
+//    file << write_expression_c();
+
+//    file.close();
+//}
 
 
 /// Saves the python function of the expression represented by the neural network to a text file.
@@ -2719,7 +2805,7 @@ Layer* NeuralNetwork::get_output_layer_pointer() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

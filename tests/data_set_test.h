@@ -124,38 +124,10 @@ public:
 
    // Data scaling
 
-   void test_scale_data_mean_standard_deviation();  
-   void test_scale_data_minimum_maximum(); 
+   void test_scale_data();
 
-   // Input variables scaling
+   void test_unscale_data();
 
-   void test_scale_inputs_mean_standard_deviation();
-   void test_scale_inputs_minimum_maximum();
-
-   // Target variables scaling
-
-   void test_scale_targets_mean_standard_deviation();
-   void test_scale_targets_minimum_maximum();
-
-   // Input-target variables scaling
-
-   void test_scale_variables_mean_standard_deviation();
-   void test_scale_variables_minimum_maximum();
-
-   // Data unscaling
-
-   void test_unscale_data_mean_standard_deviation();
-   void test_unscale_data_minimum_maximum();
-
-   // Input variables unscaling
-
-   void test_unscale_inputs_mean_standard_deviation();
-   void test_unscale_inputs_minimum_maximum();
-
-   // Target variables unscaling
-
-   void test_unscale_targets_mean_standard_deviation();
-   void test_unscale_targets_minimum_maximum();
 
    // Pattern recognition methods
 
@@ -163,6 +135,14 @@ public:
    void test_unuse_most_populated_target();
 
    void test_clean_Tukey_outliers();
+
+   void test_calculate_euclidean_distance();
+   void test_calculate_distance_matrix();
+   void test_calculate_k_nearest_neighbors();
+   void test_calculate_average_reachability();
+
+   void test_calculate_LOF_outliers();
+   void test_unuse_LOF_outliers();
 
    // Data generation
 

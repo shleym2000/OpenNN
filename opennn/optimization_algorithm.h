@@ -232,7 +232,9 @@ struct TrainingResults
     void save(const string&) const;
 
     void print()
-    {
+    {             
+        cout << endl;
+        cout << "Training results" << endl;
         cout << "Optimum training error: " << optimum_training_error << endl;
         cout << "Optimum selection error: " << optimum_selection_error << endl;
     }
@@ -313,7 +315,7 @@ struct TrainingResults
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

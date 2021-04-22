@@ -22,6 +22,7 @@
 
 #include "layer.h"
 #include "statistics.h"
+#include "scaling.h"
 #include "opennn_strings.h"
 
 namespace OpenNN
@@ -51,12 +52,7 @@ public:
 
    virtual ~ScalingLayer();
 
-   /// Enumeration of available methods for scaling the input variables.  
-   
-   enum ScalingMethod{NoScaling, MinimumMaximum, MeanStandardDeviation, StandardDeviation};
-
    // Get methods
-
    
    Tensor<Index, 1> get_outputs_dimensions() const;
 
@@ -77,10 +73,10 @@ public:
 
    // Variables scaling and unscaling
 
-   const Tensor<ScalingMethod, 1> get_scaling_methods() const;
+   const Tensor<Scaler, 1> get_scaling_methods() const;
 
-   Tensor<string, 1> write_scaling_methods() const;
-   Tensor<string, 1> write_scaling_methods_text() const;
+   Tensor<string, 1> write_scalers() const;
+   Tensor<string, 1> write_scalers_text() const;
 
    // Display messages
 
@@ -92,10 +88,8 @@ public:
    void set(const Index&);
    void set(const Tensor<Index, 1>&);
    void set(const Tensor<Descriptives, 1>&);
+   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
-   void set(const ScalingLayer&);
-
-//   void set(const Tensor<bool, 1>&);
 
    void set_inputs_number(const Index&);
    void set_neurons_number(const Index&);
@@ -117,11 +111,11 @@ public:
 
    // Scaling method
 
-   void set_scaling_methods(const Tensor<ScalingMethod, 1>&);
-   void set_scaling_methods(const Tensor<string, 1>&);
+   void set_scalers(const Tensor<Scaler, 1>&);
+   void set_scalers(const Tensor<string, 1>&);
 
-   void set_scaling_methods(const ScalingMethod&);
-   void set_scaling_methods(const string&);
+   void set_scalers(const Scaler&);
+   void set_scalers(const string&);
 
    // Display messages
 
@@ -168,7 +162,7 @@ protected:
 
    /// Vector of scaling methods for each variable.
 
-   Tensor<ScalingMethod, 1> scaling_methods;
+   Tensor<Scaler, 1> scalers;
 
    /// min and max range for minmaxscaling
 

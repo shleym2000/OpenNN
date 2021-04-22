@@ -37,6 +37,7 @@ class Layer;
 
 struct LayerForwardPropagation;
 struct LayerBackPropagation;
+struct LayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/struct_layer_cuda.h"
@@ -116,8 +117,12 @@ public:
     // Deltas
 
     virtual void calculate_hidden_delta(LayerForwardPropagation*,
-        LayerBackPropagation*,
-        LayerBackPropagation*) const {}
+                                        LayerBackPropagation*,
+                                        LayerBackPropagation*) const {}
+
+    virtual void calculate_hidden_delta(LayerForwardPropagation*,
+                                        LayerBackPropagationLM*,
+                                        LayerBackPropagationLM*) const {}
 
     // Error gradient
 
@@ -128,6 +133,16 @@ public:
     virtual void calculate_error_gradient(const Tensor<type, 4>&,
                                           LayerForwardPropagation*,
                                           LayerBackPropagation*) const {}
+
+    // Squared errors
+
+    virtual void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
+                                                   LayerForwardPropagation*,
+                                                   LayerBackPropagationLM*) {}
+
+    virtual void insert_squared_errors_Jacobian(LayerBackPropagationLM*,
+                                                const Index&,
+                                                Tensor<type, 2>&) const {}
 
     // Get neurons number
 
@@ -303,6 +318,23 @@ struct LayerBackPropagation
     Layer* layer_pointer = nullptr;
 };
 
+
+struct LayerBackPropagationLM
+{
+    /// Default constructor.
+
+    explicit LayerBackPropagationLM() {}
+
+    virtual ~LayerBackPropagationLM() {}
+
+    virtual void set(const Index&, Layer*) {}
+
+    virtual void print() const {}
+
+    Index batch_samples_number = 0;
+
+    Layer* layer_pointer = nullptr;
+};
 
 }
 

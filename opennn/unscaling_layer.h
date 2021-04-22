@@ -53,15 +53,7 @@ public:
 
    virtual ~UnscalingLayer();
 
-   // Enumerations
-
-   /// Enumeration of available methods for input variables, output variables and independent parameters scaling.  
-   
-   enum UnscalingMethod{NoUnscaling, MinimumMaximum, MeanStandardDeviation, Logarithmic};
-
-   // Get methods
-
-   
+   // Get methods  
 
    Index get_inputs_number() const;
    Index get_neurons_number() const;
@@ -72,7 +64,7 @@ public:
    Tensor<type, 1> get_minimums() const;
    Tensor<type, 1> get_maximums() const;
 
-   const Tensor<UnscalingLayer::UnscalingMethod, 1> get_unscaling_method() const;
+   const Tensor<Scaler, 1> get_unscaling_method() const;
 
    Tensor<string, 1> write_unscaling_methods() const;
    Tensor<string, 1> write_unscaling_method_text() const;
@@ -84,6 +76,7 @@ public:
    void set();
    void set(const Index&);
    void set(const Tensor<Descriptives, 1>&);
+   void set(const Tensor<Descriptives, 1>&, const Tensor<Scaler, 1>&);
    void set(const tinyxml2::XMLDocument&);
    void set(const UnscalingLayer&);
 
@@ -108,14 +101,14 @@ public:
 
    // Outputs unscaling method
 
-   void set_unscaling_methods(const Tensor<UnscalingMethod,1>&);
-   void set_unscaling_methods(const string&);
-   void set_unscaling_methods(const Tensor<string, 1>&);
-   void set_unscaling_methods(const UnscalingLayer::UnscalingMethod&);
+   void set_scalers(const Tensor<Scaler,1>&);
+   void set_scalers(const string&);
+   void set_scalers(const Tensor<string, 1>&);
+   void set_scalers(const Scaler&);
 
    // Display messages
 
-   void set_display(const bool&); 
+   void set_display(const bool&);
 
    // Check methods
 
@@ -149,7 +142,7 @@ protected:
 
    /// Unscaling method for the output variables.
 
-   Tensor<UnscalingMethod, 1> unscaling_methods;
+   Tensor<Scaler, 1> scalers;
 
    /// min and max range for unscaling
 
@@ -183,4 +176,3 @@ protected:
 // License along with this library; if not, write to the Free Software
 
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

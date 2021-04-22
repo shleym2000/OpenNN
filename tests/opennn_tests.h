@@ -17,7 +17,7 @@
 
 #include "statistics_test.h"
 #include "numerical_differentiation_test.h"
-#include "statistics_test.h"
+#include "scaling_test.h"
 
 #include "data_set_test.h"
 
@@ -56,6 +56,7 @@
 #include "pruning_inputs_test.h"
 #include "genetic_algorithm_test.h"
 #include "correlations_test.h"
+#include "tensor_utilities_test.h"
 
 #include "testing_analysis_test.h"
 

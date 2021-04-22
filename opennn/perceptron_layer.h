@@ -31,6 +31,7 @@ namespace OpenNN
 
 struct PerceptronLayerForwardPropagation;
 struct PerceptronLayerBackPropagation;
+struct PerceptronLayerBackPropagationLM;
 
 #ifdef OPENNN_CUDA
     #include "../../opennn-cuda/opennn_cuda/struct_perceptron_layer_cuda.h"
@@ -166,8 +167,8 @@ public:
    // Delta methods
 
    void calculate_hidden_delta(LayerForwardPropagation*,
-       LayerBackPropagation*,
-       LayerBackPropagation*) const;
+                               LayerBackPropagation*,
+                               LayerBackPropagation*) const;
 
    void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
                                           PerceptronLayerBackPropagation*,
@@ -177,11 +178,27 @@ public:
                                              ProbabilisticLayerBackPropagation*,
                                              PerceptronLayerBackPropagation*) const;
 
+   void calculate_hidden_delta(LayerForwardPropagation*,
+                               LayerBackPropagationLM*,
+                               LayerBackPropagationLM*) const;
+
+   void calculate_hidden_delta_perceptron(PerceptronLayerForwardPropagation*,
+                                          PerceptronLayerBackPropagationLM*,
+                                          PerceptronLayerBackPropagationLM*) const;
+
+   void calculate_hidden_delta_probabilistic(ProbabilisticLayerForwardPropagation*,
+                                             ProbabilisticLayerBackPropagationLM*,
+                                             PerceptronLayerBackPropagationLM*) const;
+
    // Squared errors methods
 
-   void calculate_layer_squared_errors_Jacobian(const Tensor<type, 2>&,
-                                                LayerForwardPropagation*,
-                                                LayerBackPropagation*);
+   void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
+                                          LayerForwardPropagation*,
+                                          LayerBackPropagationLM*);
+
+   void insert_squared_errors_Jacobian(LayerBackPropagationLM*,
+                                       const Index&,
+                                       Tensor<type, 2>&) const;
 
    // Gradient methods
 
@@ -293,9 +310,56 @@ struct PerceptronLayerForwardPropagation : LayerForwardPropagation
 };
 
 
+struct PerceptronLayerBackPropagationLM : LayerBackPropagationLM
+{
+    // Default constructor
+
+    explicit PerceptronLayerBackPropagationLM() : LayerBackPropagationLM()
+    {
+
+    }
+
+
+    explicit PerceptronLayerBackPropagationLM(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+        : LayerBackPropagationLM()
+    {
+        set(new_batch_samples_number, new_layer_pointer);
+    }
+
+
+    void set(const Index& new_batch_samples_number, Layer* new_layer_pointer)
+    {
+        layer_pointer = new_layer_pointer;
+
+        batch_samples_number = new_batch_samples_number;
+
+        const Index neurons_number = layer_pointer->get_neurons_number();
+        const Index parameters_number = layer_pointer->get_parameters_number();
+
+        delta.resize(batch_samples_number, neurons_number);
+
+        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
+    }
+
+    void print() const
+    {
+        cout << "Delta:" << endl;
+        cout << delta << endl;
+
+        cout << "Squared errors Jacobian: " << endl;
+        cout << squared_errors_Jacobian << endl;
+
+    }
+
+    Tensor<type, 2> delta;
+
+    Tensor<type, 2> squared_errors_Jacobian;
+};
+
+
+
 struct PerceptronLayerBackPropagation : LayerBackPropagation
 {
-
     // Default constructor
 
     explicit PerceptronLayerBackPropagation() : LayerBackPropagation()
@@ -319,17 +383,12 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
         const Index neurons_number = layer_pointer->get_neurons_number();
         const Index inputs_number = layer_pointer->get_inputs_number();
-        const Index parameters_number = layer_pointer->get_parameters_number();
 
         delta.resize(batch_samples_number, neurons_number);
 
         biases_derivatives.resize(neurons_number);
 
         synaptic_weights_derivatives.resize(inputs_number, neurons_number);
-
-        delta.resize(batch_samples_number, neurons_number);
-
-        squared_errors_Jacobian.resize(batch_samples_number, parameters_number);
     }
 
     void print() const
@@ -348,8 +407,6 @@ struct PerceptronLayerBackPropagation : LayerBackPropagation
 
     Tensor<type, 1> biases_derivatives;
     Tensor<type, 2> synaptic_weights_derivatives;
-
-    Tensor<type, 2> squared_errors_Jacobian;
 };
 
 

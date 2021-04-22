@@ -116,6 +116,8 @@ DataSet::Column::Column()
     type = Numeric;
     categories.resize(0);
     categories_uses.resize(0);
+
+    scaler = MeanStandardDeviation;
 }
 
 
@@ -124,10 +126,12 @@ DataSet::Column::Column()
 DataSet::Column::Column(const string& new_name,
                         const VariableUse& new_column_use,
                         const ColumnType& new_type,
+                        const Scaler& new_scaler,
                         const Tensor<string, 1>& new_categories,
                         const Tensor<VariableUse, 1>& new_categories_uses)
 {
     name = new_name;
+    scaler = new_scaler;
     column_use = new_column_use;
     type = new_type;
     categories = new_categories;
@@ -138,6 +142,43 @@ DataSet::Column::Column(const string& new_name,
 
 DataSet::Column::~Column()
 {}
+
+void DataSet::Column::set_scaler(const Scaler& new_scaler)
+{
+    scaler = new_scaler;
+}
+
+
+void DataSet::Column::set_scaler(const string& new_scaler)
+{
+    if(new_scaler == "MinimumMaximum")
+    {
+        set_scaler(MinimumMaximum);
+    }
+    else if(new_scaler == "MeanStandardDeviation")
+    {
+        set_scaler(MeanStandardDeviation);
+    }
+    else if(new_scaler == "StandardDeviation")
+    {
+        set_scaler(StandardDeviation);
+    }
+    else if(new_scaler == "Logarithm")
+    {
+        set_scaler(Logarithm);
+    }
+    else
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception DataSet class.\n"
+               << "void set_use(const string&) method.\n"
+               << "Unknown use: " << new_scaler << "\n";
+
+        throw logic_error(buffer.str());
+    }
+}
+
 
 
 /// Sets the use of the column and of the categories.
@@ -327,6 +368,26 @@ void DataSet::Column::from_XML(const tinyxml2::XMLDocument& column_document)
         name = new_name;
     }
 
+    // Scaler
+
+    const tinyxml2::XMLElement* scaler_element = column_document.FirstChildElement("Scaler");
+
+    if(!scaler_element)
+    {
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "void Column::from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "Scaler element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(scaler_element->GetText())
+    {
+        const string new_scaler = scaler_element->GetText();
+
+        set_scaler(new_scaler);
+    }
+
     // Column use
 
     const tinyxml2::XMLElement* column_use_element = column_document.FirstChildElement("ColumnUse");
@@ -418,6 +479,29 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     file_stream.OpenElement("Name");
 
     file_stream.PushText(name.c_str());
+
+    file_stream.CloseElement();
+
+    // Scaler
+
+    file_stream.OpenElement("Scaler");
+
+    if(scaler == MinimumMaximum)
+    {
+        file_stream.PushText("MinimumMaximum");
+    }
+    else if (scaler == MeanStandardDeviation)
+    {
+        file_stream.PushText("MeanStandardDeviation");
+    }
+    else if (scaler == StandardDeviation)
+    {
+        file_stream.PushText("StandardDeviation");
+    }
+    else if (scaler == Logarithm)
+    {
+        file_stream.PushText("Logarithm");
+    }
 
     file_stream.CloseElement();
 
@@ -521,6 +605,19 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
         }
 
         file_stream.CloseElement();
+    }
+}
+
+
+Index DataSet::Column::get_variables_number() const
+{
+    if(type == Categorical)
+    {
+        return categories.size();
+    }
+    else
+    {
+        return 1;
     }
 }
 
@@ -2137,6 +2234,7 @@ Tensor<Index, 1> DataSet::get_input_time_series_columns_indices() const
     return input_columns_indices;
 }
 
+
 /// Returns a indices vector with the positions of the targets.
 
 Tensor<Index, 1> DataSet::get_target_columns_indices() const
@@ -2179,6 +2277,7 @@ Tensor<Index, 1> DataSet::get_target_time_series_columns_indices() const
 
     return target_columns_indices;
 }
+
 
 /// Returns a indices vector with the positions of the unused columns.
 
@@ -2228,6 +2327,70 @@ Tensor<Index, 1> DataSet::get_used_columns_indices() const
     }
 
     return used_indices;
+}
+
+
+Tensor<Scaler, 1> DataSet::get_columns_scalers() const
+{
+    const Index columns_number = get_columns_number();
+
+    Tensor<Scaler, 1> columns_scalers(columns_number);
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns_scalers(i) = columns(i).scaler;
+    }
+
+    return columns_scalers;
+}
+
+
+
+Tensor<Scaler, 1> DataSet::get_input_variables_scalers() const
+{
+    const Index input_columns_number = get_input_columns_number();
+    const Index input_variables_number = get_input_variables_number();
+
+    const Tensor<Column, 1> input_columns = get_input_columns();
+
+    Tensor<Scaler, 1> input_variables_scalers(input_variables_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < input_columns_number; i++)
+    {
+        for(Index j = 0;  j < input_columns(i).get_variables_number(); j++)
+        {
+            input_variables_scalers(index) = input_columns(i).scaler;
+            index++;
+        }
+    }
+
+    return input_variables_scalers;
+}
+
+
+Tensor<Scaler, 1> DataSet::get_target_variables_scalers() const
+{
+    const Index target_columns_number = get_target_columns_number();
+    const Index target_variables_number = get_target_variables_number();
+
+    const Tensor<Column, 1> target_columns = get_target_columns();
+
+    Tensor<Scaler, 1> target_variables_scalers(target_variables_number);
+
+    Index index = 0;
+
+    for(Index i = 0; i < target_columns_number; i++)
+    {
+        for(Index j = 0;  j < target_columns(i).get_variables_number(); j++)
+        {
+            target_variables_scalers(index) = target_columns(i).scaler;
+            index++;
+        }
+    }
+
+    return target_variables_scalers;
 }
 
 
@@ -2950,12 +3113,12 @@ void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, co
 
     for(Index i = 0; i < input_columns.size(); i++)
     {
-        set_column_use(i, Input);
+        set_column_use(input_columns(i), Input);
     }
 
     for(Index i = 0; i < target_columns.size(); i++)
     {
-        set_column_use(i, Target);
+        set_column_use(target_columns(i), Target);
     }
 }
 
@@ -2974,13 +3137,12 @@ void DataSet::set_input_columns_unused()
 
 
 
-void DataSet::set_input_columns_binary(const Tensor<bool, 1>& new_input_columns)
+void DataSet::set_input_columns(const Tensor<Index, 1>& input_columns_indices, const Tensor<bool, 1>& input_columns_use)
 {
-    const Index columns_number = get_columns_number();
-
-    for(Index i = 0; i < columns_number; i++)
-    {
-        if(new_input_columns(i)) set_column_use(i, Input);
+    for(Index i = 0; i < input_columns_indices.size(); i++)
+    {                
+        if(input_columns_use(i)) set_column_use(input_columns_indices(i), Input);
+        else set_column_use(input_columns_indices(i), UnusedVariable);
     }
 }
 
@@ -3198,6 +3360,17 @@ void DataSet::set_columns_number(const Index& new_columns_number)
 }
 
 
+void DataSet::set_columns_scalers(const Scaler& scalers)
+{
+    const Index columns_number = get_columns_number();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        columns(i).scaler = scalers;
+    }
+}
+
+
 Tensor<type, 2> DataSet::transform_binary_column(const Tensor<type,1>& column) const
 
 {
@@ -3272,7 +3445,7 @@ void DataSet::set_binary_simple_columns()
             if(is_binary)
             {
                 columns(column_index).type = Binary;
-                scale_data_minimum_maximum_binary(values(0), values(1), column_index);
+                scale_minimum_maximum_binary(data, values(0), values(1), column_index);
                 columns(column_index).categories.resize(2);
 
                 if(values(0) == 0 && values(1) == 1)
@@ -3531,7 +3704,7 @@ const Index& DataSet::get_time_index() const
 /// Returns a value of the scaling-unscaling method enumeration from a string containing the name of that method.
 /// @param scaling_unscaling_method String with the name of the scaling and unscaling method.
 
-DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
+Scaler DataSet::get_scaling_unscaling_method(const string& scaling_unscaling_method)
 {
     if(scaling_unscaling_method == "NoScaling")
     {
@@ -3547,7 +3720,7 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
     }
     else if(scaling_unscaling_method == "Logarithmic")
     {
-        return Logarithmic;
+        return Logarithm;
     }
     else if(scaling_unscaling_method == "MeanStandardDeviation")
     {
@@ -3562,7 +3735,7 @@ DataSet::ScalingUnscalingMethod DataSet::get_scaling_unscaling_method(const stri
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "static ScalingUnscalingMethod get_scaling_unscaling_method(const string).\n"
+               << "static Scaler get_scaling_unscaling_method(const string).\n"
                << "Unknown scaling-unscaling method: " << scaling_unscaling_method << ".\n";
 
         throw logic_error(buffer.str());
@@ -6099,7 +6272,6 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
     }
 
     return correlations;
-
 }
 
 
@@ -6165,420 +6337,136 @@ void DataSet::print_top_inputs_correlations() const
 }
 
 
-/// Scales the data matrix with given mean and standard deviation values.
-/// It updates the data matrix.
-/// @param data_descriptives vector of descriptives structures for all the variables in the data set.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
-
-void DataSet::scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>& data_descriptives)
-{
-
-   #ifdef OPENNN_DEBUG
-
-   ostringstream buffer;
-
-   const Index columns_number = data.dimension(1);
-
-   const Index descriptives_size = data_descriptives.size();
-
-   if(descriptives_size != columns_number)
-   {
-      buffer << "OpenNN Exception: DataSet class.\n"
-             << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
-             << "Size of descriptives must be equal to number of columns.\n";
-
-      throw logic_error(buffer.str());
-   }
-
-   #endif
-
-   const Index variables_number = get_variables_number();
-
-   for(Index i = 0; i < variables_number; i++)
-   {
-       if(display && abs(data_descriptives(i).standard_deviation) < numeric_limits<type>::min())
-       {
-          cout << "OpenNN Warning: DataSet class.\n"
-                    << "void scale_data_mean_standard_deviation(const Tensor<Descriptives, 1>&) method.\n"
-                    << "Standard deviation of variable " <<  i << " is zero.\n"
-                    << "That variable won't be scaled.\n";
-        }
-    }
-
-//   scale_mean_standard_deviation(data, data_descriptives);
-}
-
-
-/// Scales the data using the minimum and maximum method,
-/// and the minimum and maximum values calculated from the data matrix.
-/// It also returns the descriptives from all columns.
-
-Tensor<Descriptives, 1> DataSet::scale_data_minimum_maximum()
-{
-    const Tensor<Descriptives, 1> data_descriptives = calculate_variables_descriptives();
-
-    scale_data_minimum_maximum(data_descriptives);
-
-    return data_descriptives;
-}
-
-
-/// Scales the data using the mean and standard deviation method,
-/// and the mean and standard deviation values calculated from the data matrix.
-/// It also returns the descriptives from all columns.
-
-Tensor<Descriptives, 1> DataSet::scale_data_mean_standard_deviation()
-{
-    const Tensor<Descriptives, 1> data_descriptives = calculate_variables_descriptives();
-
-    scale_data_mean_standard_deviation(data_descriptives);
-
-    return data_descriptives;
-}
-
-
-void DataSet::scale_data_minimum_maximum_binary(const type& value_1, const type& value_2,const Index& column_index)
-{
-    const Index rows_number = data.dimension(0);
-
-    type slope = 0;
-    type intercept = 0;
-
-    if(value_1 > value_2)
-    {
-        slope = 1/(value_1-value_2);
-        intercept = -value_2/(value_1-value_2);
-    }
-    else
-    {
-        slope = 1/(value_2 - value_1);
-
-        intercept = -value_1/(value_2-value_1);
-    }
-
-    for(Index i = 0; i < rows_number; i++)
-    {
-        data(i, column_index) = slope*data(i, column_index)+intercept;
-    }
-}
-
-
 /// Returns a vector of strings containing the scaling method that best fits each
 /// of the input variables.
 
-Tensor<string, 1> DataSet::calculate_default_scaling_methods() const
+void DataSet::set_default_columns_scalers()
 {
-    const Tensor<Index, 1> used_inputs_indices = get_input_variables_indices();
-    const Index used_inputs_number = used_inputs_indices.size();
+    const Index columns_number = get_columns_number();
 
     Index current_distribution;
-    Tensor<string, 1> scaling_methods(used_inputs_number);
+
+    Tensor<string, 1> scalers(columns_number);
 
     #pragma omp parallel for private(current_distribution)
 
-    for(Index i = 0; i < static_cast<Index>(used_inputs_number); i++)
+    for(Index i = 0; i < static_cast<Index>(columns_number); i++)
     {
-        current_distribution = perform_distribution_distance_analysis(data.chip(used_inputs_indices(i),1));
+        ColumnType column_type = get_column_type(i);
+
+        if(column_type == ColumnType::Categorical || column_type == ColumnType::Binary || column_type == ColumnType::DateTime)
+        {
+            continue;
+        }
+
+        Tensor<type, 2> column_data = get_column_data(i);
+
+        const TensorMap<Tensor<type,1>> input_column(column_data.data(), column_data.dimension(0));
+
+        current_distribution = perform_distribution_distance_analysis(input_column);
 
         if(current_distribution == 0) // Normal distribution
         {
-            scaling_methods(i) = "MeanStandardDeviation";
+            columns(i).scaler = Scaler::MeanStandardDeviation;
         }
         else if(current_distribution == 1) // Uniform distribution
         {
-            scaling_methods(i) = "MinimumMaximum";
+            columns(i).scaler = Scaler::MinimumMaximum;
         }
         else // Default
         {
-            scaling_methods(i) = "MinimumMaximum";
+            columns(i).scaler = Scaler::MinimumMaximum;
         }
     }
-
-    return scaling_methods;
 }
 
 
-/// Returns a vector of strings containing the scaling method that best fits each
-/// of the target variables.
-
-Tensor<string, 1> DataSet::calculate_default_unscaling_methods() const
-{
-    const Tensor<Index, 1> used_targets_indices = get_target_variables_indices();
-    const Index used_targets_number = used_targets_indices.size();
-
-    Index current_distribution;
-    Tensor<string, 1> scaling_methods(used_targets_number);
-
-    #pragma omp parallel for private(current_distribution)
-
-    for(Index i = 0; i < static_cast<Index>(used_targets_number); i++)
-    {
-        current_distribution = perform_distribution_distance_analysis(data.chip(used_targets_indices(i),1));
-
-        if(current_distribution == 0) // Normal distribution
-        {
-            scaling_methods(i) = "MeanStandardDeviation";
-        }
-        else if(current_distribution == 1) // Uniform distribution
-        {
-            scaling_methods(i) = "MinimumMaximum";
-        }
-        else // Default
-        {
-            scaling_methods(i) = "MinimumMaximum";
-        }
-    }
-
-    return scaling_methods;
-}
-
-
-/// Scales the data matrix with given minimum and maximum values.
-/// It updates the data matrix.
-/// @param data_descriptives vector of descriptives structures for all the variables in the data set.
-/// The size of that vector must be equal to the number of variables.
-/// @todo
-
-void DataSet::scale_data_minimum_maximum(const Tensor<Descriptives, 1>& data_descriptives)
+Tensor<Descriptives, 1> DataSet::scale_data()
 {
     const Index variables_number = get_variables_number();
 
-#ifdef OPENNN_DEBUG
-
-    ostringstream buffer;
-
-    const Index descriptives_size = data_descriptives.size();
-
-    if(descriptives_size != variables_number)
-    {
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
-               << "Size of data descriptives must be equal to number of variables.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
+    const Tensor<Descriptives, 1> variables_descriptives = calculate_variables_descriptives();
 
     for(Index i = 0; i < variables_number; i++)
     {
-        if(display
-                && abs(data_descriptives(i).maximum - data_descriptives(i).minimum) < numeric_limits<type>::min())
+        switch(columns(i).scaler)
         {
-            cout << "OpenNN Warning: DataSet class.\n"
-                 << "void scale_data_minimum_maximum(const Tensor<Descriptives, 1>&) method.\n"
-                 << "Range of variable " <<  i << " is zero.\n"
-                 << "That variable won't be scaled.\n";
+        case NoScaling:
+            // Do nothing
+        break;
+
+        case MinimumMaximum:
+            scale_minimum_maximum(data, i, variables_descriptives(i));
+        break;
+
+        case MeanStandardDeviation:
+            scale_mean_standard_deviation(data, i, variables_descriptives(i));
+        break;
+
+        case StandardDeviation:
+            scale_standard_deviation(data, i, variables_descriptives(i));
+        break;
+
+        case Logarithm:
+            scale_logarithmic(data, i, variables_descriptives(i));
+        break;
+
+        default:
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void scale_data() method.\n"
+                   << "Unknown scaler: " << columns(i).scaler << "\n";
+
+            throw logic_error(buffer.str());
+        }
         }
     }
 
-//       scale_minimum_maximum(data, data_descriptives);
+    return variables_descriptives;
 }
 
 
-/// Scales the given input variables with given mean and standard deviation values.
-/// It updates the input variable of the data matrix.
-/// @param input_statistics vector of descriptives structures for the input variables.
-/// @param input_index Index of the input to be scaled.
-
-void DataSet::scale_input_variable_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
+void DataSet::unscale_data(const Tensor<Descriptives, 1>& variables_descriptives)
 {
-    const type slope = (input_statistics.standard_deviation -0) < static_cast<type>(1e-3) ?
-                0 :
-                static_cast<type>(1)/input_statistics.standard_deviation;
+    const Index variables_number = get_variables_number();
 
-    const type intercept = (input_statistics.standard_deviation -0) < static_cast<type>(1e-3) ?
-                0 :
-                -static_cast<type>(1)*input_statistics.mean/input_statistics.standard_deviation;
-
-    for(Index i = 0; i < data.dimension(0); i++)
+    for(Index i = 0; i < variables_number; i++)
     {
-        data(i, input_index) = data(i, input_index)*slope + intercept;
-    }
-}
+        switch(columns(i).scaler)
+        {
+        case NoScaling:
+            // Do nothing
+        break;
 
+        case MinimumMaximum:
+            unscale_minimum_maximum(data, i, variables_descriptives(i));
+        break;
 
-/// Scales the given input variables with the calculated mean and standard deviation values from the data matrix.
-/// It updates the input variables of the data matrix.
-/// It also returns a vector with the variables descriptives.
-/// @param input_index Index of the input to be scaled.
+        case MeanStandardDeviation:
+            unscale_mean_standard_deviation(data, i, variables_descriptives(i));
+        break;
 
-Descriptives DataSet::scale_input_variable_mean_standard_deviation(const Index& input_index)
-{
-#ifdef OPENNN_DEBUG
+        case StandardDeviation:
+            unscale_standard_deviation(data, i, variables_descriptives(i));
+        break;
 
-    if(is_empty())
-    {
-        ostringstream buffer;
+        case Logarithm:
+            unscale_logarithmic(data, i, variables_descriptives(i));
+        break;
 
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Descriptives scale_input_variable_mean_standard_deviation(const Index&) method.\n"
-               << "Data file is not loaded.\n";
+        default:
+        {
+            ostringstream buffer;
 
-        throw logic_error(buffer.str());
-    }
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void unscale_data() method.\n"
+                   << "Unknown scaler: " << columns(i).scaler << "\n";
 
-#endif
-
-    const Descriptives input_statistics = calculate_input_descriptives(input_index);
-
-    scale_input_variable_mean_standard_deviation(input_statistics, input_index);
-
-    return input_statistics;
-}
-
-
-/// Scales the given input variables with given standard deviation values.
-/// It updates the input variable of the data matrix.
-/// @param inputs_statistics vector of descriptives structures for the input variables.
-/// @param input_index Index of the input to be scaled.
-
-void DataSet::scale_input_variable_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
-{
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, input_index) = static_cast<type>(2)*(data(i, input_index)) / input_statistics.standard_deviation;
-    }
-}
-
-
-/// Scales the given input variables with the calculated standard deviation values from the data matrix.
-/// It updates the input variables of the data matrix.
-/// It also returns a vector with the variables descriptives.
-/// @param input_index Index of the input to be scaled.
-
-Descriptives DataSet::scale_input_variable_standard_deviation(const Index& input_index)
-{
-#ifdef OPENNN_DEBUG
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Descriptives scale_input_variable_standard_deviation(const Index&) method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Descriptives input_statistics = calculate_input_descriptives(input_index);
-
-    scale_input_variable_standard_deviation(input_statistics, input_index);
-
-    return input_statistics;
-}
-
-
-/// Scales the given input variable with given minimum and maximum values.
-/// It updates the input variables of the data matrix.
-/// @param input_statistics vector with the descriptives of the input variable.
-/// @param input_index Index of the input to be scaled.
-
-void DataSet::scale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index& input_index)
-{
-    const type slope = abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (max_range-min_range)/(input_statistics.maximum-input_statistics.minimum);
-
-    const type intercept = abs(input_statistics.maximum-input_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(input_statistics.maximum-input_statistics.minimum);
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, input_index) = data(i, input_index)*slope + intercept;
-    }
-}
-
-
-/// Scales the given input variable with the calculated minimum and maximum values from the data matrix.
-/// It updates the input variable of the data matrix.
-/// It also returns a vector with the minimum and maximum values of the input variables.
-
-Descriptives DataSet::scale_input_variable_minimum_maximum(const Index& input_index)
-{
-#ifdef OPENNN_DEBUG
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Descriptives scale_input_variable_minimum_maximum(const Index&) method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Descriptives input_statistics = calculate_input_descriptives(input_index);
-
-    scale_input_variable_minimum_maximum(input_statistics, input_index);
-
-    return input_statistics;
-}
-
-
-void DataSet::scale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>& input_variables_descriptives)
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Index input_variables_number = input_variables_indices.size();
-
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        scale_input_variable_minimum_maximum(input_variables_descriptives[i], input_variables_indices[i]);
-    }
-}
-
-
-Tensor<Descriptives, 1> DataSet::scale_input_variables_minimum_maximum()
-{
-    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
-
-    scale_input_variables_minimum_maximum(input_variables_descriptives);
-
-    return input_variables_descriptives;
-}
-
-
-void DataSet::scale_input_variables_mean_standard_deviation(const Tensor<Descriptives, 1>& input_variables_descriptives)
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Index input_variables_number = input_variables_indices.size();
-
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        scale_input_variable_mean_standard_deviation(input_variables_descriptives[i], input_variables_indices[i]);
-    }
-}
-
-
-Tensor<Descriptives, 1> DataSet::scale_input_variables_mean_standard_deviation()
-{
-    const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
-
-    scale_input_variables_mean_standard_deviation(input_variables_descriptives);
-
-    return input_variables_descriptives;
-}
-
-
-void DataSet::unscale_input_variables_minimum_maximum(const Tensor<Descriptives, 1>& input_variables_descriptives)
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    const Index input_variables_number = input_variables_indices.size();
-
-    for(Index i = 0; i < input_variables_number; i++)
-    {
-        unscale_input_variable_minimum_maximum(input_variables_descriptives[i], input_variables_indices[i]);
+            throw logic_error(buffer.str());
+        }
+        }
     }
 }
 
@@ -6586,38 +6474,37 @@ void DataSet::unscale_input_variables_minimum_maximum(const Tensor<Descriptives,
 /// It scales every input variable with the given method.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-Tensor<Descriptives, 1> DataSet::scale_input_variables(const Tensor<string, 1>& scaling_unscaling_methods)
+Tensor<Descriptives, 1> DataSet::scale_input_variables()
 {
+    const Index input_variables_number = get_input_variables_number();
+
     const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives = calculate_input_variables_descriptives();
 
-    for(Index i = 0; i < scaling_unscaling_methods.dimension(0); i++)
+    for(Index i = 0; i < input_variables_number; i++)
     {
-        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        switch(input_variables_scalers(i))
         {
         case NoScaling:
-        {
             // Do nothing
-        }
         break;
 
         case MinimumMaximum:
-        {
-            scale_input_variable_minimum_maximum(input_variables_descriptives(i), input_variables_indices(i));
-        }
+            scale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
         case MeanStandardDeviation:
-        {
-            scale_input_variable_mean_standard_deviation(input_variables_descriptives(i), input_variables_indices(i));
-        }
+            scale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
         case StandardDeviation:
-        {
-            scale_input_variable_standard_deviation(input_variables_descriptives(i), input_variables_indices(i));
-        }
+            scale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+        break;
+
+        case Logarithm:
+            scale_logarithmic(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
         default:
@@ -6626,7 +6513,7 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables(const Tensor<string, 1>& 
 
             buffer << "OpenNN Exception: DataSet class\n"
                    << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method: " << scaling_unscaling_methods(i) << "\n";
+                   << "Unknown scaling and unscaling method: " << input_variables_scalers(i) << "\n";
 
             throw logic_error(buffer.str());
         }
@@ -6637,387 +6524,90 @@ Tensor<Descriptives, 1> DataSet::scale_input_variables(const Tensor<string, 1>& 
 }
 
 
-/// Scales the target variables with given mean and standard deviation values.
-/// It updates the target variables of the data matrix.
-/// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
-/// The size of that vector must be equal to the number of target variables.
-
-void DataSet::scale_target_variables_mean_standard_deviation(const Tensor<Descriptives, 1>& targets_descriptives)
-{
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    const Index target_variables_number = target_variables_indices.size();
-
-    Index variable_index;
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        for(Index j = 0; j < target_variables_number; j++)
-        {
-            variable_index = target_variables_indices(j);
-
-            if(!::isnan(data(i,variable_index)))
-            {
-                data(i, variable_index) =
-                        (data(i, variable_index)-targets_descriptives(j).mean)/(targets_descriptives(j).standard_deviation);
-            }
-        }
-    }
-}
-
-
-/// Scales the target variables with the calculated mean and standard deviation values from the data matrix.
-/// It updates the target variables of the data matrix.
-/// It also returns a vector of descriptives structures with the basic descriptives of all the variables.
-
-Tensor<Descriptives, 1> DataSet::scale_target_variables_mean_standard_deviation()
-{
-#ifdef OPENNN_DEBUG
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_target_variables_mean_standard_deviation() method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
-
-    scale_target_variables_mean_standard_deviation(targets_descriptives);
-
-    return targets_descriptives;
-}
-
-
-/// Scales the target variables with given minimum and maximum values.
-/// It updates the target variables of the data matrix.
-/// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
-/// The size of that vector must be equal to the number of target variables.
-
-void DataSet::scale_target_variables_minimum_maximum(const Tensor<Descriptives, 1>& targets_descriptives)
-{
-#ifdef OPENNN_DEBUG
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_target_variables_minimum_maximum() method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    const Index target_variables_number = target_variables_indices.size();
-
-    for(Index i = 0; i < target_variables_number; i++)
-    {
-        scale_target_variable_minimum_maximum(targets_descriptives[i], target_variables_indices[i]);
-    }
-}
-
-
-/// Scales the target variables with the calculated minimum and maximum values from the data matrix.
-/// It updates the target variables of the data matrix.
-/// It also returns a vector of vectors with the descriptives of the input target variables.
-
-Tensor<Descriptives, 1> DataSet::scale_target_variables_minimum_maximum()
-{
-    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
-
-    scale_target_variables_minimum_maximum(targets_descriptives);
-
-    return targets_descriptives;
-}
-
-
-/// Scales the target variables with the logarithmic scale using the given minimum and maximum values.
-/// It updates the target variables of the data matrix.
-/// @param targets_descriptives vector of descriptives structures for all the targets in the data set.
-/// The size of that vector must be equal to the number of target variables.
-
-void DataSet::scale_target_variables_logarithm(const Tensor<Descriptives, 1>& targets_descriptives)
-{
-#ifdef OPENNN_DEBUG
-
-    if(is_empty())
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Descriptives, 1> scale_target_variables_logarithm() method.\n"
-               << "Data file is not loaded.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    const Index target_variables_number = target_variables_indices.size();
-
-    Index variable_index;
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        for(Index j = 0; j < target_variables_number; j++)
-        {
-            variable_index = target_variables_indices(j);
-
-            if(!::isnan(data(i,variable_index)))
-            {
-                data(i, variable_index) =
-                        static_cast<type>(0.5)*(exp(data(i, variable_index)))*(targets_descriptives(j).maximum-targets_descriptives(j).minimum)+ targets_descriptives(j).minimum;
-            }
-        }
-    }
-}
-
-
-/// Scales the target variables with the logarithmic scale using the calculated minimum and maximum values
-/// from the data matrix.
-/// It updates the target variables of the data matrix.
-/// It also returns a vector of vectors with the descriptives of the input target variables.
-
-Tensor<Descriptives, 1> DataSet::scale_target_variables_logarithm()
-{
-    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
-
-    scale_target_variables_logarithm(targets_descriptives);
-
-    return targets_descriptives;
-}
-
-
 /// Calculates the input and target variables descriptives.
 /// Then it scales the target variables with those values.
 /// The method to be used is that in the scaling and unscaling method variable.
 /// Finally, it returns the descriptives.
 
-Tensor<Descriptives, 1> DataSet::scale_target_variables(const string& scaling_unscaling_method)
+Tensor<Descriptives, 1> DataSet::scale_target_variables()
 {
-    switch(get_scaling_unscaling_method(scaling_unscaling_method))
-    {
-    case NoUnscaling:
-        return calculate_target_variables_descriptives();
+    const Index target_variables_number = get_target_variables_number();
 
-    case MinimumMaximum:
-        return scale_target_variables_minimum_maximum();
-
-    case Logarithmic:
-        return scale_target_variables_logarithm();
-
-    case MeanStandardDeviation:
-        return scale_target_variables_mean_standard_deviation();
-
-    default:
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: DataSet class\n"
-               << "Tensor<Descriptives, 1> scale_target_variables(const string&) method.\n"
-               << "Unknown scaling and unscaling method.\n";
-
-        throw logic_error(buffer.str());
-    }
-    }
-}
-
-
-void DataSet::scale_target_variable_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
-{
-    const type slope = abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (max_range-min_range)/(target_statistics.maximum-target_statistics.minimum);
-
-    const type intercept = abs(target_statistics.maximum-target_statistics.minimum) < static_cast<type>(1e-3) ?
-                0 :
-                (min_range*target_statistics.maximum-max_range*target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum);
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, target_index) = data(i, target_index)*slope + intercept;
-    }
-}
-
-
-void DataSet::scale_target_variable_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
-{
-    const type slope = abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
-                0 :
-                static_cast<type>(1)/target_statistics.standard_deviation;
-
-    const type intercept = abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
-                0 :
-                -target_statistics.mean/target_statistics.standard_deviation;
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, target_index) = data(i, target_index)*slope + intercept;
-    }
-}
-
-
-void DataSet::scale_target_variable_logarithmic(const Descriptives& target_statistics, const Index& target_index)
-{
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        if(abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3))
-        {
-            data(i, target_index) = 0;
-        }
-        else
-        {
-            data(i, target_index)
-                    = static_cast<type>(0.5)*(exp(data(i,target_index)-1))*(target_statistics.maximum-target_statistics.minimum)
-                    + target_statistics.minimum;
-        }
-    }
-}
-
-
-/// It scales the input variables with that values.
-/// The method to be used is that in the scaling and unscaling method variable.
-
-Tensor<Descriptives, 1> DataSet::scale_target_variables(const Tensor<string, 1>& scaling_unscaling_methods)
-{
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
-    const Tensor<Descriptives, 1> targets_descriptives = calculate_target_variables_descriptives();
+    const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
 
-    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    const Tensor<Descriptives, 1> target_variables_descriptives = calculate_target_variables_descriptives();
+
+    for(Index i = 0; i < target_variables_number; i++)
     {
-        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
-        {
-        case NoUnscaling:
-            break;
-
-        case MinimumMaximum:
-            scale_target_variable_minimum_maximum(targets_descriptives(i), target_variables_indices(i));
-            break;
-
-        case MeanStandardDeviation:
-            scale_target_variable_mean_standard_deviation(targets_descriptives(i), target_variables_indices(i));
-            break;
-
-        case Logarithmic:
-            scale_target_variable_logarithmic(targets_descriptives(i), target_variables_indices(i));
-            break;
-
-        default:
-        {
-            ostringstream buffer;
-
-            buffer << "OpenNN Exception: DataSet class\n"
-                   << "void scale_target_variables(const string&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown scaling and unscaling method.\n";
-
-            throw logic_error(buffer.str());
-        }
-        }
-    }
-    return targets_descriptives;
-}
-
-
-/// Unscales the given input variable with given minimum and maximum values.
-/// It updates the input variables of the data matrix.
-/// @param input_statistics vector with the descriptives of the input variable.
-/// @param input_index Index of the input to be scaled.
-
-void DataSet::unscale_input_variable_minimum_maximum(const Descriptives& input_statistics, const Index&  input_index)
-{
-    const type slope = abs(max_range-min_range) < static_cast<type>(1e-3)
-            ? 0
-            : (input_statistics.maximum-input_statistics.minimum)/(max_range-min_range);
-
-    const type intercept = abs(max_range-min_range) < static_cast<type>(1e-3)
-            ? 0
-            : -(min_range*input_statistics.maximum-max_range*input_statistics.minimum)/(max_range-min_range);
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, input_index) = data(i, input_index)*slope + intercept;
-    }
-}
-
-
-/// Uncales the given input variables with given mean and standard deviation values.
-/// It updates the input variable of the data matrix.
-/// @param input_statistics vector of descriptives structures for the input variables.
-/// @param input_index Index of the input to be scaled.
-
-void DataSet::unscale_input_variable_mean_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
-{
-    const type slope = abs(input_statistics.mean - 0) < static_cast<type>(1e-3) ? 0
-            : input_statistics.standard_deviation/static_cast<type>(2);
-
-    const type intercept = abs(input_statistics.mean-0) < static_cast<type>(1e-3)
-            ? input_statistics.minimum
-            : input_statistics.mean;
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, input_index) = data(i, input_index)*slope + intercept;
-    }
-}
-
-
-/// Unscales the given input variables with given standard deviation values.
-/// It updates the input variable of the data matrix.
-/// @param inputs_statistics vector of descriptives structures for the input variables.
-/// @param input_index Index of the input to be scaled.
-
-void DataSet::unscale_input_variable_standard_deviation(const Descriptives& input_statistics, const Index& input_index)
-{
-    const type slope = abs(input_statistics.mean-0) < static_cast<type>(1e-3)
-            ? 0
-            : input_statistics.standard_deviation/static_cast<type>(2);
-
-    const type intercept = abs(input_statistics.mean-0) < static_cast<type>(1e-3)
-            ? input_statistics.minimum
-            : 0;
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, input_index) = data(i, input_index)*slope + intercept;
-    }
-}
-
-
-/// It unscales every input variable with the given method.
-/// The method to be used is that in the scaling and unscaling method variable.
-
-void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& input_variables_descriptives)
-{
-    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
-
-    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
-    {
-        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        switch(target_variables_scalers(i))
         {
         case NoScaling:
             // Do nothing
         break;
 
         case MinimumMaximum:
-            unscale_input_variable_minimum_maximum(input_variables_descriptives(i), input_variables_indices(i));
+            scale_minimum_maximum(data, target_variables_indices(i), target_variables_descriptives(i));
         break;
 
         case MeanStandardDeviation:
-            unscale_input_variable_mean_standard_deviation(input_variables_descriptives(i), input_variables_indices(i));
+            scale_mean_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
         break;
 
         case StandardDeviation:
-            unscale_input_variable_standard_deviation(input_variables_descriptives(i), input_variables_indices(i));
+            scale_standard_deviation(data, target_variables_indices(i), target_variables_descriptives(i));
+        break;
+
+        case Logarithm:
+            scale_logarithmic(data, target_variables_indices(i), target_variables_descriptives(i));
+        break;
+
+        default:
+        {
+            ostringstream buffer;
+
+            buffer << "OpenNN Exception: DataSet class\n"
+                   << "void scale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "Unknown scaling and unscaling method: " << target_variables_scalers(i) << "\n";
+
+            throw logic_error(buffer.str());
+        }
+        }
+    }
+
+    return target_variables_descriptives;
+}
+
+
+/// It unscales every input variable with the given method.
+/// The method to be used is that in the scaling and unscaling method variable.
+
+void DataSet::unscale_input_variables(const Tensor<Descriptives, 1>& input_variables_descriptives)
+{
+    const Index input_variables_number = get_input_variables_number();
+
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    const Tensor<Scaler, 1> input_variables_scalers = get_input_variables_scalers();
+
+    for(Index i = 0; i < input_variables_number; i++)
+    {
+        switch(input_variables_scalers(i))
+        {
+        case NoScaling:
+            // Do nothing
+        break;
+
+        case MinimumMaximum:
+            unscale_minimum_maximum(data, input_variables_indices(i), input_variables_descriptives(i));
+        break;
+
+        case MeanStandardDeviation:
+            unscale_mean_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
+        break;
+
+        case StandardDeviation:
+            unscale_standard_deviation(data, input_variables_indices(i), input_variables_descriptives(i));
         break;
 
         default:
@@ -7026,54 +6616,10 @@ void DataSet::unscale_input_variables(const Tensor<string, 1>& scaling_unscaling
 
             buffer << "OpenNN Exception: DataSet class\n"
                    << "void unscale_input_variables(const Tensor<string, 1>&, const Tensor<Descriptives, 1>&) method.\n"
-                   << "Unknown unscaling and unscaling method: " << scaling_unscaling_methods(i) << "\n";
+                   << "Unknown unscaling and unscaling method: " << input_variables_scalers(i) << "\n";
 
             throw logic_error(buffer.str());
         }
-        }
-    }
-}
-
-
-void DataSet::unscale_target_variable_minimum_maximum(const Descriptives& target_statistics, const Index& target_index)
-{
-    const type slope = abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : (target_statistics.maximum-target_statistics.minimum)/(max_range-min_range);
-
-    const type intercept = abs(max_range-min_range) < static_cast<type>(1e-3) ? 0 : -(min_range*target_statistics.maximum-max_range*target_statistics.minimum)/(max_range-min_range);
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, target_index) = data(i, target_index)*slope + intercept;
-    }
-}
-
-
-void DataSet::unscale_target_variable_mean_standard_deviation(const Descriptives& target_statistics, const Index& target_index)
-{
-    const type slope = abs(target_statistics.standard_deviation-0) < static_cast<type>(1e-3) ?
-                0 :
-                target_statistics.standard_deviation/static_cast<type>(2);
-
-    const type intercept = target_statistics.mean;
-
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        data(i, target_index) = data(i, target_index)*slope + intercept;
-    }
-}
-
-
-void DataSet::unscale_target_variable_logarithmic(const Descriptives& target_statistics, const Index& target_index)
-{
-    for(Index i = 0; i < data.dimension(0); i++)
-    {
-        if(abs(target_statistics.maximum - target_statistics.minimum) < static_cast<type>(1e-3))
-        {
-            data(i, target_index) = target_statistics.minimum;
-        }
-        else
-        {
-            data(i, target_index) = log(static_cast<type>(2)*(data(i,target_index)-target_statistics.minimum)/(target_statistics.maximum-target_statistics.minimum));
         }
     }
 }
@@ -7082,27 +6628,29 @@ void DataSet::unscale_target_variable_logarithmic(const Descriptives& target_sta
 /// It unscales the input variables with that values.
 /// The method to be used is that in the scaling and unscaling method variable.
 
-void DataSet::unscale_target_variables(const Tensor<string, 1>& scaling_unscaling_methods, const Tensor<Descriptives, 1>& targets_descriptives)
+void DataSet::unscale_target_variables(const Tensor<Descriptives, 1>& targets_descriptives)
 {
+    const Index target_variables_number = get_target_variables_number();
     const Tensor<Index, 1> target_variables_indices = get_target_variables_indices();
+    const Tensor<Scaler, 1> target_variables_scalers = get_target_variables_scalers();
 
-    for(Index i = 0; i < scaling_unscaling_methods.size(); i++)
+    for(Index i = 0; i < target_variables_number; i++)
     {
-        switch(get_scaling_unscaling_method(scaling_unscaling_methods(i)))
+        switch(target_variables_scalers(i))
         {
         case NoUnscaling:
             break;
 
         case MinimumMaximum:
-            unscale_target_variable_minimum_maximum(targets_descriptives(i), target_variables_indices(i));
+            unscale_minimum_maximum(data, target_variables_indices(i), targets_descriptives(i));
             break;
 
         case MeanStandardDeviation:
-            unscale_target_variable_mean_standard_deviation(targets_descriptives(i), target_variables_indices(i));
+            unscale_mean_standard_deviation(data, target_variables_indices(i), targets_descriptives(i));
             break;
 
-        case Logarithmic:
-            unscale_target_variable_logarithmic(targets_descriptives(i), target_variables_indices(i));
+        case Logarithm:
+            unscale_logarithmic(data, target_variables_indices(i), targets_descriptives(i));
             break;
 
         default:
@@ -7110,7 +6658,7 @@ void DataSet::unscale_target_variables(const Tensor<string, 1>& scaling_unscalin
             ostringstream buffer;
 
             buffer << "OpenNN Exception: DataSet class\n"
-                   << "void unscale_targets(const string&, const Tensor<Descriptives, 1>&) method.\n"
+                   << "void unscale_targets(const Tensor<Descriptives, 1>&) method.\n"
                    << "Unknown unscaling and unscaling method.\n";
 
             throw logic_error(buffer.str());
@@ -7118,8 +6666,6 @@ void DataSet::unscale_target_variables(const Tensor<string, 1>& scaling_unscalin
         }
     }
 }
-
-
 
 
 /// Initializes the data matrix with a given value.
@@ -7814,6 +7360,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                 columns(i).name = new_name;
             }
 
+            // Scaler
+
+            const tinyxml2::XMLElement* scaler_element = column_element->FirstChildElement("Scaler");
+
+            if(!scaler_element)
+            {
+                buffer << "OpenNN Exception: DataSet class.\n"
+                       << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                       << "Scaler element is nullptr.\n";
+
+                throw logic_error(buffer.str());
+            }
+
+            if(scaler_element->GetText())
+            {
+                const string new_scaler = scaler_element->GetText();
+
+                columns(i).set_scaler(new_scaler);
+            }
+
             // Column use
 
             const tinyxml2::XMLElement* column_use_element = column_element->FirstChildElement("ColumnUse");
@@ -7977,6 +7543,26 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
                     time_series_columns(i).name = time_series_new_name;
                 }
 
+                // Scaler
+
+                const tinyxml2::XMLElement* time_series_scaler_element = time_series_column_element->FirstChildElement("Scaler");
+
+                if(!time_series_scaler_element)
+                {
+                    buffer << "OpenNN Exception: DataSet class.\n"
+                           << "void DataSet::from_XML(const tinyxml2::XMLDocument&) method.\n"
+                           << "Time series scaler element is nullptr.\n";
+
+                    throw logic_error(buffer.str());
+                }
+
+                if(time_series_scaler_element->GetText())
+                {
+                    const string time_series_new_scaler = time_series_scaler_element->GetText();
+
+                    time_series_columns(i).set_scaler(time_series_new_scaler);
+                }
+
                 // Column use
 
                 const tinyxml2::XMLElement* time_series_column_use_element = time_series_column_element->FirstChildElement("ColumnUse");
@@ -8087,8 +7673,6 @@ void DataSet::from_XML(const tinyxml2::XMLDocument& data_set_document)
 
             rows_labels = get_tokens(new_rows_labels, ',');
         }
-
-
     }
 
     // Samples
@@ -8400,7 +7984,21 @@ void DataSet::print_columns_types() const
         else if(columns(i).type == Categorical) cout << "Categorical ";
         else if(columns(i).type == DateTime) cout << "DateTime ";
         else if(columns(i).type == Constant) cout << "Constant ";
+    }
 
+    cout << endl;
+}
+
+
+void DataSet::print_columns_uses() const
+{
+    const Index columns_number = get_columns_number();
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == Input) cout << "Input ";
+        else if(columns(i).column_use == Target) cout << "Target ";
+        else if(columns(i).column_use == UnusedVariable) cout << "Unused ";
     }
 
     cout << endl;
@@ -9265,6 +8863,227 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 }
 
 
+type DataSet::calculate_euclidean_distance(const Index& sample_index, const Index& other_sample_index) const
+{
+    type distance = 0.0;
+    type error;
+
+    const Index columns_number = get_columns_number();
+
+    //const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
+
+    //const Tensor<type, 1> sample = get_sample_data(sample_index);
+    //const Tensor<type, 1> other_sample = get_sample_data(other_sample_index);
+
+    Index variable_index = 0;
+
+    for(Index i = 0; i < columns_number; i++)
+    {
+        if(columns(i).column_use == UnusedVariable
+            || columns(i).column_use == Id
+            || columns(i).column_use == Time
+            || columns(i).column_use == Target)
+        {
+            columns(i).type != Categorical ? variable_index++ : variable_index += columns(i).get_categories_number();
+            continue;
+        }
+        else if(columns(i).type == DateTime)
+        {
+            variable_index++;
+        }
+        else if(columns(i).type == Categorical)
+        {
+            for(Index j = 0; j < columns(i).get_categories_number(); j++)
+            {
+                error = data(sample_index, variable_index) - data(other_sample_index, variable_index);
+                //error = sample(variable_index) - other_sample(variable_index);
+                distance += error * error;
+
+                variable_index++;
+            }
+        }
+        else // Numeric or Binary
+        {
+            error = data(sample_index, variable_index) - data(other_sample_index, variable_index);
+            //error = sample(variable_index) - other_sample(variable_index);
+
+            distance += error * error;
+
+            variable_index++;
+        }
+    }
+
+    return sqrt(distance);
+}
+
+
+Tensor<type, 2> DataSet::calculate_distance_matrix()const
+{
+    const Index used_samples_number = get_used_samples_number();
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+
+    Tensor<type, 2> distance_matrix(used_samples_number, used_samples_number);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < used_samples_number ; i++)
+    {
+        distance_matrix(i,i) = 0.0;
+
+        for(Index k = 0; k < i; k++)
+        {
+            distance_matrix(i,k) = distance_matrix(k,i)
+                    = calculate_euclidean_distance(used_samples_indices(i), used_samples_indices(k));
+        }
+    }
+
+    return distance_matrix;
+}
+
+
+/// @todo Check if can be simplified.
+
+Tensor<Index, 2> DataSet::calculate_k_nearest_neighbors(const Tensor<type, 2>& distance_matrix, const Index& k_neighbors) const
+{
+    const Index samples_number = get_used_samples_number();
+
+    Tensor<Index, 2> neighbors_indices(samples_number, k_neighbors);
+    neighbors_indices.setConstant(0);
+
+    Tensor<type, 1> min_distances(k_neighbors);
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        min_distances.setConstant(numeric_limits<type>::max());
+
+        type prev_value;
+        Index prev_index;
+
+        #pragma omp parallel for
+
+        for(Index j = 0; j < samples_number; j++)
+        {
+            if(j == i) continue;
+
+            for(Index k = 0; k < k_neighbors; k++)
+            {
+                if(distance_matrix(i,j) < min_distances(k))
+                {
+                    prev_value = min_distances(k);
+                    prev_index = neighbors_indices(i, k);
+
+                    min_distances(k) = distance_matrix(i, j);
+                    neighbors_indices(i, k) = j;
+
+                    for(Index k_left = k; k_left < k_neighbors; k_left++)
+                    {
+                        if(prev_value < min_distances(k_left))
+                        {
+                            swap(prev_value, min_distances(k_left));
+                            swap(prev_index, neighbors_indices(i, k_left));
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    return neighbors_indices;
+}
+
+
+Tensor<type, 1> DataSet::calculate_average_reachability(const Tensor<type,2>& distance_matrix,
+                                                        const Tensor<Index, 2>& k_nearest_indexes,
+                                                        const Index& k) const
+{
+    const Index samples_number = get_used_samples_number();
+    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+
+    Tensor<type, 1> average_reachability(samples_number);
+    average_reachability.setZero();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        for(Index j = 0; j < k; j++)
+        {
+            const Index other_index = k_nearest_indexes(i, j);
+
+            average_reachability(i) += max(distance_matrix(i, other_index), distance_matrix(other_index, k-1));
+        }
+
+        average_reachability(i) /= k;
+    }
+
+    return average_reachability;
+}
+
+
+// TODO
+Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index& k, const type& LOF_treshold) const
+{
+    /*
+    if(contamination < 0.0 && contamination > 0.5)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index&, const type&) method.\n"
+               << "Outlier contamination(" << contamination
+               << ") should be a value between 0.0 and 0.5\n";
+
+        throw logic_error(buffer.str());
+    }
+    */
+
+    const Index samples_number = get_used_samples_number();
+    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+    const Index fixed_k = k >= samples_number ? samples_number - 1 : k;
+
+    const Tensor<type, 2> distance_matrix = calculate_distance_matrix();
+
+    const Tensor<Index, 2> k_nearest_indexes = calculate_k_nearest_neighbors(distance_matrix, fixed_k);
+
+    const Tensor<type, 1> average_reachabilities = calculate_average_reachability(distance_matrix, k_nearest_indexes, fixed_k);
+
+    Tensor<type, 1> LOF(samples_number);
+
+    Tensor<Index, 1> outlier_indexes(samples_number);
+
+    outlier_indexes.setZero();
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < samples_number; i++)
+    {
+        type sum = 0;
+
+        const type current_reachibility = average_reachabilities(i);
+
+        for(Index j = 0; j < fixed_k; j++)
+        {
+            const Index other_index = k_nearest_indexes(i, j);
+
+            sum += current_reachibility / average_reachabilities(other_index);
+        }
+
+        if(sum/fixed_k > LOF_treshold)
+        {
+            outlier_indexes(i) = 1;
+        }
+
+        LOF(i) = sum/fixed_k;
+    }
+
+    cout << LOF << endl;
+
+    return outlier_indexes;
+}
+
+
 /// Returns a matrix with the values of autocorrelation for every variable in the data set.
 /// The number of rows is equal to the number of
 /// The number of columns is the maximum lags number.
@@ -9569,8 +9388,6 @@ void DataSet::generate_sum_data(const Index& samples_number, const Index& variab
     }
 
     set_default();
-
-    scale_data_mean_standard_deviation();
 }
 
 
@@ -10610,6 +10427,7 @@ void DataSet::read_csv_3_complete()
     file.close();
 
     // Check binary
+
     cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
@@ -11065,7 +10883,7 @@ void DataSet::intialize_sequential(Tensor<type, 1>& new_tensor,
 }
 
 
-Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index&  new_batch_size) const
+Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices, const Index& new_batch_size) const
 {
     const Index samples_number = samples_indices.dimension(0);
 
@@ -11103,8 +10921,9 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
 
 
 void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
-          const Tensor<Index, 1>& rows_indices,
-          const Tensor<Index, 1>& columns_indices, type* submatrix_pointer)
+                             const Tensor<Index, 1>& rows_indices,
+                             const Tensor<Index, 1>& columns_indices,
+                             type* submatrix_pointer)
 {
     const Index rows_number = rows_indices.size();
     const Index columns_number = columns_indices.size();
@@ -11180,7 +10999,6 @@ DataSetBatch::DataSetBatch(const Index& new_samples_number, DataSet* new_data_se
 {
     set(new_samples_number, new_data_set_pointer);
 }
-
 
 
 void DataSetBatch::set(const Index& new_samples_number, DataSet* new_data_set_pointer)
@@ -11271,7 +11089,7 @@ bool DataSet::get_has_rows_labels() const
 
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
