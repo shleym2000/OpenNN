@@ -107,7 +107,7 @@ public:
    LongShortTermMemoryLayer* get_long_short_term_memory_layer_pointer() const;
    RecurrentLayer* get_recurrent_layer_pointer() const;
 
-   Layer* get_output_layer_pointer() const;
+   Layer* get_last_trainable_layer_pointer() const;
    PerceptronLayer* get_first_perceptron_layer_pointer() const;
 
    const bool& get_display() const;
@@ -148,6 +148,8 @@ public:
 
    Index get_perceptron_layers_number() const;
    Index get_probabilistic_layers_number() const;
+   Index get_long_short_term_memory_layers_number() const;
+   Index get_recurrent_layers_number() const;
 
    // Architecture
 
@@ -208,7 +210,6 @@ public:
    // virtual void read_XML( );
 
    void print() const;
-   void print_summary() const;
    void save(const string&) const;
    void save_parameters(const string&) const;
 
@@ -411,8 +412,10 @@ struct NeuralNetworkBackPropagation
         }
     }
 
-    void print()
+    void print() const
     {
+        cout << "Neural network back-propagation" << endl;
+
         const Index layers_number = layers.size();
 
         cout << "Layers number: " << layers_number << endl;

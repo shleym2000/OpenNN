@@ -54,10 +54,6 @@ public:
 
    void test_perform_training();
 
-   // Training history methods
-
-   void test_set_reserve_all_training_history();
-
    // Serialization methods
 
    void test_to_XML();   
@@ -66,6 +62,16 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   SumSquaredError sum_squared_error;
+
+   ConjugateGradient conjugate_gradient;
 
 };
 

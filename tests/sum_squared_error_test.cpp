@@ -10,6 +10,7 @@
 
 SumSquaredErrorTest::SumSquaredErrorTest() : UnitTesting() 
 {
+    sum_squared_error.set(&neural_network, &data_set);
 }
 
 
@@ -32,7 +33,6 @@ void SumSquaredErrorTest::test_constructor()
    // Neural network and data set
 
    NeuralNetwork neural_network_2;
-   DataSet data_set;
 
    NeuralNetwork neural_network_3;
    SumSquaredError sum_squared_error_4(&neural_network_2, &data_set);
@@ -52,7 +52,6 @@ void SumSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   DataSet data_set;
    Tensor<type, 2> data;
 
    Tensor<Index,1> training_samples_indices;
@@ -61,12 +60,9 @@ void SumSquaredErrorTest::test_calculate_error()
 
    DataSetBatch batch;
 
-   NeuralNetwork neural_network;
-
    Index inputs_number;
    Index targets_number;
 
-   
    Tensor<type, 1> parameters;
 
    NeuralNetworkForwardPropagation forward_propagation;
@@ -81,7 +77,7 @@ void SumSquaredErrorTest::test_calculate_error()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -115,7 +111,7 @@ void SumSquaredErrorTest::test_calculate_error()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -145,7 +141,7 @@ void SumSquaredErrorTest::test_calculate_error()
    //Dataset
 
    data_set.set(1, 1, 1);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -226,7 +222,6 @@ void SumSquaredErrorTest::test_calculate_output_delta()
 {
    cout << "test_calculate_output_delta\n";
 
-   DataSet data_set;
    Tensor<type, 2> data;
 
    Tensor<Index,1> training_samples_indices;
@@ -234,8 +229,6 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    Tensor<Index,1> targets_indices;
 
    DataSetBatch batch;
-
-   NeuralNetwork neural_network;
 
    Tensor<type, 1> parameters;
 
@@ -257,7 +250,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -293,7 +286,7 @@ void SumSquaredErrorTest::test_calculate_output_delta()
    //Dataset
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -403,11 +396,8 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 {
    cout << "test_calculate_Jacobian_gradient\n";
 
-   NeuralNetwork neural_network;
-
    Tensor<type, 1> parameters;
 
-   DataSet data_set;
    Tensor<type, 2> data;
 
    SumSquaredError sum_squared_error(&neural_network, &data_set);
@@ -421,7 +411,7 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
    Index targets_number = 3;
 
    data_set.set(1, inputs_number, targets_number);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
    data_set.set_training();
 
    DataSetBatch batch(1, &data_set);
@@ -432,12 +422,9 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-        // Neural network
+   // Neural network
 
-   Tensor<Index, 1> architecture(2);
-   architecture.setValues({inputs_number,targets_number});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number,targets_number});
    neural_network.set_parameters_constant(0.0);
 
    NeuralNetworkForwardPropagation forward_propagation(data_set.get_training_samples_number(), &neural_network);
@@ -458,12 +445,6 @@ void SumSquaredErrorTest::test_calculate_Jacobian_gradient()
 void SumSquaredErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
-
-   DataSet data_set;
-   NeuralNetwork neural_network;
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-   
 
    Tensor<type, 1> parameters;
    Tensor<type, 1> gradient;
@@ -664,10 +645,6 @@ void SumSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {   
    cout << "test_calculate_squared_errors_jacobian\n";
 
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
-
    Tensor<Index, 1> samples_indices;
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
@@ -675,8 +652,6 @@ void SumSquaredErrorTest::test_calculate_squared_errors_jacobian()
    DataSetBatch batch;
 
    MeanSquaredError mean_squared_error(&neural_network, &data_set);
-
-   Tensor<Index, 1> architecture;
 
    Index samples_number;
    Index inputs_number;
@@ -702,12 +677,7 @@ void SumSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       architecture.resize(3);
-       architecture[0] = inputs_number;
-       architecture[1] = hidden_neurons_number;
-       architecture[2] = outputs_number;
-
-       neural_network.set(NeuralNetwork::Approximation, architecture);
+       neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 

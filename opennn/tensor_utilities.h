@@ -16,6 +16,8 @@
 
 #include "config.h"
 
+#include "../eigen/Eigen/Dense"
+
 using namespace std;
 using namespace Eigen;
 
@@ -41,6 +43,21 @@ void save_csv(const Tensor<type,2>&, const string&);
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>&);
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>&);
 
+void scrub_missing_values(Tensor<type, 2>&, const type&);
+
+type l1_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
+void l1_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
+void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+
+type l2_norm(const ThreadPoolDevice*, const Tensor<type, 1>&);
+void l2_norm_gradient(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 1>&);
+void l2_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>&);
+
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&);
+
+void sum_diagonal(Tensor<type, 2>&, const type&);
+
+Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
 
 }
 

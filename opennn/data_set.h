@@ -173,6 +173,8 @@ public:
 
        void from_XML(const tinyxml2::XMLDocument&);
        void write_XML(tinyxml2::XMLPrinter&) const;
+
+       void print() const;
    };
 
    // Samples get methods
@@ -205,6 +207,7 @@ public:
 
    Tensor<Column, 1> get_columns() const;
    Tensor<Column, 1> get_time_series_columns() const;
+   Index get_time_series_data_rows_number() const;
    Tensor<Column, 1> get_input_columns() const;
    Tensor<bool, 1> get_input_columns_binary() const;
    Tensor<Column, 1> get_target_columns() const;
@@ -506,7 +509,7 @@ public:
 
    // Initialization methods
 
-   void initialize_data(const type&);
+   void set_data_constant(const type&);
 
    void set_data_random();
    void set_data_binary_random();
@@ -533,8 +536,6 @@ public:
 
    Tensor<type, 1> calculate_variables_means(const Tensor<Index, 1>&) const;
    Tensor<type, 1> calculate_used_variables_minimums() const;
-
-   Descriptives calculate_input_descriptives(const Index&) const;
 
    Tensor<type, 1> calculate_used_targets_mean() const;
    Tensor<type, 1> calculate_selection_targets_mean() const;
@@ -641,7 +642,6 @@ public:
    // Serialization methods
 
    void print() const;
-   void print_summary() const;
 
    void from_XML(const tinyxml2::XMLDocument&);
    void write_XML(tinyxml2::XMLPrinter&) const;
@@ -649,6 +649,7 @@ public:
    void save(const string&) const;
    void load(const string&);
 
+   void print_columns() const;
    void print_columns_types() const;
    void print_columns_uses() const;
 

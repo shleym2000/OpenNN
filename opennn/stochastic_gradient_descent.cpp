@@ -90,30 +90,6 @@ const type& StochasticGradientDescent::get_maximum_time() const
 }
 
 
-/// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
-
-const bool& StochasticGradientDescent::get_choose_best_selection() const
-{
-    return choose_best_selection;
-}
-
-
-/// Returns true if the loss history vector is to be reserved, and false otherwise.
-
-const bool& StochasticGradientDescent::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& StochasticGradientDescent::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
-}
-
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -139,16 +115,10 @@ void StochasticGradientDescent::set_default()
     gradient_norm_goal = 0;
     maximum_time = 3600.0;
     maximum_epochs_number = 1000;
-    choose_best_selection = false;
-
-    // TRAINING HISTORY
-
-    reserve_training_error_history = true;
-    reserve_selection_error_history = true;
 
     // UTILITIES
 
-    display_period = 5;
+    display_period = 10;
 }
 
 
@@ -247,27 +217,6 @@ void StochasticGradientDescent::set_nesterov(const bool& new_nesterov_momentum)
 }
 
 
-/// Makes the training history of all variables to reseved or not in memory:
-/// <ul>
-/// <li> Parameters.
-/// <li> Parameters norm.
-/// <li> Loss.
-/// <li> Gradient.
-/// <li> Gradient norm.
-/// <li> Selection loss.
-/// <li> Learning rate.
-/// <li> Elapsed_time.
-/// </ul>
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
-
-void StochasticGradientDescent::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
-{
-    reserve_training_error_history = new_reserve_all_training_history;
-
-    reserve_selection_error_history = new_reserve_all_training_history;
-}
-
-
 /// Set the a new maximum for the epochs number.
 /// @param new_maximum_epochs number New maximum epochs number.
 
@@ -330,34 +279,6 @@ void StochasticGradientDescent::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-void StochasticGradientDescent::set_choose_best_selection(const bool& new_choose_best_selection)
-{
-    choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the error history vector is to be reserved, false otherwise.
-
-void StochasticGradientDescent::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void StochasticGradientDescent::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
 /// Set hardware to use. Default: Multi-core.
 
 void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back_propagation,
@@ -407,7 +328,7 @@ void StochasticGradientDescent::update_parameters(LossIndexBackPropagation& back
 
 TrainingResults StochasticGradientDescent::perform_training()
 {
-    TrainingResults results;
+    TrainingResults results(maximum_epochs_number+1);
 
     check();
 
@@ -433,8 +354,13 @@ TrainingResults StochasticGradientDescent::perform_training()
     const Index training_samples_number = data_set_pointer->get_training_samples_number();
     const Index selection_samples_number = data_set_pointer->get_selection_samples_number();
 
-    training_samples_number < batch_samples_number ? batch_size_training = training_samples_number : batch_size_training = batch_samples_number;
-    selection_samples_number < batch_samples_number && selection_samples_number != 0 ? batch_size_selection = selection_samples_number : batch_size_selection = batch_samples_number;
+    training_samples_number < batch_samples_number
+            ? batch_size_training = training_samples_number
+            : batch_size_training = batch_samples_number;
+
+    selection_samples_number < batch_samples_number && selection_samples_number != 0
+            ? batch_size_selection = selection_samples_number
+            : batch_size_selection = batch_samples_number;
 
     DataSetBatch batch_training(batch_size_training, data_set_pointer);
     DataSetBatch batch_selection(batch_size_selection, data_set_pointer);
@@ -460,10 +386,7 @@ TrainingResults StochasticGradientDescent::perform_training()
     type training_error = 0;
     type training_loss = 0;
 
-    type selection_error = 0;
-    type old_selection_error = 0;
-
-    Index selection_error_increases = 0;
+    Index selection_failures = 0;
     type gradient_norm = 0;
 
     // Optimization algorithm
@@ -480,38 +403,17 @@ TrainingResults StochasticGradientDescent::perform_training()
 
     bool shuffle = false;
 
-    results.resize_training_history(maximum_epochs_number+1);
-    if(has_selection) results.resize_selection_history(maximum_epochs_number+1);
-
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
         shuffle = false;
 
-    // Calculate error before training
-
-    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
-    batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
-
-    neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
-
-    loss_index_pointer->calculate_errors(batch_training, training_forward_propagation, training_back_propagation);
-    loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0) = training_back_propagation.error;
-
-    if(has_selection)
-    {
-        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
-        batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
-        neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
-        loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
-        loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0) = selection_back_propagation.error;
-    }
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
-        const Tensor<Index, 2> training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+
+        training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
 
@@ -532,15 +434,10 @@ TrainingResults StochasticGradientDescent::perform_training()
 
             neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
 
-//            training_forward_propagation.print();
-
-
             // Loss index
 
             loss_index_pointer->back_propagate(batch_training, training_forward_propagation, training_back_propagation);
-//            training_back_propagation.neural_network.print();
 
-//system("pause");
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
@@ -560,7 +457,7 @@ TrainingResults StochasticGradientDescent::perform_training()
         {
             selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
-            selection_error = 0;
+            //selection_error = 0;
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
@@ -577,24 +474,12 @@ TrainingResults StochasticGradientDescent::perform_training()
                 loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
-                selection_error += selection_back_propagation.error;
+                //selection_error += selection_back_propagation.error;
             }
 
-            selection_error /= static_cast<type>(selection_batches_number);
+            //selection_error /= static_cast<type>(selection_batches_number);
 
-            if(epoch == 1)
-            {
-                results.optimum_selection_error = selection_error;
-            }
-            else if(selection_error > old_selection_error)
-            {
-                selection_error_increases++;
-            }
-            else if(selection_error <= results.optimum_selection_error)
-            {
-                results.optimum_selection_error = selection_error;
-                results.optimal_parameters = training_back_propagation.parameters;
-            }
+            //if(selection_error > old_selection_error) selection_failures++;
         }
 
         // Elapsed time
@@ -604,113 +489,83 @@ TrainingResults StochasticGradientDescent::perform_training()
 
         // Training history
 
-        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
+        results.training_error_history(epoch) = training_error;
 
-        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
+        //if(has_selection) results.selection_error_history(epoch) = selection_error;
+
+        if(display)
+        {
+            cout << "Training error: " << training_error << "\n"
+                 << "Learning rate: " << learning_rate << "\n"
+                 << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
+
+            //if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
+        }
+
+        // Stopping criteria
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch<< ": Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
-
         }
 
-        else if(elapsed_time >= maximum_time)
+        if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
 
-        else if(training_loss <= training_loss_goal)
+        if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
             results.stopping_condition  = LossGoal;
         }
 
-        else if(gradient_norm <= gradient_norm_goal)
+        if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(selection_error_increases >= maximum_selection_error_increases)
+        if(selection_failures >= maximum_selection_failures)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection error increases: " << selection_error_increases << endl;
-            }
+            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        if(epoch != 1 && epoch % save_period == 0)
-        {
-            neural_network_pointer->save(neural_network_file_name);
-        }
-
         if(stop_training)
         {
-            if(display)
-            {
-                cout << "Training error: " << training_error << "\n"
-                     << "Learning rate: " << learning_rate << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
-                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            }
-
             results.resize_training_error_history(epoch + 1);
 
             if(has_selection) results.resize_selection_error_history(epoch + 1);
 
-            results.parameters = training_back_propagation.parameters;
-
-            results.training_error = training_error;
-
-            if(has_selection) results.selection_error = selection_error;
-
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.epochs_number = epoch;
-
             break;
-        }
-        else if(epoch == 1 || (epoch)%display_period == 0)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ";\n"
-                     << "Training error: " << training_error << "\n"
-                     << "DataSetBatch size: " << batch_samples_number << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
-                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            }
         }
 
         // Update stuff
 
-        if(has_selection) old_selection_error = selection_error;
-
         if(stop_training) break;
-    }
 
-    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
+        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+    }
 
     if(display) results.print();
 
@@ -779,32 +634,6 @@ Tensor<string, 2> StochasticGradientDescent::to_string_matrix() const
 
     labels_values(6,1) = to_string(batch_samples_number);
 
-    // Reserve training error history
-
-    labels_values(7,0) = "Reserve training error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(7,1) = "true";
-    }
-    else
-    {
-        labels_values(7,1) = "false";
-    }
-
-    // Reserve selection error history
-
-    labels_values(8,0) = "Reserve selection error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(8,1) = "true";
-    }
-    else
-    {
-        labels_values(8,1) = "false";
-    }
-
     return labels_values;
 }
 
@@ -840,17 +669,6 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     file_stream.CloseElement();
 
-    // Return minimum selection error neural network
-
-    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
-
-    buffer.str("");
-    buffer << choose_best_selection;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Loss goal
 
     file_stream.OpenElement("LossGoal");
@@ -879,28 +697,6 @@ void StochasticGradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) con
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve training error history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error history
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -981,24 +777,6 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Return minimum selection error neural network
-
-    const tinyxml2::XMLElement* choose_best_selection_element = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
-
-    if(choose_best_selection_element)
-    {
-        string new_choose_best_selection = choose_best_selection_element->GetText();
-
-        try
-        {
-            set_choose_best_selection(new_choose_best_selection != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
     // Loss goal
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("LossGoal");
@@ -1048,44 +826,6 @@ void StochasticGradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_training_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_history(new_reserve_training_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
             }
             catch(const logic_error& e)
             {

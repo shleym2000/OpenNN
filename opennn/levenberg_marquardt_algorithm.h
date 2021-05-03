@@ -24,6 +24,7 @@
 // OpenNN includes
 
 #include "config.h"
+#include "tensor_utilities.h"
 #include "optimization_algorithm.h"
 
 // Eigen includes
@@ -67,17 +68,10 @@ public:
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
    const type& get_gradient_norm_goal() const;
-   const Index& get_maximum_selection_error_increases() const;
+   const Index& get_maximum_selection_failures() const;
 
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
-
-   const bool& get_choose_best_selection() const;
-
-   // Reserve training history
-
-   const bool& get_reserve_training_error_history() const;
-   const bool& get_reserve_selection_error_history() const;
 
    // Utilities
 
@@ -106,21 +100,10 @@ public:
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
    void set_gradient_norm_goal(const type&);
-   void set_maximum_selection_error_increases(const Index&);
+   void set_maximum_selection_failures(const Index&);
 
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
-
-   void set_choose_best_selection(const bool&);
-
-   // Reserve training history
-
-   void set_reserve_training_error_history(const bool&);
-   void set_reserve_selection_error_history(const bool&);
-
-   /// Makes the training history of all variables to be reseved or not in memory.
-
-   virtual void set_reserve_all_training_history(const bool&);
 
    // Training methods
 
@@ -139,14 +122,11 @@ public:
    // Serialization methods
 
    Tensor<string, 2> to_string_matrix() const;
-
    
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;
    
-   Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&) const;
-
 private:
 
    // MEMBERS
@@ -188,7 +168,7 @@ private:
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_error_increases;
+   Index maximum_selection_failures;
 
    /// Maximum number of epoch to perform_training. It is used as a stopping criterion.
 
@@ -197,20 +177,6 @@ private:
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time;
-
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-   bool choose_best_selection = false;
-
-   // TRAINING HISTORY
-
-   /// True if the loss history vector is to be reserved, false otherwise.
-
-   bool reserve_training_error_history;
-
-   /// True if the selection error history vector is to be reserved, false otherwise.
-
-   bool reserve_selection_error_history;
 };
 
 
@@ -258,7 +224,7 @@ struct LevenbergMarquardtAlgorithmData : public OptimizationAlgorithmData
 
     Tensor<type, 1> parameters_increment;
 
-    type parameters_increment_norm = 0;
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     // Loss index data
 

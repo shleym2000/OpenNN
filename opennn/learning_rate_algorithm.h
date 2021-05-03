@@ -277,9 +277,9 @@ protected:
 
    /// Maximum interval length for the learning rate.
 
-   type learning_rate_tolerance = static_cast<type>(1.0e-3);
+   type learning_rate_tolerance;
 
-   type loss_tolerance = static_cast<type>(1.0e-3);
+   type loss_tolerance;
 
    // UTILITIES
 
@@ -291,18 +291,6 @@ protected:
 
    NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
    ThreadPoolDevice* thread_pool_device = nullptr;
-
-   bool is_zero(const Tensor<type, 1>& tensor) const
-   {
-       const Index size = tensor.size();
-
-       for(Index i = 0; i < size; i++)
-       {
-           if(abs(tensor[i]) > numeric_limits<type>::min()) return false;
-       }
-
-       return true;
-   }
 };
 
 }

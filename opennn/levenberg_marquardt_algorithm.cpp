@@ -78,9 +78,9 @@ const type& LevenbergMarquardtAlgorithm::get_gradient_norm_goal() const
 
 /// Returns the maximum number of selection failures during the training process.
 
-const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_error_increases() const
+const Index& LevenbergMarquardtAlgorithm::get_maximum_selection_failures() const
 {
-    return maximum_selection_error_increases;
+    return maximum_selection_failures;
 }
 
 
@@ -97,30 +97,6 @@ const Index& LevenbergMarquardtAlgorithm::get_maximum_epochs_number() const
 const type& LevenbergMarquardtAlgorithm::get_maximum_time() const
 {
     return maximum_time;
-}
-
-
-/// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_choose_best_selection() const
-{
-    return choose_best_selection;
-}
-
-
-/// Returns true if the error history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& LevenbergMarquardtAlgorithm::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
 }
 
 
@@ -177,26 +153,19 @@ void LevenbergMarquardtAlgorithm::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(1.0e-3);
+    minimum_parameters_increment_norm = static_cast<type>(0.0);
 
     minimum_loss_decrease = static_cast<type>(0.0);
     training_loss_goal = 0;
     gradient_norm_goal = 0;
-    maximum_selection_error_increases = 1000;
+    maximum_selection_failures = 1000;
 
     maximum_epochs_number = 1000;
     maximum_time = 3600.0;
 
-    choose_best_selection = false;
-
-    // TRAINING HISTORY
-
-    reserve_training_error_history = false;
-    reserve_selection_error_history = true;
-
     // UTILITIES
 
-    display_period = 5;
+    display_period = 10;
 
     // Training parameters
 
@@ -385,13 +354,13 @@ void LevenbergMarquardtAlgorithm::set_gradient_norm_goal(const type& new_gradien
 
 
 /// Sets a new maximum number of selection error increases.
-/// @param new_maximum_selection_error_increases Maximum number of epochs in which the
+/// @param new_maximum_selection_failures Maximum number of epochs in which the
 /// selection evalutation increases.
 
-void LevenbergMarquardtAlgorithm::set_maximum_selection_error_increases(
-        const Index& new_maximum_selection_error_increases)
+void LevenbergMarquardtAlgorithm::set_maximum_selection_failures(
+        const Index& new_maximum_selection_failures)
 {
-    maximum_selection_error_increases = new_maximum_selection_error_increases;
+    maximum_selection_failures = new_maximum_selection_failures;
 }
 
 
@@ -425,35 +394,6 @@ void LevenbergMarquardtAlgorithm::set_maximum_time(const type& new_maximum_time)
 #endif
 
     maximum_time = new_maximum_time;
-}
-
-
-/// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with
-/// the minimum selection error, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_choose_best_selection(const bool& new_choose_best_selection)
-{
-    choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the error history vector is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void LevenbergMarquardtAlgorithm::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
 }
 
 
@@ -522,10 +462,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     if(display) cout << "Training with Levenberg-Marquardt algorithm...\n";
 
-    TrainingResults results;
-
-    results.resize_training_history(maximum_epochs_number+1);
-    results.resize_selection_history(maximum_epochs_number+1);
+    TrainingResults results(maximum_epochs_number+1);
 
     // Data set
 
@@ -565,8 +502,8 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     type gradient_norm = 0;
 
-    LossIndexBackPropagationLM training_loss_index_back_propagation_lm(training_samples_number, loss_index_pointer);
-    LossIndexBackPropagationLM selection_loss_index_back_propagation_lm(selection_samples_number, loss_index_pointer);
+    LossIndexBackPropagationLM training_back_propagation_lm(training_samples_number, loss_index_pointer);
+    LossIndexBackPropagationLM selection_back_propagation_lm(selection_samples_number, loss_index_pointer);
 
     // Training strategy stuff
 
@@ -578,25 +515,11 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
     LevenbergMarquardtAlgorithmData optimization_data(this);
 
-    // Calculate error before training
-
-    neural_network_pointer->forward_propagate(training_batch, training_forward_propagation);
-    loss_index_pointer->calculate_squared_errors(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
-    loss_index_pointer->calculate_error(training_batch, training_forward_propagation, training_loss_index_back_propagation_lm);
-    results.training_error_history(0)  = training_loss_index_back_propagation_lm.error;
-
-    if(has_selection)
-    {
-        neural_network_pointer->forward_propagate(selection_batch, selection_forward_propagation);
-        loss_index_pointer->calculate_squared_errors(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
-        loss_index_pointer->calculate_error(selection_batch, selection_forward_propagation, selection_loss_index_back_propagation_lm);
-        results.selection_error_history(0)  = selection_loss_index_back_propagation_lm.error;
-    }
-
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
 
         optimization_data.epoch = epoch;
 
@@ -609,57 +532,28 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         loss_index_pointer->back_propagate(training_batch,
                                            training_forward_propagation,
-                                           training_loss_index_back_propagation_lm);
+                                           training_back_propagation_lm);
 
-        // Update epoch
+        results.training_error_history(epoch) = training_back_propagation_lm.error;
 
-        gradient_norm = l2_norm(training_loss_index_back_propagation_lm.gradient);
-
-        // Optimization data
-
-        update_parameters(training_batch,
-                     training_forward_propagation,
-                     training_loss_index_back_propagation_lm,
-                     optimization_data);
-
-        if(epoch == 1)
-        {
-            training_loss_decrease = 0;
-        }
-        else
-        {
-            training_loss_decrease = training_loss_index_back_propagation_lm.loss - old_training_loss;
-        }
+        gradient_norm = l2_norm(training_back_propagation_lm.gradient);
 
         if(has_selection)
         {
-          neural_network_pointer->forward_propagate(selection_batch,
-                                                    selection_forward_propagation);
+            neural_network_pointer->forward_propagate(selection_batch,
+                                                      selection_forward_propagation);
 
-          loss_index_pointer->calculate_squared_errors(selection_batch,
-                                                       selection_forward_propagation,
-                                                       training_loss_index_back_propagation_lm);
+            loss_index_pointer->calculate_squared_errors(selection_batch,
+                                                         selection_forward_propagation,
+                                                         selection_back_propagation_lm);
 
-          loss_index_pointer->calculate_error(selection_batch,
-                                              selection_forward_propagation,
-                                              training_loss_index_back_propagation_lm);
-        }
+            loss_index_pointer->calculate_error(selection_batch,
+                                                selection_forward_propagation,
+                                                selection_back_propagation_lm);
 
-        if(epoch == 1)
-        {
-            results.optimum_selection_error = training_loss_index_back_propagation_lm.error;
+            results.selection_error_history(epoch) = selection_back_propagation_lm.error;
 
-            results.optimal_parameters = training_loss_index_back_propagation_lm.parameters;
-        }
-        else if(epoch != 1 && training_loss_index_back_propagation_lm.error > old_selection_error)
-        {
-            selection_failures++;
-        }
-        else if(training_loss_index_back_propagation_lm.error < results.optimum_selection_error)
-        {
-            results.optimum_selection_error = training_loss_index_back_propagation_lm.error;
-
-            results.optimal_parameters = training_loss_index_back_propagation_lm.parameters;
+            if(selection_back_propagation_lm.error > old_selection_error) selection_failures++;
         }
 
         // Elapsed time
@@ -667,154 +561,108 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
         time(&current_time);
         elapsed_time = static_cast<type>(difftime(current_time, beginning_time));
 
-        // Training history loss index
-
-        if(reserve_training_error_history)
+        if(display && epoch%display_period == 0)
         {
-            results.training_error_history(epoch) = training_loss_index_back_propagation_lm.error;
+            cout << "Training error: " << training_back_propagation_lm.error << endl;
+            if(has_selection) cout << "Selection error: " << selection_back_propagation_lm.error << endl;
+            cout << "Gradient norm: " << gradient_norm << endl;
+            cout << "Damping parameter: " << damping_parameter << endl;
+            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
         }
 
-        if(reserve_selection_error_history)
-        {
-            results.selection_error_history(epoch) = selection_loss_index_back_propagation_lm.error;
-        }
 
         // Stopping Criteria
 
         if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum parameters increment norm reached.\n"
-                     << "Parameters increment norm: " << optimization_data.parameters_increment_norm << endl;
-            }
+            if(display) cout << "Minimum parameters increment norm reached: " << optimization_data.parameters_increment_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumParametersIncrementNorm;
         }
 
-        else if(training_loss_index_back_propagation_lm.loss <= training_loss_goal)
+        if(training_back_propagation_lm.loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_back_propagation_lm.loss << endl;
 
             stop_training = true;
 
             results.stopping_condition = LossGoal;
         }
 
-        else if(epoch != 1 && training_loss_decrease >= minimum_loss_decrease)
+        epoch == 1 ? training_loss_decrease = 0
+                   : training_loss_decrease = training_back_propagation_lm.loss - old_training_loss;
+
+        if(epoch != 1 && abs(training_loss_decrease) < minimum_loss_decrease)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Minimum loss decrease (" << minimum_loss_decrease << ") reached.\n"
-                     << "Loss decrease: " << training_loss_decrease << endl;
-            }
+            if(display) cout << "Minimum loss decrease (" << minimum_loss_decrease << ") reached: " << training_loss_decrease << endl;
 
             stop_training = true;
 
             results.stopping_condition = MinimumLossDecrease;
         }
 
-        else if(gradient_norm <= gradient_norm_goal)
+        if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached." << endl;
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
         }
 
-        else if(selection_failures >= maximum_selection_error_increases)
+        if(selection_failures >= maximum_selection_failures)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection loss increases: "<< selection_failures << endl;
-            }
+            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(epoch == maximum_epochs_number)
+        if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached." << endl;
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
         }
 
-        else if(elapsed_time >= maximum_time)
+        if(elapsed_time >= maximum_time)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum training time reached." << endl;
-            }
+            if(display) cout << "Maximum training time reached: " << elapsed_time << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
 
-        if(epoch != 1 && epoch % save_period == 0)
-        {
-            neural_network_pointer->save(neural_network_file_name);
-        }
-
         if(stop_training)
         {
-            if(display)
-            {
-                cout << "Training error: " << training_loss_index_back_propagation_lm.error << "\n"
-                     << "Gradient norm: " << gradient_norm << "\n"
-                     << "Damping parameter: " << damping_parameter << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
-
-                if(has_selection)
-                {
-                    cout << "Selection error: " << selection_loss_index_back_propagation_lm.error << endl;
-                }
-            }
-
             results.resize_training_error_history(epoch+1);
             results.resize_selection_error_history(epoch+1);
-
-            results.parameters = training_loss_index_back_propagation_lm.parameters;
-            results.training_error = training_loss_index_back_propagation_lm.error;
-            results.selection_error = selection_loss_index_back_propagation_lm.error;
 
             results.final_gradient_norm = gradient_norm;
 
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.epochs_number = epoch;
-
             break;
         }
-        else if((display && epoch == 0) || (display && epoch%display_period == 0))
-        {
-            cout << "Epoch " << epoch << ";\n"
-                 << "Training error: " << training_loss_index_back_propagation_lm.loss << "\n"
-                 << "Gradient norm: " << gradient_norm << "\n"
-                 << "Damping parameter: " << damping_parameter << "\n"
-                 << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
 
-            if(has_selection)
-            {
-                cout << "Selection error: " << selection_loss_index_back_propagation_lm.error << endl;
-            }
-        }
+        if(epoch%save_period == 0) neural_network_pointer->save(neural_network_file_name);
+
+        update_parameters(training_batch,
+                          training_forward_propagation,
+                          training_back_propagation_lm,
+                          optimization_data);
 
         // Update stuff
 
-        old_training_loss = training_loss_index_back_propagation_lm.loss;
-        old_selection_error = selection_loss_index_back_propagation_lm.error;
+        old_training_loss = training_back_propagation_lm.loss;
+        old_selection_error = selection_back_propagation_lm.error;
     }
-
-    if(choose_best_selection) neural_network_pointer->set_parameters(results.optimal_parameters);
 
     if(display) results.print();
 
@@ -830,46 +678,46 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 /// \param optimization_data
 
 void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
-                                               NeuralNetworkForwardPropagation& forward_propagation,
-                                               LossIndexBackPropagationLM& loss_index_back_propagation_lm,
-                                               LevenbergMarquardtAlgorithmData& optimization_data)
+                                                    NeuralNetworkForwardPropagation& forward_propagation,
+                                                    LossIndexBackPropagationLM& loss_index_back_propagation_lm,
+                                                    LevenbergMarquardtAlgorithmData& optimization_data)
 {
-
     const type regularization_weight = loss_index_pointer->get_regularization_weight();
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
     do
     {
-         loss_index_back_propagation_lm.sum_hessian_diagonal(damping_parameter);
+        sum_diagonal(loss_index_back_propagation_lm.hessian, damping_parameter);
 
-         optimization_data.parameters_increment = perform_Householder_QR_decomposition(loss_index_back_propagation_lm.hessian,(-1)*loss_index_back_propagation_lm.gradient);
+        optimization_data.parameters_increment = perform_Householder_QR_decomposition(loss_index_back_propagation_lm.hessian,(-1)*loss_index_back_propagation_lm.gradient);
 
-         optimization_data.potential_parameters.device(*thread_pool_device) = loss_index_back_propagation_lm.parameters + optimization_data.parameters_increment;
+        optimization_data.potential_parameters.device(*thread_pool_device) = loss_index_back_propagation_lm.parameters + optimization_data.parameters_increment;
 
-         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
+        neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
-         loss_index_pointer->calculate_error(batch, forward_propagation, loss_index_back_propagation_lm);
+        loss_index_pointer->calculate_squared_errors(batch, forward_propagation, loss_index_back_propagation_lm);
+        loss_index_pointer->calculate_error(batch, forward_propagation, loss_index_back_propagation_lm);
 
-         const type new_loss = loss_index_back_propagation_lm.error + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
+        const type new_loss = loss_index_back_propagation_lm.error + regularization_weight*loss_index_pointer->calculate_regularization(optimization_data.potential_parameters);
 
-         if(new_loss <= loss_index_back_propagation_lm.loss) // succesfull step
-         {
-             set_damping_parameter(damping_parameter/damping_parameter_factor);
+        if(new_loss <= loss_index_back_propagation_lm.loss) // succesfull step
+        {
+            set_damping_parameter(damping_parameter/damping_parameter_factor);
 
-             loss_index_back_propagation_lm.parameters = optimization_data.potential_parameters;
+            loss_index_back_propagation_lm.parameters = optimization_data.potential_parameters;
 
-             loss_index_back_propagation_lm.error = loss_index_back_propagation_lm.error;
-             loss_index_back_propagation_lm.loss = new_loss;
+            loss_index_back_propagation_lm.error = loss_index_back_propagation_lm.error;
+            loss_index_back_propagation_lm.loss = new_loss;
 
             break;
-         }
-         else
-         {
-             loss_index_back_propagation_lm.sum_hessian_diagonal(-damping_parameter);
+        }
+        else
+        {
+            sum_diagonal(loss_index_back_propagation_lm.hessian, -damping_parameter);
 
-             set_damping_parameter(damping_parameter*damping_parameter_factor);
-         }
+            set_damping_parameter(damping_parameter*damping_parameter_factor);
+        }
     }while(damping_parameter < maximum_damping_parameter);
 
     optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);
@@ -877,13 +725,6 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
     // Set parameters
 
     neural_network_pointer->set_parameters(loss_index_back_propagation_lm.parameters);
-}
-
-
-void LevenbergMarquardtAlgorithm::set_reserve_all_training_history(const bool&)
-{
-    reserve_training_error_history = true;
-    reserve_selection_error_history = true;
 }
 
 
@@ -935,7 +776,7 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
 
     labels_values(5,0) = "Maximum selection error increases";
 
-    labels_values(5,1) = to_string(maximum_selection_error_increases);
+    labels_values(5,1) = to_string(maximum_selection_failures);
 
     // Maximum iterations number
 
@@ -948,32 +789,6 @@ Tensor<string, 2> LevenbergMarquardtAlgorithm::to_string_matrix() const
     labels_values(7,0) = "Maximum time";
 
     labels_values(7,1) = to_string(maximum_time);
-
-    // Reserve training error history
-
-    labels_values(8,0) = "Reserve training error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(8,1) = "true";
-    }
-    else
-    {
-        labels_values(8,1) = "false";
-    }
-
-    // Reserve selection error history
-
-    labels_values(9,0) = "Reserve selection error history";
-
-    if(reserve_selection_error_history)
-    {
-        labels_values(9,1) = "true";
-    }
-    else
-    {
-        labels_values(9,1) = "false";
-    }
 
     return labels_values;
 }
@@ -999,18 +814,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.PushText(buffer.str().c_str());
 
     file_stream.CloseElement();
-
-    // Return minimum selection error neural network
-    {
-        file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
-
-        buffer.str("");
-        buffer << choose_best_selection;
-
-        file_stream.PushText(buffer.str().c_str());
-
-        file_stream.CloseElement();
-    }
 
     // Minimum parameters increment norm
 
@@ -1061,7 +864,7 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
     file_stream.OpenElement("MaximumSelectionErrorIncreases");
 
     buffer.str("");
-    buffer << maximum_selection_error_increases;
+    buffer << maximum_selection_failures;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1084,28 +887,6 @@ void LevenbergMarquardtAlgorithm::write_XML(tinyxml2::XMLPrinter& file_stream) c
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve training error history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error history
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -1157,25 +938,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         try
         {
             set_damping_parameter_factor(new_damping_parameter_factor);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Return minimum selection error neural network
-
-    const tinyxml2::XMLElement* choose_best_selection_element
-            = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
-
-    if(choose_best_selection_element)
-    {
-        const string new_choose_best_selection = choose_best_selection_element->GetText();
-
-        try
-        {
-            set_choose_best_selection(new_choose_best_selection != "0");
         }
         catch(const logic_error& e)
         {
@@ -1259,17 +1021,17 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
 
     // Maximum selection error increases
 
-    const tinyxml2::XMLElement* maximum_selection_error_increases_element
+    const tinyxml2::XMLElement* maximum_selection_failures_element
             = root_element->FirstChildElement("MaximumSelectionErrorIncreases");
 
-    if(maximum_selection_error_increases_element)
+    if(maximum_selection_failures_element)
     {
-        const Index new_maximum_selection_error_increases
-                = static_cast<Index>(atoi(maximum_selection_error_increases_element->GetText()));
+        const Index new_maximum_selection_failures
+                = static_cast<Index>(atoi(maximum_selection_failures_element->GetText()));
 
         try
         {
-            set_maximum_selection_error_increases(new_maximum_selection_error_increases);
+            set_maximum_selection_failures(new_maximum_selection_failures);
         }
         catch(const logic_error& e)
         {
@@ -1313,44 +1075,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
         }
     }
 
-    // Reserve training error history
-
-    const tinyxml2::XMLElement* reserve_training_error_history_element
-            = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-    if(reserve_training_error_history_element)
-    {
-        const string new_reserve_training_error_history = reserve_training_error_history_element->GetText();
-
-        try
-        {
-            set_reserve_training_error_history(new_reserve_training_error_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Reserve selection error history
-
-    const tinyxml2::XMLElement* reserve_selection_error_history_element
-            = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-    if(reserve_selection_error_history_element)
-    {
-        const string new_reserve_selection_error_history = reserve_selection_error_history_element->GetText();
-
-        try
-        {
-            set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
     // Hardware use
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("HardwareUse");
@@ -1369,25 +1093,6 @@ void LevenbergMarquardtAlgorithm::from_XML(const tinyxml2::XMLDocument& document
             }
         }
     }
-}
-
-
-/// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
-
-Tensor<type, 1> LevenbergMarquardtAlgorithm::perform_Householder_QR_decomposition(const Tensor<type, 2>& A,
-        const Tensor<type, 1>& b) const
-{
-    const Index n = A.dimension(0);
-
-    Tensor<type, 1> x(n);
-
-    const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
-    const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
-    Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
-
-    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
-
-    return x;
 }
 
 }

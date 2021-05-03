@@ -77,18 +77,11 @@ public:
 
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
-   const Index& get_maximum_selection_error_increases() const;
+   const Index& get_maximum_selection_failures() const;
    const type& get_gradient_norm_goal() const;
 
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
-
-   const bool& get_choose_best_selection() const;
-
-   // Reserve training history
-
-   const bool& get_reserve_training_error_history() const;
-   const bool& get_reserve_selection_error_history() const;
 
    // Set methods
 
@@ -107,20 +100,11 @@ public:
 
    void set_loss_goal(const type&);
    void set_minimum_loss_decrease(const type&);
-   void set_maximum_selection_error_increases(const Index&);
+   void set_maximum_selection_failures(const Index&);
    void set_gradient_norm_goal(const type&);
 
    void set_maximum_epochs_number(const Index&);
    void set_maximum_time(const type&);
-
-   void set_choose_best_selection(const bool&);
-
-   // Reserve training history
-
-   void set_reserve_training_error_history(const bool&);
-   void set_reserve_selection_error_history(const bool&);
-
-   void set_reserve_all_training_history(const bool&);
 
    // Utilities
 
@@ -196,7 +180,7 @@ private:
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_error_increases;
+   Index maximum_selection_failures;
 
    /// Maximum number of epochs to perform_training. It is used as a stopping criterion.
 
@@ -205,20 +189,6 @@ private:
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time;
-
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-   bool choose_best_selection = false;
-
-   // TRAINING HISTORY
-
-   /// True if the training error history vector is to be reserved, false otherwise.
-
-   bool reserve_training_error_history;
-
-   /// True if the selection error history vector is to be reserved, false otherwise.
-
-   bool reserve_selection_error_history;
 };
 
 
@@ -249,7 +219,7 @@ struct ConjugateGradientData : public OptimizationAlgorithmData
     type learning_rate = 0;
     type old_learning_rate = 0;
 
-    type parameters_increment_norm = 0;
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     Tensor<type, 0> training_slope;
 };

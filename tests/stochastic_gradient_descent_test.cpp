@@ -11,6 +11,9 @@
 
 StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 {
+    sum_squared_error.set(&neural_network, &data_set);
+
+    stochastic_gradient_descent.set_loss_index_pointer(&sum_squared_error);
 }
 
 
@@ -22,8 +25,6 @@ StochasticGradientDescentTest::~StochasticGradientDescentTest()
 void StochasticGradientDescentTest::test_constructor()
 {
    cout << "test_constructor\n"; 
-
-   SumSquaredError sum_squared_error;
 
    // Default constructor
 
@@ -45,28 +46,9 @@ void StochasticGradientDescentTest::test_destructor()
 }
 
 
-void StochasticGradientDescentTest::test_set_reserve_all_training_history()
-{
-   cout << "test_set_reserve_all_training_history\n";
-
-   StochasticGradientDescent sgd;
-
-   sgd.set_reserve_all_training_history(true);
-
-   assert_true(sgd.get_reserve_training_error_history(), LOG);
-   assert_true(sgd.get_reserve_selection_error_history(), LOG);
-}
-
-
 void StochasticGradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
-
-   DataSet data_set;
-
-   NeuralNetwork neural_network; 
-
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
 
    // Test
 
@@ -75,8 +57,6 @@ void StochasticGradientDescentTest::test_perform_training()
 
    neural_network.set(NeuralNetwork::Approximation, {1, 2});
    neural_network.set_parameters_random();
-
-   StochasticGradientDescent stochastic_gradient_descent(&sum_squared_error);
 
    // Test
 
@@ -143,17 +123,13 @@ void StochasticGradientDescentTest::test_perform_training()
 }
 
 
-void StochasticGradientDescentTest::test_resize_training_history()
+void StochasticGradientDescentTest::test_resize_training_error_history()
 {
-   cout << "test_resize_training_history\n";
-
-   StochasticGradientDescent sgd;
-
-   sgd.set_reserve_all_training_history(true);
+   cout << "test_resize_training_error_history\n";
 
    TrainingResults sgdtr;
 
-   sgdtr.resize_training_history(1);
+   sgdtr.resize_training_error_history(1);
 
    assert_true(sgdtr.training_error_history.size() == 1, LOG);
    assert_true(sgdtr.selection_error_history.size() == 1, LOG);
@@ -163,8 +139,6 @@ void StochasticGradientDescentTest::test_resize_training_history()
 void StochasticGradientDescentTest::test_to_XML()
 {
    cout << "test_to_XML\n";
-
-   StochasticGradientDescent sgd;
 
    tinyxml2::XMLDocument* document = nullptr;
 
@@ -192,10 +166,6 @@ void StochasticGradientDescentTest::run_test_case()
    test_constructor();
    test_destructor();
 
-   // Set methods
-
-   test_set_reserve_all_training_history();
-
    // Training methods
 
    test_perform_training();
@@ -203,7 +173,7 @@ void StochasticGradientDescentTest::run_test_case()
 
    // Training history methods
 
-   test_resize_training_history();
+   test_resize_training_error_history();
 
    // Serialization methods
 

@@ -30,7 +30,6 @@
 #include "learning_rate_algorithm.h"
 #include "config.h"
 
-
 namespace OpenNN
 {
 
@@ -72,17 +71,10 @@ public:
    const type& get_minimum_loss_decrease() const;
    const type& get_loss_goal() const;
    const type& get_gradient_norm_goal() const;
-   const Index& get_maximum_selection_error_increases() const;
+   const Index& get_maximum_selection_failures() const;
 
    const Index& get_maximum_epochs_number() const;
    const type& get_maximum_time() const;
-
-   const bool& get_choose_best_selection() const;
-
-   // Reserve training history
-
-   const bool& get_reserve_training_error_history() const;
-   const bool& get_reserve_selection_error_history() const;
 
    // Set methods
 
@@ -92,7 +84,6 @@ public:
 
    void set_default();
 
-   void set_reserve_all_training_history(const bool&);
 
    // Stopping criteria
 
@@ -103,16 +94,9 @@ public:
    void set_minimum_loss_decrease(const type&);
    void set_loss_goal(const type&);
    void set_gradient_norm_goal(const type&);
-   void set_maximum_selection_error_increases(const Index&);
+   void set_maximum_selection_failures(const Index&);
 
    void set_maximum_time(const type&);
-
-   void set_choose_best_selection(const bool&);
-
-   // Reserve training history
-
-   void set_reserve_training_error_history(const bool&);
-   void set_reserve_selection_error_history(const bool&);
 
    // Training methods
 
@@ -124,9 +108,7 @@ public:
            LossIndexBackPropagation& back_propagation,
            GradientDescentData& optimization_data);
 
-   TrainingResults perform_training();
-
-   
+   TrainingResults perform_training();   
 
    string write_optimization_algorithm_type() const;
 
@@ -169,7 +151,7 @@ private:
    /// Maximum number of epochs at which the selection error increases.
    /// This is an early stopping method for improving selection.
 
-   Index maximum_selection_error_increases;
+   Index maximum_selection_failures;
 
    /// Maximum epochs number
 
@@ -178,20 +160,6 @@ private:
    /// Maximum training time. It is used as a stopping criterion.
 
    type maximum_time;
-
-   /// True if the final model will be the neural network with the minimum selection error, false otherwise.
-
-   bool choose_best_selection = false;
-
-   // TRAINING HISTORY 
-
-   /// True if the loss history vector is to be reserved, false otherwise.
-
-   bool reserve_training_error_history;
-
-   /// True if the selection error history vector is to be reserved, false otherwise.
-
-   bool reserve_selection_error_history;
 
 };
 
@@ -226,14 +194,9 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
         // Neural network data
 
-        old_parameters.resize(parameters_number);
         potential_parameters.resize(parameters_number);
 
         parameters_increment.resize(parameters_number);
-
-        // Loss index data
-
-        old_gradient.resize(parameters_number);
 
         // Optimization algorithm data
 
@@ -243,29 +206,20 @@ struct GradientDescentData : public OptimizationAlgorithmData
 
     void print() const
     {
-        cout << "Training Direction:" << endl;
+        cout << "Training direction:" << endl;
         cout << training_direction << endl;
 
         cout << "Learning rate:" << endl;
         cout << learning_rate << endl;
     }
 
-
     GradientDescent* gradient_descent_pointer = nullptr;
 
     // Neural network data
 
-    Tensor<type, 1> old_parameters;
-
     Tensor<type, 1> parameters_increment;
 
-    type parameters_increment_norm = 0;
-
-    // Loss index data
-
-    type old_training_loss = 0;
-
-    Tensor<type, 1> old_gradient;
+    type parameters_increment_norm = numeric_limits<type>::max();
 
     // Optimization algorithm data
 

@@ -31,8 +31,8 @@ int main()
 
         // Data Set
 
-        const Index samples = 100;
-        const Index variables = 5;
+        const Index samples = 10000;
+        const Index variables = 10;
 
         DataSet data_set;
 
@@ -46,7 +46,7 @@ int main()
         // Neural network
 
         const Index inputs_number = data_set.get_input_variables_number();
-        const Index hidden_neurons_number = variables;
+        const Index hidden_neurons_number = 10;
         const Index outputs_number = data_set.get_target_variables_number();
 
         NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
@@ -59,21 +59,17 @@ int main()
 
         TrainingStrategy training_strategy(&neural_network, &data_set);
 
-        training_strategy.set_loss_method(TrainingStrategy::MEAN_SQUARED_ERROR);
+        training_strategy.set_loss_method(TrainingStrategy::NORMALIZED_SQUARED_ERROR);
 
         training_strategy.get_loss_index_pointer()->set_regularization_method(LossIndex::NoRegularization);
 
-        training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
+        training_strategy.set_optimization_method(TrainingStrategy::LEVENBERG_MARQUARDT_ALGORITHM);
 
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_display_period(100);
-
-        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
+//        training_strategy.get_adaptive_moment_estimation_pointer()->set_maximum_epochs_number(1000);
 
         training_strategy.perform_training();
 
         cout << "End Rosenbrock" << endl;
-
-        system("pause");
 
         return 0;
     }

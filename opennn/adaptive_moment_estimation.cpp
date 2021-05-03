@@ -90,29 +90,6 @@ const type& AdaptiveMomentEstimation::get_maximum_time() const
 }
 
 
-/// Returns true if the final model will be the neural network with the minimum selection error, false otherwise.
-
-const bool& AdaptiveMomentEstimation::get_choose_best_selection() const
-{
-    return choose_best_selection;
-}
-
-
-/// Returns true if the error history vector is to be reserved, and false otherwise.
-
-const bool& AdaptiveMomentEstimation::get_reserve_training_error_history() const
-{
-    return reserve_training_error_history;
-}
-
-
-/// Returns true if the selection error history vector is to be reserved, and false otherwise.
-
-const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() const
-{
-    return reserve_selection_error_history;
-}
-
 /// Sets a pointer to a loss index object to be associated to the gradient descent object.
 /// It also sets that loss index to the learning rate algorithm.
 /// @param new_loss_index_pointer Pointer to a loss index object.
@@ -120,28 +97,6 @@ const bool& AdaptiveMomentEstimation::get_reserve_selection_error_history() cons
 void AdaptiveMomentEstimation::set_loss_index_pointer(LossIndex* new_loss_index_pointer)
 {
     loss_index_pointer = new_loss_index_pointer;
-}
-
-
-/// Makes the training history of all variables to reseved or not in memory:
-/// <ul>
-/// <li> Parameters.
-/// <li> Parameters norm.
-/// <li> Loss.
-/// <li> Gradient.
-/// <li> Gradient norm.
-/// <li> Selection loss.
-/// <li> Training direction.
-/// <li> Training direction norm.
-/// <li> Learning rate.
-/// </ul>
-/// @param new_reserve_all_training_history True if the training history of all variables is to be reserved, false otherwise.
-
-void AdaptiveMomentEstimation::set_reserve_all_training_history(const bool& new_reserve_all_training_history)
-{
-    reserve_training_error_history = new_reserve_all_training_history;
-
-    reserve_selection_error_history = new_reserve_all_training_history;
 }
 
 
@@ -243,35 +198,6 @@ void AdaptiveMomentEstimation::set_maximum_time(const type& new_maximum_time)
 }
 
 
-/// Makes the minimum selection error neural network of all the iterations to be returned or not.
-/// @param new_choose_best_selection True if the final model will be the neural network with the minimum selection error,
-/// false otherwise.
-
-void AdaptiveMomentEstimation::set_choose_best_selection(const bool& new_choose_best_selection)
-{
-    choose_best_selection = new_choose_best_selection;
-}
-
-
-/// Makes the error history vector to be reseved or not in memory.
-/// @param new_reserve_training_error_history True if the error history vector is to be reserved, false otherwise.
-
-void AdaptiveMomentEstimation::set_reserve_training_error_history(const bool& new_reserve_training_error_history)
-{
-    reserve_training_error_history = new_reserve_training_error_history;
-}
-
-
-/// Makes the selection error history to be reserved or not in memory.
-/// This is a vector.
-/// @param new_reserve_selection_error_history True if the selection error history is to be reserved, false otherwise.
-
-void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& new_reserve_selection_error_history)
-{
-    reserve_selection_error_history = new_reserve_selection_error_history;
-}
-
-
 /// Trains a neural network with an associated loss index,
 /// according to the gradient descent method.
 /// Training occurs according to the training parameters and stopping criteria.
@@ -279,7 +205,7 @@ void AdaptiveMomentEstimation::set_reserve_selection_error_history(const bool& n
 
 TrainingResults AdaptiveMomentEstimation::perform_training()
 {
-    TrainingResults results;
+    TrainingResults results(maximum_epochs_number+1);
 
     check();
 
@@ -296,8 +222,8 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
     const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
-    Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
-    Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
+    const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
+    const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
     Index batch_size_training = 0;
     Index batch_size_selection = 0;
@@ -337,10 +263,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     type training_error = 0;
     type training_loss = 0;
 
-    type selection_error = 0;
-    type old_selection_error = 0;
-
-    Index selection_error_increases = 0;
+    Index selection_failures = 0;
     type gradient_norm = 0;
 
     // Optimization algorithm
@@ -357,36 +280,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     bool shuffle = false;
 
-    results.resize_training_history(maximum_epochs_number+1);
-    if(has_selection) results.resize_selection_history(maximum_epochs_number + 1);
-
     if(neural_network_pointer->has_long_short_term_memory_layer()
     || neural_network_pointer->has_recurrent_layer())
         shuffle = false;
 
-    // Calculate error before training
-
-    training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
-    batch_training.fill(training_batches.chip(0, 0), input_variables_indices, target_variables_indices);
-    neural_network_pointer->forward_propagate(batch_training, training_forward_propagation);
-    loss_index_pointer->calculate_errors(batch_training, training_forward_propagation, training_back_propagation);
-    loss_index_pointer->calculate_error(batch_training, training_forward_propagation, training_back_propagation);
-    results.training_error_history(0) = training_back_propagation.error;
-
-    if(has_selection)
-    {
-        selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
-        batch_selection.fill(selection_batches.chip(0,0), input_variables_indices, target_variables_indices);
-        neural_network_pointer->forward_propagate(batch_selection, selection_forward_propagation);
-        loss_index_pointer->calculate_errors(batch_selection, selection_forward_propagation, selection_back_propagation);
-        loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
-        results.selection_error_history(0) = selection_back_propagation.error;
-    }
-
     // Main loop
 
-    for(Index epoch = 1; epoch <= maximum_epochs_number; epoch++)
+    for(Index epoch = 0; epoch <= maximum_epochs_number; epoch++)
     {
+        if(display && epoch%display_period == 0) cout << "Epoch: " << epoch << endl;
+
         training_batches = data_set_pointer->get_batches(training_samples_indices, batch_size_training, shuffle);
 
         const Index batches_number = training_batches.dimension(0);
@@ -415,8 +318,6 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             training_error += training_back_propagation.error;
             training_loss += training_back_propagation.loss;
 
-            // Gradient
-
             update_parameters(training_back_propagation, optimization_data);
         }
 
@@ -427,11 +328,13 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         training_loss /= static_cast<type>(batches_number);
         training_error /= static_cast<type>(batches_number);
 
+        results.training_error_history(epoch) = training_error;
+
         if(has_selection)
         {
             selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
-            selection_error = 0;
+            //selection_error = 0;
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
@@ -449,25 +352,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
-                selection_error += selection_back_propagation.error;
+                //selection_error += selection_back_propagation.error;
             }
 
-            selection_error /= static_cast<type>(selection_batches_number);
+            //selection_error /= static_cast<type>(selection_batches_number);
 
-            if(epoch == 0)
-            {
-                results.optimum_selection_error = selection_error;
-            }
-            else if(selection_error > old_selection_error)
-            {
-                selection_error_increases++;
-            }
-            else if(selection_error <= results.optimum_selection_error)
-            {
-                results.optimum_selection_error = selection_error;
-                results.optimal_parameters = training_back_propagation.parameters;
-            }
+            //if(selection_error > old_selection_error) selection_failures++;
+
+            //if(has_selection) results.selection_error_history(epoch) = selection_error;
         }
+
 
         // Elapsed time
 
@@ -476,112 +370,68 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         // Training history
 
-        if(reserve_training_error_history) results.training_error_history(epoch) = training_error;
-
-        if(has_selection && reserve_selection_error_history) results.selection_error_history(epoch) = selection_error;
 
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum number of epochs reached.\n";
+            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumEpochsNumber;
         }
-        else if(elapsed_time >= maximum_time)
+
+        if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Epoch " << epoch << ": Maximum training time reached.\n";
+            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumTime;
         }
-        else if(training_loss <= training_loss_goal)
+
+        if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Loss goal reached.\n";
+            if(display) cout << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
             results.stopping_condition  = LossGoal;
         }
-        else if(gradient_norm <= gradient_norm_goal)
+
+        if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Epoch " << epoch << ": Gradient norm goal reached.\n";
+            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
             results.stopping_condition = GradientNormGoal;
         }
-        else if(selection_error_increases >= maximum_selection_error_increases)
+
+        if(selection_failures >= maximum_selection_failures)
         {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ": Maximum selection error increases reached.\n"
-                     << "Selection error increases: " << selection_error_increases << endl;
-            }
+            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        if(epoch != 0 && epoch % save_period == 0)
-        {
-            neural_network_pointer->save(neural_network_file_name);
-        }
-
         if(stop_training)
         {
-            if(display)
-            {
-                cout << "Training error: " << training_error << "\n"
-                     << "Learning rate: " << learning_rate << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
-                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            }
-
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
 
-            results.parameters = training_back_propagation.parameters;
-
-            results.training_error = training_error;
-
-            if(has_selection) results.selection_error = selection_error;
-
             results.elapsed_time = write_elapsed_time(elapsed_time);
 
-            results.epochs_number = epoch;
-
             break;
-        }
-        else if(epoch == 0 || (epoch)%display_period == 0)
-        {
-            if(display)
-            {
-                cout << "Epoch " << epoch << ";\n"
-                     << "Training error: " << training_error << "\n"
-                     << "DataSetBatch size: " << batch_samples_number << "\n"
-                     << "Elapsed time: " << write_elapsed_time(elapsed_time)<<"\n";
-
-                if(has_selection) cout << "Selection error: " << selection_error << endl<<endl;
-            }
         }
 
         // Update stuff
 
-        if(has_selection) old_selection_error = selection_error;
+        if(epoch != 0 && epoch % save_period == 0) neural_network_pointer->save(neural_network_file_name);
 
         if(stop_training) break;
-    }
-
-    if(choose_best_selection)
-    {
-        neural_network_pointer->set_parameters(results.optimal_parameters);
-
-        selection_error = results.optimum_selection_error;
     }
 
     if(display) results.print();
@@ -667,34 +517,6 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 
     row_index++;
 
-    // Reserve training error history
-
-    labels_values(row_index,0) = "Reserve training error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(row_index,1) = "true";
-    }
-    else
-    {
-        labels_values(row_index,1) = "false";
-    }
-
-    row_index++;
-
-    // Reserve selection error history
-
-    labels_values(row_index,0) = "Reserve selection error history";
-
-    if(reserve_training_error_history)
-    {
-        labels_values(row_index,1) = "true";
-    }
-    else
-    {
-        labels_values(row_index,1) = "false";
-    }
-
     return labels_values;
 }
 
@@ -714,17 +536,6 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     buffer.str("");
     buffer << batch_samples_number;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Return minimum selection error neural network
-
-    file_stream.OpenElement("ReturnMinimumSelectionErrorNN");
-
-    buffer.str("");
-    buffer << choose_best_selection;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -758,28 +569,6 @@ void AdaptiveMomentEstimation::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     buffer.str("");
     buffer << maximum_time;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve training error history
-
-    file_stream.OpenElement("ReserveTrainingErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_training_error_history;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Reserve selection error history
-
-    file_stream.OpenElement("ReserveSelectionErrorHistory");
-
-    buffer.str("");
-    buffer << reserve_selection_error_history;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -828,26 +617,6 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
         try
         {
             set_batch_samples_number(new_batch_size);
-        }
-        catch(const logic_error& e)
-        {
-            cerr << e.what() << endl;
-        }
-    }
-
-    // Return minimum selection error neural network
-
-    const tinyxml2::XMLElement* choose_best_selection_element
-        = root_element->FirstChildElement("ReturnMinimumSelectionErrorNN");
-
-    if(choose_best_selection_element)
-    {
-        const string new_choose_best_selection
-            = choose_best_selection_element->GetText();
-
-        try
-        {
-            set_choose_best_selection(new_choose_best_selection != "0");
         }
         catch(const logic_error& e)
         {
@@ -904,44 +673,6 @@ void AdaptiveMomentEstimation::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_maximum_time(new_maximum_time);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve training error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveTrainingErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_training_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_training_error_history(new_reserve_training_error_history != "0");
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Reserve selection error history
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("ReserveSelectionErrorHistory");
-
-        if(element)
-        {
-            const string new_reserve_selection_error_history = element->GetText();
-
-            try
-            {
-                set_reserve_selection_error_history(new_reserve_selection_error_history != "0");
             }
             catch(const logic_error& e)
             {

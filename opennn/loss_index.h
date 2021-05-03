@@ -173,9 +173,9 @@ public:
                          const NeuralNetworkForwardPropagation&,
                          LossIndexBackPropagationLM&) const;
 
-   void calculate_squared_errors(const DataSetBatch&,
-                                 const NeuralNetworkForwardPropagation&,
-                                 LossIndexBackPropagationLM&) const;
+   virtual void calculate_squared_errors(const DataSetBatch&,
+                                         const NeuralNetworkForwardPropagation&,
+                                         LossIndexBackPropagationLM&) const;
 
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
@@ -183,7 +183,7 @@ public:
 
    virtual void calculate_error(const DataSetBatch&,
                                 const NeuralNetworkForwardPropagation&,
-                                LossIndexBackPropagationLM&) const {}
+                                LossIndexBackPropagationLM&) const {} 
 
    void back_propagate(const DataSetBatch&,
                        NeuralNetworkForwardPropagation&,
@@ -241,18 +241,6 @@ public:
    // Checking methods
 
    void check() const;
-
-   // Metrics
-
-   Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&) const;
-
-   type l1_norm(const Tensor<type, 1>& parameters) const;
-   void l1_norm_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void l1_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
-
-   type l2_norm(const Tensor<type, 1>& parameters) const;
-   void l2_norm_gradient(const Tensor<type, 1>&, Tensor<type, 1>&) const;
-   void l2_norm_hessian(const Tensor<type, 1>&, Tensor<type, 2>&) const;
 
 protected:
 
@@ -343,6 +331,11 @@ struct LossIndexBackPropagation
 
     void print() const
     {
+        cout << "Loss index back-propagation" << endl;
+
+        cout << "Errors:" << endl;
+        cout << errors << endl;
+
         cout << "Error:" << endl;
         cout << error << endl;
 
@@ -351,6 +344,8 @@ struct LossIndexBackPropagation
 
         cout << "Gradient:" << endl;
         cout << gradient << endl;
+
+        neural_network.print();
     }
 
     LossIndex* loss_index_pointer = nullptr;
@@ -430,14 +425,32 @@ struct LossIndexBackPropagationLM
         squared_errors.resize(batch_samples_number);
     }
 
-    void sum_hessian_diagonal(const type& value)
+    void print() const
     {
-        const Index parameters_number = hessian.dimension(0);
+        cout << "Loss index back-propagation LM" << endl;
 
-         #pragma omp parallel for
+        cout << "Errors:" << endl;
+        cout << errors << endl;
 
-        for(Index i = 0; i < parameters_number; i++)
-            hessian(i,i) += value;
+        cout << "Squared errors:" << endl;
+        cout << squared_errors << endl;
+
+        cout << "Squared errors Jacobian:" << endl;
+        cout << squared_errors_jacobian << endl;
+
+        cout << "Error:" << endl;
+        cout << error << endl;
+
+        cout << "Loss:" << endl;
+        cout << loss << endl;
+
+        cout << "Gradient:" << endl;
+        cout << gradient << endl;
+
+        cout << "Hessian:" << endl;
+        cout << hessian << endl;
+
+        //neural_network.print();
     }
 
     LossIndex* loss_index_pointer = nullptr;

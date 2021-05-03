@@ -77,7 +77,15 @@ public:
                         const NeuralNetworkForwardPropagation&,
                         LossIndexBackPropagation&) const;
 
+   void calculate_error(const DataSetBatch&,
+                        const NeuralNetworkForwardPropagation&,
+                        LossIndexBackPropagationLM&) const;
+
    type weighted_sum_squared_error(const Tensor<type, 2> & x, const Tensor<type, 2> & y) const;
+
+   void calculate_squared_errors(const DataSetBatch&,
+                                 const NeuralNetworkForwardPropagation&,
+                                 LossIndexBackPropagationLM&) const;
 
    string get_error_type() const;
 
@@ -99,7 +107,6 @@ public:
 
    // Serialization methods
 
-      
    void from_XML(const tinyxml2::XMLDocument&);
 
    void write_XML(tinyxml2::XMLPrinter&) const;   
@@ -108,11 +115,11 @@ private:
 
    /// Weight for the positives for the calculation of the error.
 
-   type positives_weight;
+   type positives_weight = NAN;
 
    /// Weight for the negatives for the calculation of the error.
 
-   type negatives_weight;
+   type negatives_weight = NAN;
 
    /// Coefficient of normalization
 

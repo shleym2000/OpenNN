@@ -45,11 +45,10 @@ void divide_columns(Tensor<type, 2>& matrix, const Tensor<type, 1>& vector)
     {
         for(Index i = 0; i < rows_number; i++)
         {
-           matrix(i,j) /= vector(i);
+           matrix(i,j) /= vector(i) == 0 ? 1 : vector(i);
         }
     }
 }
-
 
 
 bool is_zero(const Tensor<type, 1>& tensor)
@@ -188,6 +187,125 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
     return rank;
 }
+
+
+void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
+{
+    std::replace_if (matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
+}
+
+
+Tensor<type, 2> kronecker_product(const Tensor<type, 1>& vector, const Tensor<type, 1>& other_vector)
+{
+    const Index size = vector.size();
+
+    Tensor<type, 2> direct(size, size);
+
+    #pragma omp parallel for
+
+    for(Index i = 0; i < size; i++)
+    {
+        for(Index j = 0; j < size; j++)
+        {
+            direct(i, j) = vector(i) * other_vector(j);
+        }
+    }
+
+    return direct;
+}
+
+
+type l1_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+{
+    Tensor<type, 0> norm;
+
+    norm.device(*thread_pool_device) = vector.abs().sum();
+
+    return norm(0);
+}
+
+
+void l1_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
+{
+    gradient.device(*thread_pool_device) = vector.sign();
+}
+
+
+void l1_norm_hessian(const ThreadPoolDevice*, const Tensor<type, 1>&, Tensor<type, 2>& hessian)
+{
+    hessian.setZero();
+}
+
+
+/// Returns the l2 norm of a vector.
+
+type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector)
+{
+    Tensor<type, 0> norm;
+
+    norm.device(*thread_pool_device) = vector.square().sum().sqrt();
+
+    return norm(0);
+}
+
+
+void l2_norm_gradient(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 1>& gradient)
+{
+    const type norm = l2_norm(thread_pool_device, vector);
+
+    if(norm < numeric_limits<type>::min())
+    {
+        gradient.setZero();
+
+        return;
+    }
+
+    gradient.device(*thread_pool_device) = vector/norm;
+}
+
+
+void l2_norm_hessian(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& vector, Tensor<type, 2>& hessian)
+{
+    const type norm = l2_norm(thread_pool_device, vector);
+
+    if(norm < numeric_limits<type>::min())
+    {
+        hessian.setZero();
+
+        return;
+    }
+
+    hessian.device(*thread_pool_device) = kronecker_product(vector, vector)/(norm*norm*norm);
+}
+
+
+void sum_diagonal(Tensor<type, 2>& matrix, const type& value)
+{
+    const Index rows_number = matrix.dimension(0);
+
+     #pragma omp parallel for
+    for(Index i = 0; i < rows_number; i++)
+        matrix(i,i) += value;
+}
+
+
+/// Uses Eigen to solve the system of equations by means of the Householder QR decomposition.
+
+Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, const Tensor<type, 1>& b)
+{
+    const Index n = A.dimension(0);
+
+    Tensor<type, 1> x(n);
+
+    const Map<Matrix<type, Dynamic, Dynamic>> A_eigen((type*)A.data(), n, n);
+    const Map<Matrix<type, Dynamic, 1>> b_eigen((type*)b.data(), n, 1);
+    Map<Matrix<type, Dynamic, 1>> x_eigen((type*)x.data(), n);
+
+    x_eigen = A_eigen.colPivHouseholderQr().solve(b_eigen);
+
+    return x;
+}
+
 
 }
 

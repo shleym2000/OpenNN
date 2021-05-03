@@ -148,18 +148,6 @@ void OptimizationAlgorithm::set()
 }
 
 
-/// Sets a new loss index pointer.
-/// It also sets the rest of members to their default values.
-/// @param new_loss_index_pointer Pointer to a loss index object.
-
-void OptimizationAlgorithm::set(LossIndex* new_loss_index_pointer)
-{
-    loss_index_pointer = new_loss_index_pointer;
-
-    set_default();
-}
-
-
 void OptimizationAlgorithm::set_threads_number(const int& new_threads_number)
 {
     if(non_blocking_thread_pool != nullptr) delete this->non_blocking_thread_pool;
@@ -256,7 +244,7 @@ void OptimizationAlgorithm::set_default()
 {
     display = true;
 
-    display_period = 5;
+    display_period = 10;
 
     save_period = UINT_MAX;
 
@@ -450,29 +438,18 @@ string TrainingResults::write_stopping_condition() const
 }
 
 
-/// Resizes all the training history variables.
-/// @param new_size Size of training history variables.
-
-void TrainingResults::resize_training_history(const Index& new_size)
-{
-    training_error_history.resize(new_size);
-}
-
-
-/// Resizes all the selection history variables.
-/// @param new_size Size of selection history variables.
-
-void TrainingResults::resize_selection_history(const Index& new_size)
-{
-    selection_error_history.resize(new_size);
-}
-
-
 /// Resizes the training error history keeping the values.
 /// @param new_size Size of training history variables.
 
 void TrainingResults::resize_training_error_history(const Index& new_size)
 {
+    if(training_error_history.size() == 0)
+    {
+        training_error_history.resize(new_size);
+
+        return;
+    }
+
     const Tensor<type, 1> old_training_error_history = training_error_history;
 
     training_error_history.resize(new_size);
@@ -489,6 +466,13 @@ void TrainingResults::resize_training_error_history(const Index& new_size)
 
 void TrainingResults::resize_selection_error_history(const Index& new_size)
 {
+    if(selection_error_history.size() == 0)
+    {
+        selection_error_history.resize(new_size);
+
+        return;
+    }
+
     const Tensor<type, 1> old_selection_error_history = selection_error_history;
 
     selection_error_history.resize(new_size);
@@ -569,11 +553,11 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(0,1) = buffer.str();
 
     // Final loss
-
+/*
     final_results(1,0) = "Final training error";
 
     buffer.str("");
-    buffer << setprecision(precision) << training_error;
+    buffer << setprecision(precision) << final_training_error;
 
     final_results(1,1) = buffer.str();
 
@@ -582,10 +566,10 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(2,0) = "Final selection error";
 
     buffer.str("");
-    buffer << setprecision(precision) << selection_error;
+    buffer << setprecision(precision) << final_selection_error;
 
     final_results(2,1) = buffer.str();
-
+*/
     // Final gradient norm
 
     final_results(3,0) = "Final gradient norm";
@@ -600,7 +584,7 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
     final_results(4,0) = "Epochs number";
 
     buffer.str("");
-    buffer << epochs_number;
+    buffer << training_error_history.size();
 
     final_results(4,1) = buffer.str();
 

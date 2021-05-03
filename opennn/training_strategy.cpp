@@ -649,23 +649,12 @@ void TrainingStrategy::set_loss_goal(const type&  new_loss_goal)
 }
 
 
-void TrainingStrategy::set_maximum_selection_error_increases(const Index&  maximum_selection_error_increases)
+void TrainingStrategy::set_maximum_selection_failures(const Index&  maximum_selection_failures)
 {
-    gradient_descent.set_maximum_selection_error_increases(maximum_selection_error_increases);
-    conjugate_gradient.set_maximum_selection_error_increases(maximum_selection_error_increases);
-    quasi_Newton_method.set_maximum_selection_error_increases(maximum_selection_error_increases);
-    Levenberg_Marquardt_algorithm.set_maximum_selection_error_increases(maximum_selection_error_increases);
-}
-
-
-void TrainingStrategy::set_reserve_selection_error_history(const bool& reserve_selection_error)
-{
-    gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
-    conjugate_gradient.set_reserve_selection_error_history(reserve_selection_error);
-    stochastic_gradient_descent.set_reserve_selection_error_history(reserve_selection_error);
-    adaptive_moment_estimation.set_reserve_selection_error_history(reserve_selection_error);
-    quasi_Newton_method.set_reserve_selection_error_history(reserve_selection_error);
-    Levenberg_Marquardt_algorithm.set_reserve_selection_error_history(reserve_selection_error);
+    gradient_descent.set_maximum_selection_failures(maximum_selection_failures);
+    conjugate_gradient.set_maximum_selection_failures(maximum_selection_failures);
+    quasi_Newton_method.set_maximum_selection_failures(maximum_selection_failures);
+    Levenberg_Marquardt_algorithm.set_maximum_selection_failures(maximum_selection_failures);
 }
 
 
@@ -750,6 +739,7 @@ TrainingResults TrainingStrategy::perform_training()
         quasi_Newton_method.set_display(display);
 
         return quasi_Newton_method.perform_training();
+
     }
 
     case LEVENBERG_MARQUARDT_ALGORITHM:
@@ -775,7 +765,7 @@ TrainingResults TrainingStrategy::perform_training()
     }
     }
 
-    return TrainingResults();
+    return TrainingResults(0);
 }
 
 
@@ -836,7 +826,7 @@ void TrainingStrategy::fix_forecasting()
 
 /// Prints to the screen the string representation of the training strategy object.
 
-void TrainingStrategy::print_summary() const
+void TrainingStrategy::print() const
 {
     cout << "Training strategy object" << endl;
     cout << "Loss index: " << write_loss_method() << endl;

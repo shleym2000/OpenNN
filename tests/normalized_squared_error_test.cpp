@@ -10,6 +10,7 @@
 
 NormalizedSquaredErrorTest::NormalizedSquaredErrorTest() : UnitTesting()
 {
+    normalized_squared_error.set(&neural_network, &data_set);
 }
 
 
@@ -50,10 +51,6 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 {
    cout << "test_calculate_normalization_coefficient\n";
 
-   NeuralNetwork neural_network;
-   DataSet data_set;
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-
    Index samples_number = 4;
    Index inputs_number = 4;
    Index outputs_number = 4;
@@ -72,10 +69,7 @@ void NormalizedSquaredErrorTest::test_calculate_normalization_coefficient()
 
    targets = data_set.get_target_data();
 
-   Tensor<Index, 1> architecture(2);
-   architecture.setValues({inputs_number, outputs_number});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, outputs_number});
    neural_network.set_parameters_random();
 
    data_set.set(samples_number, inputs_number, outputs_number);
@@ -104,8 +98,6 @@ void NormalizedSquaredErrorTest::test_calculate_error()
 
    DataSetBatch batch;
 
-   NeuralNetwork neural_network;
-
    Index inputs_number;
    Index hidden_neurons;
    Index outputs_number;
@@ -113,8 +105,6 @@ void NormalizedSquaredErrorTest::test_calculate_error()
    Tensor<type, 1> parameters;
 
    NeuralNetworkForwardPropagation forward_propagation;
-
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
    LossIndexBackPropagation back_propagation;
 
@@ -194,10 +184,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
 
-   Tensor<Index, 1> architecture;
-
-   NeuralNetwork neural_network;
-
    Index inputs_number;
    Index outputs_number;
    Index hidden_neurons;
@@ -214,8 +200,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
    NeuralNetworkForwardPropagation forward_propagation;
 
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-
    LossIndexBackPropagation training_back_propagation;
 
    Tensor<type, 1> error_gradient;
@@ -228,7 +212,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
        outputs_number = 1;
 
        data_set.set(samples_number, inputs_number, outputs_number);
-       data_set.initialize_data(0.0);
+       data_set.set_data_constant(0.0);
        data_set.set_training();
 
        batch.set(samples_number, &data_set);
@@ -308,7 +292,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    // Test perceptron and binary probabilistic
@@ -350,7 +334,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -394,7 +378,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -445,7 +429,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -495,7 +479,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -548,7 +532,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -600,7 +584,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -652,7 +636,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(error_gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(error_gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    // Test Perceptron LM
@@ -674,12 +658,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       architecture.resize(3);
-       architecture[0] = inputs_number;
-       architecture[1] = hidden_neurons;
-       architecture[2] = outputs_number;
-
-       neural_network.set(NeuralNetwork::Approximation, architecture);
+       neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons, outputs_number});
 
        neural_network.set_parameters_random();
 
@@ -698,8 +677,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, 1.0e-3), LOG);
-       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
+       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -745,8 +724,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, 1.0e-3), LOG);
-       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
+       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    neural_network.set();
@@ -791,8 +770,8 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        numerical_error_gradient = normalized_squared_error.calculate_gradient_numerical_differentiation();
 
-       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, 1.0e-3), LOG);
-       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, 1.0e-3), LOG);
+       assert_true(are_equal(back_propagation.gradient, loss_index_back_propagation_lm.gradient, static_cast<type>(1.0e-3)), LOG);
+       assert_true(are_equal(loss_index_back_propagation_lm.gradient, numerical_error_gradient, static_cast<type>(1.0e-3)), LOG);
    }
 
    // Test convolutional
@@ -823,7 +802,7 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 
        data_set.set(samples_number, inputs_number, outputs_number);
        data_set.set_input_variables_dimensions(input_variables_dimensions);
-       data_set.initialize_data(0.5);
+       data_set.set_data_constant(0.5);
        data_set.set_training();
 
        Tensor<Index, 1> samples_indices = data_set.get_training_samples_indices();
@@ -868,12 +847,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 void NormalizedSquaredErrorTest::test_calculate_squared_errors()
 {
    cout << "test_calculate_squared_errors\n";
-
-   DataSet data_set;
-   
-   NeuralNetwork neural_network;
-
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
 
    Index samples_number;
    Index inputs_number;
@@ -924,19 +897,11 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 {
    cout << "test_calculate_squared_errors_jacobian\n";
 
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
-
    Tensor<Index, 1> samples_indices;
    Tensor<Index, 1> input_indices;
    Tensor<Index, 1> target_indices;
 
    DataSetBatch batch;
-
-   NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-
-   Tensor<Index, 1> architecture;
 
    Index samples_number;
    Index inputs_number;
@@ -962,12 +927,7 @@ void NormalizedSquaredErrorTest::test_calculate_squared_errors_jacobian()
 
        batch.fill(samples_indices, input_indices, target_indices);
 
-       architecture.resize(3);
-       architecture[0] = inputs_number;
-       architecture[1] = hidden_neurons_number;
-       architecture[2] = outputs_number;
-
-       neural_network.set(NeuralNetwork::Approximation, architecture);
+       neural_network.set(NeuralNetwork::Approximation, {inputs_number, hidden_neurons_number, outputs_number});
 
        neural_network.set_parameters_random();
 

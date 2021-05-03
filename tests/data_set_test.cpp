@@ -61,8 +61,6 @@ void DataSetTest::test_get_samples_number()
 {
    cout << "test_get_samples_number\n";
 
-   DataSet data_set;
-
    assert_true(data_set.get_samples_number() == 0, LOG);
 }
 
@@ -70,8 +68,6 @@ void DataSetTest::test_get_samples_number()
 void DataSetTest::test_get_variables_number() 
 {
    cout << "test_get_variables_number\n";
-
-   DataSet data_set;
 
    assert_true(data_set.get_variables_number() == 0, LOG);
 }
@@ -94,8 +90,6 @@ void DataSetTest::test_get_display()
 {
    cout << "test_get_display\n";
 
-   DataSet data_set;
-
    data_set.set_display(true);
 
    assert_true(data_set.get_display(), LOG);
@@ -112,7 +106,7 @@ void DataSetTest::test_get_data()
 
    DataSet data_set(1,1,1);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
 
    const Tensor<type, 2>& data = data_set.get_data();
@@ -123,7 +117,7 @@ void DataSetTest::test_get_data()
 
    DataSet data_set1(2,3,2);
 
-   data_set1.initialize_data(1.0);
+   data_set1.set_data_constant(1.0);
 
    const Tensor<type, 2>& data1 = data_set1.get_data();
 
@@ -256,13 +250,12 @@ void DataSetTest::test_get_sample()
 {
    cout << "test_get_sample\n";
 
-   DataSet data_set;
    Tensor<type, 1> sample;
 
    // Test
 
    data_set.set(1, 1, 1);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
 
    sample = data_set.get_sample_data(0);
 
@@ -272,7 +265,7 @@ void DataSetTest::test_get_sample()
    // Test several variables
 
    data_set.set(4, 3, 1);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
 
    Tensor<Index, 1> indices_variables(2);
    indices_variables.setValues({1,3});
@@ -286,8 +279,6 @@ void DataSetTest::test_get_sample()
 void DataSetTest::test_set() 
 {
    cout << "test_set\n";
-
-   DataSet data_set;
 
    Tensor<type, 2> data;
 
@@ -357,15 +348,13 @@ void DataSetTest::test_calculate_variables_descriptives()
 {
    cout << "test_calculate_variables_descriptives\n";
 
-   DataSet data_set;
-
    Tensor<Descriptives, 1> descriptives;
 
    // Test
 
    data_set.set(1, 1);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    descriptives = data_set.calculate_variables_descriptives();
 
@@ -380,7 +369,7 @@ void DataSetTest::test_calculate_variables_descriptives()
 
    data_set.set(2, 2, 2);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    descriptives = data_set.calculate_variables_descriptives();
 
@@ -441,7 +430,6 @@ void DataSetTest::test_calculate_training_samples_descriptives()
 {
    cout << "test_calculate_training_samples_descriptives\n";
 
-   DataSet data_set;
    Tensor<Descriptives, 1> training_samples_descriptives;
 
    // Test
@@ -450,7 +438,7 @@ void DataSetTest::test_calculate_training_samples_descriptives()
 
    data_set.set_training();
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.calculate_columns_descriptives_training_samples();
 }
@@ -460,7 +448,6 @@ void DataSetTest::test_calculate_selection_samples_descriptives()
 {
    cout << "test_calculate_selection_samples_descriptives\n";
 
-   DataSet data_set;
    Tensor<Descriptives, 1> selection_samples_descriptives;
 
    // Test
@@ -469,7 +456,7 @@ void DataSetTest::test_calculate_selection_samples_descriptives()
 
    data_set.set_selection();
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    selection_samples_descriptives = data_set.calculate_columns_descriptives_selection_samples();
 }
@@ -479,7 +466,6 @@ void DataSetTest::test_calculate_testing_samples_descriptives()
 {
    cout << "test_calculate_testing_samples_descriptives\n";
 
-   DataSet data_set;
    Tensor<Descriptives, 1> testing_samples_descriptives;
 
    // Test
@@ -489,7 +475,7 @@ void DataSetTest::test_calculate_testing_samples_descriptives()
 
    data_set.set_testing();
    
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
 //   testing_samples_descriptives = data_set.calculate_columns_descriptives_testing_samples();
 }
@@ -530,7 +516,6 @@ void DataSetTest::test_calculate_autocorrelations()
     Tensor<type, 2> new_data(4,3);
     new_data.setValues({{5,2,8}, {7,8,7}, {3,6,4}, {8,1,6}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
     data_set.set_lags_number(4);
     data_set.set_steps_ahead_number(1);
@@ -552,7 +537,6 @@ void DataSetTest::test_calculate_cross_correlations()
     Tensor<type, 2> new_data(6,3);
     new_data.setValues({{5,2,8}, {7,8,7}, {3,6,4}, {8,1,6}, {5,8,6}, {6,3,4}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
     data_set.set_lags_number(6);
     data_set.set_steps_ahead_number(1);
@@ -616,8 +600,6 @@ void DataSetTest::test_filter_data()
 {
    cout << "test_filter_data\n";
 
-   DataSet data_set;
-
    Tensor<type, 1> minimums(2);
    Tensor<type, 1> maximums(2);
 
@@ -626,7 +608,7 @@ void DataSetTest::test_filter_data()
    // Test
 
    data_set.set(2, 1, 1);
-   data_set.initialize_data(1.0);
+   data_set.set_data_constant(1.0);
 
    minimums.setValues({2, 0.0});
    maximums.setValues({2, 0.5});
@@ -637,17 +619,12 @@ void DataSetTest::test_filter_data()
 
    assert_true(data_set.get_sample_use(0) == DataSet::UnusedSample, LOG);
    assert_true(data_set.get_sample_use(1) == DataSet::UnusedSample, LOG);
-
 }
-
-
 
 
 void DataSetTest::test_scale_data()
 {
    cout << "test_scale_data\n";
-
-   DataSet data_set;
 
    Tensor<Descriptives, 1> data_descriptives;
 
@@ -658,7 +635,7 @@ void DataSetTest::test_scale_data()
     // Test
 
    data_set.set(2,2,2);
-//   data_set.initialize_data(0.0);
+//   data_set.set_data_constant(0.0);
 
    data.setValues({{1, 2}, {3, 4}});
    data_set.set_data(data);
@@ -673,8 +650,6 @@ void DataSetTest::test_scale_data()
 
 //   assert_true(scaled_data == data, LOG);
 
-//   DataSet data_set;
-
 //   Tensor<Descriptives, 1> data_descriptives;
 
 //   Tensor<type, 2> data;
@@ -683,7 +658,7 @@ void DataSetTest::test_scale_data()
     // Test
 
    data_set.set(2,2,2);
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.set_display(false);
 
@@ -701,13 +676,11 @@ void DataSetTest::test_unuse_constant_columns()
 {
    cout << "test_unuse_constant_columns\n";
 
-   DataSet data_set;
-
    // Test 
 
    data_set.set(1, 2, 1);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.unuse_constant_columns();
 
@@ -722,11 +695,9 @@ void DataSetTest::test_initialize_data()
 
    Tensor<type, 2> matrix(3,3);
 
-   DataSet data_set;
-
    data_set.set(matrix);
 
-   data_set.initialize_data(2);
+   data_set.set_data_constant(2);
 
    Tensor<type, 2> solution(3, 3);
    solution.setValues({{2,2,2},{2,2,2},{2,2,2}});
@@ -793,14 +764,12 @@ void DataSetTest::test_unuse_most_populated_target()
 {
     cout << "test_unused_most_populated_target\n";
 
-    DataSet data_set;
-
     Tensor<Index, 1> unused_samples_indices;
 
     // Test
 
     data_set.set(5,2,5);
-    data_set.initialize_data(0.0);
+    data_set.set_data_constant(0.0);
 
 //    unused_samples_indices = data_set.unuse_most_populated_target(7);
 
@@ -813,7 +782,7 @@ void DataSetTest::test_unuse_most_populated_target()
     DataSet ds2;
 
     ds2.set(100, 7,5);
-    ds2.initialize_data(1.0);
+    ds2.set_data_constant(1.0);
 
     //unused_samples_indices = ds2.unuse_most_populated_target(99);
 
@@ -886,8 +855,6 @@ void DataSetTest::test_calculate_k_nearest_neighbors()
 {
    cout << "test_k_nearest_neighbors\n";
 
-   DataSet data_set;
-
 //   Tensor kneware = data_set.calculate_k_nearest_neighbors();
 }
 
@@ -914,8 +881,6 @@ void DataSetTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
-   DataSet data_set;
-
    tinyxml2::XMLDocument* document;
 
    // Test
@@ -931,8 +896,6 @@ void DataSetTest::test_to_XML()
 void DataSetTest::test_from_XML() 
 {
    cout << "test_from_XML\n";
-
-//   DataSet data_set;
 
 //   tinyxml2::XMLDocument* document;
    
@@ -970,8 +933,6 @@ void DataSetTest::test_is_constant_numeric()
 {
     cout << "test_read_csv\n";
 
-    DataSet data_set;
-
     data_set.set_data_file_name("../../datasets/constant_variables.csv");
 
     data_set.set_separator(DataSet::Comma);
@@ -991,7 +952,6 @@ void DataSetTest::test_read_csv()
 {
    cout << "test_read_csv\n";
 
-   DataSet data_set;
    ofstream file;
 
    Tensor<type, 2> data;
@@ -1005,7 +965,7 @@ void DataSetTest::test_read_csv()
    data_set.set_separator(',');
    data_set.set_data_file_name(data_file_name);
 
-   data_set.initialize_data(0.0);
+   data_set.set_data_constant(0.0);
 
    data_set.set_display(false);
 
@@ -1349,8 +1309,6 @@ void DataSetTest::test_read_adult_csv()
 {
     cout << "test_read_adult_csv\n";
 
-    DataSet data_set;
-
     data_set.set_missing_values_label("?");
     data_set.set_separator(',');
     data_set.set_data_file_name("../../datasets/adult.data");
@@ -1597,8 +1555,6 @@ void DataSetTest::test_transform_time_series()
     Tensor<type, 2> new_data(9, 2);
     new_data.setValues({{1,10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}, {6, 60}, {7, 70}, {8, 80}, {9, 90}});
 
-    DataSet data_set;
-
     data_set.set_data(new_data);
 
     data_set.set_variable_name(0, "x");
@@ -1634,7 +1590,6 @@ void DataSetTest::test_get_time_series_data()
     Tensor<type, 2> new_data(5,2);
     new_data.setValues({{1,10}, {2,20}, {3,30}, {4,40}, {5,50}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1656,7 +1611,6 @@ void DataSetTest::test_get_time_series_columns()
     Tensor<type, 2> new_data(5,2);
     new_data.setValues({{1,10}, {2,20}, {3,30}, {4,40}, {5,50}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1676,7 +1630,6 @@ void DataSetTest::test_get_time_series_columns_number()
     Tensor<type, 2> new_data(5,2);
     new_data.setValues({{1,10}, {2,20}, {3,30}, {4,40}, {5,50}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1697,7 +1650,6 @@ void DataSetTest::test_get_time_series_column_data()
     DataSet old_data_set;
     old_data_set.set_data(new_data);
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1716,7 +1668,6 @@ void DataSetTest::test_get_time_series_columns_names()
     Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1735,7 +1686,6 @@ void DataSetTest::test_set_time_series_data()
     Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1761,7 +1711,6 @@ void DataSetTest::test_set_time_index()
     Tensor<type, 2> new_data(4,2);
     new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1791,7 +1740,6 @@ void DataSetTest::test_has_time_columns()
     Tensor<type, 2> new_data(4,2);
     new_data.setValues({{1,10},{2,20},{3,30},{4,40}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_column_type(0,DataSet::ColumnType::DateTime);
@@ -1808,7 +1756,6 @@ void DataSetTest::test_save_time_series_data_binary()
     Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1837,7 +1784,6 @@ void DataSetTest::test_set_steps_ahead_number()
     Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1857,7 +1803,6 @@ void DataSetTest::test_set_lags_number()
     Tensor<type, 2> new_data(4,2);
     new_data.setValues({{0,0},{1,10},{2,20},{3,30}});
 
-    DataSet data_set;
     data_set.set_data(new_data);
 
     data_set.set_lags_number(2);
@@ -1878,8 +1823,6 @@ void DataSetTest::test_scrub_missing_values()
     const string data_file_name = "../data/data.dat";
 
     ofstream file;
-
-    DataSet data_set;
 
     data_set.set_data_file_name(data_file_name);
 
@@ -1943,8 +1886,6 @@ void DataSetTest::test_empty()
 
     Tensor<type, 2> matrix(9,9);
 
-    DataSet data_set;
-
     data_set.set(matrix);
 
 //    assert_true(abs(data_set.empty() - 0) < 1.0e-6 , LOG);
@@ -1962,7 +1903,6 @@ void DataSetTest::test_filter_column()
 //    Tensor<Index, 1> solution_1({0, 1, 2});
 //    Tensor<Index, 1> solution_2({});
 
-    DataSet data_set;
     data_set.set_data(matrix);
 
     // Test
@@ -1986,7 +1926,6 @@ void DataSetTest::test_calculate_variables_means()
 
 //    Tensor<type, 2> matrix({{1, 2, 3, 4},{2, 2, 2, 2},{1, 1, 1, 1}});
 
-//    DataSet data_set;
 //    data_set.set_data(matrix);
 //    Tensor<Index, 1> index({0, 1});
 //    Tensor<type, 1> means = data_set.calculate_variables_means(index);
@@ -2006,7 +1945,6 @@ void DataSetTest::test_calculate_training_targets_mean()
     indices.setValues({0, 1, 2});
     Tensor<Index, 1> training_indexes(3);
     training_indexes.setValues({0, 1, 2});
-//    DataSet data_set;
 //    data_set.set_data(matrix);
 
 //    data_set.set_training(training_indexes);
@@ -2048,7 +1986,6 @@ void DataSetTest::test_calculate_selection_targets_mean()
 //    indexes_targets.setValues({2});
 //    Tensor<Index, 1> selection_indexes(2);
 //    selection_indexes.setValues({0, 1});
-//    DataSet data_set;
 //    data_set.set_data(matrix);
 
 //    data_set.set_input();
@@ -2072,7 +2009,6 @@ void DataSetTest::test_calculate_testing_targets_mean()
 
 //    Tensor<type, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
 
-//    DataSet data_set;
 //    data_set.set_data(matrix);
 //    Tensor<Index, 1> target_variables_indices({2});
 //    Tensor<Index, 1> testing_indices({2, 3});
@@ -2094,7 +2030,6 @@ void DataSetTest::test_calculate_input_target_correlations()
 
 //    Tensor<type, 2> matrix({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
 
-//    DataSet data_set;
 //    data_set.set_data(matrix);
 //    Tensor<Index, 1> input_variables_indices({0, 1});
 
@@ -2117,7 +2052,6 @@ void DataSetTest::test_calculate_total_input_correlations()
     Tensor<type, 2> matrix(3, 4);
     matrix.setValues({{1, 1, 1, 1},{2, 2, 2, 2},{3, 3, 3, 3}});
 
-    DataSet data_set;
     data_set.set_data(matrix);
 
     Tensor<Index, 1> input_variables_indices(2);
@@ -2144,7 +2078,6 @@ void DataSetTest::test_unuse_repeated_samples()
     Tensor<type, 2> matrix(3, 3);
     matrix.setValues({{1,2,2},{1,2,2},{1,6,6}});
 
-    DataSet data_set;
     data_set.set_data(matrix);
 
     Tensor<Index, 1> indices(1);
@@ -2183,7 +2116,6 @@ void DataSetTest::test_unuse_uncorrelated_columns()
     Tensor<type, 2> matrix(3, 3);
     matrix.setValues({{1,0,0},{1,0,0},{1,0,1}});
 
-    DataSet data_set;
 }
 
 
@@ -2196,7 +2128,6 @@ void DataSetTest::test_calculate_training_negatives()
                       {-1,-1, 0},
                       { 0, 1, 1}});
 
-    DataSet data_set;
     data_set.set_data(matrix);
 
     Tensor<Index, 1> training_indices(2);
@@ -2233,7 +2164,6 @@ void DataSetTest::test_calculate_selection_negatives()
     Tensor<type, 2> matrix(3, 3);
     matrix.setValues({{1,1,1},{-1,-1,-1},{0,1,1}});
 
-    DataSet data_set;
     data_set.set_data(matrix);
     Tensor<Index, 1> selection_indices(2);
     selection_indices.setValues({0,1});

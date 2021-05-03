@@ -129,95 +129,45 @@ void LearningRateAlgorithmTest::test_set_loss_tolerance()
 }
 
 
-void LearningRateAlgorithmTest::test_calculate_directional_point()
+void LearningRateAlgorithmTest::test_calculate_golden_section_learning_rate()
 {
-   cout << "test_calculate_directional_point\n";
+    cout << "test_calculate_golden_section_learning_rate\n";
+
 }
 
 
-void LearningRateAlgorithmTest::test_calculate_fixed_directional_point()
+void LearningRateAlgorithmTest::test_calculate_Brent_method_learning_rate()
 {
-   cout << "test_calculate_fixed_directional_point\n";
+    cout << "test_calculate_Brent_method_learning_rate\n";
 
-//   Tensor<Index, 1> indices;
-
-//   NeuralNetwork neural_network;
-
-//   
-//   Tensor<type, 1> parameters;
-
-//   SumSquaredError sum_squared_error(&neural_network);
-
-//   type loss;
-//   Tensor<type, 1> gradient;
-
-//   LearningRateAlgorithm tra(&sum_squared_error);
-
-//   Tensor<type, 1> training_direction;
-//   type learning_rate;
-
-//   pair<type,type> directional_point;
-
-   // Test
-
-//   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-
-//   neural_network.set_parameters_constant(1.0);
-
-//   loss = sum_squared_error.calculate_training_loss();
-
-//   gradient = sum_squared_error.calculate_training_loss_gradient();
-
-//   training_direction = -gradient;
-//   learning_rate = 0.001;
-
-//   directional_point = tra.calculate_fixed_directional_point(loss, training_direction, learning_rate);
-
-//   assert_true(directional_point.second < loss, LOG);
-
-//   assert_true(abs(directional_point.second - sum_squared_error.calculate_training_loss(training_direction, learning_rate)) <= numeric_limits<type>::min(), LOG);
-
-//   parameters = neural_network.get_parameters();
-
-//   neural_network.set_parameters(parameters + training_direction*learning_rate);
-
-//   assert_true(abs(directional_point.second - sum_squared_error.calculate_training_loss()) <= numeric_limits<type>::min(), LOG);
-
-   // Test
-
-//   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
-
-//   neural_network.set_parameters_constant(1.0);
-
-//   training_direction.set(2, -1.0);
-//   learning_rate = 1.0;
-
-//   directional_point = tra.calculate_fixed_directional_point(3.14, training_direction, learning_rate);
-
-//   assert_true(directional_point.first == 1.0, LOG);
-//   assert_true(directional_point.second == 0.0, LOG);
 }
-
 
 void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 {
     cout << "test_calculate_bracketing_triplet\n";
 
-//    DataSet data_set(2, 1, 1);
+    DataSet data_set;
+    DataSetBatch batch;
 
-//    data_set.set_data_random();
+    NeuralNetwork neural_network;
+    NeuralNetworkForwardPropagation forward_propagation;
+
+    SumSquaredError sum_squared_error(&neural_network, &data_set);
+    LossIndexBackPropagation back_propagation;
+
+    LearningRateAlgorithm learning_rate_algorithm(&sum_squared_error);
+
+    LearningRateAlgorithm::Triplet triplet;
+
+    OptimizationAlgorithmData optimization_data;
+
+    // Test
+
+//    triplet = learning_rate_algorithm.calculate_bracketing_triplet(batch, forward_propagation, back_propagation, optimization_data);
 
 //    Tensor<Index, 1> samples_indices(0, 1, data_set.get_samples_number()-1);
 
-//    
-
-//    architecture.setValues({1,1});
-
-//    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//    NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
 //    SumSquaredError sum_squared_error(&neural_network, &data_set);
 
@@ -271,13 +221,9 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 //    data_set.set(1, 1, 1);
 //    data_set.set_data_random();
 
-//    samples_indices.set(0, 1, data_set.get_samples_number()-1);
+//    samples_indices.set(0, 1, data_set.get_samples_number()-1);  
 
-//    
-
-//    architecture.setValues({1,1});
-
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::Approximation, {1,1});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -298,9 +244,7 @@ void LearningRateAlgorithmTest::test_calculate_bracketing_triplet()
 
 //    samples_indices.set(0, 1, data_set.get_samples_number()-1);
 
-//    architecture.setValues({1,1});
-
-//    neural_network.set(NeuralNetwork::Approximation, architecture);
+//    neural_network.set(NeuralNetwork::Approximation, {1,1});
 //    neural_network.set_parameters_random();
 
 //    loss = sum_squared_error.calculate_training_loss();
@@ -324,11 +268,7 @@ void LearningRateAlgorithmTest::test_calculate_golden_section_directional_point(
 //   DataSet data_set(1, 1, 1);
 //   Tensor<Index, 1> indices(1,1,data_set.get_samples_number()-1);
 
-//   
-
-//   architecture.setValues({1,1});
-
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
 //   SumSquaredError sum_squared_error(&neural_network);
 
@@ -361,13 +301,10 @@ void LearningRateAlgorithmTest::test_calculate_Brent_method_directional_point()
    Tensor<Index, 1> indices(3);
    indices.setValues({1,1,data_set.get_samples_number()-1});
 
-   Tensor<Index, 1> architecture(2);
-
-   architecture.setValues({1,1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
    neural_network.set_parameters_constant(1.0);
+
 //   type loss = sum_squared_error.calculate_training_loss();
 //   Tensor<type, 1> gradient = sum_squared_error.calculate_training_loss_gradient();
 
@@ -446,10 +383,10 @@ void LearningRateAlgorithmTest::run_test_case()
    // Training methods
 
    test_calculate_bracketing_triplet();
-   test_calculate_fixed_directional_point();
+//   test_calculate_fixed_directional_point();
    test_calculate_golden_section_directional_point();
    test_calculate_Brent_method_directional_point();
-   test_calculate_directional_point();
+//   test_calculate_directional_point();
 
    // Serialization methods
 

@@ -10,6 +10,7 @@
 
 CrossEntropyErrorTest::CrossEntropyErrorTest() : UnitTesting() 
 {
+    cross_entropy_error.set(&neural_network, &data_set);
 }
 
 
@@ -22,7 +23,6 @@ void CrossEntropyErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   DataSet data_set;
    Tensor<type, 2> data;
    Tensor<Index,1> training_samples_indices;
    Tensor<Index,1> inputs_indices;
@@ -46,10 +46,10 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    // Test Trivial
 
-    //Dataset
+   // Dataset
 
    data_set.set(1, 2, 1);
-   data_set.initialize_data(0);
+   data_set.set_data_constant(0);
    data_set.set_training();
 
    batch.set(1, &data_set);
@@ -80,7 +80,7 @@ void CrossEntropyErrorTest::test_calculate_error()
 
    // Test 1 binary
 
-   data_set.initialize_data(1);
+   data_set.set_data_constant(1);
    training_samples_indices = data_set.get_training_samples_indices();
    inputs_indices = data_set.get_input_variables_indices();
    targets_indices = data_set.get_target_variables_indices();
@@ -103,7 +103,7 @@ void CrossEntropyErrorTest::test_calculate_error()
    // Test 2 multiple
 
    data_set.set(1, 2, 2);
-   data_set.initialize_data(0);
+   data_set.set_data_constant(0);
    data_set.set_training();
 
    training_samples_indices = data_set.get_training_samples_indices();
@@ -135,9 +135,6 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
-   NeuralNetwork neural_network;
-
-   DataSet data_set;
    Tensor<type, 2> data;
 
    DataSetBatch batch;
@@ -193,10 +190,7 @@ void CrossEntropyErrorTest::test_calculate_error_gradient()
 
    batch.fill(training_samples_indices, inputs_indices, targets_indices);
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({inputs_number, hidden_neurons, outputs_number});
-
-   neural_network.set(NeuralNetwork::Classification, architecture);
+   neural_network.set(NeuralNetwork::Classification, {inputs_number, hidden_neurons, outputs_number});
 
    neural_network.set_parameters_random();
 

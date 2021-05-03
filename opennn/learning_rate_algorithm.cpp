@@ -164,8 +164,8 @@ void LearningRateAlgorithm::set_default()
 
     // TRAINING PARAMETERS
 
-    learning_rate_tolerance = static_cast<type>(1.0e-3);
-    loss_tolerance = static_cast<type>(1.0e-3);
+    learning_rate_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
+    loss_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
 }
 
 
@@ -274,6 +274,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     LossIndexBackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
+
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
 #ifdef OPENNN_DEBUG
@@ -315,9 +316,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
     ostringstream buffer;
 
-    const type regularization_weight = loss_index_pointer->get_regularization_weight();
-
-
     // Bracket minimum
 
     Triplet triplet = calculate_bracketing_triplet(batch,
@@ -331,19 +329,21 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     }
     catch(const logic_error& error)
     {
-        //cout << "Triplet bracketing" << endl;
+        cout << "Triplet bracketing" << endl;
 
-        //cout << error.what() << endl;
+        cout << error.what() << endl;
 
         return triplet.minimum();
     }
+
+    const type regularization_weight = loss_index_pointer->get_regularization_weight();
 
     pair<type, type> V;
 
     // Reduce the interval
 
-    while(fabs(triplet.A.first-triplet.B.first) > learning_rate_tolerance
-      ||  fabs(triplet.A.second-triplet.B.second) > loss_tolerance)
+    while(fabs(triplet.A.first-triplet.B.first) >= learning_rate_tolerance
+       || fabs(triplet.A.second-triplet.B.second) >= loss_tolerance)
     {
         try
         {
@@ -356,7 +356,7 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
         }
         catch(const logic_error& error)
         {
-            //cout << error.what() << endl;
+            cout << error.what() << endl;
 
             return triplet.minimum();
         }
@@ -442,7 +442,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     LossIndexBackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
-    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+    Triplet triplet;
 
 #ifdef OPENNN_DEBUG
 
@@ -456,6 +456,11 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         throw logic_error(buffer.str());
     }
+#endif
+
+    const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
+
+#ifdef OPENNN_DEBUG
 
     if(neural_network_pointer == nullptr)
     {
@@ -499,8 +504,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     const type regularization_weight = loss_index_pointer->get_regularization_weight();
 
-    Triplet triplet;
-
     // Left point
 
     triplet.A.first = 0;
@@ -518,6 +521,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
+
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -556,7 +560,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
             triplet.B.first *= golden_ratio;
 
-            optimization_data.potential_parameters.device(*thread_pool_device) = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
+            optimization_data.potential_parameters.device(*thread_pool_device)
+                    = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
             neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -572,7 +577,8 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
     {
         triplet.U.first = triplet.A.first + (triplet.B.first - triplet.A.first)*static_cast<type>(0.382);
 
-        optimization_data.potential_parameters.device(*thread_pool_device) = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
+        optimization_data.potential_parameters.device(*thread_pool_device)
+                = back_propagation.parameters + optimization_data.training_direction*triplet.U.first;
 
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
@@ -613,6 +619,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
     return triplet;
 }
+
 
 /// Calculates the golden section point within a minimum interval defined by three points.
 /// @param triplet Triplet containing a minimum.

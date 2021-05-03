@@ -81,7 +81,6 @@ public:
    // Set methods
 
    void set();
-   void set(LossIndex*);
 
    virtual void set_default();
 
@@ -95,8 +94,6 @@ public:
 
    void set_save_period(const Index&);
    void set_neural_network_file_name(const string&);
-
-   virtual void set_reserve_selection_error_history(const bool&) = 0;
 
    // Training methods
 
@@ -143,7 +140,7 @@ protected:
 
    /// Number of iterations between the training showing progress.
 
-   Index display_period = 5;
+   Index display_period = 10;
 
    /// Number of iterations between the training saving progress.
 
@@ -160,13 +157,6 @@ protected:
    const Eigen::array<IndexPair<Index>, 1> AT_B = {IndexPair<Index>(0, 0)};
    const Eigen::array<IndexPair<Index>, 1> product_vector_matrix = {IndexPair<Index>(0, 1)}; // Normal product vector times matrix
    const Eigen::array<IndexPair<Index>, 1> A_B = {IndexPair<Index>(1, 0)};
-
-   void normalized(Tensor<type, 1>& tensor) const
-   {      
-       const type norm = l2_norm(tensor);
-
-       tensor.device(*thread_pool_device) = tensor/norm;
-   }
 
    type l2_norm(const Tensor<type, 1>& tensor) const
    {
@@ -217,7 +207,18 @@ struct OptimizationAlgorithmData
 
 struct TrainingResults
 {
-    explicit TrainingResults() {}
+    explicit TrainingResults()
+    {
+    }
+
+    explicit TrainingResults(const Index& epochs_number)
+    {
+        training_error_history.resize(1+epochs_number);
+        training_error_history.setConstant(-1.0);
+
+        selection_error_history.resize(1+epochs_number);
+        selection_error_history.setConstant(-1.0);
+    }
 
     virtual ~TrainingResults() {}
 
@@ -231,25 +232,26 @@ struct TrainingResults
 
     void save(const string&) const;
 
-    void print()
+    void print(const string& message = string())
     {             
-        cout << endl;
+        cout << message << endl;
+
+        const Index epochs_number = training_error_history.size();
+
         cout << "Training results" << endl;
-        cout << "Optimum training error: " << optimum_training_error << endl;
-        cout << "Optimum selection error: " << optimum_selection_error << endl;
+        cout << "Epochs number: " << epochs_number-1 << endl;
+
+        cout << "Training error: " << training_error_history(epochs_number-1) << endl;
+
+//        if(final_selection_error != -1.0)
+//            cout << "Final selection error: " << final_selection_error << endl;
+
+        cout << "Stopping condition: " << write_stopping_condition() << endl;
     }
 
     /// Writes final results of the training.
 
     Tensor<string, 2> write_final_results(const Index& = 3) const;
-
-    /// Resizes training history variables.
-
-    void resize_training_history(const Index&);
-
-    /// Resizes selection history variables.
-
-    void resize_selection_history(const Index&);
 
     /// Resizes the training error history keeping the values.
 
@@ -269,23 +271,9 @@ struct TrainingResults
 
     Tensor<type, 1> selection_error_history;
 
-    // Final values
-
-    /// Final neural network parameters vector.
-
-    Tensor<type, 1> parameters;
-
     /// Final neural network parameters norm.
 
     type final_parameters_norm;
-
-    /// Final loss function evaluation.
-
-    type training_error;
-
-    /// Final selection error.
-
-    type selection_error;
 
     /// Final gradient norm.
 
@@ -295,18 +283,9 @@ struct TrainingResults
 
     string elapsed_time;
 
-    /// Maximum number of training iterations.
-
-    Index epochs_number;
-
     /// Stopping criterion.
 
     string stopping_criterion;
-
-    Tensor<type, 1> optimal_parameters;
-
-    type optimum_selection_error = numeric_limits<type>::max();
-    type optimum_training_error = numeric_limits<type>::max();
 };
 
 }

@@ -11,6 +11,9 @@
 
 QuasiNewtonMethodTest::QuasiNewtonMethodTest() : UnitTesting() 
 {
+    sum_squared_error.set(&neural_network, &data_set);
+
+    quasi_newton_method.set_loss_index_pointer(&sum_squared_error);
 }
 
 
@@ -47,8 +50,6 @@ void QuasiNewtonMethodTest::test_get_inverse_hessian_approximation_method()
 {
    cout << "test_get_inverse_hessian_approximation_method\n";
 
-   QuasiNewtonMethod quasi_newton_method;
-
    quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
    assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::DFP, LOG);
 
@@ -67,29 +68,16 @@ void QuasiNewtonMethodTest::test_set_inverse_hessian_approximation_method()
 {
    cout << "test_set_training_direction_method\n";
 
-   QuasiNewtonMethod quasi_newton_method;
-
    quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::BFGS);
    assert_true(quasi_newton_method.get_inverse_hessian_approximation_method() == QuasiNewtonMethod::BFGS, LOG);
 }
-
-
 
 
 void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
 {
    cout << "test_calculate_DFP_inverse_hessian_approximation\n";
 
-   DataSet data_set;
-
    Tensor<type, 1> architecture;
-
-   NeuralNetwork neural_network;
-
-   SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
-
 
    // Test
 
@@ -97,9 +85,7 @@ void QuasiNewtonMethodTest::test_calculate_DFP_inverse_hessian_approximation()
    data_set.set_data_random();
 
    architecture.resize(2);
-   architecture.setValues({1,1});
-
-//   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,1});
 
    // Test
 
@@ -178,17 +164,9 @@ void QuasiNewtonMethodTest::test_calculate_BFGS_inverse_hessian_approximation()
 {
    cout << "test_calculate_BFGS_inverse_hessian_approximation\n";
 
-//   DataSet data_set;
-
-//   architecture.setValues({1,1});
-
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
-
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
+//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1,1});
 
 //   sum_squared_error.set_regularization_method(LossIndex::L2);
-
-//   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
 //   neural_network.set_parameters_constant(1.0);
 
@@ -215,13 +193,9 @@ void QuasiNewtonMethodTest::test_calculate_inverse_hessian_approximation()
 {
    cout << "test_calculate_inverse_hessian_approximation\n";
 
-//   architecture.setValues({1,1});
-
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {1,1});
 //   DataSet data_set(2, 1, 1);
 //   data_set.set_data_random();
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-//   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
 
 //   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
 
@@ -289,11 +263,9 @@ void QuasiNewtonMethodTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-//   DataSet data_set(2, 1, 1);
-//   data_set.set_data_random();
-//   NeuralNetwork neural_network(NeuralNetwork::Approximation, {1, 1, 1});
-//   SumSquaredError sum_squared_error(&neural_network, &data_set);
-//   QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
+   data_set.set(2, 1, 1);
+   data_set.set_data_random();
+   neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
 //   quasi_newton_method.set_inverse_hessian_approximation_method(QuasiNewtonMethod::DFP);
 
 //   quasi_newton_method.set_reserve_all_training_history(true);
@@ -387,8 +359,6 @@ void QuasiNewtonMethodTest::test_to_XML()    // @todo
 {
    cout << "test_to_XML\n";
 
-//   QuasiNewtonMethod quasi_newton_method;
-
 //   tinyxml2::XMLDocument* document = quasi_newton_method.to_XML();
 //   assert_true(document != nullptr, LOG);
 
@@ -396,17 +366,9 @@ void QuasiNewtonMethodTest::test_to_XML()    // @todo
 }
 
 
-void QuasiNewtonMethodTest::test_resize_training_history()
+void QuasiNewtonMethodTest::test_resize_training_error_history()
 {
-    cout << "test_resize_training_history\n";
-
-//    DataSet data_set;
-
-//    NeuralNetwork neural_network;
-
-//    SumSquaredError sum_squared_error(&neural_network, &data_set);
-
-//    QuasiNewtonMethod quasi_newton_method(&sum_squared_error);
+    cout << "test_resize_training_error_history\n";
 
 //    TrainingResults results;
 
@@ -414,7 +376,7 @@ void QuasiNewtonMethodTest::test_resize_training_history()
 
     // Test
 
-//    results.resize_training_history(2);
+//    results.resize_training_error_history(2);
 
 //    assert_true(results.elapsed_time_history.size() == 2, LOG);
 
@@ -425,21 +387,10 @@ void QuasiNewtonMethodTest::test_load()
 {
    cout << "test_load\n";
 
-//   QuasiNewtonMethod quasi_newton_method;
-
 //   tinyxml2::XMLDocument* document = quasi_newton_method.to_XML();
 //   quasi_newton_method.from_XML(*document);
 
 //   delete document;
-}
-
-
-void QuasiNewtonMethodTest::test_set_reserve_all_training_history()
-{
-   cout << "test_set_reserve_all_training_history\n";
-
-//   QuasiNewtonMethod quasi_newton_method;
-//   quasi_newton_method.set_reserve_all_training_history(true);
 }
 
 
@@ -473,8 +424,7 @@ void QuasiNewtonMethodTest::run_test_case()
 
    // Training history methods
 
-   test_resize_training_history();
-   test_set_reserve_all_training_history();
+   test_resize_training_error_history();
 
    // Serialization methods
 

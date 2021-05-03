@@ -31,11 +31,7 @@ void NeuralNetworkTest::test_constructor()
 
   // Test 1 / Model type constructor
 
-  Tensor<Index, 1> architecture(3);
-
-  architecture.setValues({1,4,2});
-
-  NeuralNetwork neural_network_1_1(NeuralNetwork::Approximation, architecture);
+  NeuralNetwork neural_network_1_1(NeuralNetwork::Approximation, {1, 4, 2});
 
   assert_true(neural_network_1_1.get_layers_number() == 5, LOG);
   assert_true(neural_network_1_1.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
@@ -44,14 +40,14 @@ void NeuralNetworkTest::test_constructor()
   assert_true(neural_network_1_1.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
   assert_true(neural_network_1_1.get_layer_pointer(4)->get_type() == Layer::Bounding, LOG);
 
-  NeuralNetwork neural_network_1_2(NeuralNetwork::Classification, architecture);
+  NeuralNetwork neural_network_1_2(NeuralNetwork::Classification, {1, 4, 2});
 
   assert_true(neural_network_1_2.get_layers_number() == 3, LOG);
   assert_true(neural_network_1_2.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
   assert_true(neural_network_1_2.get_layer_pointer(1)->get_type() == Layer::Perceptron, LOG);
   assert_true(neural_network_1_2.get_layer_pointer(2)->get_type() == Layer::Probabilistic, LOG);
 
-  NeuralNetwork neural_network_1_3(NeuralNetwork::Forecasting, architecture);
+  NeuralNetwork neural_network_1_3(NeuralNetwork::Forecasting, {1, 4, 2});
 
   assert_true(neural_network_1_3.get_layers_number() == 4, LOG);
   assert_true(neural_network_1_3.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
@@ -59,7 +55,7 @@ void NeuralNetworkTest::test_constructor()
   assert_true(neural_network_1_3.get_layer_pointer(2)->get_type() == Layer::Perceptron, LOG);
   assert_true(neural_network_1_3.get_layer_pointer(3)->get_type() == Layer::Unscaling, LOG);
 
-  NeuralNetwork neural_network_1_4(NeuralNetwork::ImageApproximation, architecture);
+  NeuralNetwork neural_network_1_4(NeuralNetwork::ImageApproximation, {1, 4, 2});
 
   assert_true(neural_network_1_4.get_layers_number() == 1, LOG);
   assert_true(neural_network_1_4.get_layer_pointer(0)->get_type() == Layer::Scaling, LOG);
@@ -154,25 +150,25 @@ void NeuralNetworkTest::test_add_layer()
 
     // LSTM
 
-   NeuralNetwork neural_network_;
+   neural_network.set();
 
    LongShortTermMemoryLayer* long_short_term_memory_layer = new LongShortTermMemoryLayer;
-   neural_network_.add_layer(long_short_term_memory_layer);
-   assert_true(neural_network_.get_layers_number() == 1, LOG);
-   assert_true(neural_network_.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
+   neural_network.add_layer(long_short_term_memory_layer);
+   assert_true(neural_network.get_layers_number() == 1, LOG);
+   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::LongShortTermMemory, LOG);
 
     // RECURRENT
 
-   NeuralNetwork neural_network__;
+   neural_network.set();
 
    RecurrentLayer* recurrent_layer = new RecurrentLayer;
-   neural_network__.add_layer(recurrent_layer);
-   assert_true(neural_network__.get_layers_number() == 1, LOG);
-   assert_true(neural_network__.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
+   neural_network.add_layer(recurrent_layer);
+   assert_true(neural_network.get_layers_number() == 1, LOG);
+   assert_true(neural_network.get_layer_pointer(0)->get_type() == Layer::Recurrent, LOG);
 
    // SCALING
 
-   NeuralNetwork neural_network;
+   neural_network.set();
 
    ScalingLayer* scaling_layer = new ScalingLayer(1);
    neural_network.add_layer(scaling_layer);
@@ -346,8 +342,6 @@ void NeuralNetworkTest::test_get_inputs()
 {
    cout << "test_get_inputs\n";
 
-   NeuralNetwork neural_network;
-
    Tensor<string, 1> inputs_names(2);
    inputs_names.setValues({"in_1","in_2"});
 
@@ -363,8 +357,6 @@ void NeuralNetworkTest::test_get_inputs()
 void NeuralNetworkTest::test_get_outputs()
 {
    cout << "test_get_outputs\n";
-
-   NeuralNetwork neural_network;
 
    Tensor<string, 1> outputs_names(2);
    outputs_names.setValues({"out_1","out_2"});
@@ -478,16 +470,13 @@ void NeuralNetworkTest::test_get_layer_pointer()
    assert_true(neural_network.get_layer_pointer(7)->get_type() == Layer::Unscaling, LOG);
    assert_true(neural_network.get_layer_pointer(8)->get_type() == Layer::Bounding, LOG);
 
-   assert_true(neural_network.get_output_layer_pointer()->get_type() == Layer::Bounding, LOG);
+//   assert_true(neural_network.get_output_layer_pointer()->get_type() == Layer::Bounding, LOG);
 }
 
 
 void NeuralNetworkTest::test_set()
 {
    cout << "test_set\n";
-
-   NeuralNetwork neural_network;
-   
 
    // Test 0
 
@@ -561,8 +550,6 @@ void NeuralNetworkTest::test_set_names()
 {
    cout << "test_set_names\n";
 
-   NeuralNetwork neural_network;
-
    // Test 0
 
    Tensor<string, 1> inputs_names;
@@ -595,21 +582,13 @@ void NeuralNetworkTest::test_set_inputs_number()
 {
    cout << "test_set_inputs_number\n";
 
-   NeuralNetwork neural_network;
-
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1,0,1});
-
    Index inputs_number = 0;
 
    Tensor<bool, 1> inputs;
 
    // Test
 
-   architecture.resize(3);
-   architecture.setValues({1,0,1});
-
-   neural_network.set(NeuralNetwork::Classification, architecture);
+   neural_network.set(NeuralNetwork::Classification, {1,0,1});
 
    inputs_number = 0;
 
@@ -656,8 +635,6 @@ void NeuralNetworkTest::test_set_default()
 {
    cout << "test_set_default\n";
 
-   NeuralNetwork neural_network;
-
    neural_network.set_default();
 
    assert_true(neural_network.get_display(), LOG);
@@ -668,10 +645,7 @@ void NeuralNetworkTest::test_set_pointers()
 {
    cout << "test_set_pointers\n";
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1,0,1});
-
-   NeuralNetwork neural_network(NeuralNetwork::Classification, architecture);
+   NeuralNetwork neural_network(NeuralNetwork::Classification, {1,0,1});
 
    // Test 1 // Device
 
@@ -697,8 +671,6 @@ void NeuralNetworkTest::test_set_pointers()
 void NeuralNetworkTest::test_set_display()
 {
    cout << "test_set_display\n";
-
-   NeuralNetwork neural_network;
 
    neural_network.set_display(true);
    assert_true(neural_network.get_display(), LOG);
@@ -793,10 +765,7 @@ void NeuralNetworkTest::test_get_architecture()
 
    // Test 1
 
-   Tensor<Index, 1> architecture(3);
-   architecture.setValues({1,4,2});
-
-   NeuralNetwork neural_network_1_1(NeuralNetwork::Approximation, architecture);
+   NeuralNetwork neural_network_1_1(NeuralNetwork::Approximation, {1,4,2});
 
    assert_true(neural_network_1_1.get_architecture().rank() == 1, LOG);
    assert_true(neural_network_1_1.get_architecture().dimension(0) == 5, LOG);
@@ -812,7 +781,6 @@ void NeuralNetworkTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
 
-   NeuralNetwork neural_network;
    Tensor<type, 1> parameters;
 
    // Test 0
@@ -825,11 +793,7 @@ void NeuralNetworkTest::test_get_parameters()
 
    // Test 1
 
-   Tensor<Index, 1> architecture(3);
-
-   architecture.setValues({1,2,1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,2,1});
 
    PerceptronLayer* pl00 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl00->set_biases_constant(0);
@@ -848,11 +812,7 @@ void NeuralNetworkTest::test_get_parameters()
 
    // Test 2
 
-   architecture.resize(4);
-
-   architecture.setConstant(1);
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,1,1,1});
 
    PerceptronLayer* pl10 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl10->set_biases_constant(0);
@@ -879,11 +839,7 @@ void NeuralNetworkTest::test_get_parameters()
 
    // Test 3
 
-   architecture.resize(5);
-
-   architecture.setConstant(1);
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,1,1,1,1});
 
    PerceptronLayer* pl20 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
    pl20->set_biases_constant(0);
@@ -921,7 +877,6 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 {
     cout << "test_get_trainable_layers_parameters\n";
 
-    NeuralNetwork neural_network;
     Tensor<type, 1> parameters;
     Tensor<Tensor<type, 1>, 1> trainable_layers_parameters;
 
@@ -936,11 +891,7 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 
     // Test 1
 
-    Tensor<Index, 1> architecture(3);
-
-    architecture.setValues({1,2,1});
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {1,2,1});
     neural_network.set_parameters_constant(0.0);
     parameters = neural_network.get_parameters();
     trainable_layers_parameters = neural_network.get_trainable_layers_parameters(parameters);
@@ -961,10 +912,7 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 
     // Test 2
 
-    architecture.resize(4);
-    architecture.setConstant(1);
-
-    neural_network.set(NeuralNetwork::Approximation, architecture);
+    neural_network.set(NeuralNetwork::Approximation, {1,1,1,1});
 
     PerceptronLayer* pl0 = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     pl0->set_biases_constant(0);
@@ -1003,9 +951,6 @@ void NeuralNetworkTest::test_get_trainable_layers_parameters()
 void NeuralNetworkTest::test_set_parameters()
 {
    cout << "test_set_parameters\n";
-
-   
-   NeuralNetwork neural_network;
 
    Index parameters_number;
    Tensor<type, 1> parameters;
@@ -1050,14 +995,9 @@ void NeuralNetworkTest::test_set_parameters_constant()
 {
    cout << "test_set_parameters_constant\n";
 
-   NeuralNetwork neural_network;
    Tensor<type, 1> parameters;
 
-   Tensor<Index, 1> architecture(3);
-
-   architecture.setValues({1,2,1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,2,1});
 
    // Test 0
 
@@ -1086,14 +1026,12 @@ void NeuralNetworkTest::test_set_parameters_random()
 {
    cout << "test_set_parameters_random\n";
 
-   NeuralNetwork neural_network;
    Tensor<type, 1> parameters;
 
    Tensor<Index, 1> architecture(3);
 
-   architecture.setValues({1,2,1});
 
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,2,1});
 
    neural_network.set_parameters_random();
    parameters = neural_network.get_parameters();
@@ -1107,7 +1045,6 @@ void NeuralNetworkTest::test_calculate_parameters_norm()
 {
    cout << "test_calculate_parameters_norm\n";
 
-   NeuralNetwork neural_network;
    type parameters_norm = 0;
    type parameters_norm_1 = 0;
    
@@ -1150,14 +1087,11 @@ void NeuralNetworkTest::test_perturbate_parameters()
    // Test 1
 
    Tensor<Index, 1> architecture(3);
-   NeuralNetwork neural_network;
 
    Index parameters_number;
    Tensor<type, 1> parameters;
 
-   architecture.setValues({1,1,1});
-
-   neural_network.set(NeuralNetwork::Approximation, architecture);
+   neural_network.set(NeuralNetwork::Approximation, {1,1,1});
 
    parameters_number = neural_network.get_parameters_number();
    parameters.resize(parameters_number);
@@ -1195,8 +1129,6 @@ void NeuralNetworkTest::test_perturbate_parameters()
 void NeuralNetworkTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
-
-   NeuralNetwork neural_network;
 
    Index inputs_number;
    Index outputs_number;
@@ -1397,8 +1329,6 @@ void NeuralNetworkTest::test_calculate_directional_inputs()
 {
    cout << "test_calculate_directional_inputs\n";
 
-   NeuralNetwork neural_network; 
-
    Tensor<type, 2> inputs;
    Tensor<type, 2> outputs;
    Tensor<type, 2> trainable_outputs;
@@ -1457,8 +1387,6 @@ void NeuralNetworkTest::test_save()
 
    string file_name = "../data/neural_network.xml";
 
-   NeuralNetwork neural_network;   
-
    // Empty neural network
 
    neural_network.set();
@@ -1483,7 +1411,6 @@ void NeuralNetworkTest::test_load()
 
    // Empty neural network
 
-   NeuralNetwork neural_network;
    neural_network.save(file_name);
    neural_network.load(file_name);
 }
@@ -1494,8 +1421,6 @@ void NeuralNetworkTest::test_print()
    cout << "test_print\n";
 
    // Empty neural network
-
-   NeuralNetwork neural_network;
 
    //neural_network.print();
 
@@ -1512,8 +1437,6 @@ void NeuralNetworkTest::test_write_expression()
    cout << "test_write_expression\n";
 
    // Test 0
-
-   NeuralNetwork neural_network;
 
    //neural_network.print();
 
@@ -1563,8 +1486,6 @@ void NeuralNetworkTest::test_forward_propagate()
 
     Tensor<Index, 1> architecture(2);
 
-    architecture.setValues({inputs_number,targets_number});
-
     Tensor<type, 2> data(5, 3);
 
     data.setValues({{1,1,1},{2,2,2},{3,3,3},{0,0,0},{0,0,0}});
@@ -1585,7 +1506,7 @@ void NeuralNetworkTest::test_forward_propagate()
 
     //NeuralNetwork
 
-    NeuralNetwork neural_network(NeuralNetwork::Approximation, architecture);
+    NeuralNetwork neural_network(NeuralNetwork::Approximation, {inputs_number,targets_number});
 
     PerceptronLayer* perceptron_layer = static_cast<PerceptronLayer*>(neural_network.get_layer_pointer(1));
     const Index neurons_number = perceptron_layer->get_neurons_number();
