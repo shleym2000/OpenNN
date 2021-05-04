@@ -164,8 +164,8 @@ void LearningRateAlgorithm::set_default()
 
     // TRAINING PARAMETERS
 
-    learning_rate_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
-    loss_tolerance = numeric_limits<type>::min();//static_cast<type>(1.0e-9);
+    learning_rate_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
+    loss_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
 }
 
 
@@ -329,9 +329,11 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     }
     catch(const logic_error& error)
     {
-        cout << "Triplet bracketing" << endl;
+//        cout << "Triplet bracketing" << endl;
 
-        cout << error.what() << endl;
+//        cout << error.what() << endl;
+
+//        cout << "!";
 
         return triplet.minimum();
     }
@@ -342,8 +344,8 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
     // Reduce the interval
 
-    while(fabs(triplet.A.first-triplet.B.first) >= learning_rate_tolerance
-       || fabs(triplet.A.second-triplet.B.second) >= loss_tolerance)
+    while(fabs(triplet.A.first - triplet.B.first) > learning_rate_tolerance
+       || fabs(triplet.A.second - triplet.B.second) > loss_tolerance)
     {
         try
         {
