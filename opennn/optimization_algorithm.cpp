@@ -486,7 +486,7 @@ void TrainingResults::resize_selection_error_history(const Index& new_size)
 
 /// Writes the time from seconds in format HH:mm:ss.
 
-const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
+const string OptimizationAlgorithm::write_time(const type& time) const
 {
 
 #ifdef OPENNN_DEBUG
@@ -496,7 +496,7 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
         throw logic_error(buffer.str());
@@ -507,7 +507,7 @@ const string OptimizationAlgorithm::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
         throw logic_error(buffer.str());
@@ -541,67 +541,63 @@ Tensor<string, 2> TrainingResults::write_final_results(const Index& precision) c
 {
     ostringstream buffer;
 
-    Tensor<string, 2> final_results(7, 2);
+    const Index size = training_error_history.size();        
 
-    // Final parameters norm
+    Tensor<string, 2> final_results(6, 2);
 
-    final_results(0,0) = "Final parameters norm";
+    // Final training error
+
+    final_results(0,0) = "Training error";
 
     buffer.str("");
-    buffer << setprecision(precision) << parameters_norm;
+    buffer << setprecision(precision) << training_error_history(size-1);
 
     final_results(0,1) = buffer.str();
 
-    // Final loss
-/*
-    final_results(1,0) = "Final training error";
+    // Final selection error
+
+    final_results(1,0) = "Selection error";
 
     buffer.str("");
-    buffer << setprecision(precision) << final_training_error;
+
+    selection_error_history.size() == 0
+            ? buffer << "NAN"
+            : buffer << setprecision(precision) << selection_error_history(size-1);
 
     final_results(1,1) = buffer.str();
 
-    // Final selection error
-
-    final_results(2,0) = "Final selection error";
-
-    buffer.str("");
-    buffer << setprecision(precision) << final_selection_error;
-
-    final_results(2,1) = buffer.str();
-*/
     // Final gradient norm
 
-    final_results(3,0) = "Final gradient norm";
+    final_results(2,0) = "Gradient norm";
 
     buffer.str("");
     buffer << setprecision(precision) << gradient_norm;
 
-    final_results(3,1) = buffer.str();
+    final_results(2,1) = buffer.str();
 
     // Epochs number
 
-    final_results(4,0) = "Epochs number";
+    final_results(3,0) = "Epochs number";
 
     buffer.str("");
-    buffer << training_error_history.size();
+    buffer << training_error_history.size()-1;
 
-    final_results(4,1) = buffer.str();
+    final_results(3,1) = buffer.str();
 
     // Elapsed time
 
-    final_results(5,0) = "Elapsed time";
+    final_results(4,0) = "Elapsed time";
 
     buffer.str("");
     buffer << setprecision(precision) << elapsed_time;
 
-    final_results(5,1) = buffer.str();
+    final_results(4,1) = buffer.str();
 
     // Stopping criteria
 
-    final_results(6,0) = "Stopping criterion";
+    final_results(5,0) = "Stopping criterion";
 
-    final_results(6,1) = write_stopping_condition();
+    final_results(5,1) = write_stopping_condition();
 
     return final_results;
 }

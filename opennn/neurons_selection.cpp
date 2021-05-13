@@ -101,22 +101,6 @@ const Index& NeuronsSelection::get_trials_number() const
 }
 
 
-/// Returns true if the loss index losses are to be reserved, and false otherwise.
-
-const bool& NeuronsSelection::get_reserve_training_errors() const
-{
-    return reserve_training_errors;
-}
-
-
-/// Returns true if the loss index selection losses are to be reserved, and false otherwise.
-
-const bool& NeuronsSelection::get_reserve_selection_errors() const
-{
-    return reserve_selection_errors;
-}
-
-
 /// Returns true if messages from this class can be displayed on the screen,
 /// or false if messages from this class can't be displayed on the screen.
 
@@ -185,11 +169,6 @@ void NeuronsSelection::set_default()
 
     maximum_neurons = 2*(inputs_number + outputs_number);
     trials_number = 1;
-
-    // Neurons selection results
-
-    reserve_training_errors = true;
-    reserve_selection_errors = true;
 
     display = true;
 
@@ -291,24 +270,6 @@ void NeuronsSelection::set_trials_number(const Index& new_trials_number)
 #endif
 
     trials_number = new_trials_number;
-}
-
-
-/// Sets the reserve flag for the loss data.
-/// @param new_reserve_training_error_data Flag value.
-
-void NeuronsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
-{
-    reserve_training_errors = new_reserve_training_error_data;
-}
-
-
-/// Sets the reserve flag for the selection error data.
-/// @param new_reserve_selection_error_data Flag value.
-
-void NeuronsSelection::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
-{
-    reserve_selection_errors = new_reserve_selection_error_data;
 }
 
 
@@ -509,7 +470,7 @@ void NeuronsSelection::check() const
 
 /// Writes the time from seconds in format HH:mm:ss.
 
-const string NeuronsSelection::write_elapsed_time(const type& time) const
+const string NeuronsSelection::write_time(const type& time) const
 {
 #ifdef OPENNN_DEBUG
 
@@ -518,7 +479,7 @@ const string NeuronsSelection::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
         throw logic_error(buffer.str());
@@ -529,7 +490,7 @@ const string NeuronsSelection::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
         throw logic_error(buffer.str());

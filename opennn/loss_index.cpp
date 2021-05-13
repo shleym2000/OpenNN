@@ -503,6 +503,7 @@ void LossIndex::back_propagate(const DataSetBatch& batch,
 
         back_propagation.gradient.device(*thread_pool_device) += regularization_weight*back_propagation.regularization_gradient;
     }
+
 }
 
 
@@ -1108,8 +1109,11 @@ Tensor<type, 1> LossIndex::calculate_gradient_numerical_differentiation()
        parameters_forward(i) += h;
 
        neural_network_pointer->forward_propagate(batch, parameters_forward, forward_propagation);
+
        calculate_errors(batch, forward_propagation, back_propagation);
+
        calculate_error(batch, forward_propagation, back_propagation);
+
        error_forward = back_propagation.error;
 
        parameters_forward(i) -= h;

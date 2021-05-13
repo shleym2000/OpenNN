@@ -65,9 +65,6 @@ public:
     const Index& get_minimum_neurons() const;
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_training_errors() const;
-    const bool& get_reserve_selection_errors() const;
-
     const bool& get_display() const;
 
     const type& get_selection_error_goal() const;
@@ -83,9 +80,6 @@ public:
     void set_maximum_neurons_number(const Index&);
     void set_minimum_neurons(const Index&);
     void set_trials_number(const Index&);
-
-    void set_reserve_training_error_data(const bool&);
-    void set_reserve_selection_error_data(const bool&);
 
     void set_display(const bool&);
 
@@ -111,7 +105,7 @@ public:
 
     /// Writes the time from seconds in format HH:mm:ss.
 
-    const string write_elapsed_time(const type&) const;
+    const string write_time(const type&) const;
 
 protected:
 
@@ -147,16 +141,6 @@ protected:
 
     Index trials_number = 1;
 
-    // Neurons selection results
-
-    /// True if the loss of all neural networks are to be reserved.
-
-    bool reserve_training_errors;
-
-    /// True if the selection error of all neural networks are to be reserved.
-
-    bool reserve_selection_errors;
-
     /// Display messages to screen.
 
     bool display = true;
@@ -187,16 +171,38 @@ struct NeuronsSelectionResults
 
    explicit NeuronsSelectionResults(const Index& maximum_epochs_number)
    {
-        neurons_numbers.resize(maximum_epochs_number);
+        neurons_number_history.resize(maximum_epochs_number);
+        neurons_number_history.setConstant(0);
 
-        training_errors.resize(maximum_epochs_number);
-        selection_errors.resize(maximum_epochs_number);
+        training_error_history.resize(maximum_epochs_number);
+        training_error_history.setConstant(-1);
+
+        selection_error_history.resize(maximum_epochs_number);
+        selection_error_history.setConstant(-1);
 
         optimum_training_error = numeric_limits<type>::max();
         optimum_selection_error = numeric_limits<type>::max();
     }
 
    virtual ~NeuronsSelectionResults() {}
+
+   void resize_history(const Index& new_size)
+   {
+       const Tensor<Index, 1> old_neurons_number_history = neurons_number_history;
+       const Tensor<type, 1> old_training_error_history = training_error_history;
+       const Tensor<type, 1> old_selection_error_history = selection_error_history;
+
+       neurons_number_history.resize(new_size);
+       training_error_history.resize(new_size);
+       selection_error_history.resize(new_size);
+
+       for(Index i = 0; i < new_size; i++)
+       {
+           neurons_number_history(i) = old_neurons_number_history(i);
+           training_error_history(i) = old_training_error_history(i);
+           selection_error_history(i) = old_selection_error_history(i);
+       }
+   }
 
    string write_stopping_condition() const;
 
@@ -215,7 +221,7 @@ struct NeuronsSelectionResults
 
    /// Neurons of the diferent neural networks.
 
-   Tensor<Index, 1> neurons_numbers;
+   Tensor<Index, 1> neurons_number_history;
 
    /// Neurons of the neural network with minimum selection error.
 
@@ -229,11 +235,11 @@ struct NeuronsSelectionResults
 
    /// Performance of the different neural networks.
 
-   Tensor<type, 1> training_errors;
+   Tensor<type, 1> training_error_history;
 
    /// Selection loss of the different neural networks.
 
-   Tensor<type, 1> selection_errors;
+   Tensor<type, 1> selection_error_history;
 
    /// Value of loss for the neural network with minimum selection error.
 
@@ -244,10 +250,6 @@ struct NeuronsSelectionResults
    type optimum_selection_error;
 
    // Model selection
-
-   /// Number of iterations to perform the neurons selection.
-
-   Index epochs_number;
 
    /// Stopping condition of the algorithm.
 

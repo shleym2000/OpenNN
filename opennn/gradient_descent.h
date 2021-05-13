@@ -177,9 +177,9 @@ struct GradientDescentData : public OptimizationAlgorithmData
         set(new_gradient_descent_pointer);
     }
 
+    /// Destructor
 
     virtual ~GradientDescentData() {}
-
 
     void set(GradientDescent* new_gradient_descent_pointer)
     {
@@ -229,7 +229,6 @@ struct GradientDescentData : public OptimizationAlgorithmData
     type learning_rate = 0;
     type old_learning_rate = 0;
 };
-
 
 }
 

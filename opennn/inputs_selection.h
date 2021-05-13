@@ -66,9 +66,6 @@ public:
 
     const Index& get_trials_number() const;
 
-    const bool& get_reserve_training_errors() const;
-    const bool& get_reserve_selection_errors() const;
-
     const bool& get_display() const;
 
     const type& get_selection_error_goal() const;
@@ -86,13 +83,10 @@ public:
 
     void set_trials_number(const Index&);
 
-    void set_reserve_training_error_data(const bool&);
-    void set_reserve_selection_error_data(const bool&);
-
     void set_display(const bool&);
 
     void set_selection_error_goal(const type&);
-    void set_maximum_iterations_number(const Index&);
+    void set_maximum_epochs_number(const Index&);
     void set_maximum_time(const type&);
     void set_maximum_correlation(const type&);
     void set_minimum_correlation(const type&);
@@ -115,7 +109,7 @@ public:
 
     /// Writes the time from seconds in format HH:mm:ss.
 
-    const string write_elapsed_time(const type&) const;
+    const string write_time(const type&) const;
 
 protected:
 
@@ -123,35 +117,12 @@ protected:
 
     TrainingStrategy* training_strategy_pointer = nullptr;
 
-    /// Inputs of all the neural networks trained.
-
-    Tensor<bool, 2> inputs_history;
-
-    /// Selection loss of all the neural networks trained.
-
-    Tensor<type, 1> selection_error_history;
-
-    /// Performance of all the neural networks trained.
-
-    Tensor<type, 1> training_error_history;
-
-    /// Parameters of all the neural network trained.
-
-    Tensor<Tensor<type, 1>, 1> parameters_history;
+    Tensor<Index, 1> original_input_columns_indices;
+    Tensor<Index, 1> original_target_columns_indices;
 
     /// Number of trials for each neural network.
 
     Index trials_number = 1;
-
-    // Inputs selection results
-
-    /// True if the loss of all neural networks are to be reserved.
-
-    bool reserve_training_errors;
-
-    /// True if the selection error of all neural networks are to be reserved.
-
-    bool reserve_selection_errors;
 
     /// Display messages to screen.
 
@@ -200,18 +171,41 @@ struct InputsSelectionResults
         set(maximum_epochs_number);
     }
 
+    Index get_epochs_number() const
+    {
+        return training_error_history.size();
+    }
+
     void set(const Index& maximum_epochs_number)
     {
-        training_errors.resize(maximum_epochs_number);
+        training_error_history.resize(maximum_epochs_number);
+        training_error_history.setConstant(-1);
 
-        selection_errors.resize(maximum_epochs_number);
+        selection_error_history.resize(maximum_epochs_number);
+        selection_error_history.setConstant(-1);
     }
 
    virtual ~InputsSelectionResults() {}
 
    string write_stopping_condition() const;
 
-   void print()
+   void resize_history(const Index& new_size)
+   {
+       const Tensor<type, 1> old_training_error_history = training_error_history;
+       const Tensor<type, 1> old_selection_error_history = selection_error_history;
+
+       training_error_history.resize(new_size);
+       selection_error_history.resize(new_size);
+
+       for(Index i = 0; i < new_size; i++)
+       {
+           training_error_history(i) = old_training_error_history(i);
+           selection_error_history(i) = old_selection_error_history(i);
+       }
+   }
+
+
+   void print() const
    {
        cout << endl;
        cout << "Inputs Selection Results" << endl;
@@ -226,6 +220,7 @@ struct InputsSelectionResults
        cout << "Optimum selection error: " << optimum_selection_error << endl;
    }
 
+
    // Neural network
 
    /// Vector of parameters for the neural network with minimum selection error.
@@ -234,13 +229,13 @@ struct InputsSelectionResults
 
    // Loss index
 
-   /// Performance of the different neural networks.
+   /// Final training errors of the different neural networks.
 
-   Tensor<type, 1> training_errors;
+   Tensor<type, 1> training_error_history;
 
-   /// Selection loss of the different neural networks.
+   /// Final selection errors of the different neural networks.
 
-   Tensor<type, 1> selection_errors;
+   Tensor<type, 1> selection_error_history;
 
    /// Value of training for the neural network with minimum selection error.
 
@@ -259,10 +254,6 @@ struct InputsSelectionResults
    Tensor<bool, 1> optimal_inputs;
 
    // Model selection
-
-   /// Number of iterations to perform the inputs selection.
-
-   Index epochs_number;
 
    /// Stopping condition of the algorithm.
 

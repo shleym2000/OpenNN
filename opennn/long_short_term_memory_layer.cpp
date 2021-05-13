@@ -1058,13 +1058,6 @@ void LongShortTermMemoryLayer::initialize_cell_states(const type& value)
 }
 
 
-/// @todo
-
-void LongShortTermMemoryLayer::set_synaptic_weights_glorot()
-{   
-}
-
-
 /// Initializes all the biases, weights and recurrent weights in the neural newtork with a given value.
 /// @param value Parameters initialization value.
 
@@ -2223,8 +2216,6 @@ void LongShortTermMemoryLayer::calculate_error_gradient(const Tensor<type, 2>&  
 
 //#pragma omp parallel
     {
-
-
         // Biases
 
         calculate_forget_biases_error_gradient(inputs,
@@ -3446,14 +3437,14 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
                forward_propagation->hidden_states_activations_derivatives.data()+copy_index,
                static_cast<size_t>(neurons_number)*sizeof(type));
 
-        forward_propagation->previous_cell_state_activations.setZero();
-
         if(sample%timesteps == 0)
         {
             back_propagation->forget_combinations_biases_derivatives.setZero();
             back_propagation->input_combinations_biases_derivatives.setZero();
             back_propagation->state_combinations_biases_derivatives.setZero();
             back_propagation->output_combinations_biases_derivatives.setZero();
+
+            forward_propagation->previous_cell_state_activations.setZero();
 
             back_propagation->cell_state_biases_derivatives.setZero();
         }
@@ -3485,8 +3476,7 @@ void LongShortTermMemoryLayer::calculate_forget_biases_error_gradient(const Tens
                           forward_propagation->current_output_activations_derivatives);
         }
 
-        for(Index row = 0; row < parameters_number; row++) back_propagation->forget_combinations_biases_derivatives(row, row)
-                += static_cast<type>(1.0);
+        for(Index row = 0; row < parameters_number; row++) back_propagation->forget_combinations_biases_derivatives(row, row) += static_cast<type>(1.0);
 
         multiply_rows(back_propagation->cell_state_biases_derivatives,
                       forward_propagation->current_forget_activations);
@@ -4147,6 +4137,24 @@ void LongShortTermMemoryLayer::from_XML(const tinyxml2::XMLDocument& document)
         set_neurons_number(static_cast<Index>(stoi(neurons_number_element->GetText())));
     }
 
+    // Time step
+
+    const tinyxml2::XMLElement* time_step_element = long_short_term_memory_layer_element->FirstChildElement("TimeStep");
+
+    if(!time_step_element)
+    {
+        buffer << "OpenNN Exception: LongShortTermMemoryLayer class.\n"
+               << "void from_XML(const tinyxml2::XMLDocument&) method.\n"
+               << "TimeStep element is nullptr.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(time_step_element->GetText())
+    {
+        set_timesteps(static_cast<Index>(stoi(time_step_element->GetText())));
+    }
+
     // Activation function
 
     const tinyxml2::XMLElement* activation_function_element = long_short_term_memory_layer_element->FirstChildElement("ActivationFunction");
@@ -4214,6 +4222,7 @@ void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.OpenElement("LongShortTermMemoryLayer");
 
     // Layer name
+
     file_stream.OpenElement("LayerName");
     buffer.str("");
     buffer << layer_name;
@@ -4221,6 +4230,7 @@ void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
     file_stream.CloseElement();
 
     // Inputs number
+
     file_stream.OpenElement("InputsNumber");
 
     buffer.str("");
@@ -4236,6 +4246,17 @@ void LongShortTermMemoryLayer::write_XML(tinyxml2::XMLPrinter& file_stream) cons
 
     buffer.str("");
     buffer << get_neurons_number();
+
+    file_stream.PushText(buffer.str().c_str());
+
+    file_stream.CloseElement();
+
+    // Time step
+
+    file_stream.OpenElement("TimeStep");
+
+    buffer.str("");
+    buffer << get_timesteps();
 
     file_stream.PushText(buffer.str().c_str());
 

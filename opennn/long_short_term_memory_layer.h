@@ -172,7 +172,7 @@ public:
    void initialize_hidden_states(const type&);
    void initialize_cell_states(const type&);
 
-   void set_synaptic_weights_glorot();
+
 
    void set_parameters_constant(const type&);
 
@@ -292,7 +292,7 @@ public:
 
 protected:
 
-   Index timesteps = 10;
+   Index timesteps = 3;
 
    Tensor<type, 1> input_biases;
    Tensor<type, 1> forget_biases;
@@ -312,7 +312,7 @@ protected:
    /// Activation function variable.
 
    ActivationFunction activation_function = HyperbolicTangent;
-   ActivationFunction recurrent_activation_function = HardSigmoid;
+   ActivationFunction recurrent_activation_function = Linear;
 
    Index batch;
    Index variables;
@@ -353,8 +353,8 @@ struct LongShortTermMemoryLayerForwardPropagation : LayerForwardPropagation
 
         batch_samples_number = new_batch_samples_number;
 
-        previous_hidden_state_activations.resize(inputs_number);
-        previous_cell_state_activations.resize(inputs_number);
+        previous_hidden_state_activations.resize(neurons_number);
+        previous_cell_state_activations.resize(neurons_number);
 
         current_inputs.resize(inputs_number);
 

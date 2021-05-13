@@ -225,6 +225,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
+    const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
+    const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
+
+    const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
+    const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
+
+    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    Tensor<Descriptives, 1> target_variables_descriptives;
+
     Index batch_size_training = 0;
     Index batch_size_selection = 0;
 
@@ -252,10 +261,29 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
     NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
+    neural_network_pointer->set_inputs_names(inputs_names);
+    neural_network_pointer->set_outputs_names(targets_names);
+
+    if(neural_network_pointer->has_scaling_layer())
+    {
+        ScalingLayer* scaling_layer_pointer = neural_network_pointer->get_scaling_layer_pointer();
+        scaling_layer_pointer->set(input_variables_descriptives, input_variables_scalers);
+    }
+
+    if(neural_network_pointer->has_unscaling_layer())
+    {
+        target_variables_descriptives = data_set_pointer->scale_target_variables();
+
+        UnscalingLayer* unscaling_layer_pointer = neural_network_pointer->get_unscaling_layer_pointer();
+        unscaling_layer_pointer->set(target_variables_descriptives, target_variables_scalers);
+    }
+
     NeuralNetworkForwardPropagation training_forward_propagation(batch_size_training, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(batch_size_selection, neural_network_pointer);
 
     // Loss index
+
+    loss_index_pointer->set_normalization_coefficient();
 
     LossIndexBackPropagation training_back_propagation(batch_size_training, loss_index_pointer);
     LossIndexBackPropagation selection_back_propagation(batch_size_selection, loss_index_pointer);
@@ -263,14 +291,14 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
     type training_error = 0;
     type training_loss = 0;
 
+    type selection_error = 0;
+
     Index selection_failures = 0;
     type gradient_norm = 0;
 
     // Optimization algorithm
 
     AdaptiveMomentEstimationData optimization_data(this);
-
-    type learning_rate = 0;
 
     bool stop_training = false;
 
@@ -334,7 +362,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         {
             selection_batches = data_set_pointer->get_batches(selection_samples_indices, batch_size_selection, shuffle);
 
-            //selection_error = 0;
+            selection_error = 0;
 
             for(Index iteration = 0; iteration < selection_batches_number; iteration++)
             {
@@ -352,16 +380,15 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
                 loss_index_pointer->calculate_error(batch_selection, selection_forward_propagation, selection_back_propagation);
 
-                //selection_error += selection_back_propagation.error;
+                selection_error += selection_back_propagation.error;
             }
 
-            //selection_error /= static_cast<type>(selection_batches_number);
+            selection_error /= static_cast<type>(selection_batches_number);
 
-            //if(selection_error > old_selection_error) selection_failures++;
+            results.selection_error_history(epoch) = selection_error;
 
-            //if(has_selection) results.selection_error_history(epoch) = selection_error;
+            if(epoch != 0 && results.selection_error_history(epoch) > results.selection_error_history(epoch-1)) selection_failures++;
         }
-
 
         // Elapsed time
 
@@ -371,17 +398,16 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
         if(display && epoch%display_period == 0)
         {
             cout << "Training error: " << training_error << endl;
-//            if(has_selection) cout << "Selection error: " << selection_error << endl;
+            if(has_selection) cout << "Selection error: " << selection_error << endl;
             cout << "Gradient norm: " << gradient_norm << endl;
-            cout << "Elapsed time: " << write_elapsed_time(elapsed_time) << endl;
+            cout << "Elapsed time: " << write_time(elapsed_time) << endl;
         }
 
         // Training history
 
-
         if(epoch == maximum_epochs_number)
         {
-            if(display) cout << "Maximum number of epochs reached: " << epoch << endl;
+            if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
 
             stop_training = true;
 
@@ -390,7 +416,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(elapsed_time >= maximum_time)
         {
-            if(display) cout << "Maximum training time reached: " << write_elapsed_time(elapsed_time) << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum training time reached: " << write_time(elapsed_time) << endl;
 
             stop_training = true;
 
@@ -399,7 +425,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(training_loss <= training_loss_goal)
         {
-            if(display) cout << "Loss goal reached: " << training_loss << endl;
+            if(display) cout << "Epoch " << epoch << "Loss goal reached: " << training_loss << endl;
 
             stop_training = true;
 
@@ -408,7 +434,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(gradient_norm <= gradient_norm_goal)
         {
-            if(display) cout << "Gradient norm goal reached: " << gradient_norm << endl;
+            if(display) cout << "Epoch " << epoch << "Gradient norm goal reached: " << gradient_norm << endl;
 
             stop_training = true;
 
@@ -417,7 +443,7 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(selection_failures >= maximum_selection_failures)
         {
-            if(display) cout << "Maximum selection failures reached: " << selection_failures << endl;
+            if(display) cout << "Epoch " << epoch << "Maximum selection failures reached: " << selection_failures << endl;
 
             stop_training = true;
 
@@ -429,8 +455,9 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
             results.resize_training_error_history(epoch+1);
 
             if(has_selection) results.resize_selection_error_history(epoch+1);
+            else results.resize_selection_error_history(0);
 
-            results.elapsed_time = write_elapsed_time(elapsed_time);
+            results.elapsed_time = write_time(elapsed_time);
 
             break;
         }
@@ -441,6 +468,11 @@ TrainingResults AdaptiveMomentEstimation::perform_training()
 
         if(stop_training) break;
     }
+
+    data_set_pointer->unscale_input_variables(input_variables_descriptives);
+
+    if(neural_network_pointer->has_unscaling_layer())
+        data_set_pointer->unscale_target_variables(target_variables_descriptives);
 
     if(display) results.print();
 
@@ -458,7 +490,7 @@ string AdaptiveMomentEstimation::write_optimization_algorithm_type() const
 
 Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(11, 2);
+    Tensor<string, 2> labels_values(9, 2);
 
     Index row_index = 0;
 
@@ -514,13 +546,13 @@ Tensor<string, 2> AdaptiveMomentEstimation::to_string_matrix() const
     // Maximum time
 
     labels_values(row_index,0) = "Maximum time";
-    labels_values(row_index,1) = to_string(maximum_time);
+    labels_values(row_index,1) = write_time(maximum_time);
 
     row_index++;
 
-    // DataSetBatch samples number
+    // Batch samples number
 
-    labels_values(row_index,0) = "DataSetBatch samples number";
+    labels_values(row_index,0) = "Batch samples number";
     labels_values(row_index,1) = to_string(batch_samples_number);
 
     row_index++;
@@ -787,18 +819,17 @@ void AdaptiveMomentEstimationData::set(AdaptiveMomentEstimation* new_adaptive_mo
 
 void AdaptiveMomentEstimationData::print() const
 {
-    cout << "Gradien exponential decay:" << endl
+    cout << "Gradient exponential decay:" << endl
          <<gradient_exponential_decay << endl;
 
     cout << "Square gradient exponential decay:" << endl
          << square_gradient_exponential_decay << endl;
-
 }
 
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

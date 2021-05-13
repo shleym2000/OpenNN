@@ -83,22 +83,6 @@ const Index& InputsSelection::get_trials_number() const
 }
 
 
-/// Returns true if the loss index losses are to be reserved, and false otherwise.
-
-const bool& InputsSelection::get_reserve_training_errors() const
-{
-    return reserve_training_errors;
-}
-
-
-/// Returns true if the selection losses are to be reserved, and false otherwise.
-
-const bool& InputsSelection::get_reserve_selection_errors() const
-{
-    return reserve_selection_errors;
-}
-
-
 /// Returns true if messages from this class can be displayed on the screen,
 /// or false if messages from this class can't be displayed on the screen.
 
@@ -163,11 +147,6 @@ void InputsSelection::set_default()
 {
     trials_number = 1;
 
-    // Results
-
-    reserve_training_errors = true;
-    reserve_selection_errors = true;
-
     // Stopping criteria
 
     selection_error_goal = 0;
@@ -201,24 +180,6 @@ void InputsSelection::set_trials_number(const Index& new_trials_number)
 #endif
 
     trials_number = new_trials_number;
-}
-
-
-/// Sets the reserve flag for the loss data.
-/// @param new_reserve_error_data Flag value.
-
-void InputsSelection::set_reserve_training_error_data(const bool& new_reserve_training_error_data)
-{
-    reserve_training_errors = new_reserve_training_error_data;
-}
-
-
-/// Sets the reserve flag for the selection error data.
-/// @param new_reserve_selection_error_data Flag value.
-
-void InputsSelection::set_reserve_selection_error_data(const bool& new_reserve_selection_error_data)
-{
-    reserve_selection_errors = new_reserve_selection_error_data;
 }
 
 
@@ -260,9 +221,9 @@ void InputsSelection::set_selection_error_goal(const type& new_selection_error_g
 /// Sets the maximum iterations number for the inputs selection algorithm.
 /// @param new_maximum_iterations_number Maximum number of epochs.
 
-void InputsSelection::set_maximum_iterations_number(const Index& new_maximum_iterations_number)
+void InputsSelection::set_maximum_epochs_number(const Index& new_maximum_epochs_number)
 {
-    maximum_epochs_number = new_maximum_iterations_number;
+    maximum_epochs_number = new_maximum_epochs_number;
 }
 
 
@@ -448,7 +409,7 @@ string InputsSelectionResults::write_stopping_condition() const
 
 /// Writes the time from seconds in format HH:mm:ss.
 
-const string InputsSelection::write_elapsed_time(const type& time) const
+const string InputsSelection::write_time(const type& time) const
 {
 
 #ifdef OPENNN_DEBUG
@@ -458,7 +419,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be lower than 10e5 seconds.\n";
 
         throw logic_error(buffer.str());
@@ -469,7 +430,7 @@ const string InputsSelection::write_elapsed_time(const type& time) const
         ostringstream buffer;
 
         buffer << "OpenNN Exception: OptimizationAlgorithm class.\n"
-               << "const string write_elapsed_time(const type& time) const method.\n"
+               << "const string write_time(const type& time) const method.\n"
                << "Time must be greater than 0.\n";
 
         throw logic_error(buffer.str());

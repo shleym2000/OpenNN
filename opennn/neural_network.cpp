@@ -1418,7 +1418,7 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       Tensor<type, 1>& parameters,
-    NeuralNetworkForwardPropagation& forward_propagation) const
+                                      NeuralNetworkForwardPropagation& forward_propagation) const
 {
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
@@ -2835,7 +2835,7 @@ Layer* NeuralNetwork::get_last_trainable_layer_pointer() const
 }
 
 // OpenNN: Open Neural Networks Library.
-// Copyright(C) 2005-2020 Artificial Intelligence Techniques, SL.
+// Copyright(C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public

@@ -247,6 +247,7 @@ public:
    // Variables get methods
 
    Index get_variables_number() const;
+   Index get_time_series_variables_number() const;
 
    Index get_input_variables_number() const;
    Index get_target_variables_number() const;
@@ -255,6 +256,7 @@ public:
 
    string get_variable_name(const Index&) const;
    Tensor<string, 1> get_variables_names() const;
+   Tensor<string, 1> get_time_series_variables_names() const;
 
    Tensor<string, 1> get_input_variables_names() const;
    Tensor<string, 1> get_target_variables_names() const;
@@ -816,7 +818,7 @@ private:
 
    Tensor<Column, 1> columns;
 
-   /// Header wihch contains the rows label.
+   /// Header which contains the rows label.
 
    bool has_rows_labels = false;
 
@@ -826,8 +828,6 @@ private:
 
    Tensor<Tensor<string, 1>, 1> data_file_preview;
 
-   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
-
    /// Missing values
 
    Index missing_values_number;
@@ -835,6 +835,9 @@ private:
    Tensor<Index, 1> columns_missing_values_number;
 
    Index rows_missing_values_number;
+
+   const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+
 };
 
 

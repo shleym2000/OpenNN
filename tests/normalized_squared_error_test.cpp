@@ -85,8 +85,6 @@ void NormalizedSquaredErrorTest::test_calculate_error()
 {
    cout << "test_calculate_error\n";
 
-   DataSet data_set;
-
    Tensor<type, 2> data;
    Index samples_number;
 
@@ -175,7 +173,6 @@ void NormalizedSquaredErrorTest::test_calculate_error_gradient()
 {
    cout << "test_calculate_error_gradient\n";
 
-   DataSet data_set;
    Index samples_number;
 
    DataSetBatch batch;
@@ -1061,7 +1058,7 @@ void NormalizedSquaredErrorTest::run_test_case()
    cout << "Running normalized squared error test case...\n";
 
    // Constructor and destructor methods
-
+/*
    test_constructor();
    test_destructor();
    test_calculate_normalization_coefficient();
@@ -1073,9 +1070,9 @@ void NormalizedSquaredErrorTest::run_test_case()
    // Error methods
 
    test_calculate_error();
-
+*/
    test_calculate_error_gradient();
-
+/*
    // Squared errors methods
 
    test_calculate_squared_errors();
@@ -1090,7 +1087,7 @@ void NormalizedSquaredErrorTest::run_test_case()
 
    test_to_XML();
    test_from_XML();
-
+*/
    cout << "End of normalized squared error test case.\n\n";
 }
 
