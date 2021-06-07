@@ -122,6 +122,8 @@ public:
    void set(const string&);
    void set(const NeuralNetwork&);
 
+   void set_layers_pointers(Tensor<Layer*, 1>&);
+
    void set_inputs_names(const Tensor<string, 1>&);
    void set_outputs_names(const Tensor<string, 1>&);
 
@@ -132,7 +134,6 @@ public:
 
    void set_threads_number(const int&);
 
-   void set_layers_pointers(Tensor<Layer*, 1>&);
 
    void set_scaling_layer(ScalingLayer&);
 
@@ -158,7 +159,6 @@ public:
    Tensor<Index, 1> get_trainable_layers_neurons_numbers() const;
    Tensor<Index, 1> get_trainable_layers_inputs_numbers() const;
    Tensor<Index, 1> get_trainable_layers_synaptic_weight_numbers() const;
-
 
    Tensor<Index, 1> get_architecture() const;
 
@@ -192,8 +192,6 @@ public:
 
    Tensor<type, 2> calculate_directional_inputs(const Index&, const Tensor<type, 1>&, const type&, const type&, const Index& = 101) const;
 
-   Tensor<type, 1> calculate_outputs_std(const Tensor<type, 1>&);
-
    // Serialization methods
 
    Tensor<string, 2> get_information() const;
@@ -219,7 +217,7 @@ public:
 
    // Expression methods
 
-   string write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const;
+   string write_expression() const;
    string write_expression_python() const;
    string write_expression_c() const;
 
@@ -276,7 +274,7 @@ struct NeuralNetworkForwardPropagation
 
     void set(const Index& new_batch_samples_number, NeuralNetwork* new_neural_network_pointer)
     {
-        if (new_batch_samples_number == 0) return;
+        if(new_batch_samples_number == 0) return;
 
         batch_samples_number = new_batch_samples_number;
 

@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class MinkowskiErrorTest : public UnitTesting 
 {
 
@@ -32,26 +29,15 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
    void test_get_Minkowski_parameter();
 
-   // Set methods
-
-   void test_set_Minkowski_parameter();
-
    // Error methods
 
    void test_calculate_error();
-   void test_calculate_selection_error();
    void test_calculate_error_gradient();
-
-   // Serialization methods
-
-   void test_to_XML();   
-   void test_from_XML();
 
    // Unit testing methods
 
@@ -64,6 +50,14 @@ private:
    NeuralNetwork neural_network;
 
    MinkowskiError minkowski_error;
+
+   DataSetBatch batch;
+
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
+
+   LossIndexBackPropagationLM back_propagation_lm;
 
 };
 

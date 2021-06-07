@@ -650,9 +650,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
     }
     else if(model_type == Forecasting)
     {
-        cout<<"LSTM"<<endl;
         LongShortTermMemoryLayer* long_short_term_memory_layer_pointer = new LongShortTermMemoryLayer(architecture[0], architecture[1]);
-//        cout<<"Recurrent"<<endl;
 //        RecurrentLayer* long_short_term_memory_layer_pointer = new RecurrentLayer(architecture[0], architecture[1]);
 
         this->add_layer(long_short_term_memory_layer_pointer);
@@ -1892,7 +1890,6 @@ void NeuralNetwork::from_XML(const tinyxml2::XMLDocument& document)
 
             inputs_from_XML(inputs_document);
         }
-
     }
 
     // Layers
@@ -2484,7 +2481,6 @@ string NeuralNetwork::write_expression_c() const
 
     for(Index i = 0; i < layers_number; i++)
     {
-
         buffer << layers_pointers[i]->write_expression_c() << endl;
     }
 
@@ -2506,7 +2502,6 @@ string NeuralNetwork::write_expression_c() const
 
     buffer << "int main(){return 0;}" << endl;
 
-
     string expression = buffer.str();
 
     replace(expression, "+-", "-");
@@ -2517,16 +2512,16 @@ string NeuralNetwork::write_expression_c() const
 }
 
 
-string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, const Tensor<string, 1>& outputs_names) const
+string NeuralNetwork::write_expression() const
 {
     const Index layers_number = get_layers_number();
 
     const Tensor<Layer*, 1> layers_pointers = get_layers_pointers();
     const Tensor<string, 1> layers_names = get_layers_names();
 
-    Tensor<string, 1> temporal_outputs_names;
-    Tensor<string, 1> temporal_inputs_names;
-    temporal_inputs_names = inputs_names;
+    Tensor<string, 1> outputs_names_vector;
+    Tensor<string, 1> inputs_names_vector;
+    inputs_names_vector = inputs_names;
 
     Index layer_neurons_number;
 
@@ -2536,27 +2531,28 @@ string NeuralNetwork::write_expression(const Tensor<string, 1>& inputs_names, co
     {
         if(i == layers_number-1)
         {
-            temporal_outputs_names = outputs_names;
-            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+            outputs_names_vector = outputs_names;
+            buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
         }
-        else{
+        else
+        {
             layer_neurons_number = layers_pointers[i]->get_neurons_number();
-            temporal_outputs_names.resize(layer_neurons_number);
-
+            outputs_names_vector.resize(layer_neurons_number);
 
             for(Index j = 0; j < layer_neurons_number; j++)
             {
                 if(layers_names(i) == "scaling_layer")
                 {
-                    temporal_outputs_names(j) = "scaled_" + inputs_names(j);
+                    outputs_names_vector(j) = "scaled_" + inputs_names(j);
                 }
-                else{
-                    temporal_outputs_names(j) =  layers_names(i) + "_output_" + to_string(j);
+                else
+                {
+                    outputs_names_vector(j) =  layers_names(i) + "_output_" + to_string(j);
                 }
             }
-            buffer << layers_pointers[i]->write_expression(temporal_inputs_names, temporal_outputs_names) << endl;
+            buffer << layers_pointers[i]->write_expression(inputs_names_vector, outputs_names_vector) << endl;
 
-            temporal_inputs_names = temporal_outputs_names;
+            inputs_names_vector = outputs_names_vector;
         }
     }
 
@@ -2705,30 +2701,6 @@ void NeuralNetwork::save_expression_c(const string& file_name)
 
     file.close();
 }
-
-
-///// Saves the mathematical expression represented by the neural network to a text file.
-///// @param file_name Name of expression text file.
-
-//void NeuralNetwork::save_expression_c(const string& file_name)
-//{
-//    ofstream file(file_name.c_str());
-
-//    if(!file.is_open())
-//    {
-//        ostringstream buffer;
-
-//        buffer << "OpenNN Exception: NeuralNetwork class.\n"
-//               << "void  save_expression(const string&) method.\n"
-//               << "Cannot open expression text file.\n";
-
-//        throw logic_error(buffer.str());
-//    }
-
-//    file << write_expression_c();
-
-//    file.close();
-//}
 
 
 /// Saves the python function of the expression represented by the neural network to a text file.

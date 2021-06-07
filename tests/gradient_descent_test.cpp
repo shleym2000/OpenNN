@@ -28,19 +28,13 @@ void GradientDescentTest::test_constructor()
 
    // Default constructor
 
-   GradientDescent gd1;
-   assert_true(!gd1.has_loss_index(), LOG);
+   GradientDescent gradient_descent_1;
+   assert_true(!gradient_descent_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
-   GradientDescent gd2(&sum_squared_error);
-   assert_true(gd2.has_loss_index(), LOG);
-}
-
-
-void GradientDescentTest::test_destructor()
-{
-   cout << "test_destructor\n"; 
+   GradientDescent gradient_descent_2(&sum_squared_error);
+   assert_true(gradient_descent_2.has_loss_index(), LOG);
 }
 
 
@@ -48,24 +42,27 @@ void GradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+
    // Test
 
    data_set.set(1,1,1);
    data_set.set_data_constant(0.0);
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_constant(0.0);
 
    gradient_descent.set_maximum_epochs_number(1);
    gradient_descent.perform_training();
 
-/*
    // Test
 
    data_set.set(1,1,1);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 1});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_random();
 
    gradient_descent.perform_training();
@@ -97,7 +94,7 @@ void GradientDescentTest::test_perform_training()
 
    gradient_descent.perform_training();
 
-   // Performance goal
+   // Loss goal
 
    neural_network.set_parameters_constant(-1.0);
 
@@ -146,7 +143,6 @@ void GradientDescentTest::test_perform_training()
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-*/
 }
 
 
@@ -163,32 +159,6 @@ void GradientDescentTest::test_resize_training_error_history()
 }
 
 
-/// @todo
-
-void GradientDescentTest::test_to_XML()
-{
-   cout << "test_to_XML\n";
-
-//   GradientDescent gradient_descent;
-
-//   tinyxml2::XMLDocument* document;
-
-   // Test
-
-//   document = gradient_descent.to_XML();
-//   assert_true(document != nullptr, LOG);
-
-//   delete document;
-
-}
-
-
-void GradientDescentTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
-}
-
-
 void GradientDescentTest::run_test_case()
 {
    cout << "Running gradient descent test case...\n";
@@ -196,7 +166,6 @@ void GradientDescentTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    // Training methods
 
@@ -206,16 +175,11 @@ void GradientDescentTest::run_test_case()
 
    test_resize_training_error_history();
 
-   // Serialization methods
-
-   test_to_XML();
-   test_from_XML();
-
    cout << "End of gradient descent test case.\n\n";
 }
 
 
- // OpenNN: Open Neural Networks Library.
+// OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.
 //
 // This library is free software; you can redistribute it and/or
@@ -231,4 +195,3 @@ void GradientDescentTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

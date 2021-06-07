@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T   S E L E C T I O N   A L G O R I T H M   T E S T   C L A S S   H E A D E R
+//   I N P U T S   S E L E C T I O N   T E S T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -12,9 +12,6 @@
 // Unit testing includes
 
 #include "unit_testing.h"
-
-using namespace OpenNN;
-
 
 class InputsSelectionTest : public UnitTesting
 {
@@ -46,23 +43,21 @@ public:
 
    // Set methods
 
-   void test_set_training_strategy_pointer();
-
-   void test_set_default();
-
-   void test_set_loss_calculation_method();
-
-   // Loss calculation methods
-
-   void test_get_final_loss();
-
-   void test_calculate_losses();
-
-   void test_get_parameters_order();
+   void test_set();
 
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
+
+   GrowingInputs growing_inputs;
 
 };
 

@@ -8,9 +8,6 @@
 
 #include "convolutional_layer_test.h"
 
-using namespace OpenNN;
-
-
 ConvolutionalLayerTest::ConvolutionalLayerTest() : UnitTesting()
 {
 }
@@ -23,9 +20,7 @@ ConvolutionalLayerTest::~ConvolutionalLayerTest()
 
 void ConvolutionalLayerTest::test_eigen_convolution()
 {
-
     cout << "test_eigen_convolution\n";
-
 
     // Convolution 2D, 1 channel
     Tensor<float, 2> input(3, 3);
@@ -133,8 +128,6 @@ void ConvolutionalLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    ConvolutionalLayer convolutional_layer;
-
     // Test
 
     assert_true(convolutional_layer.is_empty(), LOG);
@@ -162,7 +155,7 @@ void ConvolutionalLayerTest::test_get_parameters()
 {
     cout << "test_get_parameters\n";
 
-    ConvolutionalLayer convolutional_layer;
+
     Tensor<type, 4> synaptic_weights(2, 3, 2, 2);
     Tensor<type, 1> biases(2);
     Tensor<type, 1> parameters(26);
@@ -306,7 +299,7 @@ void ConvolutionalLayerTest::test_get_parameters_number()
 {
     cout << "test_get_parameters_number\n";
 
-//    ConvolutionalLayer convolutional_layer;
+//
 
     // Test
 
@@ -326,7 +319,7 @@ void ConvolutionalLayerTest::test_set()
 {
     cout << "test_set\n";
 
-    ConvolutionalLayer convolutional_layer;
+
 
     // Test
 
@@ -352,7 +345,7 @@ void ConvolutionalLayerTest::test_set_parameters()
 {
     cout << "test_set_parameters\n";
 
-    ConvolutionalLayer convolutional_layer;
+
     Tensor<type, 4> new_synaptic_weights(2, 2, 2, 2);
     Tensor<type, 1> new_biases(2);
     Tensor<type, 1> parameters(18);
@@ -443,7 +436,7 @@ void ConvolutionalLayerTest::test_calculate_combinations()
     Tensor<type, 1> biases;
     Tensor<type, 4> combinations;
 
-    ConvolutionalLayer convolutional_layer;
+
 
     inputs.resize(1, 3, 5, 5);
     kernels.resize(3, 3, 2, 2);
@@ -597,7 +590,7 @@ void ConvolutionalLayerTest::test_calculate_activations()
 {
     cout << "test_calculate_activations\n";
 
-    ConvolutionalLayer convolutional_layer;
+
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations_4d;
     Tensor<type, 4> result;
@@ -889,12 +882,11 @@ void ConvolutionalLayerTest::test_calculate_activations_derivatives()
 {
     cout << "test_calculate_activations_derivatives\n";
 
-    NumericalDifferentiation numerical_differentiation;
     numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 
     Tensor<type, 4> numerical_activation_derivatives;
 
-    ConvolutionalLayer convolutional_layer;
+
     Tensor<type, 4> inputs;
     Tensor<type, 4> activations_derivatives;
     Tensor<type, 4> activations;
@@ -1176,7 +1168,7 @@ void ConvolutionalLayerTest::test_calculate_outputs()
 {
     cout << "test_calculate_outputs\n";
 
-    ConvolutionalLayer convolutional_layer;
+
 
     Tensor<type, 4> inputs;
     Tensor<type, 4> kernels;
@@ -1372,7 +1364,7 @@ void ConvolutionalLayerTest::test_insert_padding()
 {
     cout << "test_insert_padding\n";
 
-    ConvolutionalLayer convolutional_layer;
+
 
     Tensor<type, 4> inputs;
     Tensor<type, 4> kernels;
@@ -1473,7 +1465,7 @@ void ConvolutionalLayerTest::test_forward_propagate()
     Tensor<type, 4> kernels;
     Tensor<type, 1> biases;
 
-    ConvolutionalLayer convolutional_layer;
+
 
 //    inputs.resize(3, 3, 3, 2);
 //    kernels.resize(2, , 3, 2);
@@ -1563,7 +1555,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 {
     cout << "test_calculate_error_gradient\n";
 
-//    ConvolutionalLayer convolutional_layer;
+//
 //    Tensor<type, 4> inputs_4d(1, 3, 5, 5);
 //    Tensor<type, 4> kernels(1, 3, 3, 3);
 //    Tensor<type, 1> biases(1);
@@ -1579,7 +1571,6 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    convolutional_layer.set(inputs_4d, kernels, biases);
 
-//    NumericalDifferentiation numerical_differentiation;
 //    numerical_differentiation.set_numerical_differentiation_method(NumericalDifferentiation::CentralDifferences);
 //    Tensor<type, 4> numerical_activations = numerical_differentiation.calculate_derivatives(convolutional_layer,
 //                                                                                            &ConvolutionalLayer::calculate_error_gradient,
@@ -1599,7 +1590,7 @@ void ConvolutionalLayerTest::test_calculate_error_gradient()
 
 //    Tensor<type, 2> output_delta(1,2);
 
-    // Test 1
+    // Test
 
 //    parameters.setConstant(1);
 //    perceptron_layer.set_parameters(parameters);

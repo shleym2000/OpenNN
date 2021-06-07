@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class GrowingInputsTest : public UnitTesting
 {
 
@@ -36,24 +33,23 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Set methods
-
-   void test_set_default();
-
    // Input selection methods
 
    void test_perform_inputs_selection();
-
-   // Serialization methods
-
-   void test_to_XML();
-
-   void test_from_XML();
 
    // Unit testing methods
 
    void run_test_case();
 
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
+
+   GrowingInputs growing_inputs;
 };
 
 

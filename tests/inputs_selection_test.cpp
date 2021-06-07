@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N P U T   S E L E C T I O N   T E S T   C L A S S
+//   I N P U T S   S E L E C T I O N   T E S T   C L A S S
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -11,6 +11,9 @@
 
 InputsSelectionTest::InputsSelectionTest() : UnitTesting()
 {
+    training_strategy.set(&neural_network, &data_set);
+
+    growing_inputs.set(&training_strategy);
 }
 
 
@@ -23,11 +26,6 @@ void InputsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
     GrowingInputs gi1(&training_strategy);
 
     assert_true(gi1.has_training_strategy(), LOG);
@@ -35,7 +33,6 @@ void InputsSelectionTest::test_constructor()
     GrowingInputs gi2;
 
     assert_true(!gi2.has_training_strategy(), LOG);
-
 }
 
 
@@ -43,9 +40,9 @@ void InputsSelectionTest::test_destructor()
 {
     cout << "tes_destructor\n";
 
-    GrowingInputs* gi = new GrowingInputs;
+    GrowingInputs* growing_inputs_pointer = new GrowingInputs;
 
-    delete gi;
+    delete growing_inputs_pointer;
 }
 
 
@@ -53,64 +50,19 @@ void InputsSelectionTest::test_get_training_strategy_pointer()
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
     GrowingInputs growing_inputs(&training_strategy);
 
     assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 
-void InputsSelectionTest::test_set_training_strategy_pointer()
+void InputsSelectionTest::test_set()
 {
-    cout << "test_set_training_strategy_pointer\n";
+    cout << "test_set\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    GrowingInputs growing_inputs;
-
-    growing_inputs.set_training_strategy_pointer(&training_strategy);
+    growing_inputs.set(&training_strategy);
 
     assert_true(growing_inputs.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-void InputsSelectionTest::test_set_default()
-{
-    cout << "test_set_default\n";
-
-}
-
-void InputsSelectionTest::test_set_loss_calculation_method()
-{
-    cout << "test_set_loss_calculation_method\n";
-
-}
-
-
-void InputsSelectionTest::test_get_final_loss()
-{
-    cout << "test_get_final_loss\n";
-
-}
-
-
-void InputsSelectionTest::test_calculate_losses()
-{
-    cout << "test_calculate_losses\n";
-
-}
-
-
-void InputsSelectionTest::test_get_parameters_order()
-{
-    cout << "test_get_parameters_order\n";
-
 }
 
 
@@ -129,11 +81,7 @@ void InputsSelectionTest::run_test_case()
 
     // Set methods
 
-    test_set_training_strategy_pointer();
-    test_set_default();
-    test_get_final_loss();
-    test_calculate_losses();
-    test_get_parameters_order();
+    test_set();
 
     cout << "End of inputs selection algorithm test case.\n\n";
 }

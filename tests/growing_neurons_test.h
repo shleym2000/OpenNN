@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N C R E M E N T A L   N E U R O N S   T E S T   C L A S S   H E A D E R
+//   G R O W I N G   N E U R O N S   T E S T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -12,9 +12,6 @@
 // Unit testing includes
 
 #include "unit_testing.h"
-
-using namespace OpenNN;
-
 
 class GrowingNeuronsTest : public UnitTesting
 {
@@ -34,23 +31,23 @@ public:
    void test_constructor();
    void test_destructor();
 
-   // Set methods
-
-   void test_set_default();
-
    // Order selection methods
 
    void test_perform_neurons_selection();
 
-   // Serialization methods
-
-   void test_to_XML();
-
-   void test_from_XML();
-
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
+
+   GrowingNeurons growing_neurons;
 
 };
 

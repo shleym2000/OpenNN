@@ -30,6 +30,7 @@ void multiply_rows(Tensor<type, 2>&, const Tensor<type, 1>&);
 void divide_columns(Tensor<type, 2>&, const Tensor<type, 1>&);
 
 bool is_zero(const Tensor<type, 1>&);
+bool is_constant(const Tensor<type, 1>&);
 
 bool is_equal(const Tensor<type, 2>&, const type&, const type& = 0.0);
 
@@ -58,6 +59,12 @@ Tensor<type, 2> kronecker_product(const Tensor<type, 1>&, const Tensor<type, 1>&
 void sum_diagonal(Tensor<type, 2>&, const type&);
 
 Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>&, const Tensor<type, 1>&);
+
+void fill_submatrix(const Tensor<type, 2>& matrix,
+          const Tensor<Index, 1>& rows_indices,
+          const Tensor<Index, 1>& columns_indices, type* submatrix);
+
+Index count_NAN(const Tensor<type, 1>&);
 
 }
 

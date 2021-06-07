@@ -164,11 +164,11 @@ string UnscalingLayer::write_expression(const Tensor<string, 1>& inputs_names, c
         }
         else if(scalers(i) == MeanStandardDeviation)
         {
-            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << ");\n";
+            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(" << inputs_names(i) << "+1)*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ");\n";
         }
         else if(scalers(i) == Logarithm)
         {
-            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*((" << descriptives(i).maximum << ")-(" << descriptives(i).minimum << "));\n";
+            buffer << outputs_names(i) << " = " << descriptives(i).minimum << "+0.5*(exp(" << inputs_names(i) << ")+1)*(" << descriptives(i).maximum << "-" << descriptives(i).minimum << ");\n";
         }
         else
         {
@@ -440,24 +440,6 @@ void UnscalingLayer::set_descriptives(const Tensor<Descriptives, 1>& new_descrip
     // Set all descriptives
 
     descriptives = new_descriptives;
-}
-
-
-void UnscalingLayer::set_descriptives_eigen(const Tensor<type, 2>& new_descriptives)
-{
-    const Index neurons_number = get_neurons_number();
-
-    Tensor<Descriptives, 1> descriptives(neurons_number);
-
-    for(Index i = 0; i < neurons_number; i++)
-    {
-        descriptives[i].set_minimum(new_descriptives(static_cast<long long>(i), 0));
-        descriptives[i].set_maximum(new_descriptives(static_cast<long long>(i), 1));
-        descriptives[i].set_mean(new_descriptives(static_cast<long long>(i), 2));
-        descriptives[i].set_standard_deviation(new_descriptives(static_cast<long long>(i), 3));
-    }
-
-    set_descriptives(descriptives);
 }
 
 

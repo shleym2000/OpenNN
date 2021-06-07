@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class SumSquaredErrorTest : public UnitTesting 
 {
 
@@ -31,11 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Get methods
-
-   // Set methods
 
    // Error methods
 
@@ -49,13 +42,7 @@ public:
 
    // Squared errors methods
 
-   void test_calculate_squared_errors();
    void test_calculate_squared_errors_jacobian();
-
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
 
    // Unit testing methods
 
@@ -69,6 +56,13 @@ private:
 
    SumSquaredError sum_squared_error;
 
+   DataSetBatch batch;
+
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
+
+   LossIndexBackPropagationLM back_propagation_lm;
 };
 
 #endif

@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class StatisticsTest : public UnitTesting
 {
 
@@ -29,11 +27,6 @@ public:
    explicit StatisticsTest();  
 
    virtual ~StatisticsTest();
-
-   // Constructor and destructor methods
-
-   void test_constructor();
-   void test_destructor();
 
    // Descriptives
    void test_set_mean();
@@ -51,14 +44,8 @@ public:
    void test_maximum();
    void test_maximum_matrix();
 
-
    // Mean
    void test_mean();
-   void test_weighted_mean();
-
-   // Mean binary
-   void test_means_binary_columns();
-
 
    // Median
    void test_median();
@@ -105,15 +92,11 @@ public:
    void test_calculate_maximal_index();
    void test_calculate_maximal_indices();
 
-   // Normality
-   void test_l2_norm();
-
    // Percentiles
    void test_percentiles();
 
    // Means by categories
    void test_means_by_categories();
-
 
    // Unit testing methods
 

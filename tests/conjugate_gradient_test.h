@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class ConjugateGradientTest : public UnitTesting 
 {
 
@@ -31,12 +29,10 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
    void test_get_training_direction_method();
-   void test_get_training_direction_method_name();
 
    // Set methods
 
@@ -50,14 +46,7 @@ public:
    void test_calculate_FR_training_direction();
    void test_calculate_PR_training_direction();
 
-   void test_calculate_training_direction();
-
    void test_perform_training();
-
-   // Serialization methods
-
-   void test_to_XML();   
-   void test_from_XML();
 
    // Unit testing methods
 

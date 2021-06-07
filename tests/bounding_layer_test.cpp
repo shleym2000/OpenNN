@@ -32,17 +32,9 @@ void BoundingLayerTest::test_constructor()
 }
 
 
-void BoundingLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-}
-
-
 void BoundingLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
-
-   BoundingLayer bounding_layer;
 
    // Test
 
@@ -56,97 +48,11 @@ void BoundingLayerTest::test_get_neurons_number()
 }
 
 
-void BoundingLayerTest::test_set()
-{
-   cout << "test_set\n";
-}
-
-
-void BoundingLayerTest::test_set_default()
-{
-   cout << "test_set_default\n";
-}
-
-
-void BoundingLayerTest::test_get_lower_bounds()
-{
-   cout << "test_get_lower_bounds\n";
-}
-
-
-void BoundingLayerTest::test_get_upper_bounds()
-{
-   cout << "test_get_upper_bounds\n";
-}
-
-
-void BoundingLayerTest::test_get_lower_bound()
-{
-   cout << "test_get_lower_bound\n";
-}
-
-
-void BoundingLayerTest::test_get_upper_bound()
-{
-   cout << "test_get_upper_bound\n";
-}
-
-
-void BoundingLayerTest::test_get_bounds()
-{
-   cout << "test_get_bounds\n";
-}
-
-
 void BoundingLayerTest::test_get_type()
 {
    cout << "test_get_type\n";
 
-   BoundingLayer bounding_layer;
-
    assert_true(bounding_layer.get_type() == Layer::Bounding, LOG);
-}
-
-
-void BoundingLayerTest::test_get_display()
-{
-   cout << "test_get_display\n";
-}
-
-
-void BoundingLayerTest::test_set_lower_bounds()
-{
-   cout << "test_set_lower_bounds\n";
-}
-
-
-void BoundingLayerTest::test_set_upper_bounds()
-{
-   cout << "test_set_upper_bounds\n";
-}
-
-
-void BoundingLayerTest::test_set_lower_bound()
-{
-   cout << "test_set_lower_bound\n";
-}
-
-
-void BoundingLayerTest::test_set_upper_bound()
-{
-   cout << "test_set_upper_bound\n";
-}
-
-
-void BoundingLayerTest::test_set_bounds()
-{
-   cout << "test_set_bounds\n";
-}
-
-
-void BoundingLayerTest::test_set_display()
-{
-   cout << "test_set_display\n";
 }
 
 
@@ -154,18 +60,21 @@ void BoundingLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   BoundingLayer bounding_layer(1);
+   BoundingLayer bounding_layer;
+   Tensor<type, 2> inputs;
+   Tensor<type, 2> outputs;
+
+   // Test
+
+   bounding_layer.set(1);
    bounding_layer.set_lower_bound(0, -1.0);
    bounding_layer.set_upper_bound(0,  1.0);
    bounding_layer.set_bounding_method("Bounding");
 
-   Tensor<type, 2> inputs(1, 1);
-
-   // Test
-
-   Tensor<type, 2> outputs(1, 1);
+   inputs.resize(1, 1);
    inputs(0) = -2.0;
    outputs = bounding_layer.calculate_outputs(inputs);
+
    assert_true(outputs.rank() == 2, LOG);
    assert_true(outputs(0) == -1.0, LOG);
 
@@ -178,12 +87,6 @@ void BoundingLayerTest::test_calculate_outputs()
 }
 
 
-void BoundingLayerTest::test_write_expression()
-{
-   cout << "test_write_expression\n";
-}
-
-
 void BoundingLayerTest::run_test_case()
 {
    cout << "Running bounding layer test case...\n";
@@ -191,8 +94,6 @@ void BoundingLayerTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
-
 
    // Get methods
 
@@ -200,50 +101,9 @@ void BoundingLayerTest::run_test_case()
 
    test_get_neurons_number();
 
-
-   // Variables bounds
-
-   test_get_lower_bounds();
-   test_get_lower_bound();
-   test_get_upper_bounds();
-   test_get_upper_bound();
-   test_get_bounds();
-   test_get_type();
-
-
-   // Display messages
-
-   test_get_display();
-
-
-   // Set methods
-
-   test_set();
-   test_set_default();
-
-
-   // Variables bounds
-
-   test_set_lower_bounds();
-   test_set_lower_bound();
-   test_set_upper_bounds();
-   test_set_upper_bound();
-   test_set_bounds();
-
-
-   // Display messages
-
-   test_set_display();
-
-
    // Lower and upper bounds
 
    test_calculate_outputs();
-
-
-   // Expression methods
-
-   test_write_expression();
 
    cout << "End of bounding layer test case.\n\n";
 }

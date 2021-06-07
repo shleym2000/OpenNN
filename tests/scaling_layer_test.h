@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class ScalingLayerTest : public UnitTesting
 {
 
@@ -32,7 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
@@ -59,7 +55,7 @@ public:
 
    // Display messages
 
-   void test_get_display();
+   
 
    // Set methods
 
@@ -73,7 +69,6 @@ public:
    // Descriptives
 
    void test_set_descriptives();
-   void test_set_descriptives_eigen();
    void test_set_item_descriptives();
 
    // Multilayer perceptron architecture
@@ -110,7 +105,7 @@ public:
 
    // Display messages
 
-   void test_set_display();
+   
 
    // Input range
 
@@ -136,6 +131,10 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   ScalingLayer scaling_layer;
 };
 
 

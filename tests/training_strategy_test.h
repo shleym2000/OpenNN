@@ -14,9 +14,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class TrainingStrategyTest : public UnitTesting 
 {
 
@@ -39,20 +36,6 @@ public:
 
    void test_get_loss_index_pointer();
 
-   // Utilities
-
-   void test_get_display();
-
-   // Set methods
-
-   void test_set();
-   void test_set_default();
-   void test_set_loss_index_pointer();
-
-    // Utilities
-
-   void test_set_display();
-
    // Training methods
 
    void test_perform_training();
@@ -62,13 +45,20 @@ public:
    void test_to_XML();
    void test_from_XML();
 
-   void test_print();
    void test_save();
    void test_load();
 
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
 
 };
 

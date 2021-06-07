@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include <list>
 
 // OpenNN includes
 
@@ -35,6 +36,7 @@
 #include "scaling.h"
 #include "correlations.h"
 #include "opennn_strings.h"
+#include "tensor_utilities.h"
 
 using namespace std;
 using namespace Eigen;
@@ -567,7 +569,7 @@ public:
 
    // Inputs-targets correlations
 
-   Tensor<CorrelationResults, 2> calculate_input_target_columns_correlations() const;
+   Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
    Tensor<type, 2> calculate_input_target_columns_correlations_values() const;
 
    void print_input_target_columns_correlations() const;
@@ -576,7 +578,7 @@ public:
 
    // Inputs-targets regressions
 
-   Tensor<RegressionResults, 2> calculate_input_target_columns_regressions() const;
+   Tensor<Correlation, 2> calculate_input_target_columns_regressions() const;
 
    // Filtering methods
 
@@ -607,19 +609,29 @@ public:
 
    Tensor<Index, 1> calculate_target_distribution() const;
 
-   // Outlier detection
+   // Tuckey outlier detection
 
    Tensor<Tensor<Index, 1>, 1> calculate_Tukey_outliers(const type& = 1.5) const;
 
    void unuse_Tukey_outliers(const type& = 1.5);
 
-   type calculate_euclidean_distance(const Index&, const Index&) const;
-   Tensor<type, 2> calculate_distance_matrix() const;
-   Tensor<Index, 2> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
-   Tensor<type, 1> calculate_average_reachability(const Tensor<type,2>&, const Tensor<Index, 2>&, const Index&) const;
+   // Local outlier factor
 
-   Tensor<Index, 1> calculate_LOF_outliers(const Index& = 20, const type& = 1.5) const;
-   void unuse_LOF_outliers(const Index& = 20, const type& = 1.5);
+   type calculate_euclidean_distance(const Tensor<Index, 1>&, const Index&, const Index&) const;
+
+   Tensor<type, 2> calculate_distance_matrix(const Tensor<Index, 1>&) const;
+
+   Tensor<list<Index>, 1> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
+
+   Tensor<Tensor<type, 1>, 1> get_kd_tree_data() const;
+
+   Tensor<list<Index>, 1> calculate_kd_tree_neighbors(const Index& = 20, const Index& = 40) const;
+
+   Tensor<type, 1> calculate_average_reachability(Tensor<list<Index>, 1>&, const Index&) const;
+
+   Tensor<Index, 1> calculate_local_outlier_factor_outliers(const Index& = 20, const Index& = 0, const type& = 0.0) const;
+
+   void unuse_local_outlier_factor_outliers(const Index& = 20, const type& = 1.5);
 
    // Time series methods
 
@@ -726,9 +738,6 @@ public:
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
-   void fill_submatrix(const Tensor<type, 2>& matrix,
-             const Tensor<Index, 1>& rows_indices,
-             const Tensor<Index, 1>& columns_indices, type*submatrix);
 
    bool get_has_rows_labels() const;
 
@@ -873,6 +882,7 @@ struct DataSetBatch
     Tensor<type, 4> inputs_4d;
 
     Tensor<type, 2> targets_2d;
+
 };
 
 

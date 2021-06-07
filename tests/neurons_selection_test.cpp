@@ -23,18 +23,13 @@ void NeuronsSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
+    GrowingNeurons growing_neurons_1(&training_strategy);
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    assert_true(growing_neurons_1.has_training_strategy(), LOG);
 
-    GrowingNeurons io1(&training_strategy);
+    GrowingNeurons growing_neurons_2;
 
-    assert_true(io1.has_training_strategy(), LOG);
-
-    GrowingNeurons io2;
-
-    assert_true(!io2.has_training_strategy(), LOG);
+    assert_true(!growing_neurons_2.has_training_strategy(), LOG);
 }
 
 
@@ -42,9 +37,9 @@ void NeuronsSelectionTest::test_destructor()
 {
     cout << "tes_destructor\n";
 
-    GrowingNeurons* io = new GrowingNeurons;
+    GrowingNeurons* growing_neurons_pointer = new GrowingNeurons;
 
-    delete io;
+    delete growing_neurons_pointer;
 }
 
 
@@ -52,11 +47,9 @@ void NeuronsSelectionTest::test_get_training_strategy_pointer()
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    TrainingStrategy training_strategy;
+    GrowingNeurons growing_neurons(&training_strategy);
 
-    GrowingNeurons io(&training_strategy);
-
-    assert_true(io.get_training_strategy_pointer() != nullptr, LOG);
+    assert_true(growing_neurons.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 
@@ -64,47 +57,11 @@ void NeuronsSelectionTest::test_set_training_strategy_pointer()
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
+    GrowingNeurons growing_neurons;
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    growing_neurons.set_training_strategy_pointer(&training_strategy);
 
-    GrowingNeurons in;
-
-    in.set_training_strategy_pointer(&training_strategy);
-
-    assert_true(in.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-void NeuronsSelectionTest::test_set_default()
-{
-    cout << "test_set_default\n";
-
-}
-
-void NeuronsSelectionTest::test_set_loss_calculation_method()
-{
-    cout << "test_set_loss_calculation_method\n";
-
-}
-
-
-void NeuronsSelectionTest::test_get_final_loss()
-{
-    cout << "test_get_final_loss\n";
-
-}
-
-void NeuronsSelectionTest::test_calculate_losses()
-{
-    cout << "test_calculate_losses\n";
-
-}
-
-void NeuronsSelectionTest::test_get_parameters_order()
-{
-    cout << "test_get_parameters_order\n";
-
+    assert_true(growing_neurons.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 
@@ -124,14 +81,6 @@ void NeuronsSelectionTest::run_test_case()
     // Set methods
 
     test_set_training_strategy_pointer();
-
-    test_set_default();
-
-    test_get_final_loss();
-
-    test_calculate_losses();
-
-    test_get_parameters_order();
 
     cout << "End of neurons selection algorithm test case.\n\n";
 }

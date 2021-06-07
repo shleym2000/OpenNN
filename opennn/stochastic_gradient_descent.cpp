@@ -114,11 +114,11 @@ void StochasticGradientDescent::set_default()
     training_loss_goal = 0;
     gradient_norm_goal = 0;
     maximum_time = 3600.0;
-    maximum_epochs_number = 1000;
+    maximum_epochs_number = 10000;
 
     // UTILITIES
 
-    display_period = 10;
+    display_period = 1000;
 }
 
 
@@ -476,7 +476,7 @@ TrainingResults StochasticGradientDescent::perform_training()
             update_parameters(training_back_propagation, optimization_data);
         }
 
-        gradient_norm = l2_norm(training_back_propagation.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
 
         // Loss
 

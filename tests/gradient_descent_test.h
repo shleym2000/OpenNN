@@ -6,7 +6,6 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-
 #ifndef GRADIENTDESCENTTEST_H
 #define GRADIENTDESCENTTEST_H
 
@@ -33,7 +32,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Set methods
 
@@ -46,11 +44,6 @@ public:
    // Training history methods
 
    void test_resize_training_error_history();
-
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
 
    // Unit testing methods
 

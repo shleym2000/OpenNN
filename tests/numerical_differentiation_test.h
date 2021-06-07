@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class NumericalDifferentiationTest : public UnitTesting
 {
 
@@ -32,7 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    void test_set_get_methods();
    void test_calculate_methods();
@@ -83,8 +79,9 @@ public:
 
 private:
 
-   // Constant methods
+   NumericalDifferentiation numerical_differentiation;
 
+   // Constant methods
 
    type f1(const type& var_x) const
    {

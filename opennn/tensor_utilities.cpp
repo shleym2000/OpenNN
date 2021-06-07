@@ -11,6 +11,8 @@
 namespace OpenNN
 {
 
+
+
 void initialize_sequential(Tensor<type, 1>& vector)
 {
     for(Index i = 0; i < vector.size(); i++) vector(i) = i;
@@ -77,6 +79,22 @@ bool is_false(const Tensor<bool, 1>& tensor)
 }
 
 
+bool is_constant(const Tensor<type, 1>& vector)
+{
+    const Index size = vector.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        for(Index j = 0; j < size; j++)
+        {
+            if((vector(i) - vector(j)) != 0) return false;
+        }
+    }
+
+    return true;
+}
+
+
 bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tolerance)
 {
     const Index size = matrix.size();
@@ -88,6 +106,7 @@ bool is_equal(const Tensor<type, 2>& matrix, const type& value, const type& tole
 
     return true;
 }
+
 
 
 bool are_equal(const Tensor<type, 1>& vector_1, const Tensor<type, 1>& vector_2, const type& tolerance)
@@ -159,7 +178,6 @@ void save_csv(const Tensor<type,2>& data, const string& filename)
 
 Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
 {        
-
     const Index size = vector.size();
 
     Tensor<Index, 1> rank(size);
@@ -175,7 +193,6 @@ Tensor<Index, 1> calculate_rank_greater(const Tensor<type, 1>& vector)
 
 Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 {
-
     const Index size = vector.size();
 
     Tensor<Index, 1> rank(size);
@@ -191,7 +208,7 @@ Tensor<Index, 1> calculate_rank_less(const Tensor<type, 1>& vector)
 
 void scrub_missing_values(Tensor<type, 2>& matrix, const type& value)
 {
-    std::replace_if (matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
+    std::replace_if(matrix.data(), matrix.data()+matrix.size(), [](type x){return isnan(x);}, value);
 }
 
 
@@ -306,6 +323,47 @@ Tensor<type, 1> perform_Householder_QR_decomposition(const Tensor<type, 2>& A, c
     return x;
 }
 
+
+void fill_submatrix(const Tensor<type, 2>& matrix,
+                    const Tensor<Index, 1>& rows_indices,
+                    const Tensor<Index, 1>& columns_indices,
+                    type* submatrix_pointer)
+{
+    const Index rows_number = rows_indices.size();
+    const Index columns_number = columns_indices.size();
+
+    const type* matrix_pointer = matrix.data();
+
+    #pragma omp parallel for
+
+    for(Index j = 0; j < columns_number; j++)
+    {
+        const type* matrix_column_pointer = matrix_pointer + matrix.dimension(0)*columns_indices[j];
+        type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
+
+        const type* value_pointer = nullptr;
+        const Index* rows_indices_pointer = rows_indices.data();
+        for(Index i = 0; i < rows_number; i++)
+        {
+            value_pointer = matrix_column_pointer + *rows_indices_pointer;
+            rows_indices_pointer++;
+            *submatrix_column_pointer = *value_pointer;
+            submatrix_column_pointer++;
+        }
+    }
+}
+
+Index count_NAN(const Tensor<type, 1>& x)
+{
+    Index NAN_number = 0;
+
+    for(Index i = 0; i < x.size(); i++)
+    {
+        if(::isnan(x(i))) NAN_number++;
+    }
+
+    return NAN_number;
+}
 
 }
 

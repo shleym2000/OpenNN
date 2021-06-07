@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class RecurrentLayerTest : public UnitTesting
 {
 
@@ -32,7 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Inputs and perceptrons
 
@@ -48,16 +44,21 @@ public:
 
    void test_get_biases();
    void test_get_weights();
-   void test_get_recurrent_initializer();
+   void test_get_recurrent_weights();
    void test_get_parameters_number();
    void test_get_parameters();
    void test_calculate_activations_derivatives();
-   void test_calculate_combinations();
    void test_calculate_outputs();
 
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+    RecurrentLayer recurrent_layer;
+
+    NumericalDifferentiation numerical_differentiation;
 };
 
 

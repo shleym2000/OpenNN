@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class PerceptronLayerTest : public UnitTesting
 {
 
@@ -32,9 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Get methods
 
    // Inputs and perceptrons
 
@@ -57,7 +51,7 @@ public:
    
    // Display messages
 
-   void test_get_display();
+   
 
    // Set methods
 
@@ -84,7 +78,7 @@ public:
 
    // Display messages
 
-   void test_set_display();
+   
 
    // Parameters initialization methods
 
@@ -124,6 +118,12 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   PerceptronLayer perceptron_layer;
+
+    NumericalDifferentiation numerical_differentiation;
 };
 
 

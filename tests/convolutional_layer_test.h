@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class ConvolutionalLayerTest : public UnitTesting
 {
 
@@ -80,6 +78,12 @@ public:
   // Unit testing methods
 
   void run_test_case();
+
+private:
+
+  ConvolutionalLayer convolutional_layer;
+
+  NumericalDifferentiation numerical_differentiation;
 };
 
 

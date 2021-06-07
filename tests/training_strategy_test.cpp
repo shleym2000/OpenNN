@@ -11,6 +11,7 @@
 
 TrainingStrategyTest::TrainingStrategyTest() : UnitTesting() 
 {
+    training_strategy.set(&neural_network, &data_set);
 }
 
 
@@ -23,23 +24,15 @@ void TrainingStrategyTest::test_constructor()
 {
    cout << "test_constructor\n";
 
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
    // Test
 
-   TrainingStrategy training_strategy1(&neural_network, &data_set);
-
-
+   TrainingStrategy training_strategy_1(&neural_network, &data_set);
 }
 
 
 void TrainingStrategyTest::test_destructor()
 {
    cout << "test_destructor\n";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
 
    TrainingStrategy* training_strategy_pointer = new TrainingStrategy(&neural_network, &data_set);
 
@@ -51,54 +44,9 @@ void TrainingStrategyTest::test_get_loss_index_pointer()
 {
    cout << "test_get_loss_index_pointer\n";
 
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
-   SumSquaredError sum_squared_error;
-
-   TrainingStrategy training_strategy(&neural_network, &data_set);
-
    LossIndex* loss_index_pointer = training_strategy.get_loss_index_pointer();
 
    assert_true(loss_index_pointer != nullptr, LOG);
-}
-
-
-void TrainingStrategyTest::test_get_display()
-{
-   cout << "test_get_display\n";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
-   TrainingStrategy training_strategy(&neural_network, &data_set);
-
-   training_strategy.set_display(false);
-
-   assert_true(!training_strategy.get_display(), LOG);
-}
-
-
-void TrainingStrategyTest::test_set()
-{
-   cout << "test_set\n"; 
-}
-
-
-void TrainingStrategyTest::test_set_default()
-{
-   cout << "test_set_default\n"; 
-
-   TrainingStrategy training_strategy;
-
-   training_strategy.set_default();
-
-}
-
-
-void TrainingStrategyTest::test_set_loss_index_pointer()
-{
-   cout << "test_set_loss_index_pointer\n"; 
 }
 
 
@@ -106,25 +54,27 @@ void TrainingStrategyTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
-    NeuralNetwork neural_network;
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
 
-    DataSet data_set(2, 2);
+   Index neurons_number;
 
-    Tensor<type, 2> new_data(2, 2);
-    new_data(0,0) = 0.0;
-    new_data(0,1) = 0.0;
-    new_data(1,0) = 1.0;
-    new_data(1,1) = 1.0;
-
-    data_set.set_data(new_data);
-
-    NormalizedSquaredError normalized_squared_error(&neural_network, &data_set);
-
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    Tensor<type, 2> data;
 
     // Test
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1, 1});
+    samples_number = 2;
+    inputs_number = 1;
+    targets_number = 1;
+
+    data.resize(samples_number, inputs_number+targets_number);
+    data.setValues({{0,1},{0,1}});
+
+    data_set.set(samples_number, inputs_number, targets_number);
+    data_set.set_data(data);
+
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, neurons_number, targets_number});
     training_strategy.set_optimization_method(TrainingStrategy::ADAPTIVE_MOMENT_ESTIMATION);
     neural_network.set_parameters_random();
 
@@ -139,8 +89,6 @@ void TrainingStrategyTest::test_to_XML()
 {
    cout << "test_to_XML\n";
 
-   TrainingStrategy training_strategy;
-
    FILE *pFile;
 
    string file_name = "../data/training_strategy.xml";
@@ -152,15 +100,12 @@ void TrainingStrategyTest::test_to_XML()
    training_strategy.write_XML(document);
 
    fclose(pFile);
-
 }
 
 
 void TrainingStrategyTest::test_from_XML()
 {
    cout << "test_from_XML\n";
-
-   TrainingStrategy training_strategy;
 
    training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
@@ -182,13 +127,6 @@ void TrainingStrategyTest::test_from_XML()
    }
 
    training_strategy.from_XML(document);
-
-}
-
-
-void TrainingStrategyTest::test_print()
-{
-   cout << "test_print\n";
 }
 
 
@@ -197,8 +135,6 @@ void TrainingStrategyTest::test_save()
    cout << "test_save\n";
 
    string file_name = "../data/training_strategy.xml";
-
-   TrainingStrategy training_strategy;
 
    training_strategy.set_optimization_method(TrainingStrategy::GRADIENT_DESCENT);
 
@@ -211,11 +147,6 @@ void TrainingStrategyTest::test_load()
    cout << "test_load\n";
 
    string file_name = "../data/training_strategy.xml";
-
-   NeuralNetwork neural_network;
-   DataSet data_set;
-
-   TrainingStrategy training_strategy(&neural_network, &data_set);
 
    // Test
 
@@ -233,34 +164,18 @@ void TrainingStrategyTest::run_test_case()
    test_constructor();
    test_destructor();
 
-
    // Get methods
 
    test_get_loss_index_pointer();
-
-
-   // Utilities
-   
-   test_get_display();
-
-
-   // Set methods
-
-   test_set();
-   test_set_default();   
-   test_set_loss_index_pointer();
-
 
    // Training methods
 
    test_perform_training();
 
-
    // Serialization methods
 
    test_to_XML();
    test_from_XML();
-   test_print();
    test_save();
    test_load();
 

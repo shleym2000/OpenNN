@@ -11,9 +11,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class ModelSelectionTest : public UnitTesting 
 {
 
@@ -40,8 +37,6 @@ public:
 
    void test_set_training_strategy_pointer();
 
-   void test_set_default();
-
    // Model selection methods
 
    void test_perform_neurons_selection();
@@ -56,6 +51,17 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
+
+   ModelSelection model_selection;
+
 };
 
 #endif

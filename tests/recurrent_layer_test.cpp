@@ -22,17 +22,12 @@ void RecurrentLayerTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    RecurrentLayer recurrent_layer;
     Index inputs_number;
     Index neurons_number;
 
     Tensor<type, 2> synaptic_weights;
     Tensor<type, 2> recurrent_initializer;
     Tensor<type, 1> biases;
-
-    // Test
-
-    recurrent_layer.set();
 
     // Test
 
@@ -58,25 +53,19 @@ void RecurrentLayerTest::test_constructor()
 }
 
 
-void RecurrentLayerTest::test_destructor()
-{
-   cout << "test_destructor\n";
-
-}
-
-
 void RecurrentLayerTest::test_get_inputs_number()
 {
    cout << "test_get_inputs_number\n";
-
-   RecurrentLayer recurrent_layer;
 
    Index inputs_number;
    Index neurons_number;
 
    // Test
 
-   recurrent_layer.set(0,0);
+   inputs_number = 0;
+   neurons_number = 0;
+
+   recurrent_layer.set(inputs_number, neurons_number);
    assert_true(recurrent_layer.get_inputs_number() == 0, LOG);
 
    // Test
@@ -93,8 +82,6 @@ void RecurrentLayerTest::test_get_inputs_number()
 void RecurrentLayerTest::test_get_neurons_number()
 {
    cout << "test_get_neurons_number\n";
-
-   RecurrentLayer recurrent_layer;
 
    Index inputs_number;
    Index neurons_number;
@@ -114,26 +101,25 @@ void RecurrentLayerTest::test_get_neurons_number()
 }
 
 
-
 void RecurrentLayerTest::test_get_biases()
 {
    cout << "test_get_biases\n";
 
-   RecurrentLayer recurrent_layer;
-
    Index inputs_number;
    Index neurons_number;
+
+   Tensor<type, 1> biases;
 
    // Test
 
    neurons_number = 3;
    inputs_number = 2;
 
-   Tensor<type, 1> biases(neurons_number);
-
    recurrent_layer.set(inputs_number, neurons_number);
 
+   biases.resize(neurons_number);
    biases.setConstant(1);
+
    recurrent_layer.set_biases(biases);
 
    assert_true(biases(0) == recurrent_layer.get_biases()(0), LOG);
@@ -147,28 +133,21 @@ void RecurrentLayerTest::test_get_weights()
 {
    cout << "test_get_synaptic_weights\n";
 
-   RecurrentLayer recurrent_layer;
-
-//   Tensor<type, 2> weights;
-
    // Test
 
-   recurrent_layer.set(3,2);
+   recurrent_layer.set(3, 2);
 
    recurrent_layer.set_parameters_constant(4.0);
 
    assert_true(recurrent_layer.get_input_weights()(0) == 4.0, LOG);
-
-
 }
 
-void RecurrentLayerTest::test_get_recurrent_initializer()
+
+void RecurrentLayerTest::test_get_recurrent_weights()
 {
-   cout << "test_get_recurrent_initializer\n";
+   cout << "test_get_recurrent_weights\n";
 
-   RecurrentLayer recurrent_layer;
-
-//   Tensor<type, 2> recurrent_weights;
+   Tensor<type, 2> recurrent_weights;
 
    // Test
 
@@ -176,7 +155,7 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 
    recurrent_layer.set_parameters_constant(-1.0);
 
-   Tensor<type, 2> recurrent_weights = recurrent_layer.get_recurrent_weights();
+   recurrent_weights = recurrent_layer.get_recurrent_weights();
 
    assert_true(recurrent_weights.size() == 4, LOG);
    assert_true(recurrent_weights.dimension(0) == 2, LOG);
@@ -190,8 +169,6 @@ void RecurrentLayerTest::test_get_recurrent_initializer()
 void RecurrentLayerTest::test_get_parameters_number()
 {
    cout << "test_get_parameters_number\n";
-
-   RecurrentLayer recurrent_layer;
 
    // Test
 
@@ -223,7 +200,7 @@ void RecurrentLayerTest::test_get_parameters()
 {
    cout << "test_get_parameters\n";
 
-   RecurrentLayer recurrent_layer;
+
 
    // Test
 
@@ -283,15 +260,14 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 {
    cout << "test_calculate_activation_derivative\n";
 
-   NumericalDifferentiation numerical_differentiation;
-
-   RecurrentLayer recurrent_layer;
    Tensor<type, 1> parameters;
    Tensor<type, 2> inputs;
    Tensor<type, 2> combinations;
    Tensor<type, 2> activations;
+
    Tensor<type, 2> activations_derivatives;
    Tensor<type, 2> numerical_activation_derivative;
+   Tensor<type, 0> maximum_difference;
 
     numerical_differentiation_tests = true;
 
@@ -416,15 +392,8 @@ void RecurrentLayerTest::test_calculate_activations_derivatives()
 //      activations_derivatives = recurrent_layer.calculate_activations_derivatives(combinations);
 //      numerical_activation_derivative = numerical_differentiation.calculate_derivatives(recurrent_layer, &RecurrentLayer::calculate_activations, combinations);
 //      assert_true(absolute_value((activations_derivatives - numerical_activation_derivative)) < 1.0e-3, LOG);
-
    }
 
-}
-
-
-void RecurrentLayerTest::test_calculate_combinations()
-{
-   cout << "test_calculate_combinations\n";
 }
 
 
@@ -432,8 +401,8 @@ void RecurrentLayerTest::test_calculate_outputs()
 {
    cout << "test_calculate_outputs\n";
 
-   RecurrentLayer recurrent_layer;
    Tensor<type, 2> inputs;
+   Tensor<type, 2> outputs;
 
    Tensor<type, 1> parameters;
 
@@ -467,7 +436,7 @@ void RecurrentLayerTest::test_calculate_outputs()
 
    parameters = recurrent_layer.get_parameters();
 
-   Tensor<type, 2> outputs = recurrent_layer.calculate_outputs(inputs);
+   outputs = recurrent_layer.calculate_outputs(inputs);
 }
 
 
@@ -479,8 +448,6 @@ void RecurrentLayerTest::run_test_case()
 
    test_constructor();
 
-   test_destructor();
-
    // Inputs and perceptrons
 
    test_get_inputs_number();
@@ -490,14 +457,13 @@ void RecurrentLayerTest::run_test_case()
 
    test_get_biases();
    test_get_weights();
-   test_get_recurrent_initializer();
+   test_get_recurrent_weights();
 
    test_get_parameters_number();
    test_get_parameters();
 
    test_calculate_activations_derivatives();
 
-   test_calculate_combinations();
    test_calculate_outputs();
 
    cout << "End of recurrent layer test case.\n\n";

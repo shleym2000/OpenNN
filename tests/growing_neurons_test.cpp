@@ -1,7 +1,7 @@
 //   OpenNN: Open Neural Networks Library
 //   www.opennn.net
 //
-//   I N C R E M E N T A L   N E U R O N S   T E S T   C L A S S   H E A D E R
+//   G R O W I N G   N E U R O N S   T E S T   C L A S S   H E A D E R
 //
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com                                           
@@ -22,19 +22,13 @@ void GrowingNeuronsTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
+    GrowingNeurons growing_neurons_1(&training_strategy);
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
+    assert_true(growing_neurons_1.has_training_strategy(), LOG);
 
-    GrowingNeurons io1(&training_strategy);
+    GrowingNeurons growing_neurons_2;
 
-    assert_true(io1.has_training_strategy(), LOG);
-
-    GrowingNeurons io2;
-
-    assert_true(!io2.has_training_strategy(), LOG);
-
+    assert_true(!growing_neurons_2.has_training_strategy(), LOG);
 }
 
 
@@ -42,15 +36,9 @@ void GrowingNeuronsTest::test_destructor()
 {
     cout << "test_destructor\n";
 
-    GrowingNeurons* io = new GrowingNeurons;
+    GrowingNeurons* growing_neurons_pointer = new GrowingNeurons;
 
-    delete io;
-}
-
-
-void GrowingNeuronsTest::test_set_default()
-{
-    cout << "test_set_default\n";
+    delete growing_neurons_pointer;
 }
 
 
@@ -58,43 +46,17 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 {
     cout << "test_perform_neurons_selection\n";
 
-    string str;
-    Tensor<type, 2> data(21,2);
+    Index samples_number;
+    Index inputs_number;
+    Index targets_number;
 
-    NeuralNetwork neural_network;
+    Tensor<type, 2> data;
 
-    DataSet data_set;
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    GrowingNeurons io(&training_strategy);
-
-    GrowingNeuronsResults* results = nullptr;
+    NeuronsSelectionResults neurons_selection_results;
 
     // Test
 
-    str =   "-1 0\n"
-            "-0.9 0\n"
-            "-0.8 0\n"
-            "-0.7 0\n"
-            "-0.6 0\n"
-            "-0.5 0\n"
-            "-0.4 0\n"
-            "-0.3 0\n"
-            "-0.2 0\n"
-            "-0.1 0\n"
-            "0.0 0\n"
-            "0.1 0\n"
-            "0.2 0\n"
-            "0.3 0\n"
-            "0.4 0\n"
-            "0.5 0\n"
-            "0.6 0\n"
-            "0.7 0\n"
-            "0.8 0\n"
-            "0.9 0\n"
-            "1 0\n";
-
-//    data.parse(str);
+    data.resize(21,2);
 
     data.setValues({{-1,0},{-0.9f,0},{-0.9f,0},{-0.7f,0},{-0.6f,0},{-0.5,0},{-0.4f,0},
                     {-0.3f,0},{-0.2f,0},{-0.1f,0},{0.0,0},{0.1f,0},{0.2f,0},{0.3f,0},{0.4f,0},
@@ -116,43 +78,18 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     training_strategy.set_display(false);
 
-    io.set_trials_number(1);
-    io.set_maximum_neurons_number(7);
-    io.set_selection_error_goal(1.0e-3f);
-    io.set_display(false);
+    growing_neurons.set_trials_number(1);
+    growing_neurons.set_maximum_neurons_number(7);
+    growing_neurons.set_selection_error_goal(1.0e-3f);
+    growing_neurons.set_display(false);
 
-//    results = io.perform_neurons_selection();
+    neurons_selection_results = growing_neurons.perform_neurons_selection();
 
     assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
-//    assert_true(results->stopping_condition ==
-//                NeuronsSelection::SelectionErrorGoal, LOG);
+
+    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::SelectionErrorGoal, LOG);
 
     // Test
-
-    str =
-            "-1 -1\n"
-            "-0.9 -0.9\n"
-            "-0.8 -0.8\n"
-            "-0.7 -0.7\n"
-            "-0.6 -0.6\n"
-            "-0.5 -0.5\n"
-            "-0.4 -0.4\n"
-            "-0.3 -0.3\n"
-            "-0.2 -0.2\n"
-            "-0.1 -0.1\n"
-            "0.0 0.0\n"
-            "0.1 0.1\n"
-            "0.2 0.2\n"
-            "0.3 0.3\n"
-            "0.4 0.4\n"
-            "0.5 0.5\n"
-            "0.6 0.6\n"
-            "0.7 0.7\n"
-            "0.8 0.8\n"
-            "0.9 0.9\n"
-            "1 1\n";
-
-//    data.parse(str);
 
     data.setValues({{-1,1},{-0.9f, -0.9f},{-0.9f,-0.8f},{-0.7f,-0.7f},{-0.6f,-0.6f},{-0.5,-0.5},{-0.4f, -0.4f},
                     {-0.3f,-0.3f},{-0.2f,-0.2f},{-0.1f,-0.1f},{0.0,0.0},{0.1f,0.1f},{0.2f,0.2f},{0.3f,0.3f},{0.4f,0.4f},
@@ -160,7 +97,7 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     data_set.set(data);
 
-    neural_network.set(NeuralNetwork::Approximation, {1, 1});
+    neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
     neural_network.set_parameters_constant(0.0);
 
     training_strategy.set_loss_method(TrainingStrategy::SUM_SQUARED_ERROR);
@@ -169,43 +106,18 @@ void GrowingNeuronsTest::test_perform_neurons_selection()
 
     training_strategy.set_display(false);
 
-    io.set_trials_number(1);
-    io.set_maximum_neurons_number(7);
-    io.set_selection_error_goal(0.0);
-    io.set_maximum_selection_failures(1);
-    io.set_display(false);
+    growing_neurons.set_trials_number(1);
+    growing_neurons.set_maximum_neurons_number(7);
+    growing_neurons.set_selection_error_goal(0.0);
+    growing_neurons.set_maximum_selection_failures(1);
+    growing_neurons.set_display(false);
 
-//    results = io.perform_neurons_selection();
+    neurons_selection_results = growing_neurons.perform_neurons_selection();
 
     assert_true(neural_network.get_layers_neurons_numbers()[0] == 1, LOG);
-//    assert_true(results->stopping_condition == NeuronsSelection::AlgorithmFinished, LOG);
 
-}
+    assert_true(neurons_selection_results.stopping_condition == NeuronsSelection::MaximumEpochs, LOG);
 
-
-void GrowingNeuronsTest::test_to_XML()
-{
-    cout << "test_to_XML\n";
-
-    GrowingNeurons io;
-
-//    tinyxml2::XMLDocument* document = io.to_XML();
-//    assert_true(document != nullptr, LOG);
-
-//    delete document;
-}
-
-
-void GrowingNeuronsTest::test_from_XML()
-{
-    cout << "test_from_XML\n";
-
-    GrowingNeurons io;
-
-//    tinyxml2::XMLDocument* document = io.to_XML();
-//    io.from_XML(*document);
-
-//    delete document;
 }
 
 
@@ -218,19 +130,9 @@ void GrowingNeuronsTest::run_test_case()
     test_constructor();
     test_destructor();
 
-    // Set methods
-
-    test_set_default();
-
     // Order selection methods
 
     test_perform_neurons_selection();
-
-    // Serialization methods
-
-    test_to_XML();
-
-    test_from_XML();
 
     cout << "End of incremental order test case.\n\n";
 }

@@ -35,16 +35,16 @@ int main()
 
         data_set.set_training();
 
-        const Tensor<CorrelationResults, 2> correlation_results = data_set.calculate_input_target_columns_correlations();
+        const Tensor<Correlation, 2> correlation_results = data_set.calculate_input_target_columns_correlations();
 
         cout << "Separable genes: " << endl;
 
         for(Index i = 0; i < correlation_results.size(); i++)
         {
-            if(abs(correlation_results(i).correlation - 1) < numeric_limits<type>::min()
-            || abs(correlation_results(i).correlation + 1) < numeric_limits<type>::min())
+            if(abs(correlation_results(i).r - 1) < numeric_limits<type>::min()
+            || abs(correlation_results(i).r + 1) < numeric_limits<type>::min())
 
-            cout << "Gene " << i << " correlation: " << correlation_results(i).correlation << endl;
+            cout << "Gene " << i << " correlation: " << correlation_results(i).r << endl;
         }
 
         return 0;

@@ -23,8 +23,6 @@ void ModelSelectionTest::test_constructor()
 {
     cout << "test_constructor\n";
 
-    TrainingStrategy training_strategy;
-
     ModelSelection ms1(&training_strategy);
     assert_true(ms1.has_training_strategy(), LOG);
 
@@ -48,10 +46,6 @@ void ModelSelectionTest::test_get_training_strategy_pointer()
 {
     cout << "test_get_training_strategy_pointer\n";
 
-    TrainingStrategy training_strategy;
-
-    ModelSelection model_selection(&training_strategy);
-
     assert_true(model_selection.get_training_strategy_pointer() != nullptr, LOG);
 }
 
@@ -60,22 +54,9 @@ void ModelSelectionTest::test_set_training_strategy_pointer()
 {
     cout << "test_set_training_strategy_pointer\n";
 
-    NeuralNetwork neural_network;
-    DataSet data_set;
+    model_selection.set_training_strategy_pointer(&training_strategy);
 
-    TrainingStrategy training_strategy(&neural_network, &data_set);
-
-    ModelSelection ms;
-
-    ms.set_training_strategy_pointer(&training_strategy);
-
-    assert_true(ms.get_training_strategy_pointer() != nullptr, LOG);
-}
-
-
-void ModelSelectionTest::test_set_default()
-{
-    cout << "test_set_default\n";
+    assert_true(model_selection.get_training_strategy_pointer() != nullptr, LOG);
 }
 
 
@@ -172,8 +153,6 @@ void ModelSelectionTest::run_test_case()
     // Set methods
 
     test_set_training_strategy_pointer();
-
-    test_set_default();
 
     // Model selection methods
 

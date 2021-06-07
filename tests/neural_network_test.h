@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class NeuralNetworkTest : public UnitTesting
 {
 
@@ -36,7 +33,7 @@ public:
 
    // Display messages
 
-   void test_get_display();
+   
 
    // Appending layers
 
@@ -95,7 +92,7 @@ public:
    // Display messages
 
    void test_set_display_inputs_warning();
-   void test_set_display();
+   
 
    // Parameters norm / descriptives / histogram
 
@@ -125,7 +122,7 @@ public:
    void test_to_XML();
    void test_from_XML();
 
-   void test_print();
+   
 
    void test_save();
    void test_load();

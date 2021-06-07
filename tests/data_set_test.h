@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class DataSetTest : public UnitTesting 
 {
 
@@ -38,7 +36,7 @@ public:
    void test_get_samples_number();
    void test_get_variables_number();
    void test_get_variables();
-   void test_get_display();
+   
    void test_write_first_cell();
    void test_has_time_columns();
 
@@ -48,8 +46,8 @@ public:
    void test_get_training_data();
    void test_get_selection_data();
    void test_get_testing_data();
-   void test_get_inputs();
-   void test_get_targets();
+   void test_get_input_data();
+   void test_get_target_data();
    void test_get_time_series_columns();
    void test_get_time_series_columns_number();
    void test_get_time_series_column_data();
@@ -64,7 +62,7 @@ public:
    void test_set();
    void test_set_samples_number();
    void test_set_columns_number();
-   void test_set_display();
+   
    void test_set_lags_number();
    void test_set_steps_ahead_number();
    void test_set_time_series_data();
@@ -92,14 +90,11 @@ public:
    // Statistics methods
 
    void test_calculate_variables_descriptives();
-   void test_calculate_training_samples_descriptives();
-   void test_calculate_selection_samples_descriptives();
-   void test_calculate_testing_samples_descriptives();
    void test_calculate_input_variables_descriptives();
    void test_calculate_variables_means();
-   void test_calculate_training_targets_mean();
+
+   void test_calculate_used_targets_mean();
    void test_calculate_selection_targets_mean();
-   void test_calculate_testing_targets_mean();
 
    // Correlation methods
 
@@ -128,7 +123,6 @@ public:
 
    void test_unscale_data();
 
-
    // Pattern recognition methods
 
    void test_calculate_target_columns_distribution();
@@ -142,7 +136,7 @@ public:
    void test_calculate_average_reachability();
 
    void test_calculate_LOF_outliers();
-   void test_unuse_LOF_outliers();
+   void test_unuse_local_outlier_factor_outliers();
 
    // Data generation
 
@@ -150,9 +144,6 @@ public:
 
    // Serialization methods
 
-   void test_to_XML();
-   void test_from_XML();
-   void test_print();
    void test_print_data_preview();
 
    void test_read_csv();
@@ -170,18 +161,18 @@ public:
    void test_read_wine_csv();
    void test_read_binary_csv();
 
-   //Trasform methods
+   // Trasform methods
 
    void test_transform_time_series();
 
-   //Principal components mehtod
+   // Principal components mehtod
 
    void test_calculate_training_negatives();
    void test_calculate_selection_negatives();
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();
 
-   //Check if constant
+   // Check if constant
 
    void test_is_constant_numeric();
 
@@ -192,6 +183,16 @@ public:
   private:
 
    DataSet data_set;
+
+   Tensor<type, 2> data;
+
+   Tensor<Index, 1> training_indices;
+   Tensor<Index, 1> selection_indices;
+   Tensor<Index, 1> testing_indices;
+
+   Tensor<Index, 1> input_variables_indices;
+   Tensor<Index, 1> target_variables_indices;
+
 };
 
 #endif

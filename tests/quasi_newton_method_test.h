@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class QuasiNewtonMethodTest : public UnitTesting 
 {
 
@@ -32,12 +29,10 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor(); 
 
    // Get methods
 
    void test_get_inverse_hessian_approximation_method();
-   void test_get_inverse_hessian_approximation_method_name();
 
    // Set methods
 
@@ -49,7 +44,6 @@ public:
    void test_calculate_BFGS_inverse_hessian_approximation();
 
    void test_calculate_inverse_hessian_approximation();
-   void test_calculate_training_direction();
 
    void test_perform_training();
 
@@ -57,11 +51,6 @@ public:
 
    void test_resize_training_error_history();
 
-   // Serialization methods
-
-   void test_to_XML();   
-   void test_load();
-  
    // Unit testing methods
 
    void run_test_case();
@@ -75,6 +64,10 @@ private:
    SumSquaredError sum_squared_error;
 
    QuasiNewtonMethod quasi_newton_method;
+
+   QuasiNewtonMehtodData quasi_newton_method_data;
+
+   TrainingResults training_results;
 
 };
 

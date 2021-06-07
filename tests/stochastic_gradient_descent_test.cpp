@@ -7,13 +7,14 @@
 //   artelnics@artelnics.com
 
 #include "stochastic_gradient_descent_test.h"
- 
 
 StochasticGradientDescentTest::StochasticGradientDescentTest() : UnitTesting()
 {
     sum_squared_error.set(&neural_network, &data_set);
 
     stochastic_gradient_descent.set_loss_index_pointer(&sum_squared_error);
+
+    stochastic_gradient_descent.set_display(false);
 }
 
 
@@ -28,21 +29,13 @@ void StochasticGradientDescentTest::test_constructor()
 
    // Default constructor
 
-   StochasticGradientDescent sgd1;
-   assert_true(!sgd1.has_loss_index(), LOG);
+   StochasticGradientDescent stochastic_gradient_descent_1;
+   assert_true(!stochastic_gradient_descent_1.has_loss_index(), LOG);
 
    // Loss index constructor
 
-   StochasticGradientDescent sgd2(&sum_squared_error);
-   assert_true(sgd2.has_loss_index(), LOG);
-}
-
-
-/// @todo
-
-void StochasticGradientDescentTest::test_destructor()
-{
-   cout << "test_destructor\n"; 
+   StochasticGradientDescent stochastic_gradient_descent_2(&sum_squared_error);
+   assert_true(stochastic_gradient_descent_2.has_loss_index(), LOG);
 }
 
 
@@ -50,26 +43,27 @@ void StochasticGradientDescentTest::test_perform_training()
 {
    cout << "test_perform_training\n";
 
+   Index samples_number;
+   Index inputs_number;
+   Index targets_number;
+
+   TrainingResults training_results;
+
    // Test
 
-   data_set.set(1, 1, 2);
+   samples_number = 1;
+   inputs_number = 1;
+   targets_number = 1;
+
+   data_set.set(samples_number, inputs_number, targets_number);
    data_set.set_data_random();
 
-   neural_network.set(NeuralNetwork::Approximation, {1, 2});
+   neural_network.set(NeuralNetwork::Approximation, {inputs_number, targets_number});
    neural_network.set_parameters_random();
 
-   // Test
-
-   //type old_loss = sum_squared_error.calculate_error({0});
-
-   stochastic_gradient_descent.set_display(false);
    stochastic_gradient_descent.set_maximum_epochs_number(1);
 
-   stochastic_gradient_descent.perform_training();
-
-   //type loss = sum_squared_error.calculate_error({0});
-
-   //assert_true(loss < old_loss, LOG);
+   training_results = stochastic_gradient_descent.perform_training();
 
    // Minimum parameters increment norm
 
@@ -79,7 +73,9 @@ void StochasticGradientDescentTest::test_perform_training()
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
    stochastic_gradient_descent.set_maximum_time(1000.0);
 
-   stochastic_gradient_descent.perform_training();
+   training_results = stochastic_gradient_descent.perform_training();
+
+   //assert_true(training_results.stopping_criterion, LOG);
 
    // Loss goal
 
@@ -91,7 +87,7 @@ void StochasticGradientDescentTest::test_perform_training()
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
    stochastic_gradient_descent.set_maximum_time(1000.0);
 
-   stochastic_gradient_descent.perform_training();
+   training_results = stochastic_gradient_descent.perform_training();
 
    //loss = sum_squared_error.calculate_error({0});
 
@@ -103,7 +99,7 @@ void StochasticGradientDescentTest::test_perform_training()
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
    stochastic_gradient_descent.set_maximum_time(1000.0);
 
-   stochastic_gradient_descent.perform_training();
+   training_results = stochastic_gradient_descent.perform_training();
 
    // Gradient norm goal
 
@@ -115,11 +111,10 @@ void StochasticGradientDescentTest::test_perform_training()
    stochastic_gradient_descent.set_maximum_epochs_number(1000);
    stochastic_gradient_descent.set_maximum_time(1000.0);
 
-   stochastic_gradient_descent.perform_training();
+   training_results = stochastic_gradient_descent.perform_training();
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
-
 }
 
 
@@ -127,12 +122,12 @@ void StochasticGradientDescentTest::test_resize_training_error_history()
 {
    cout << "test_resize_training_error_history\n";
 
-   TrainingResults sgdtr;
+   TrainingResults training_results;
 
-   sgdtr.resize_training_error_history(1);
+   training_results.resize_training_error_history(1);
 
-   assert_true(sgdtr.training_error_history.size() == 1, LOG);
-   assert_true(sgdtr.selection_error_history.size() == 1, LOG);
+   assert_true(training_results.training_error_history.size() == 1, LOG);
+   assert_true(training_results.selection_error_history.size() == 1, LOG);
 }
 
 
@@ -144,16 +139,10 @@ void StochasticGradientDescentTest::test_to_XML()
 
    // Test
 
-   //document = sgd.to_XML();
+//   document = stochastic_gradient_descent.to_XML();
    assert_true(document != nullptr, LOG);
 
    delete document;
-}
-
-
-void StochasticGradientDescentTest::test_from_XML()
-{
-   cout << "test_from_XML\n";
 }
 
 
@@ -164,12 +153,10 @@ void StochasticGradientDescentTest::run_test_case()
    // Constructor and destructor methods
 
    test_constructor();
-   test_destructor();
 
    // Training methods
 
    test_perform_training();
-
 
    // Training history methods
 
@@ -178,7 +165,6 @@ void StochasticGradientDescentTest::run_test_case()
    // Serialization methods
 
    test_to_XML();
-   test_from_XML();
 
    cout << "End of stochastic gradient descent test case.\n\n";
 }
@@ -200,4 +186,3 @@ void StochasticGradientDescentTest::run_test_case()
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-

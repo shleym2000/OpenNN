@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class UnscalingLayerTest : public UnitTesting
 {
 
@@ -32,7 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();  
 
    // Get methods
 
@@ -56,10 +52,6 @@ public:
    void test_get_unscaling_method();
    void test_write_scalers();
 
-   // Display messages
-
-   void test_get_display();
-
    // Set methods
 
    void test_set();
@@ -70,7 +62,6 @@ public:
    // Output variables descriptives
 
    void test_set_descriptives();
-   void test_set_descriptives_eigen();
    void test_set_item_descriptives();
 
    void test_set_minimum();
@@ -81,10 +72,6 @@ public:
    // Variables scaling and unscaling
 
    void test_set_unscaling_method();
-
-   // Display messages
-
-   void test_set_display();
 
    // Check methods
 
@@ -110,12 +97,15 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   UnscalingLayer unscaling_layer;
+
 };
 
 
 #endif
-
-
 
 // OpenNN: Open Neural Networks Library.
 // Copyright (C) 2005-2021 Artificial Intelligence Techniques, SL.

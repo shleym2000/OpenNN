@@ -131,6 +131,7 @@ public:
    // Set methods
 
    void set();
+   void set(NeuralNetwork*, DataSet*);
    void set_default();
 
    void set_threads_number(const int&);
@@ -250,9 +251,8 @@ private:
 
    bool display = true;
 
-
 #ifdef OPENNN_CUDA
-    #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"
+   #include "../../opennn-cuda/opennn_cuda/training_strategy_cuda.h"
 #endif
 
 };

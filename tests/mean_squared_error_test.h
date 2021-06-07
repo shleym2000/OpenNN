@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class MeanSquaredErrorTest : public UnitTesting 
 {
 
@@ -32,11 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Get methods
-
-   // Set methods
 
    // Error methods
 
@@ -50,11 +42,6 @@ public:
 
    void test_calculate_squared_errors_jacobian();
 
-   // Serialization methods
-
-   void test_to_XML();
-   void test_from_XML();
-
    // Unit testing methods
 
    void run_test_case();
@@ -66,6 +53,14 @@ private:
    NeuralNetwork neural_network;
 
    MeanSquaredError mean_squared_error;
+
+   DataSetBatch batch;
+
+   NeuralNetworkForwardPropagation forward_propagation;
+
+   LossIndexBackPropagation back_propagation;
+
+   LossIndexBackPropagationLM back_propagation_lm;
 };
 
 

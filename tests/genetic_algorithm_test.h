@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class GeneticAlgorithmTest : public UnitTesting
 {
 
@@ -34,10 +32,6 @@ public:
 
    void test_constructor();
    void test_destructor();
-
-   // Set methods
-
-   void test_set_default();
 
    // Population methods
 
@@ -62,12 +56,6 @@ public:
    // Inputs selection methods
 
    void test_perform_inputs_selection();
-
-   // Serialization methods
-
-   void test_to_XML();
-
-   void test_from_XML();
 
    // Unit testing methods
 

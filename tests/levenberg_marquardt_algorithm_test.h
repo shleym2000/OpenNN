@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class LevenbergMarquardtAlgorithmTest : public UnitTesting 
 {
 
@@ -31,42 +29,14 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
-
-   // Get methods
-
-   void test_get_damping_parameter();
-
-   void test_get_damping_parameter_factor();
-
-   void test_get_minimum_damping_parameter();
-   void test_get_maximum_damping_parameter();
-
-   // Set methods
-
-   void test_set_damping_parameter();
-
-   void test_set_damping_parameter_factor();
-
-   void test_set_minimum_damping_parameter();
-   void test_set_maximum_damping_parameter();
 
    // Training methods
-
-   void test_calculate_training_loss();
-   void test_calculate_training_loss_gradient();
-   void test_calculate_hessian_approximation();
 
    void test_perform_training();
 
    // Training history methods
 
    void test_resize_training_error_history();
-
-   // Serialization methods
-
-   void test_to_XML();   
-   void test_from_XML();
 
    // Linear algebraic equations methods
 

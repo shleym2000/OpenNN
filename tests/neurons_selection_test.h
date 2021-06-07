@@ -13,8 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
 class NeuronsSelectionTest : public UnitTesting
 {
 
@@ -47,19 +45,18 @@ public:
 
    void test_set_training_strategy_pointer();
 
-   void test_set_default();
-
-   void test_set_loss_calculation_method();
-
-   void test_get_final_loss();
-
-   void test_calculate_losses();
-
-   void test_get_parameters_order();
 
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   DataSet data_set;
+
+   NeuralNetwork neural_network;
+
+   TrainingStrategy training_strategy;
 
 };
 

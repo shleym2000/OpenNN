@@ -471,6 +471,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
     const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+
     Tensor<Descriptives, 1> target_variables_descriptives;
 
     DataSetBatch training_batch(training_samples_number, data_set_pointer);
@@ -548,7 +549,7 @@ TrainingResults LevenbergMarquardtAlgorithm::perform_training()
 
         results.training_error_history(epoch) = training_back_propagation_lm.error;
 
-        gradient_norm = l2_norm(training_back_propagation_lm.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation_lm.gradient);
 
         if(has_selection)
         {
@@ -770,7 +771,7 @@ void LevenbergMarquardtAlgorithm::update_parameters(const DataSetBatch& batch,
         }
     }
 
-    optimization_data.parameters_increment_norm = l2_norm(optimization_data.parameters_increment);  
+    optimization_data.parameters_increment_norm = l2_norm(thread_pool_device, optimization_data.parameters_increment);
 
     // Set parameters
 

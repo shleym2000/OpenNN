@@ -6,14 +6,12 @@
 //   Artificial Intelligence Techniques SL
 //   artelnics@artelnics.com
 
-#ifndef CORRELATIONS_TESTS_H
-#define CORRELATIONS_TESTS_H
+#ifndef CORRELATIONS_TEST_H
+#define CORRELATIONS_TEST_H
 
 // Unit testing includes
 
 #include "unit_testing.h"
-
-using namespace OpenNN;
 
 class CorrelationsTest : public UnitTesting
 {
@@ -30,61 +28,28 @@ public:
 
     virtual ~CorrelationsTest();
 
-    // Linear correlation methods
+    // Correlation methods
 
     void test_linear_correlation();
-    void test_spearman_linear_correlation();
-    void test_rank_linear_correlation();
-
-    // Logistic correlation methods
-
-    void test_logistic_correlation();
-    void test_rank_logistic_correlation();
-    void test_logistic_function();
-    void test_logistic_error_gradient();
-
-    // Point-Biserial correlation methods
-
-    void test_point_biserial_correlation();
-
-    // Logarithmic correlation methods
-
-    void test_logarithmic_correlation();
-
-    // Exponential correlation methods
-
-    void test_exponential_correlation();
-
-    // Regressions methods
 
     void test_linear_regression();
 
-    void test_exponential_regression();
+    void test_logistic_correlation();
 
-    void test_logarithmic_regression();
+    void test_logarithmic_correlation();
 
-    void test_power_regression();
+    void test_exponential_correlation();
 
-    void test_logistic_regression();
+    void test_power_correlation();
 
     // Time series correlation methods
 
-    void test_autocorrelation();
+    void test_autocorrelations();
     void test_cross_correlations();
 
-    // Covariance
+    // Contingency table
 
-    void test_covariance();
-    void test_covariance_matrix();
-    void test_less_rank_with_ties();
-
-    //Contingency table
-
-    void test_contingency_table();
-    void test_chi_square_test();
-    void test_karl_pearson_correlation();
-
-    // Unit tseting method
+    // Unit testing methods
 
     void run_test_case();
 
@@ -92,7 +57,6 @@ public:
 
 
 #endif
-
 
 
 // OpenNN: Open Neural Networks Library.

@@ -210,11 +210,10 @@ public:
 
    // Linear regression analysis methods
 
-   Tensor<RegressionResults, 1> linear_regression() const;
-   Tensor<RegressionResults, 1> linear_regression(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
+   Tensor<Correlation, 1> linear_correlation() const;
+   Tensor<Correlation, 1> linear_correlation(const Tensor<type, 2>&, const Tensor<type, 2>&) const;
 
    void print_linear_regression_correlations() const;
-   Tensor<type, 1> get_linear_regression_correlations_std() const;
 
    Tensor<LinearRegressionAnalysis, 1> perform_linear_regression_analysis() const;
    void perform_linear_regression_analysis_void() const;

@@ -498,15 +498,15 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("MinimumMaximum");
     }
-    else if (scaler == MeanStandardDeviation)
+    else if(scaler == MeanStandardDeviation)
     {
         file_stream.PushText("MeanStandardDeviation");
     }
-    else if (scaler == StandardDeviation)
+    else if(scaler == StandardDeviation)
     {
         file_stream.PushText("StandardDeviation");
     }
-    else if (scaler == Logarithm)
+    else if(scaler == Logarithm)
     {
         file_stream.PushText("Logarithm");
     }
@@ -521,11 +521,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Input");
     }
-    else if (column_use == Target)
+    else if(column_use == Target)
     {
         file_stream.PushText("Target");
     }
-    else if (column_use == UnusedVariable)
+    else if(column_use == UnusedVariable)
     {
         file_stream.PushText("Unused");
     }
@@ -544,11 +544,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
     {
         file_stream.PushText("Numeric");
     }
-    else if (type == Binary)
+    else if(type == Binary)
     {
         file_stream.PushText("Binary");
     }
-    else if (type == Categorical)
+    else if(type == Categorical)
     {
         file_stream.PushText("Categorical");
     }
@@ -593,11 +593,11 @@ void DataSet::Column::write_XML(tinyxml2::XMLPrinter& file_stream) const
             {
                 file_stream.PushText("Input");
             }
-            else if (categories_uses(i) == Target)
+            else if(categories_uses(i) == Target)
             {
                 file_stream.PushText("Target");
             }
-            else if (categories_uses(i) == Time)
+            else if(categories_uses(i) == Time)
             {
                 file_stream.PushText("Time");
             }
@@ -1810,7 +1810,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
 
     // Testing
 
-
     Index count_testing = 0;
 
     while(count_testing != testing_samples_number)
@@ -1824,14 +1823,6 @@ void DataSet::split_samples_random(const type& training_samples_ratio,
         }
 
         i++;
-    }
-
-    for(Index i = 0; i < samples_uses.size(); i++)
-    {
-        if(samples_uses(i) == UnusedSample)
-        {
-            cout << "Sample " << i << " is unused" << endl;
-        }
     }
 }
 
@@ -1913,6 +1904,7 @@ void DataSet::split_samples_sequential(const type& training_samples_ratio,
             samples_uses(i) = Testing;
             count_testing++;
         }
+
         i++;
     }
 }
@@ -1924,7 +1916,7 @@ void DataSet::set_columns(const Tensor<Column, 1>& new_columns)
 }
 
 
-/// This method sets the n columns of the dataset by default,
+/// This method sets the n columns of the data_set by default,
 /// i.e. until column n-1 are Input and column n is Target.
 
 void DataSet::set_default_columns_uses()
@@ -1972,7 +1964,7 @@ void DataSet::set_default_columns_uses()
 }
 
 
-/// This method sets the n columns of the dataset by default,
+/// This method sets the n columns of the data_set by default,
 /// i.e. until column n-1 are Input and column n is Target.
 
 void DataSet::set_default_classification_columns_uses()
@@ -2021,8 +2013,8 @@ void DataSet::set_default_classification_columns_uses()
 }
 
 
-/// This method puts the names of the columns in the dataset.
-/// This is used when the dataset does not have a header,
+/// This method puts the names of the columns in the data_set.
+/// This is used when the data_set does not have a header,
 /// the default names are: column_0, column_1, ..., column_n.
 
 void DataSet::set_default_columns_names()
@@ -2216,6 +2208,7 @@ Tensor<string, 1> DataSet::get_variables_names() const
         else
         {
             variables_names(index) = columns(i).name;
+
             index++;
         }
     }
@@ -3273,7 +3266,7 @@ void DataSet::set_columns_uses(const Tensor<VariableUse, 1>& new_columns_uses)
 }
 
 
-/// Sets all columns in the dataset as unused columns.
+/// Sets all columns in the data_set as unused columns.
 
 void DataSet::set_columns_unused()
 {
@@ -3302,7 +3295,7 @@ void DataSet::set_input_target_columns(const Tensor<Index, 1>& input_columns, co
 }
 
 
-/// Sets all input columns in the dataset as unused columns.
+/// Sets all input columns in the data_set as unused columns.
 
 void DataSet::set_input_columns_unused()
 {
@@ -4824,7 +4817,6 @@ void DataSet::set_default()
     input_variables_dimensions.resize(1);
 
     input_variables_dimensions.setConstant(get_input_variables_number());
-
 }
 
 
@@ -5213,7 +5205,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 {
     Tensor<string, 1> unused_columns;
 
-    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -5226,7 +5218,7 @@ Tensor<string, 1> DataSet::unuse_uncorrelated_columns(const type& minimum_correl
 
         for(Index j = 0; j < target_columns_number; j++)
         {
-            if(columns(index).column_use != UnusedVariable && abs(correlations(i,j).correlation) < minimum_correlation)
+            if(columns(index).column_use != UnusedVariable && abs(correlations(i,j).r) < minimum_correlation)
             {
                 columns(index).set_use(UnusedVariable);
 
@@ -5845,6 +5837,7 @@ Tensor<type, 1> DataSet::calculate_used_variables_minimums() const
     return columns_minimums(data, get_used_samples_indices(), get_used_variables_indices());
 }
 
+
 /// Returns a vector containing the means of a set of given variables.
 /// @param variables_indices Indices of the variables.
 
@@ -5914,7 +5907,7 @@ void DataSet::set_gmt(Index& new_gmt)
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlations() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_columns_correlations() const
 {
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -5922,7 +5915,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
     const Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
-    Tensor<CorrelationResults, 2> correlations(input_columns_number, target_columns_number);
+    Tensor<Correlation, 2> correlations(input_columns_number, target_columns_number);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -5945,27 +5938,27 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const CorrelationResults linear_correlation
-                        = linear_correlations(thread_pool_device, input_column, target_column);
+                const Correlation linear_correlation
+                        = OpenNN::linear_correlation(thread_pool_device, input_column, target_column);
 
-                const CorrelationResults exponential_correlation
-                        = exponential_correlations(thread_pool_device, input_column, target_column);
+                const Correlation exponential_correlation
+                        = OpenNN::exponential_correlation(thread_pool_device, input_column, target_column);
 
-                const CorrelationResults logarithmic_correlation
-                        = logarithmic_correlations(thread_pool_device, input_column, target_column);
+                const Correlation logarithmic_correlation
+                        = OpenNN::logarithmic_correlation(thread_pool_device, input_column, target_column);
 
-                const CorrelationResults power_correlation
-                        = power_correlations(thread_pool_device, input_column, target_column);
+                const Correlation power_correlation
+                        = OpenNN::power_correlation(thread_pool_device, input_column, target_column);
 
-                CorrelationResults strongest_correlation = linear_correlation;
+                Correlation strongest_correlation = linear_correlation;
 
-                if(abs(exponential_correlation.correlation) > abs(strongest_correlation.correlation))
+                if(abs(exponential_correlation.r) > abs(strongest_correlation.r))
                     strongest_correlation = exponential_correlation;
 
-                if(abs(logarithmic_correlation.correlation) > abs(strongest_correlation.correlation))
+                if(abs(logarithmic_correlation.r) > abs(strongest_correlation.r))
                     strongest_correlation = logarithmic_correlation;
 
-                if(abs(power_correlation.correlation) > abs(strongest_correlation.correlation))
+                if(abs(power_correlation.r) > abs(strongest_correlation.r))
                     strongest_correlation = power_correlation;
 
                 correlations(i,j) = strongest_correlation;
@@ -5975,51 +5968,51 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = linear_correlations(thread_pool_device, input_column, target_column);
+                correlations(i,j) = linear_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, input_column, target_column);
+                correlations(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Binary && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, input_column, target_column);
+                correlations(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, target, input);
             }
             else if(input_type == Binary && target_type == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> input_column(input.data(), input.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, target, input);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, target, input);
             }
             else if(input_type == Categorical && target_type == Binary)
             {
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input, target);
+                //correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input, target);
             }
             else if(input_type == DateTime || target_type == DateTime)
             {
-                correlations(i,j).correlation = 0;
+                correlations(i,j).r = 0;
             }
             else
             {
@@ -6032,7 +6025,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
                 throw logic_error(buffer.str());
             }
 
-            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).correlation << endl;
+            cout << columns(input_index).name << " - " << columns(target_index).name << " correlation: " << correlations(i,j).r << endl;
         }
     }
 
@@ -6047,7 +6040,7 @@ Tensor<CorrelationResults, 2> DataSet::calculate_input_target_columns_correlatio
 
 Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() const
 {
-    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
     const Index rows_number = correlations.dimension(0);
     const Index columns_number = correlations.dimension(1);
@@ -6058,7 +6051,7 @@ Tensor<type, 2> DataSet::calculate_input_target_columns_correlations_values() co
     {
         for(Index j = 0; j < columns_number; j++)
         {
-            correlations_values(i,j) = correlations(i,j).correlation;
+            correlations_values(i,j) = correlations(i,j).r;
         }
     }
 
@@ -6124,13 +6117,13 @@ void DataSet::print_input_target_columns_correlations() const
     const Tensor<string, 1> inputs_names = get_input_variables_names();
     const Tensor<string, 1> targets_name = get_target_variables_names();
 
-    const Tensor<CorrelationResults, 2> correlations = calculate_input_target_columns_correlations();
+    const Tensor<Correlation, 2> correlations = calculate_input_target_columns_correlations();
 
     for(Index j = 0; j < targets_number; j++)
     {
         for(Index i = 0; i < inputs_number; i++)
         {
-            cout << targets_name(j) << " - " << inputs_names(i) << ": " << correlations(i,j).correlation << endl;
+            cout << targets_name(j) << " - " << inputs_names(i) << ": " << correlations(i,j).r << endl;
         }
     }
 }
@@ -6173,11 +6166,11 @@ void DataSet::print_top_input_target_columns_correlations() const
 
 
 /// Calculates the regressions between all outputs and all inputs.
-/// It returns a matrix with the data stored in RegressionResults format, where the number of rows is the input number
+/// It returns a matrix with the data stored in Correlation format, where the number of rows is the input number
 /// and number of columns is the target number.
 /// Each element contains the correlation between a single input and a single target.
 
-Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions() const
+Tensor<Correlation, 2> DataSet::calculate_input_target_columns_regressions() const
 {
     const Index input_columns_number = get_input_columns_number();
     const Index target_columns_number = get_target_columns_number();
@@ -6185,7 +6178,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
     const Tensor<Index, 1> input_columns_indices = get_input_columns_indices();
     Tensor<Index, 1> target_columns_indices = get_target_columns_indices();
 
-    Tensor<RegressionResults, 2> regressions(input_columns_number, target_columns_number);
+    Tensor<Correlation, 2> regressions(input_columns_number, target_columns_number);
 
     for(Index i = 0; i < input_columns_number; i++)
     {
@@ -6214,51 +6207,51 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                const RegressionResults linear_regression
-                        = OpenNN::linear_regression(thread_pool_device, input_column, target_column);
+                const Correlation linear_correlation
+                        = OpenNN::linear_correlation(thread_pool_device, input_column, target_column);
 
-                const RegressionResults exponential_regression
-                        = OpenNN::exponential_regression(thread_pool_device, input_column, target_column);
+                const Correlation exponential_correlation
+                        = OpenNN::exponential_correlation(thread_pool_device, input_column, target_column);
 
-                const RegressionResults logarithmic_regression
-                        = OpenNN::logarithmic_regression(thread_pool_device, input_column, target_column);
+                const Correlation logarithmic_correlation
+                        = OpenNN::logarithmic_correlation(thread_pool_device, input_column, target_column);
 
-                const RegressionResults power_regression
-                        = OpenNN::power_regression(thread_pool_device, input_column, target_column);
+                const Correlation power_correlation
+                        = OpenNN::power_correlation(thread_pool_device, input_column, target_column);
 
-                RegressionResults strongest_regression = linear_regression;
+                Correlation strongest_correlation = linear_correlation;
 
-                if(abs(exponential_regression.correlation) > abs(strongest_regression.correlation))
-                    strongest_regression = exponential_regression;
+                if(abs(exponential_correlation.r) > abs(strongest_correlation.r))
+                    strongest_correlation = exponential_correlation;
 
-                if(abs(logarithmic_regression.correlation) > abs(strongest_regression.correlation))
-                    strongest_regression = logarithmic_regression;
+                if(abs(logarithmic_correlation.r) > abs(strongest_correlation.r))
+                    strongest_correlation = logarithmic_correlation;
 
-                if(abs(power_regression.correlation) > abs(strongest_regression.correlation))
-                    strongest_regression = power_regression;
+                if(abs(power_correlation.r) > abs(strongest_correlation.r))
+                    strongest_correlation = power_correlation;
 
-                regressions(i,j) = strongest_regression;
+                regressions(i,j) = strongest_correlation;
             }
             else if(input_type == Binary && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = linear_regression(thread_pool_device, input_column, target_column);
+                regressions(i,j) = linear_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Numeric && target_type == Binary)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = logistic_regression(thread_pool_device, input_column, target_column);
+                regressions(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Binary && target_type == Numeric)
             {
                 const TensorMap<Tensor<type,1>> input_column(input.data(), input.dimension(0));
                 const TensorMap<Tensor<type,1>> target_column(target.data(), target.dimension(0));
 
-                regressions(i,j) = logistic_regression(thread_pool_device, input_column, target_column);
+                regressions(i,j) = logistic_correlation(thread_pool_device, input_column, target_column);
             }
             else if(input_type == Categorical && target_type == Categorical)
             {
@@ -6266,7 +6259,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
-                regressions(i,j).correlation = 0;
+                regressions(i,j).r = 0;
             }
             else if(input_type == Categorical && target_type == Numeric)
             {
@@ -6274,7 +6267,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
-                regressions(i,j).correlation = 0;
+                regressions(i,j).r = 0;
             }
             else if(input_type == Numeric && target_type == Categorical)
             {
@@ -6282,7 +6275,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
-                regressions(i,j).correlation = 0;
+                regressions(i,j).r = 0;
             }
             else if(input_type == Binary && target_type == Categorical)
             {
@@ -6290,7 +6283,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
-                regressions(i,j).correlation = 0;
+                regressions(i,j).r = 0;
             }
             else if(input_type == Categorical && target_type == Binary)
             {
@@ -6298,7 +6291,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
-                regressions(i,j).correlation = 0;
+                regressions(i,j).r = 0;
             }
             else if(input_type == DateTime && target_type == DateTime)
             {
@@ -6306,7 +6299,7 @@ Tensor<RegressionResults, 2> DataSet::calculate_input_target_columns_regressions
 
                 regressions(i,j).a = 0;
                 regressions(i,j).b = 0;
-                regressions(i,j).correlation = 0;
+                regressions(i,j).r = 0;
             }
             else
             {
@@ -6368,10 +6361,10 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                const type linear_correlation = OpenNN::linear_correlation(thread_pool_device, current_input_i, current_input_j);
-                const type exponential_correlation = OpenNN::exponential_correlation(thread_pool_device, current_input_i, current_input_j);
-                const type logarithmic_correlation = OpenNN::logarithmic_correlation(thread_pool_device, current_input_i, current_input_j);
-                const type power_correlation = OpenNN::power_correlation(thread_pool_device, current_input_i, current_input_j);
+                const type linear_correlation = OpenNN::linear_correlation(thread_pool_device, current_input_i, current_input_j).r;
+                const type exponential_correlation = OpenNN::exponential_correlation(thread_pool_device, current_input_i, current_input_j).r;
+                const type logarithmic_correlation = OpenNN::logarithmic_correlation(thread_pool_device, current_input_i, current_input_j).r;
+                const type power_correlation = OpenNN::power_correlation(thread_pool_device, current_input_i, current_input_j).r;
 
                 type strongest_correlation = linear_correlation;
 
@@ -6386,49 +6379,49 @@ Tensor<type, 2> DataSet::calculate_input_columns_correlations() const
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = linear_correlation(thread_pool_device, current_input_i, current_input_j);
+                correlations(i,j) = linear_correlation(thread_pool_device, current_input_i, current_input_j).r;
             }
             else if(type_i == Categorical && type_j == Categorical)
             {
-                correlations(i,j) = karl_pearson_correlation(thread_pool_device, input_i, input_j);
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).r;
             }
             else if(type_i == Numeric && type_j == Binary)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, current_input_i, current_input_j).correlation;
+                correlations(i,j) = logistic_correlation(thread_pool_device, current_input_i, current_input_j).r;
             }
             else if(type_i == Binary && type_j == Numeric)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = logistic_correlations(thread_pool_device, current_input_i, current_input_j).correlation;
+                correlations(i,j) = logistic_correlation(thread_pool_device, current_input_i, current_input_j).r;
             }
             else if(type_i == Categorical && type_j == Numeric)
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).r;
             }
             else if(type_i == Numeric && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_j, input_i).r;
             }
             else if(type_i == Categorical && type_j == Binary)
             {
                 const TensorMap<Tensor<type, 1>> current_input_j(input_j.data(), input_j.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_i, input_j).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_i, input_j).r;
             }
             else if(type_i == Binary && type_j == Categorical)
             {
                 const TensorMap<Tensor<type, 1>> current_input_i(input_i.data(), input_i.dimension(0));
 
-                correlations(i,j) = multiple_logistic_correlations(thread_pool_device, input_j, input_i).correlation;
+                correlations(i,j) = multiple_logistic_correlation(thread_pool_device, input_j, input_i).r;
             }
             else
             {
@@ -6537,45 +6530,6 @@ void DataSet::set_default_columns_scalers()
             columns(i).scaler = Scaler::MinimumMaximum;
         }
     }
-
-/*
-    Index current_distribution;
-
-    ColumnType column_type;
-
-    #pragma omp parallel for private(current_distribution)
-
-    for(Index i = 0; i < static_cast<Index>(columns_number); i++)
-    {
-        column_type = columns(i).type;
-
-        if(column_type == ColumnType::Categorical
-                || column_type == ColumnType::Binary
-                || column_type == ColumnType::DateTime)
-        {
-            continue;
-        }
-
-        Tensor<type, 2> column_data = get_column_data(i);
-
-        const TensorMap<Tensor<type,1>> input_column(column_data.data(), column_data.dimension(0));
-
-        current_distribution = perform_distribution_distance_analysis(input_column);
-
-        if(current_distribution == 0) // Normal distribution
-        {
-            columns(i).scaler = Scaler::MeanStandardDeviation;
-        }
-        else if(current_distribution == 1) // Uniform distribution
-        {
-            columns(i).scaler = Scaler::MinimumMaximum;
-        }
-        else // Default
-        {
-            columns(i).scaler = Scaler::MinimumMaximum;
-        }
-    }
-*/
 }
 
 
@@ -9076,77 +9030,44 @@ void DataSet::unuse_Tukey_outliers(const type& cleaning_parameter)
 }
 
 
-type DataSet::calculate_euclidean_distance(const Index& sample_index, const Index& other_sample_index) const
+type DataSet::calculate_euclidean_distance(const Tensor<Index, 1>& variables_indices,
+                                           const Index& sample_index,
+                                           const Index& other_sample_index) const
 {
+    const Index input_variables_number = variables_indices.size();
+
     type distance = 0.0;
     type error;
 
-    const Index columns_number = get_columns_number();
-
-    //const Tensor<Index, 1> used_columns_indices = get_used_columns_indices();
-
-    //const Tensor<type, 1> sample = get_sample_data(sample_index);
-    //const Tensor<type, 1> other_sample = get_sample_data(other_sample_index);
-
-    Index variable_index = 0;
-
-    for(Index i = 0; i < columns_number; i++)
+    for(Index i = 0; i < input_variables_number; i++)
     {
-        if(columns(i).column_use == UnusedVariable
-            || columns(i).column_use == Id
-            || columns(i).column_use == Time
-            || columns(i).column_use == Target)
-        {
-            columns(i).type != Categorical ? variable_index++ : variable_index += columns(i).get_categories_number();
-            continue;
-        }
-        else if(columns(i).type == DateTime)
-        {
-            variable_index++;
-        }
-        else if(columns(i).type == Categorical)
-        {
-            for(Index j = 0; j < columns(i).get_categories_number(); j++)
-            {
-                error = data(sample_index, variable_index) - data(other_sample_index, variable_index);
-                //error = sample(variable_index) - other_sample(variable_index);
-                distance += error * error;
+        error = data(sample_index, variables_indices(i)) - data(other_sample_index, variables_indices(i));
 
-                variable_index++;
-            }
-        }
-        else // Numeric or Binary
-        {
-            error = data(sample_index, variable_index) - data(other_sample_index, variable_index);
-            //error = sample(variable_index) - other_sample(variable_index);
-
-            distance += error * error;
-
-            variable_index++;
-        }
+        distance += error*error;
     }
 
     return sqrt(distance);
 }
 
 
-Tensor<type, 2> DataSet::calculate_distance_matrix()const
+Tensor<type, 2> DataSet::calculate_distance_matrix(const Tensor<Index,1>& indices)const
 {
-    const Index used_samples_number = get_used_samples_number();
-    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+    const Index samples_number = indices.size();
 
-    Tensor<type, 2> distance_matrix(used_samples_number, used_samples_number);
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
+
+    Tensor<type, 2> distance_matrix(samples_number, samples_number);
+    distance_matrix.setZero();
 
     #pragma omp parallel for
 
-    for(Index i = 0; i < used_samples_number ; i++)
+    for(Index i = 0; i < indices.size() ; i++)
     {
-        distance_matrix(i,i) = 0.0;
-
         for(Index k = 0; k < i; k++)
         {
-            distance_matrix(i,k) = distance_matrix(k,i)
-                    = calculate_euclidean_distance(used_samples_indices(i), used_samples_indices(k));
+            distance_matrix(i,k)
+                    = distance_matrix(k,i)
+                    = calculate_euclidean_distance(input_variables_indices, indices(i), indices(k));
         }
     }
 
@@ -9154,65 +9075,162 @@ Tensor<type, 2> DataSet::calculate_distance_matrix()const
 }
 
 
-/// @todo Check if can be simplified.
-
-Tensor<Index, 2> DataSet::calculate_k_nearest_neighbors(const Tensor<type, 2>& distance_matrix, const Index& k_neighbors) const
+Tensor<Tensor<type, 1>, 1> DataSet::get_kd_tree_data() const
 {
-    const Index samples_number = get_used_samples_number();
+    const Index used_samples_number = get_used_samples_number();
+    const Index input_variables_number = get_input_variables_number();
 
-    Tensor<Index, 2> neighbors_indices(samples_number, k_neighbors);
-    neighbors_indices.setConstant(0);
+    const Tensor<Index, 1> used_samples_indices = get_used_samples_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
-    Tensor<type, 1> min_distances(k_neighbors);
+    Tensor<Tensor<type, 1>, 1> kd_tree_data(used_samples_number);
+
+    for(Index i = 0; i < used_samples_number; i++)
+    {
+        kd_tree_data(i) = Tensor<type, 1>(input_variables_number+1);
+
+        kd_tree_data(i)(0) = used_samples_indices(i); // Storing index
+
+        for(Index j = 0; j < input_variables_number; j++)
+            kd_tree_data(i)(j+1) = data(used_samples_indices(i), input_variables_indices(j));
+    }
+
+    return kd_tree_data;
+}
+
+
+Tensor<list<Index>, 1> DataSet::calculate_kd_tree_neighbors(const Index& k_neighbors, const Index& min_samples_leaf) const
+{
+    const Index used_samples_number = get_used_samples_number();
+
+    Tensor<Tensor<type, 1>, 1> tree = get_kd_tree_data();
+
+    const Index depths = max(floor(log2(static_cast<type>(used_samples_number)/static_cast<type>(min_samples_leaf))),
+                       static_cast<type>(0.0));
+
+    Tensor<Tensor<Index, 1>, 1> bounding_limits(depths+1);
+
+    bounding_limits(0) = Tensor<Index, 1>(2);
+    bounding_limits(0)(0) = 0;
+    bounding_limits(0)(1) = used_samples_number;
+
+    for(Index i = 1; i <= depths; i++)
+    {
+        bounding_limits(i) = Tensor<Index, 1>(pow(2, i)+1);
+        bounding_limits(i)(0) = 0;
+
+        for(Index j = 1; j < bounding_limits(i).size()-1; j = j+2)
+        {
+            bounding_limits(i)(j) = (bounding_limits(i-1)(j/2+1) - bounding_limits(i-1)(j/2))/2
+                                   + bounding_limits(i-1)(j/2);
+
+            bounding_limits(i)(j+1) = bounding_limits(i-1)(j/2+1);
+        }
+    }
+
+    auto specific_sort = [&tree](const Index & first, const Index & last, const Index & split_variable)
+    {
+        sort(tree.data() + first, tree.data() + last,
+            [&split_variable](const Tensor<type, 1> & a, const Tensor<type, 1> & b) -> bool
+        {
+            return a(split_variable) > b(split_variable);
+        });
+    };
+
+    if(depths != 0) specific_sort(0, used_samples_number, 1);
+
+    Index split_variable = 2;
+
+    for(Index i = 1; i <= depths; i++, split_variable++){
+
+        split_variable = split_variable == tree(0).size() ? 1 : split_variable;
+        specific_sort(bounding_limits(i)(0), bounding_limits(i)(1), split_variable);
+
+        #pragma omp parallel for
+        for(Index j = 1; j < (Index)bounding_limits(i).size()-1; j++)
+            specific_sort(bounding_limits(i)(j)+1, bounding_limits(i)(j+1), split_variable);
+    }
+
+    Tensor<list<Index>, 1> k_nearest_neighbors(used_samples_number);
+
+    const Index leafs_number = pow(2, depths);
+
+    Tensor<Tensor<Index, 1>, 1> bounding_boxes(leafs_number);
+
+    //Tensor<type, 2> distance_matrix(XXX)
+
+    for(Index i = 0; i < leafs_number; i++) // Each bounding box
+    {
+        const Index first = bounding_limits(depths)(i);
+        const Index last = bounding_limits(depths)(i+1);
+        bounding_boxes(i) = Tensor<Index, 1>(last - first);
+
+        for(Index j = 0; j < last - first; j++)
+            bounding_boxes(i)(j) = tree(first+j)(0);
+
+        const Tensor<type, 2> distance_matrix = calculate_distance_matrix(bounding_boxes(i));
+
+        Tensor<list<Index>, 1> box_nearest_neighbors = calculate_k_nearest_neighbors(distance_matrix, k_neighbors);
+
+        for(Index j = 0; j < last - first; j++)
+        {
+            for(auto & element : box_nearest_neighbors(j)) element = bounding_boxes(i)(element);
+
+            k_nearest_neighbors(bounding_boxes(i)(j)) = move(box_nearest_neighbors(j));
+        }
+    }
+
+    return k_nearest_neighbors;
+}
+
+
+Tensor<list<Index>, 1> DataSet::calculate_k_nearest_neighbors(const Tensor<type, 2>& distance_matrix, const Index& k_neighbors) const
+{
+    const Index samples_number = distance_matrix.dimensions()[0];
+
+    Tensor<list<Index>, 1> neighbors_indices(samples_number);
+
+    #pragma omp parallel for
 
     for(Index i = 0; i < samples_number; i++)
     {
-        min_distances.setConstant(numeric_limits<type>::max());
+        list<type> min_distances(k_neighbors, numeric_limits<type>::max());
 
-        type prev_value;
-        Index prev_index;
-
-        #pragma omp parallel for
+        neighbors_indices(i) = list<Index>(k_neighbors, 0);
 
         for(Index j = 0; j < samples_number; j++)
         {
             if(j == i) continue;
 
-            for(Index k = 0; k < k_neighbors; k++)
+            list<Index>::iterator neighbor_it = neighbors_indices(i).begin();
+            list<type>::iterator current_min = min_distances.begin();
+
+            for(Index k = 0; k < k_neighbors; k++, current_min++, neighbor_it++)
             {
-                if(distance_matrix(i,j) < min_distances(k))
+                if(distance_matrix(i,j) < *current_min)
                 {
-                    prev_value = min_distances(k);
-                    prev_index = neighbors_indices(i, k);
+                    neighbors_indices(i).insert(neighbor_it, j);
 
-                    min_distances(k) = distance_matrix(i, j);
-                    neighbors_indices(i, k) = j;
-
-                    for(Index k_left = k; k_left < k_neighbors; k_left++)
-                    {
-                        if(prev_value < min_distances(k_left))
-                        {
-                            swap(prev_value, min_distances(k_left));
-                            swap(prev_index, neighbors_indices(i, k_left));
-                        }
-                    }
+                    min_distances.insert(current_min, distance_matrix(i,j));
 
                     break;
                 }
             }
         }
+
+        neighbors_indices(i).resize(k_neighbors);
     }
 
     return neighbors_indices;
 }
 
 
-Tensor<type, 1> DataSet::calculate_average_reachability(const Tensor<type,2>& distance_matrix,
-                                                        const Tensor<Index, 2>& k_nearest_indexes,
+Tensor<type, 1> DataSet::calculate_average_reachability(Tensor<list<Index>, 1>& k_nearest_indexes,
                                                         const Index& k) const
 {
     const Index samples_number = get_used_samples_number();
     const Tensor<Index, 1> samples_indices = get_used_samples_indices();
+    const Tensor<Index, 1> input_variables_indices = get_input_variables_indices();
 
     Tensor<type, 1> average_reachability(samples_number);
     average_reachability.setZero();
@@ -9221,11 +9239,19 @@ Tensor<type, 1> DataSet::calculate_average_reachability(const Tensor<type,2>& di
 
     for(Index i = 0; i < samples_number; i++)
     {
-        for(Index j = 0; j < k; j++)
-        {
-            const Index other_index = k_nearest_indexes(i, j);
+        list<Index>::iterator neighbor_it = k_nearest_indexes(i).begin();
 
-            average_reachability(i) += max(distance_matrix(i, other_index), distance_matrix(other_index, k-1));
+        type distance_between_points;
+        type distance_2_k_neighbor;
+
+        for(Index j = 0; j < k; j++, neighbor_it++)
+        {
+            const Index neighbor_k_index = k_nearest_indexes(*neighbor_it).back();
+
+            distance_between_points = calculate_euclidean_distance(input_variables_indices, i, *neighbor_it);
+            distance_2_k_neighbor = calculate_euclidean_distance(input_variables_indices, *neighbor_it, neighbor_k_index);
+
+            average_reachability(i) += max(distance_between_points, distance_2_k_neighbor);
         }
 
         average_reachability(i) /= k;
@@ -9235,38 +9261,67 @@ Tensor<type, 1> DataSet::calculate_average_reachability(const Tensor<type,2>& di
 }
 
 
-// TODO
-Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index& k, const type& LOF_treshold) const
+/// Calculate the outliers from the data set using the LocalOutlierFactor method.
+/// @param k_neighbors Used to perform a k_nearest_algorithm to find the local density. Default is 20.
+/// @param min_samples_leaf The minimum number of samples per leaf when building a KDTree.
+/// If 0, automatically decide between using brute force aproach or KDTree.
+/// If > samples_number/2, brute force aproach is performed. Default is 0.
+/// @param contamination Percentage of outliers in the data_set to be selected. If 0.0, those paterns which deviates from the mean of LOF
+/// more than 2 times are considered outlier. Default is 0.0.
+
+Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index& k_neighbors,
+                                                                  const Index& min_samples_leaf,
+                                                                  const type& contamination) const
 {
-    /*
-    if(contamination < 0.0 && contamination > 0.5)
+    if(k_neighbors < 0)
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: DataSet class.\n"
-               << "Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index&, const type&) method.\n"
-               << "Outlier contamination(" << contamination
-               << ") should be a value between 0.0 and 0.5\n";
+               << "Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index&, const Index&, const type&) const method.\n"
+               << "k_neighbors(" << k_neighbors << ") should be a positive integer value\n";
 
         throw logic_error(buffer.str());
     }
-    */
+
+    if(contamination < 0 && contamination > 0.5)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: DataSet class.\n"
+               << "Tensor<Index, 1> DataSet::calculate_local_outlier_factor_outliers(const Index&, const Index&, const type&) const method.\n"
+               << "Outlier contamination(" << contamination << ") should be a value between 0.0 and 0.5\n";
+
+        throw logic_error(buffer.str());
+    }
 
     const Index samples_number = get_used_samples_number();
-    const Tensor<Index, 1> samples_indices = get_used_samples_indices();
-    const Index fixed_k = k >= samples_number ? samples_number - 1 : k;
 
-    const Tensor<type, 2> distance_matrix = calculate_distance_matrix();
+    bool kdtree = false;
 
-    const Tensor<Index, 2> k_nearest_indexes = calculate_k_nearest_neighbors(distance_matrix, fixed_k);
+    Index k = min(k_neighbors, samples_number-1);
+    Index min_samples_leaf_fix = max(min_samples_leaf, static_cast<Index>(0));
 
-    const Tensor<type, 1> average_reachabilities = calculate_average_reachability(distance_matrix, k_nearest_indexes, fixed_k);
+    if(min_samples_leaf == 0 && samples_number > 5000)
+    {
+        min_samples_leaf_fix = 0.05 * samples_number;
+        k = min(k, min_samples_leaf_fix);
+        kdtree = true;
+    }
+    else if(min_samples_leaf!=0 && min_samples_leaf < samples_number/2)
+    {
+        k = min(k, min_samples_leaf_fix);
+        kdtree = true;
+    }
 
-    Tensor<type, 1> LOF(samples_number);
+    Tensor<list<Index>, 1> k_nearest_indexes;
 
-    Tensor<Index, 1> outlier_indexes(samples_number);
+    kdtree ? k_nearest_indexes = calculate_kd_tree_neighbors(k, min_samples_leaf_fix)
+           : k_nearest_indexes = calculate_k_nearest_neighbors(calculate_distance_matrix(get_used_samples_indices()), k);
 
-    outlier_indexes.setZero();
+    const Tensor<type, 1> average_reachabilities = calculate_average_reachability(k_nearest_indexes, k);
+
+    Tensor<type, 1> LOF_value(samples_number);
 
     #pragma omp parallel for
 
@@ -9274,27 +9329,52 @@ Tensor<Index, 1> DataSet::calculate_LOF_outliers(const Index& k, const type& LOF
     {
         type sum = 0;
 
-        const type current_reachibility = average_reachabilities(i);
+        for(auto & neighbor_index : k_nearest_indexes(i))
+            sum += average_reachabilities(i) / average_reachabilities(neighbor_index);
 
-        for(Index j = 0; j < fixed_k; j++)
-        {
-            const Index other_index = k_nearest_indexes(i, j);
-
-            sum += current_reachibility / average_reachabilities(other_index);
-        }
-
-        if(sum/fixed_k > LOF_treshold)
-        {
-            outlier_indexes(i) = 1;
-        }
-
-        LOF(i) = sum/fixed_k;
+        LOF_value(i) = sum/k ;
     }
 
-    cout << LOF << endl;
+    Tensor<Index, 1> outlier_indexes(samples_number);
+    outlier_indexes.setZero();
+
+    if(contamination > 0)
+    {
+        Tensor<Tensor<type, 1>, 1> ordered_LOF(samples_number);
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            ordered_LOF(i) = Tensor<type, 1>(2);
+            ordered_LOF(i)(0) = i;
+            ordered_LOF(i)(1) = LOF_value(i);
+        }
+
+        sort(ordered_LOF.data(), ordered_LOF.data() + samples_number,
+            [](Tensor<type, 1> & a, Tensor<type, 1> & b) -> bool
+        {
+            return a(1) < b(1);
+        });
+
+        for(Index i = (1-contamination)*samples_number; i < samples_number; i++)
+            outlier_indexes(static_cast<Index>(ordered_LOF(i)(0))) = 1;
+    }
+    else
+    {
+        const type mean_lof = mean(LOF_value);
+        const type std_lof = standard_deviation(LOF_value);
+
+        for(Index i = 0; i < samples_number; i++)
+        {
+            if(LOF_value(i) > mean_lof + 2*std_lof)
+            {
+                outlier_indexes(i) = 1;
+            }
+        }
+    }
 
     return outlier_indexes;
 }
+
 
 
 /// Returns a matrix with the values of autocorrelation for every variable in the data set.
@@ -9335,11 +9415,11 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
 
     for(Index i = 0; i < input_target_columns_number; i++)
     {
-        if (i < input_columns_number)
+        if(i < input_columns_number)
         {
             Index column_index = input_columns_indices(i);
             ColumnType input_column_type = time_series_columns(column_index).type;
-            if (input_column_type == ColumnType::Numeric)
+            if(input_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9348,7 +9428,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
         {
             Index column_index = target_columns_indices(counter);
             ColumnType target_column_type = time_series_columns(column_index).type;
-            if (target_column_type == ColumnType::Numeric)
+            if(target_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9362,7 +9442,7 @@ Tensor<type, 2> DataSet::calculate_autocorrelations(const Index& lags_number) co
     {
         new_lags_number = lags_number - 2;
     }
-    else if (samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9438,11 +9518,11 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 
     for(Index i = 0; i < input_target_columns_number; i++)
     {
-        if (i < input_columns_number)
+        if(i < input_columns_number)
         {
             Index column_index = input_columns_indices(i);
             ColumnType input_column_type = time_series_columns(column_index).type;
-            if (input_column_type == ColumnType::Numeric)
+            if(input_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9451,7 +9531,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
         {
             Index column_index = target_columns_indices(counter);
             ColumnType target_column_type = time_series_columns(column_index).type;
-            if (target_column_type == ColumnType::Numeric)
+            if(target_column_type == ColumnType::Numeric)
             {
                 input_target_numeric_column_number++;
             }
@@ -9465,7 +9545,7 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
     {
         new_lags_number = lags_number - 2;
     }
-    else if (samples_number == lags_number + 1)
+    else if(samples_number == lags_number + 1)
     {
         new_lags_number = lags_number - 1;
     }
@@ -9528,10 +9608,10 @@ Tensor<type, 3> DataSet::calculate_cross_correlations(const Index& lags_number) 
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// by constant data.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 
 void DataSet::generate_constant_data(const Index& samples_number, const Index& variables_number, const type& value)
 {
@@ -9543,10 +9623,10 @@ void DataSet::generate_constant_data(const Index& samples_number, const Index& v
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// using random data.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 /// @todo
 
 void DataSet::generate_random_data(const Index& samples_number, const Index& variables_number)
@@ -9557,10 +9637,10 @@ void DataSet::generate_random_data(const Index& samples_number, const Index& var
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// using a sequential data.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 
 void DataSet::generate_sequential_data(const Index& samples_number, const Index& variables_number)
 {
@@ -9576,10 +9656,10 @@ void DataSet::generate_sequential_data(const Index& samples_number, const Index&
 }
 
 
-/// Generates an artificial dataset with a given number of samples and number of variables
+/// Generates an artificial data_set with a given number of samples and number of variables
 /// using the Rosenbrock function.
-/// @param samples_number Number of samples in the dataset.
-/// @param variables_number Number of variables in the dataset.
+/// @param samples_number Number of samples in the data_set.
+/// @param variables_number Number of variables in the data_set.
 /// @todo
 
 void DataSet::generate_Rosenbrock_data(const Index& samples_number, const Index& variables_number)
@@ -9971,7 +10051,7 @@ void DataSet::read_csv_1()
 
     const char separator_char = get_separator_char();
 
-    cout << "Setting data file preview..." << endl;
+    if(display) cout << "Setting data file preview..." << endl;
 
     const Index lines_number = has_columns_names ? 4 : 3;
 
@@ -10019,7 +10099,7 @@ void DataSet::read_csv_1()
 
     // Set rows labels and columns names
 
-    cout << "Setting rows labels..." << endl;
+    if(display) cout << "Setting rows labels..." << endl;
 
     string first_name = data_file_preview(0)(0);
     transform(first_name.begin(), first_name.end(), first_name.begin(), ::tolower);
@@ -10048,7 +10128,7 @@ void DataSet::read_csv_1()
 
     // Columns names
 
-    cout << "Setting columns names..." << endl;
+    if(display) cout << "Setting columns names..." << endl;
 
     if(has_columns_names)
     {
@@ -10063,7 +10143,7 @@ void DataSet::read_csv_1()
 
     // Columns types
 
-    cout << "Setting columns types..." << endl;
+    if(display) cout << "Setting columns types..." << endl;
 
     Index column_index = 0;
 
@@ -10141,7 +10221,7 @@ void DataSet::read_csv_2_simple()
 
     Index tokens_count;
 
-    cout << "Setting data dimensions..." << endl;
+    if(display) cout << "Setting data dimensions..." << endl;
 
     const char separator_char = get_separator_char();
 
@@ -10226,12 +10306,9 @@ void DataSet::read_csv_3_simple()
         }
     }
 
-
     // Read data
 
     Index j = 0;
-
-    //???
 
     const Index raw_columns_number = has_rows_labels ? get_columns_number() + 1 : get_columns_number();
 
@@ -10241,7 +10318,7 @@ void DataSet::read_csv_3_simple()
 
     if(has_rows_labels) rows_labels.resize(samples_number);
 
-    cout << "Reading data..." << endl;
+    if(display) cout << "Reading data..." << endl;
 
     Index sample_index = 0;
     Index column_index = 0;
@@ -10293,11 +10370,11 @@ void DataSet::read_csv_3_simple()
 
     file.close();
 
-    cout << "Data read succesfully..." << endl;
+    if(display) cout << "Data read succesfully..." << endl;
 
     // Check Constant
 
-    cout << "Checking constant columns..." << endl;
+    if(display) cout << "Checking constant columns..." << endl;
 
     Index variable_index = 0;
 
@@ -10350,7 +10427,7 @@ void DataSet::read_csv_3_simple()
 
     // Check Binary
 
-    cout << "Checking binary columns..." << endl;
+    if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
 }
@@ -10408,7 +10485,7 @@ void DataSet::read_csv_2_complete()
 
     // Read data
 
-    cout << "Setting data dimensions..." << endl;
+    if(display) cout << "Setting data dimensions..." << endl;
 
     const Index raw_columns_number = has_rows_labels ? columns_number + 1 : columns_number;
 
@@ -10464,7 +10541,7 @@ void DataSet::read_csv_2_complete()
         lines_count++;
     }
 
-    cout << "Setting types..." << endl;
+    if(display) cout << "Setting types..." << endl;
 
     for(Index j = 0; j < columns_number; j++)
     {
@@ -10547,7 +10624,7 @@ void DataSet::read_csv_3_complete()
 
     // Read data
 
-    cout << "Reading data..." << endl;
+    if(display) cout << "Reading data..." << endl;
 
     while(file.good())
     {
@@ -10657,19 +10734,19 @@ void DataSet::read_csv_3_complete()
 
     data_file_preview(data_file_preview_index) = tokens;
 
-    cout << "Data read succesfully..." << endl;
+    if(display) cout << "Data read succesfully..." << endl;
 
     file.close();
 
     // Check binary
 
-    cout << "Checking binary columns..." << endl;
+    if(display) cout << "Checking binary columns..." << endl;
 
     set_binary_simple_columns();
 
     // Check Constant and DateTime to unused
 
-    cout << "Checking constant columns..." << endl;
+    if(display) cout << "Checking constant columns..." << endl;
 
     variable_index = 0;
 
@@ -11005,7 +11082,7 @@ void DataSet::fix_repeated_names()
     {
         auto result = columns_count_map.insert(pair<string, Index>(columns(i).name, 1));
 
-        if (!result.second) result.first->second++;
+        if(!result.second) result.first->second++;
     }
 
     for(auto & element : columns_count_map)
@@ -11040,7 +11117,7 @@ void DataSet::fix_repeated_names()
         {
             auto result = variables_count_map.insert(pair<string, Index>(variables_names(i), 1));
 
-            if (!result.second) result.first->second++;
+            if(!result.second) result.first->second++;
         }
 
         for(auto & element : variables_count_map)
@@ -11169,36 +11246,6 @@ Tensor<Index, 2> DataSet::split_samples(const Tensor<Index, 1>& samples_indices,
 }
 
 
-void DataSet::fill_submatrix(const Tensor<type, 2>& matrix,
-                             const Tensor<Index, 1>& rows_indices,
-                             const Tensor<Index, 1>& columns_indices,
-                             type* submatrix_pointer)
-{
-    const Index rows_number = rows_indices.size();
-    const Index columns_number = columns_indices.size();
-
-    const type* matrix_pointer = matrix.data();
-
-    #pragma omp parallel for
-
-    for(Index j = 0; j < columns_number; j++)
-    {
-        const type* matrix_column_pointer = matrix_pointer + matrix.dimension(0)*columns_indices[j];
-        type* submatrix_column_pointer = submatrix_pointer + rows_number*j;
-
-        const type* value_pointer = nullptr;
-        const Index* rows_indices_pointer = rows_indices.data();
-        for(Index i = 0; i < rows_number; i++)
-        {
-            value_pointer = matrix_column_pointer + *rows_indices_pointer;
-            rows_indices_pointer++;
-            *submatrix_column_pointer = *value_pointer;
-            submatrix_column_pointer++;
-        }
-    }
-}
-
-
 void DataSetBatch::fill(const Tensor<Index, 1>& samples,
                           const Tensor<Index, 1>& inputs,
                           const Tensor<Index, 1>& targets)
@@ -11209,7 +11256,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
 
     if(input_variables_dimensions.size() == 1)
     {
-        data_set_pointer->fill_submatrix(data, samples, inputs, inputs_2d.data());
+        fill_submatrix(data, samples, inputs, inputs_2d.data());
     }
     else if(input_variables_dimensions.size() == 4)
     {
@@ -11240,7 +11287,7 @@ void DataSetBatch::fill(const Tensor<Index, 1>& samples,
         }
     }
 
-    data_set_pointer->fill_submatrix(data, samples, targets, targets_2d.data());
+    fill_submatrix(data, samples, targets, targets_2d.data());
 }
 
 

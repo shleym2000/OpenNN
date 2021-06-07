@@ -490,7 +490,6 @@ type ConjugateGradient::calculate_PR_parameter(const Tensor<type, 1>& old_gradie
     {
         buffer << "OpenNN Exception: ConjugateGradient class.\n"
                << "type calculate_PR_parameter(const Tensor<type, 1>&, const Tensor<type, 1>&) const method.\n"
-
                << "Loss index pointer is nullptr.\n";
 
         throw logic_error(buffer.str());
@@ -892,7 +891,7 @@ TrainingResults ConjugateGradient::perform_training()
         loss_index_pointer->back_propagate(training_batch, training_forward_propagation, training_back_propagation);
         results.training_error_history(epoch) = training_back_propagation.error;
 
-        gradient_norm = l2_norm(training_back_propagation.gradient);
+        gradient_norm = l2_norm(thread_pool_device, training_back_propagation.gradient);
 
         if(has_selection)
         {

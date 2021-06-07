@@ -13,9 +13,6 @@
 
 #include "unit_testing.h"
 
-using namespace OpenNN;
-
-
 class ProbabilisticLayerTest : public UnitTesting
 {
 
@@ -32,7 +29,6 @@ public:
    // Constructor and destructor methods
 
    void test_constructor();
-   void test_destructor();
 
    // Get methods
 
@@ -51,7 +47,7 @@ public:
 
    // Display messages
 
-   void test_get_display();
+   
 
    // Set methods
 
@@ -72,7 +68,7 @@ public:
 
    // Display messages
 
-   void test_set_display();
+   
 
   // Probabilistic post-processing
 
@@ -107,6 +103,12 @@ public:
    // Unit testing methods
 
    void run_test_case();
+
+private:
+
+   ProbabilisticLayer probabilistic_layer;
+
+   NumericalDifferentiation numerical_differentiation;
 };
 
 

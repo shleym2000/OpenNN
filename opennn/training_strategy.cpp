@@ -423,6 +423,14 @@ void TrainingStrategy::set()
 }
 
 
+void TrainingStrategy::set(NeuralNetwork* new_neural_network_pointer, DataSet* new_data_set_pointer)
+{
+    set_data_set_pointer(new_data_set_pointer);
+
+    set_neural_network_pointer(new_neural_network_pointer);
+}
+
+
 /// Sets the loss index method.
 /// If that object does not exists, an exception is thrown.
 /// @param new_loss_method String with the name of the new method.
@@ -712,7 +720,7 @@ TrainingResults TrainingStrategy::perform_training()
         ostringstream buffer;
 
         buffer << "OpenNN Exception: TrainingStrategy class.\n"
-               << "TrainingResults TrainingStrategy::perform_training() const method.\n"
+               << "TrainingResults perform_training() const method.\n"
                << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
         throw logic_error(buffer.str());
@@ -769,7 +777,8 @@ TrainingResults TrainingStrategy::perform_training()
 }
 
 
-/// Check the time steps and the batch size in forecasting problems. The batch size must be multiple of the time step.
+/// Check the time steps and the batch size in forecasting problems.
+/// The batch size must be multiple of the time step.
 /// If they are not multiples, then the batch size is changed to a multiple (the first multiple that is lower than the batch size).
 
 void TrainingStrategy::fix_forecasting()
