@@ -16,10 +16,6 @@
 class PerceptronLayerTest : public UnitTesting
 {
 
-#define STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
    explicit PerceptronLayerTest();
@@ -103,14 +99,6 @@ public:
 
    void test_forward_propagate();
 
-   // Hidden delta
-
-   void test_calculate_hidden_delta();
-
-   // Gradient
-
-   void test_calculate_error_gradient();
-
    // Expression methods
 
    void test_write_expression();
@@ -121,7 +109,14 @@ public:
 
 private:
 
-   PerceptronLayer perceptron_layer;
+   Index inputs_number;
+   Index neurons_number;
+   Index samples_number;
+
+    PerceptronLayer perceptron_layer;
+
+    PerceptronLayerForwardPropagation forward_propagation;
+    PerceptronLayerBackPropagation back_propagation;
 
     NumericalDifferentiation numerical_differentiation;
 };

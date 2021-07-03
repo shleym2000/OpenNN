@@ -164,8 +164,8 @@ void LearningRateAlgorithm::set_default()
 
     // TRAINING PARAMETERS
 
-    learning_rate_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
-    loss_tolerance = numeric_limits<type>::epsilon();//static_cast<type>(1.0e-9);
+    learning_rate_tolerance = numeric_limits<type>::epsilon();
+    loss_tolerance = numeric_limits<type>::epsilon();
 }
 
 
@@ -264,9 +264,6 @@ void LearningRateAlgorithm::set_display(const bool& new_display)
 /// Returns a vector with two elements:
 ///(i) the learning rate calculated by means of the corresponding algorithm, and
 ///(ii) the loss for that learning rate.
-/// @param loss Initial Performance value.
-/// @param training_direction Initial training direction.
-/// @param initial_learning_rate Initial learning rate to start the algorithm.
 
 pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     const DataSetBatch& batch,
@@ -274,7 +271,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
     LossIndexBackPropagation& back_propagation,
     OptimizationAlgorithmData& optimization_data) const
 {
-
     const NeuralNetwork* neural_network_pointer = loss_index_pointer->get_neural_network_pointer();
 
 #ifdef OPENNN_DEBUG
@@ -434,9 +430,6 @@ pair<type,type> LearningRateAlgorithm::calculate_directional_point(
 
 /// Returns bracketing triplet.
 /// This algorithm is used by line minimization algorithms.
-/// @param loss Initial Performance value.
-/// @param training_direction Initial training direction.
-/// @param initial_learning_rate Initial learning rate to start the algorithm.
 
 LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_triplet(
     const DataSetBatch& batch,
@@ -524,7 +517,6 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
         optimization_data.potential_parameters.device(*thread_pool_device)
                 = back_propagation.parameters + optimization_data.training_direction*triplet.B.first;
 
-
         neural_network_pointer->forward_propagate(batch, optimization_data.potential_parameters, forward_propagation);
 
         loss_index_pointer->calculate_errors(batch, forward_propagation, back_propagation);
@@ -534,7 +526,7 @@ LearningRateAlgorithm::Triplet LearningRateAlgorithm::calculate_bracketing_tripl
 
         triplet.B.second = back_propagation.error + regularization_weight*regularization;
 
-    } while(abs(triplet.A.second - triplet.B.second) < numeric_limits<type>::min());
+    } while(abs(triplet.A.second - triplet.B.second) < loss_tolerance);
 
 
     if(triplet.A.second > triplet.B.second)
@@ -677,7 +669,7 @@ type LearningRateAlgorithm::calculate_golden_section_learning_rate(const Triplet
 /// @param triplet Triplet containing a minimum.
 
 type LearningRateAlgorithm::calculate_Brent_method_learning_rate(const Triplet& triplet) const
-{
+{ 
     const type a = triplet.A.first;
     const type u = triplet.U.first;
     const type b = triplet.B.first;

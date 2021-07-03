@@ -302,7 +302,7 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
         const Tensor<type, 1> targets = testing_targets.chip(i,1);
         const Tensor<type, 1> outputs = testing_outputs.chip(i,1);
 
-        const Correlation linear_correlation = OpenNN::linear_correlation(thread_pool_device, outputs, targets, false);
+        const Correlation linear_correlation = OpenNN::linear_correlation(thread_pool_device, outputs, targets);
 
         linear_regression_results[i].targets = targets;
         linear_regression_results[i].outputs = outputs;
@@ -316,9 +316,14 @@ Tensor<TestingAnalysis::LinearRegressionAnalysis, 1> TestingAnalysis::perform_li
 }
 
 
-void TestingAnalysis::perform_linear_regression_analysis_void() const
+void TestingAnalysis::print_linear_regression_analysis() const
 {
-    perform_linear_regression_analysis();
+    const Tensor<LinearRegressionAnalysis, 1> linear_regression_analysis = perform_linear_regression_analysis();
+
+    for(Index i = 0; i < linear_regression_analysis.size(); i++)
+    {
+        linear_regression_analysis(i).print();
+    }
 }
 
 
@@ -1433,7 +1438,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         target = targets(i,0);
         output = outputs(i,0);
 
-        if(target >= decision_threshold && output >= decision_threshold)
+        if(target > decision_threshold && output > decision_threshold)
         {
             true_positive++;
         }
@@ -1441,7 +1446,7 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion_binary_classification(cons
         {
             false_negative++;
         }
-        else if(target < decision_threshold && output >= decision_threshold)
+        else if(target <= decision_threshold && output > decision_threshold)
         {
             false_positive++;
         }
@@ -1610,6 +1615,9 @@ Tensor<Index, 2> TestingAnalysis::calculate_confusion() const
         {
             decision_threshold = 0.5;
         }
+
+        cout << "decision_threshold" << endl;
+        cout << decision_threshold << endl;
 
         return calculate_confusion_binary_classification(targets, outputs, decision_threshold);
     }
@@ -3579,8 +3587,6 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
         throw logic_error(buffer.str());
     }
 
-
-
     const Index targets_number = data_set_pointer->get_target_variables_number();
 
     const Index outputs_number = neural_network_pointer->get_outputs_number();
@@ -3845,6 +3851,18 @@ Tensor<type, 1> TestingAnalysis::calculate_binary_classification_tests() const
     binary_classification_test[14] = markedness;
 
     return binary_classification_test;
+}
+
+
+void TestingAnalysis::print_binary_classification_tests() const
+{
+    const Tensor<type, 1> binary_classification_tests = calculate_binary_classification_tests();
+
+    cout << "Binary classification tests: " << endl;
+    cout << "Classification accuracy : " << binary_classification_tests[0] << endl;
+    cout << "Error rate              : " << binary_classification_tests[1] << endl;
+    cout << "Sensitivity             : " << binary_classification_tests[2] << endl;
+    cout << "Specificity             : " << binary_classification_tests[3] << endl;
 }
 
 

@@ -37,7 +37,9 @@ bool is_equal(const Tensor<type, 2>&, const type&, const type& = 0.0);
 bool are_equal(const Tensor<type, 1>&, const Tensor<type, 1>&, const type& = 0.0);
 bool are_equal(const Tensor<type, 2>&, const Tensor<type, 2>&, const type& = 0.0);
 
-bool is_false(const Tensor<bool, 1>& tensor);
+bool is_false(const Tensor<bool, 1>&);
+
+bool is_binary(const Tensor<type, 2>&);
 
 void save_csv(const Tensor<type,2>&, const string&);
 
@@ -65,6 +67,20 @@ void fill_submatrix(const Tensor<type, 2>& matrix,
           const Tensor<Index, 1>& columns_indices, type* submatrix);
 
 Index count_NAN(const Tensor<type, 1>&);
+
+void check_size(const Tensor<type, 1>&, const Index&, const string&);
+
+void check_dimensions(const Tensor<type, 2>&, const Index&, const Index&, const string&);
+
+void check_columns_number(const Tensor<type, 2>&, const Index&, const string&);
+
+bool is_less_than(const Tensor<type, 1>&, const type&);
+
+
+Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>&, const Tensor<type, 1>&);
+Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>&, const Tensor<type, 2>&);
+Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>&, const Tensor<type, 1>&);
+Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>&, const Tensor<type, 2>&);
 
 }
 

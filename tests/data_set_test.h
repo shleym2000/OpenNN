@@ -16,10 +16,6 @@
 class DataSetTest : public UnitTesting 
 {
 
-#define STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:  
 
    explicit DataSetTest();
@@ -72,7 +68,7 @@ public:
    // Data methods
 
    void test_set_data();
-   void test_empty();
+   void test_is_empty();
 
    // Data resizing methods
 
@@ -85,7 +81,7 @@ public:
 
    // Initialization methods
 
-   void test_initialize_data();
+   void test_set_data_constant();
 
    // Statistics methods
 
@@ -114,7 +110,6 @@ public:
 
    // Filtering methods
 
-   void test_filter_column();
    void test_filter_data();
 
    // Data scaling
@@ -123,12 +118,11 @@ public:
 
    void test_unscale_data();
 
-   // Pattern recognition methods
+   // Classification methods
 
-   void test_calculate_target_columns_distribution();
-   void test_unuse_most_populated_target();
+   void test_calculate_target_distribution();
 
-   void test_clean_Tukey_outliers();
+   void test_calculate_Tukey_outliers();
 
    void test_calculate_euclidean_distance();
    void test_calculate_distance_matrix();
@@ -172,19 +166,19 @@ public:
    void test_scrub_missing_values();
    void test_impute_missing_values_mean();
 
-   // Check if constant
-
-   void test_is_constant_numeric();
-
    // Unit testing methods
 
    void run_test_case();
 
   private:
 
-   DataSet data_set;
+   Index inputs_number;
+   Index targets_number;
+   Index samples_number;
 
    Tensor<type, 2> data;
+
+   DataSet data_set;
 
    Tensor<Index, 1> training_indices;
    Tensor<Index, 1> selection_indices;

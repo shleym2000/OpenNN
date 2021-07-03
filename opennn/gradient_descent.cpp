@@ -67,14 +67,6 @@ string GradientDescent::get_hardware_use() const
 }
 
 
-/// Returns the minimum norm of the parameter increment vector used as a stopping criteria when training.
-
-const type& GradientDescent::get_minimum_parameters_increment_norm() const
-{
-    return minimum_parameters_increment_norm;
-}
-
-
 /// Returns the minimum loss improvement during training.
 
 const type& GradientDescent::get_minimum_loss_decrease() const
@@ -89,15 +81,6 @@ const type& GradientDescent::get_minimum_loss_decrease() const
 const type& GradientDescent::get_loss_goal() const
 {
     return training_loss_goal;
-}
-
-
-/// Returns the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network.
-
-const type& GradientDescent::get_gradient_norm_goal() const
-{
-    return gradient_norm_goal;
 }
 
 
@@ -141,13 +124,10 @@ void GradientDescent::set_default()
 {
     // Stopping criteria
 
-    minimum_parameters_increment_norm = static_cast<type>(0.0);
-
-    minimum_loss_decrease = -numeric_limits<type>::max();
+    minimum_loss_decrease = 0;
 
     training_loss_goal = 0;
-    gradient_norm_goal = 0;
-    maximum_selection_failures = 100;
+    maximum_selection_failures = numeric_limits<Index>::max();
 
     maximum_epochs_number = 1000;
     maximum_time = 3600;
@@ -182,32 +162,6 @@ void GradientDescent::set_maximum_epochs_number(const Index& new_maximum_epochs_
 }
 
 
-/// Sets a new value for the minimum parameters increment norm stopping criterion.
-/// @param new_minimum_parameters_increment_norm Value of norm of parameters increment norm used to stop training.
-
-void GradientDescent::set_minimum_parameters_increment_norm(const type& new_minimum_parameters_increment_norm)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_minimum_parameters_increment_norm < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void new_minimum_parameters_increment_norm(const type&) method.\n"
-               << "Minimum parameters increment norm must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set error learning rate
-
-    minimum_parameters_increment_norm = new_minimum_parameters_increment_norm;
-}
-
-
 /// Sets a new minimum loss improvement during training.
 /// @param new_minimum_loss_decrease Minimum improvement in the loss between two iterations.
 
@@ -224,33 +178,6 @@ void GradientDescent::set_minimum_loss_decrease(const type& new_minimum_loss_dec
 void GradientDescent::set_loss_goal(const type& new_loss_goal)
 {
     training_loss_goal = new_loss_goal;
-}
-
-
-/// Sets a new the goal value for the norm of the error function gradient.
-/// This is used as a stopping criterion when training a neural network.
-/// @param new_gradient_norm_goal Goal value for the norm of the error function gradient.
-
-void GradientDescent::set_gradient_norm_goal(const type& new_gradient_norm_goal)
-{
-#ifdef OPENNN_DEBUG
-
-    if(new_gradient_norm_goal < static_cast<type>(0.0))
-    {
-        ostringstream buffer;
-
-        buffer << "OpenNN Exception: GradientDescent class.\n"
-               << "void set_gradient_norm_goal(const type&) method.\n"
-               << "Gradient norm goal must be equal or greater than 0.\n";
-
-        throw logic_error(buffer.str());
-    }
-
-#endif
-
-    // Set gradient norm goal
-
-    gradient_norm_goal = new_gradient_norm_goal;
 }
 
 
@@ -444,8 +371,8 @@ TrainingResults GradientDescent::perform_training()
     const Tensor<Index, 1> training_samples_indices = data_set_pointer->get_training_samples_indices();
     const Tensor<Index, 1> selection_samples_indices = data_set_pointer->get_selection_samples_indices();
 
-    const Tensor<Index, 1> inputs_indices = data_set_pointer->get_input_variables_indices();
-    const Tensor<Index, 1> target_indices = data_set_pointer->get_target_variables_indices();
+    const Tensor<Index, 1> input_variables_indices = data_set_pointer->get_input_variables_indices();
+    const Tensor<Index, 1> target_variables_indices = data_set_pointer->get_target_variables_indices();
 
     const Tensor<string, 1> inputs_names = data_set_pointer->get_input_variables_names();
     const Tensor<string, 1> targets_names = data_set_pointer->get_target_variables_names();
@@ -453,14 +380,8 @@ TrainingResults GradientDescent::perform_training()
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
     const Tensor<Scaler, 1> target_variables_scalers = data_set_pointer->get_target_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->scale_input_variables();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->scale_input_variables();
     Tensor<Descriptives, 1> target_variables_descriptives;
-
-    DataSetBatch training_batch(training_samples_number, data_set_pointer);
-    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
-
-    training_batch.fill(training_samples_indices, inputs_indices, target_indices);
-    selection_batch.fill(selection_samples_indices, inputs_indices, target_indices);
 
     // Neural network
 
@@ -485,6 +406,12 @@ TrainingResults GradientDescent::perform_training()
 
     NeuralNetworkForwardPropagation training_forward_propagation(training_samples_number, neural_network_pointer);
     NeuralNetworkForwardPropagation selection_forward_propagation(selection_samples_number, neural_network_pointer);
+
+    DataSetBatch training_batch(training_samples_number, data_set_pointer);
+    training_batch.fill(training_samples_indices, input_variables_indices, target_variables_indices);
+
+    DataSetBatch selection_batch(selection_samples_number, data_set_pointer);
+    selection_batch.fill(selection_samples_indices, input_variables_indices, target_variables_indices);
 
     // Loss index
 
@@ -580,15 +507,6 @@ TrainingResults GradientDescent::perform_training()
             results.stopping_condition = MaximumSelectionErrorIncreases;
         }
 
-        else if(gradient_norm <= gradient_norm_goal)
-        {
-            if(display) cout << "Epoch " << epoch << endl << "Gradient norm goal reached: " << gradient_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = GradientNormGoal;
-        }
-
         else if(epoch == maximum_epochs_number)
         {
             if(display) cout << "Epoch " << epoch << endl << "Maximum number of epochs reached: " << epoch << endl;
@@ -597,15 +515,6 @@ TrainingResults GradientDescent::perform_training()
 
             results.stopping_condition = MaximumEpochsNumber;
         }
-
-        if(optimization_data.parameters_increment_norm <= minimum_parameters_increment_norm)
-        {
-            if(display) cout << "Epoch " << epoch << endl << "Minimum parameters increment norm reached: " << parameters_increment_norm << endl;
-
-            stop_training = true;
-
-            results.stopping_condition = MinimumParametersIncrementNorm;
-        }        
 
         else if(elapsed_time >= maximum_time)
         {
@@ -669,63 +578,42 @@ string GradientDescent::write_optimization_algorithm_type() const
 
 Tensor<string, 2> GradientDescent::to_string_matrix() const
 {
-    Tensor<string, 2> labels_values(9, 2);
+    Tensor<string, 2> labels_values(7, 2);
 
     // Learning rate method
 
     labels_values(0,0) = "Learning rate method";
-
-    const string learning_rate_method = learning_rate_algorithm.write_learning_rate_method();
-
-    labels_values(0,1) = learning_rate_method;
+    labels_values(0,1) = learning_rate_algorithm.write_learning_rate_method();
 
     // Loss tolerance
 
     labels_values(1,0) = "Learning rate tolerance";
-
     labels_values(1,1) = to_string(learning_rate_algorithm.get_learning_rate_tolerance());
-
-    // Minimum parameters increment norm
-
-    labels_values(2,0) = "Minimum parameters increment norm";
-
-    labels_values(2,1) = to_string(minimum_parameters_increment_norm);
 
     // Minimum loss decrease
 
-    labels_values(3,0) = "Minimum loss decrease";
-
-    labels_values(3,1) = to_string(minimum_loss_decrease);
+    labels_values(2,0) = "Minimum loss decrease";
+    labels_values(2,1) = to_string(minimum_loss_decrease);
 
     // Loss goal
 
-    labels_values(4,0) = "Loss goal";
-
-    labels_values(4,1) = to_string(training_loss_goal);
-
-    // Gradient norm goal
-
-    labels_values(5,0) = "Gradient norm goal";
-
-    labels_values(5,1) = to_string(gradient_norm_goal);
+    labels_values(3,0) = "Loss goal";
+    labels_values(3,1) = to_string(training_loss_goal);
 
     // Maximum selection error increases
 
-    labels_values(6,0) = "Maximum selection error increases";
-
-    labels_values(6,1) = to_string(maximum_selection_failures);
+    labels_values(4,0) = "Maximum selection error increases";
+    labels_values(4,1) = to_string(maximum_selection_failures);
 
     // Maximum epochs number
 
-    labels_values(7,0) = "Maximum epochs number";
-
-    labels_values(7,1) = to_string(maximum_epochs_number);
+    labels_values(5,0) = "Maximum epochs number";
+    labels_values(5,1) = to_string(maximum_epochs_number);
 
     // Maximum time
 
-    labels_values(8,0) = "Maximum time";
-
-    labels_values(8,1) = write_time(maximum_time);
+    labels_values(6,0) = "Maximum time";
+    labels_values(6,1) = write_time(maximum_time);
 
     return labels_values;
 }
@@ -745,17 +633,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     learning_rate_algorithm.write_XML(file_stream);
 
-    // Minimum parameters increment norm
-
-    file_stream.OpenElement("MinimumParametersIncrementNorm");
-
-    buffer.str("");
-    buffer << minimum_parameters_increment_norm;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
     // Minimum loss decrease
 
     file_stream.OpenElement("MinimumLossDecrease");
@@ -773,17 +650,6 @@ void GradientDescent::write_XML(tinyxml2::XMLPrinter& file_stream) const
 
     buffer.str("");
     buffer << training_loss_goal;
-
-    file_stream.PushText(buffer.str().c_str());
-
-    file_stream.CloseElement();
-
-    // Gradient norm goal
-
-    file_stream.OpenElement("GradientNormGoal");
-
-    buffer.str("");
-    buffer << gradient_norm_goal;
 
     file_stream.PushText(buffer.str().c_str());
 
@@ -870,25 +736,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
         }
     }
 
-    // Minimum parameters increment norm
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumParametersIncrementNorm");
-
-        if(element)
-        {
-            const type new_minimum_parameters_increment_norm = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_minimum_parameters_increment_norm(new_minimum_parameters_increment_norm);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
     // Minimum loss decrease
     {
         const tinyxml2::XMLElement* element = root_element->FirstChildElement("MinimumLossDecrease");
@@ -920,25 +767,6 @@ void GradientDescent::from_XML(const tinyxml2::XMLDocument& document)
             try
             {
                 set_loss_goal(new_loss_goal);
-            }
-            catch(const logic_error& e)
-            {
-                cerr << e.what() << endl;
-            }
-        }
-    }
-
-    // Gradient norm goal
-    {
-        const tinyxml2::XMLElement* element = root_element->FirstChildElement("GradientNormGoal");
-
-        if(element)
-        {
-            const type new_gradient_norm_goal = static_cast<type>(atof(element->GetText()));
-
-            try
-            {
-                set_gradient_norm_goal(new_gradient_norm_goal);
             }
             catch(const logic_error& e)
             {

@@ -117,9 +117,9 @@ public:
                                         LayerBackPropagation*,
                                         LayerBackPropagation*) const {}
 
-    virtual void calculate_hidden_delta(LayerForwardPropagation*,
-                                        LayerBackPropagationLM*,
-                                        LayerBackPropagationLM*) const {}
+    virtual void calculate_hidden_delta_lm(LayerForwardPropagation*,
+                                           LayerBackPropagationLM*,
+                                           LayerBackPropagationLM*) const {}
 
     // Error gradient
 
@@ -133,13 +133,13 @@ public:
 
     // Squared errors
 
-    virtual void calculate_squared_errors_Jacobian(const Tensor<type, 2>&,
-                                                   LayerForwardPropagation*,
-                                                   LayerBackPropagationLM*) {}
+    virtual void calculate_squared_errors_Jacobian_lm(const Tensor<type, 2>&,
+                                                      LayerForwardPropagation*,
+                                                      LayerBackPropagationLM*) {}
 
-    virtual void insert_squared_errors_Jacobian(LayerBackPropagationLM*,
-                                                const Index&,
-                                                Tensor<type, 2>&) const {}
+    virtual void insert_squared_errors_Jacobian_lm(LayerBackPropagationLM*,
+                                                   const Index&,
+                                                   Tensor<type, 2>&) const {}
 
     // Get neurons number
 
@@ -184,20 +184,20 @@ protected:
 
     // activations 1d (Time Series)
 
-    void hard_sigmoid(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void hyperbolic_tangent(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void logistic(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void symmetric_threshold(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void rectified_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void scaled_exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void soft_plus(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void soft_sign(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void exponential_linear(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void softmax(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void binary(const Tensor<type,1>&, Tensor<type,1>&) const;
-    void competitive(const Tensor<type,1>&, Tensor<type,1>&) const;
+    void hard_sigmoid(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void hyperbolic_tangent(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void logistic(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void threshold(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void symmetric_threshold(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void rectified_linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void scaled_exponential_linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void soft_plus(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void soft_sign(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void exponential_linear(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void softmax(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void binary(const Tensor<type, 1>&, Tensor<type, 1>&) const;
+    void competitive(const Tensor<type, 1>&, Tensor<type, 1>&) const;
 
     void hard_sigmoid_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
     void hyperbolic_tangent_derivatives(const Tensor<type, 1>&, Tensor<type, 1>&, Tensor<type, 1>&) const;
@@ -290,7 +290,7 @@ struct LayerForwardPropagation
 
     virtual void set(const Index&, Layer*) {}
 
-    virtual void print() const = 0;
+    virtual void print() const {}
 
     Index batch_samples_number = 0;
 

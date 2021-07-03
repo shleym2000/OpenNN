@@ -16,10 +16,6 @@
 class WeightedSquaredErrorTest : public UnitTesting
 {
 
-#define	STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public: 
 
    explicit WeightedSquaredErrorTest();
@@ -37,8 +33,8 @@ public:
 
    // Squared errors methods 
 
-   void test_calculate_squared_errors();
-   void test_calculate_squared_errors_jacobian();
+   
+   
 
    // Unit testing methods
 

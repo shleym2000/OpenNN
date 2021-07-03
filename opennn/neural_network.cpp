@@ -94,6 +94,12 @@ NeuralNetwork::NeuralNetwork(const Tensor<Layer*, 1>& new_layers_pointers)
 
 NeuralNetwork::~NeuralNetwork()
 {
+    delete_layers();
+}
+
+
+void NeuralNetwork::delete_layers()
+{
     const Index layers_number = get_layers_number();
 
     for(Index i = 0;  i < layers_number; i++)
@@ -102,6 +108,8 @@ NeuralNetwork::~NeuralNetwork()
 
         layers_pointers[i] = nullptr;
     }
+
+    layers_pointers.resize(0);
 }
 
 
@@ -110,13 +118,48 @@ NeuralNetwork::~NeuralNetwork()
 
 void NeuralNetwork::add_layer(Layer* layer_pointer)
 {
+    if(has_bounding_layer())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
+               << "No layers can be added after a bounding layer.\n";
+
+        print();
+
+        throw logic_error(buffer.str());
+    }
+
+    if(has_probabilistic_layer())
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
+               << "No layers can be added after a probabilistic layer.\n";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(layer_pointer->get_type_string() == "Pooling")
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: NeuralNetwork class.\n"
+               << "NeuralNetwork::add_layer() method.\n"
+               << "Pooling Layer is not available yet. It will be included in future versions.\n";
+
+        throw logic_error(buffer.str());
+    }
+
     if(layer_pointer->get_type_string() == "Convolutional")
     {
         ostringstream buffer;
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "NeuralNetwork::add_layer() method.\n"
-               << "Convolutional Layer is not available yet. It will be included in future versions.!!\n";
+               << "Convolutional Layer is not available yet. It will be included in future versions.\n";
 
         throw logic_error(buffer.str());
     }
@@ -586,7 +629,7 @@ void NeuralNetwork::set()
 
     outputs_names.resize(0);
 
-    layers_pointers.resize(0);
+    delete_layers();
 
     set_default();
 }
@@ -598,7 +641,7 @@ void NeuralNetwork::set()
 
 void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tensor<Index, 1>& architecture)
 {
-    layers_pointers.resize(0);
+    delete_layers();
 
     if(architecture.size() <= 1) return;
 
@@ -618,7 +661,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         for(Index i = 0; i < size-1; i++)
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
-            perceptron_layer_pointer->set_name("Perceptron_layer_" + to_string(i+1));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
             this->add_layer(perceptron_layer_pointer);
 
@@ -639,7 +682,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-            perceptron_layer_pointer->set_name("Perceptron_layer_" + to_string(i+1));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i+1));
 
             this->add_layer(perceptron_layer_pointer);
         }
@@ -659,7 +702,7 @@ void NeuralNetwork::set(const NeuralNetwork::ProjectType& model_type, const Tens
         {
             PerceptronLayer* perceptron_layer_pointer = new PerceptronLayer(architecture[i], architecture[i+1]);
 
-            perceptron_layer_pointer->set_name("Perceptron_layer_" + to_string(i));
+            perceptron_layer_pointer->set_name("perceptron_layer_" + to_string(i));
 
             this->add_layer(perceptron_layer_pointer);
 
@@ -702,7 +745,7 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
                         const Tensor<Index, 1>& filters_dimensions,
                         const Index& outputs_number)
 {
-    layers_pointers.resize(0);
+    delete_layers();
 
     ScalingLayer* scaling_layer = new ScalingLayer(input_variables_dimensions);
     this->add_layer(scaling_layer);
@@ -741,29 +784,9 @@ void NeuralNetwork::set(const Tensor<Index, 1>& input_variables_dimensions,
 
 void NeuralNetwork::set(const string& file_name)
 {
-    layers_pointers.resize(0);
+    delete_layers();
 
     load(file_name);
-}
-
-
-/// Sets the members of this neural network object with those from other neural network object.
-/// @param other_neural_network Neural network object to be copied.
-
-void NeuralNetwork::set(const NeuralNetwork& other_neural_network)
-{
-    layers_pointers.resize(0);
-
-    if(this == &other_neural_network) return;
-
-    inputs_names = other_neural_network.inputs_names;
-
-    outputs_names = other_neural_network.outputs_names;
-
-    layers_pointers = other_neural_network.layers_pointers;
-
-    display = other_neural_network.display;
-
 }
 
 
@@ -798,7 +821,7 @@ void NeuralNetwork::set_inputs_number(const Index& new_inputs_number)
 
         buffer << "OpenNN Exception: NeuralNetwork class.\n"
                << "void set_inputs_number(const Index&) method.\n"
-               << "The number of inputs(" << new_inputs_number << ") must be greater than 0.\n";
+               << "The number of inputs (" << new_inputs_number << ") must be greater than 0.\n";
 
         throw logic_error(buffer.str());
     }
@@ -1349,7 +1372,7 @@ void NeuralNetwork::perturbate_parameters(const type& perturbation)
 
 void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
                                       NeuralNetworkForwardPropagation& forward_propagation) const
-{
+{   
     const Tensor<Layer*, 1> trainable_layers_pointers = get_trainable_layers_pointers();
 
     const Index trainable_layers_number = trainable_layers_pointers.size();
@@ -1368,40 +1391,41 @@ void NeuralNetwork::forward_propagate(const DataSetBatch& batch,
         switch(trainable_layers_pointers(i-1)->get_type())
         {
         case Layer::Perceptron:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
-        }
-            break;
+
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<PerceptronLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+        break;
 
         case Layer::Probabilistic:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
-        }
-            break;
+
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<ProbabilisticLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+        break;
 
         case Layer::Recurrent:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
 
-        }
-            break;
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<RecurrentLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+
+        break;
 
         case Layer::LongShortTermMemory:
-        {
-            trainable_layers_pointers(i)->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-                                                            forward_propagation.layers(i));
-        }
-            break;
 
-        case Layer::Convolutional:
-        {
-            //trainable_layers_pointers(i)->forward_propagate(static_cast<ConvolutionalLayer::ConvolutionalLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
-            //                                                forward_propagation.layers(i));
-        }
-            break;
+        trainable_layers_pointers(i)
+                ->forward_propagate(static_cast<LongShortTermMemoryLayerForwardPropagation*>(forward_propagation.layers(i-1))->activations,
+                                                        forward_propagation.layers(i));
+        break;
+
+        case Layer::Pooling: /// @todo
+
+        break;
+
+        case Layer::Convolutional: /// @todo
+
+        break;
 
         default: break;
         }
@@ -1629,7 +1653,7 @@ Tensor<type, 2> NeuralNetwork::calculate_directional_inputs(const Index& directi
 
     for(Index i = 0; i < points_number; i++)
     {
-        inputs(direction) = minimum + (maximum-minimum)*static_cast<type>(i)/static_cast<type>(points_number-1);
+        inputs(direction) = minimum + (maximum - minimum)*static_cast<type>(i)/static_cast<type>(points_number-1);
 
         for(Index j = 0; j < inputs_number; j++)
         {
@@ -2313,7 +2337,8 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
             if(!output_element->GetText())
             {
                 outputs_names(i) = "";
-            }else
+            }
+            else
             {
                 outputs_names(i) = output_element->GetText();
             }
@@ -2326,6 +2351,8 @@ void NeuralNetwork::outputs_from_XML(const tinyxml2::XMLDocument& document)
 
 void NeuralNetwork::print() const
 {
+    cout << "Neural network" << endl;
+
     const Index layers_number = get_layers_number();
 
     cout << "Layers number: " << layers_number << endl;

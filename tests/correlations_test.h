@@ -16,10 +16,6 @@
 class CorrelationsTest : public UnitTesting
 {
 
-#define STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
     // DEFAULT CONSTRUCTOR
@@ -31,8 +27,6 @@ public:
     // Correlation methods
 
     void test_linear_correlation();
-
-    void test_linear_regression();
 
     void test_logistic_correlation();
 
@@ -46,8 +40,6 @@ public:
 
     void test_autocorrelations();
     void test_cross_correlations();
-
-    // Contingency table
 
     // Unit testing methods
 

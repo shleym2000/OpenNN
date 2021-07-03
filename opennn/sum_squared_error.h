@@ -47,39 +47,36 @@ public:
 
    virtual ~SumSquaredError();
 
-   // Error methods
+   // Back propagation
 
    void calculate_error(const DataSetBatch&,
                         const NeuralNetworkForwardPropagation&,
                         LossIndexBackPropagation&) const;
 
-   void calculate_error(const DataSetBatch&,
-                        const NeuralNetworkForwardPropagation&,
-                        LossIndexBackPropagationLM&) const;
-
-   // Gradient methods
-
    void calculate_output_delta(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
                                LossIndexBackPropagation&) const;
 
-   void calculate_output_delta(const DataSetBatch&,
+   // Back propagation LM
+
+   void calculate_error_lm(const DataSetBatch&,
+                           const NeuralNetworkForwardPropagation&,
+                           LossIndexBackPropagationLM&) const;
+
+   void calculate_output_delta_lm(const DataSetBatch&,
                                NeuralNetworkForwardPropagation&,
                                LossIndexBackPropagationLM&) const;
 
-   void calculate_gradient(const DataSetBatch&,
-                           LossIndexBackPropagationLM&) const;
+   void calculate_error_gradient_lm(const DataSetBatch&,
+                              LossIndexBackPropagationLM&) const;
 
-   // Hessian method
-
-   void calculate_hessian_approximation(const DataSetBatch&,
+   void calculate_error_hessian_lm(const DataSetBatch&,
                                         LossIndexBackPropagationLM&) const;
 
    // Serialization methods
 
    string get_error_type() const;
    string get_error_type_text() const;
-
       
    void from_XML(const tinyxml2::XMLDocument&);
 

@@ -16,10 +16,6 @@
 class ProbabilisticLayerTest : public UnitTesting
 {
 
-#define STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
    explicit ProbabilisticLayerTest();
@@ -58,7 +54,7 @@ public:
    void test_set_parameters();
    void test_set_decision_threshold();
 
-   //Activation function
+   // Activation function
 
 
    void test_write_activation_function();
@@ -90,12 +86,6 @@ public:
 
    void test_forward_propagate();
 
-   // Hidden delta
-
-   void test_calculate_hidden_delta();
-
-   void test_calculate_error_gradient();
-
    // Write expression
 
    void test_write_expression();
@@ -105,6 +95,10 @@ public:
    void run_test_case();
 
 private:
+
+   Index inputs_number;
+   Index neurons_number;
+   Index samples_number;
 
    ProbabilisticLayer probabilistic_layer;
 

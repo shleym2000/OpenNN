@@ -67,13 +67,13 @@ void PruningInputs::set_default()
 {
     if(training_strategy_pointer == nullptr || !training_strategy_pointer->has_neural_network())
     {
-        maximum_selection_failures = 100;
+        maximum_selection_failures = numeric_limits<Index>::max();
 
         maximum_inputs_number = 20;
     }
     else
     {       
-        maximum_selection_failures = 100;
+        maximum_selection_failures = numeric_limits<Index>::max();
 
         maximum_inputs_number = training_strategy_pointer->get_neural_network_pointer()->get_inputs_number();
     }
@@ -191,7 +191,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     Tensor<string, 1> input_columns_names;
 
-    const Tensor<type, 2> correlations = data_set_pointer->calculate_input_target_columns_correlations_values();
+    const Tensor<type, 2> correlations = get_correlation_values(data_set_pointer->calculate_input_target_columns_correlations());
 
     const Tensor<type, 1> total_correlations = correlations.abs().sum(rows_sum);
 
@@ -357,7 +357,7 @@ InputsSelectionResults PruningInputs::perform_inputs_selection()
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->calculate_input_variables_descriptives();
 
     // Set neural network stuff
 

@@ -16,10 +16,6 @@
 class ConvolutionalLayerTest : public UnitTesting
 {
 
-#define STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
    explicit ConvolutionalLayerTest();
@@ -68,12 +64,6 @@ public:
   // Forward propagate
 
   void test_forward_propagate();
-
-  void test_calculate_hidden_delta();
-
-  // Gradient
-
-  void test_calculate_error_gradient();
 
   // Unit testing methods
 

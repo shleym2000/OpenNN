@@ -8,10 +8,11 @@
 
 #include "tensor_utilities.h"
 
+#define GET_VARIABLE_NAME(Variable) (#Variable)
+
+
 namespace OpenNN
 {
-
-
 
 void initialize_sequential(Tensor<type, 1>& vector)
 {
@@ -73,6 +74,19 @@ bool is_false(const Tensor<bool, 1>& tensor)
     for(Index i = 0; i < size; i++)
     {
         if(tensor(i)) return false;
+    }
+
+    return true;
+}
+
+
+bool is_binary(const Tensor<type, 2>& matrix)
+{
+    const Index size = matrix.size();
+
+    for(Index i = 0; i < size; i++)
+    {
+        if(matrix(i) != 0 && matrix(i) != 1) return false;
     }
 
     return true;
@@ -262,6 +276,17 @@ type l2_norm(const ThreadPoolDevice* thread_pool_device, const Tensor<type, 1>& 
 
     norm.device(*thread_pool_device) = vector.square().sum().sqrt();
 
+    if(isnan(norm(0)))
+    {
+//        cout << "OpenNN Warning: l2 norm of vector is NaN" << endl;
+
+//        ostringstream buffer;
+
+//        buffer << "OpenNN Exception: l2 norm of vector is not a number" << endl;
+
+//        throw logic_error(buffer.str());
+    }
+
     return norm(0);
 }
 
@@ -364,6 +389,159 @@ Index count_NAN(const Tensor<type, 1>& x)
 
     return NAN_number;
 }
+
+
+void check_size(const Tensor<type, 1>& vector, const Index& size, const string& log)
+{
+    if(vector.size() != size)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << log
+               << "Size of vector is " << vector.size() << ", but must be " << size << ".";
+
+        throw logic_error(buffer.str());
+    }
+}
+
+
+void check_dimensions(const Tensor<type, 2>& matrix, const Index& rows_number, const Index& columns_number, const string& log)
+{
+    if(matrix.dimension(0) != rows_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << log
+               << "Number of rows in matrix is " << matrix.dimension(0) << ", but must be " << rows_number << ".";
+
+        throw logic_error(buffer.str());
+    }
+
+    if(matrix.dimension(1) != columns_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << log
+               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
+
+        throw logic_error(buffer.str());
+    }
+}
+
+
+void check_columns_number(const Tensor<type, 2>& matrix, const Index& columns_number, const string& log)
+{
+    if(matrix.dimension(1) != columns_number)
+    {
+        ostringstream buffer;
+
+        buffer << "OpenNN Exception: " << log
+               << "Number of columns in matrix is " << matrix.dimension(0) << ", but must be " << columns_number << ".";
+
+        throw logic_error(buffer.str());
+    }
+}
+
+Tensor<type, 2> assemble_vector_vector(const Tensor<type, 1>& x, const Tensor<type, 1>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = 2;
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        data(i, 0) = x(i);
+        data(i, 1) = y(i);
+    }
+
+    return data;
+}
+
+
+Tensor<type, 2> assemble_vector_matrix(const Tensor<type, 1>& x, const Tensor<type, 2>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = 1 + y.dimension(1);
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        data(i, 0) = x(i);
+
+        for(Index j = 0; j < y.dimension(1); j++)
+        {
+            data(i, 1+j) = y(i,j);
+        }
+    }
+
+    return data;
+}
+
+
+Tensor<type, 2> assemble_matrix_vector(const Tensor<type, 2>& x, const Tensor<type, 1>& y)
+{
+    const Index rows_number = x.size();
+    const Index columns_number = x.dimension(1) + 1;
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < x.dimension(1); j++)
+        {
+            data(i, j) = x(i,j);
+        }
+
+        data(i, columns_number-1) = y(i);
+    }
+
+    return data;
+}
+
+
+Tensor<type, 2> assemble_matrix_matrix(const Tensor<type, 2>& x, const Tensor<type, 2>& y)
+{
+    const Index rows_number = x.dimension(0);
+    const Index columns_number = x.dimension(1) + y.dimension(1);
+
+    Tensor<type, 2> data(rows_number, columns_number);
+
+    for(Index i = 0; i < rows_number; i++)
+    {
+        for(Index j = 0; j < x.dimension(1); j++)
+        {
+            data(i,j) = x(i,j);
+        }
+
+        for(Index j = 0; j < y.dimension(1); j++)
+        {
+            data(i, x.dimension(1) + j) = y(i,j);
+        }
+    }
+
+    return data;
+}
+
+
+/// Returns true if any value is less or equal than a given value, and false otherwise.
+
+bool is_less_than(const Tensor<type, 1>& column, const type& value)
+{
+    const Tensor<bool, 1> if_sentence = column <= column.constant(value);
+
+    Tensor<bool, 1> sentence(column.size());
+    sentence.setConstant(true);
+
+    Tensor<bool, 1> else_sentence(column.size());
+    else_sentence.setConstant(false);
+
+    const Tensor<bool, 0> is_less = (if_sentence.select(sentence, else_sentence)).any();
+
+    return is_less(0);
+}
+
 
 }
 

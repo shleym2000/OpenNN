@@ -16,10 +16,6 @@
 class NumericalDifferentiationTest : public UnitTesting
 {
 
-#define	STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public:
 
    explicit NumericalDifferentiationTest();
@@ -98,22 +94,22 @@ private:
        return pow(var_x,3);
    }
 
-   Tensor<type,1> f2(const Tensor<type,1>& vector_x) const
+   Tensor<type, 1> f2(const Tensor<type, 1>& vector_x) const
    {
        return vector_x.square();
    }
 
-   Tensor<type,1> f2_1(const Index& cte, const Tensor<type,1>& vector_x) const
+   Tensor<type, 1> f2_1(const Index& cte, const Tensor<type, 1>& vector_x) const
    {
        return cte*vector_x.square();
    }
 
-   Tensor<type,1> f2_2(const Index& cte, const Tensor<type, 2>& matrix_x) const
+   Tensor<type, 1> f2_2(const Index& cte, const Tensor<type, 2>& matrix_x) const
    {
        return cte*matrix_x.maximum();
    }
 
-   Tensor<type,1> f2_2(const Tensor<type,1>& dummy, const Tensor<type,1>& vector_x) const
+   Tensor<type, 1> f2_2(const Tensor<type, 1>& dummy, const Tensor<type, 1>& vector_x) const
    {
        return dummy*vector_x.square();
    }
@@ -124,7 +120,7 @@ private:
    }
 
 
-   Tensor<type, 2> f3_1(const Tensor<type,1>& vector_x, const Tensor<type,1>&) const
+   Tensor<type, 2> f3_1(const Tensor<type, 1>& vector_x, const Tensor<type, 1>&) const
    {
        Tensor<type, 2> matrix;
 
@@ -132,7 +128,7 @@ private:
    }
 
 
-   type f4(const Tensor<type,1>& vector_x) const
+   type f4(const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = vector_x.sum();
 
@@ -140,63 +136,63 @@ private:
    }
 
 
-   type f4_1(const Tensor<type,1>& vector_x) const
+   type f4_1(const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = vector_x.sum();
 
        return sum_(0);
    }
 
-   type f4_2(const Index& dummy, const Tensor<type,1>& vector_x) const
+   type f4_2(const Index& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = dummy*vector_x.square().sum();
 
        return sum_(0);
    }
 
-   type f4_3(const Tensor<type,1>& dummy, const Tensor<type,1>& vector_x) const
+   type f4_3(const Tensor<type, 1>& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = (vector_x * dummy).sum();
 
        return sum_(0);
    }
 
-   type f4_4(const Tensor<Index,1>& dummy, const Tensor<type,1>& vector_x) const
+   type f4_4(const Tensor<Index,1>& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = (vector_x * dummy).sum();
 
        return sum_(0);
    }
 
-   type f4_5(const Tensor<type,1>& vector_x) const
+   type f4_5(const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> prod_ = vector_x.prod();
 
        return prod_(0);
    }
 
-   type f4_6(const Tensor<type,1>& dummy, const Tensor<type,1>& vector_x) const
+   type f4_6(const Tensor<type, 1>& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> sum_ = (vector_x * dummy).prod();
 
        return sum_(0);
    }
 
-   type f4_7(const Index& dummy, const Tensor<type,1>& vector_x) const
+   type f4_7(const Index& dummy, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 0> prod_ = dummy*vector_x.square().prod();
 
        return prod_(0);
    }
 
-   Tensor<type,1> f5(const Index& dummy_int, const Tensor<type,1>& dummy_vec, const Tensor<type,1>& vector_x) const
+   Tensor<type, 1> f5(const Index& dummy_int, const Tensor<type, 1>& dummy_vec, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 1> prod_ = dummy_int*vector_x.square() + dummy_vec*vector_x.square();
 
        return prod_;
    }
 
-   Tensor<type,1> f5_1(const Index& dummy_int_1, const Index& dummy_int_2, const Tensor<type,1>& vector_x) const
+   Tensor<type, 1> f5_1(const Index& dummy_int_1, const Index& dummy_int_2, const Tensor<type, 1>& vector_x) const
    {
        Tensor<type, 1> func_(vector_x.size());
 

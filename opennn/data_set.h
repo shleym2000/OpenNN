@@ -86,7 +86,7 @@ public:
 
    /// Enumeration of the learning tasks.
 
-   enum ProjectType{Approximation, Classification, Forecasting, ImageApproximation, ImageClassification};
+   enum ProjectType{Approximation, Classification, Forecasting, ImageClassification};
 
    /// This enumeration represents the possible uses of an sample
    /// (training, selection, testing or unused).
@@ -322,7 +322,7 @@ public:
    Tensor<type, 2> get_sample_target_data(const Index&) const;
 
    Tensor<type, 2> get_column_data(const Index&) const;
-   Tensor<type, 2> get_column_data(const Index&, Tensor<Index, 1>&) const;
+   Tensor<type, 2> get_column_data(const Index&, const Tensor<Index, 1>&) const;
    Tensor<type, 2> get_column_data(const Tensor<Index, 1>&) const;
    Tensor<type, 2> get_column_data(const string&) const;
 
@@ -377,6 +377,7 @@ public:
    void set(const DataSet&);
    void set(const tinyxml2::XMLDocument&);
    void set(const string&);
+   void set(const string&, const char&, const bool&);
 
    void set_default();
 
@@ -408,7 +409,6 @@ public:
    void set_columns(const Tensor<Column, 1>&);
 
    void set_default_columns_uses();
-   void set_default_classification_columns_uses();
 
    void set_default_columns_names();
 
@@ -419,7 +419,6 @@ public:
    void set_columns_unused();
    void set_input_target_columns(const Tensor<Index, 1>&, const Tensor<Index, 1>&);
    void set_input_columns_unused();
-
 
    void set_input_columns(const Tensor<Index, 1>&, const Tensor<bool, 1>&);
 
@@ -439,7 +438,7 @@ public:
 
    // Columns other methods
 
-   Tensor<type, 2> transform_binary_column(const Tensor<type,1>&) const;
+   Tensor<type, 2> transform_binary_column(const Tensor<type, 1>&) const;
 
    // Variables set methods
 
@@ -482,8 +481,6 @@ public:
    // Check methods
 
    bool is_empty() const;
-
-   bool is_less_than(const Tensor<type, 1>&, const type&) const;
 
    bool is_sample_used(const Index&) const;
    bool is_sample_unused(const Index&) const;
@@ -561,7 +558,7 @@ public:
 
    // Inputs correlations
 
-   Tensor<type, 2> calculate_input_columns_correlations() const;
+   Tensor<Correlation, 2> calculate_input_columns_correlations() const;
 
    void print_inputs_correlations() const;
 
@@ -570,20 +567,12 @@ public:
    // Inputs-targets correlations
 
    Tensor<Correlation, 2> calculate_input_target_columns_correlations() const;
-   Tensor<type, 2> calculate_input_target_columns_correlations_values() const;
 
    void print_input_target_columns_correlations() const;
 
    void print_top_input_target_columns_correlations() const;
 
-   // Inputs-targets regressions
-
-   Tensor<Correlation, 2> calculate_input_target_columns_regressions() const;
-
    // Filtering methods
-
-   Tensor<Index, 1> filter_column(const Index&, const type&, const type&);
-   Tensor<Index, 1> filter_column(const string&, const type&, const type&);
 
    Tensor<Index, 1> filter_data(const Tensor<type, 1>&, const Tensor<type, 1>&);
 
@@ -617,21 +606,15 @@ public:
 
    // Local outlier factor
 
-   type calculate_euclidean_distance(const Tensor<Index, 1>&, const Index&, const Index&) const;
-
-   Tensor<type, 2> calculate_distance_matrix(const Tensor<Index, 1>&) const;
-
-   Tensor<list<Index>, 1> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
-
-   Tensor<Tensor<type, 1>, 1> get_kd_tree_data() const;
-
-   Tensor<list<Index>, 1> calculate_kd_tree_neighbors(const Index& = 20, const Index& = 40) const;
-
-   Tensor<type, 1> calculate_average_reachability(Tensor<list<Index>, 1>&, const Index&) const;
-
    Tensor<Index, 1> calculate_local_outlier_factor_outliers(const Index& = 20, const Index& = 0, const type& = 0.0) const;
 
    void unuse_local_outlier_factor_outliers(const Index& = 20, const type& = 1.5);
+
+   // Isolation Forest outlier
+
+   Tensor<Index, 1> calculate_isolation_forest_outliers(const Index& = 100, const Index& = 256, const type& = 0.0) const;
+
+   void unuse_isolation_forest_outliers(const Index& = 20, const type& = 1.5);
 
    // Time series methods
 
@@ -724,10 +707,6 @@ public:
 
    void fix_repeated_names();
 
-   // scaling
-
-   void set_min_max_range(const type min, const type max);
-
    // Eigen methods
 
    Tensor<Index, 1> push_back(const Tensor<Index, 1>&, const Index&) const;
@@ -738,72 +717,9 @@ public:
 
    Tensor<Index, 2> split_samples(const Tensor<Index, 1>&, const Index&) const;
 
-
    bool get_has_rows_labels() const;
 
    void shuffle();
-
-private:
-
-   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
-   ThreadPoolDevice* thread_pool_device = nullptr;
-
-   /// Data file name.
-
-   string data_file_name;
-
-   /// Separator character.
-
-   Separator separator = Comma;
-
-   /// Missing values label.
-
-   string missing_values_label = "NA";
-
-   /// Number of lags.
-
-   Index lags_number;
-
-   /// Number of steps ahead.
-
-   Index steps_ahead;
-
-   /// Min Max Range Scaling
-
-   type min_range = -1;
-   type max_range = 1;
-
-   /// Data Matrix.
-   /// The number of rows is the number of samples.
-   /// The number of columns is the number of variables.
-
-   Tensor<type, 2> data;
-
-   /// Time series data matrix.
-   /// The number of rows is the number of samples before time series transformation.
-   /// The number of columns is the number of variables before time series transformation.
-
-   Tensor<type, 2> time_series_data;
-
-   Tensor<Column, 1> time_series_columns;
-
-   /// Display messages to screen.
-
-   bool display = true;
-
-   /// Index where  variable is located for forecasting applications.
-
-   Index time_index;
-
-   /// Missing values method object.
-
-   MissingValuesMethod missing_values_method = Unuse;
-
-   // Samples
-
-   Tensor<SampleUse, 1> samples_uses;
-
-   // Variables
 
    // Reader
 
@@ -819,23 +735,84 @@ private:
 
    void check_special_characters(const string&) const;
 
-   /// Header which contains variables name.
+private:
 
-   bool has_columns_names = false;
+   NonBlockingThreadPool* non_blocking_thread_pool = nullptr;
+   ThreadPoolDevice* thread_pool_device = nullptr;
+
+   // DATA
+
+   /// Data Matrix.
+   /// The number of rows is the number of samples.
+   /// The number of columns is the number of variables.
+
+   Tensor<type, 2> data;
+
+   // Samples
+
+   Tensor<SampleUse, 1> samples_uses;
+
+   Tensor<string, 1> rows_labels;
+
+   // Columns
+
+   Tensor<Column, 1> columns;
 
    Tensor<Index, 1> input_variables_dimensions;
 
-   Tensor<Column, 1> columns;
+   // DATA FILE
+
+   /// Data file name.
+
+   string data_file_name;
+
+   /// Separator character.
+
+   Separator separator = Comma;
+
+   /// Missing values label.
+
+   string missing_values_label = "NA";
+
+   /// Header which contains variables name.
+
+   bool has_columns_names = false;
 
    /// Header which contains the rows label.
 
    bool has_rows_labels = false;
 
-   Tensor<string, 1> rows_labels;
+   Tensor<Tensor<string, 1>, 1> data_file_preview;
+
+   // TIME SERIES
+
+   /// Index where time variable is located for forecasting applications.
+
+   Index time_index;
+
+   /// Number of lags.
+
+   Index lags_number = 0;
+
+   /// Number of steps ahead.
+
+   Index steps_ahead = 0;
+
+   /// Time series data matrix.
+   /// The number of rows is the number of samples before time series transformation.
+   /// The number of columns is the number of variables before time series transformation.
+
+   Tensor<type, 2> time_series_data;
+
+   Tensor<Column, 1> time_series_columns;
 
    Index gmt = 0;
 
-   Tensor<Tensor<string, 1>, 1> data_file_preview;
+   // MISSING VALUES
+
+   /// Missing values method.
+
+   MissingValuesMethod missing_values_method = Unuse;
 
    /// Missing values
 
@@ -845,7 +822,54 @@ private:
 
    Index rows_missing_values_number;
 
+   /// Display messages to screen.
+
+   bool display = true;
+
    const Eigen::array<IndexPair<Index>, 1> product_vector_vector = {IndexPair<Index>(0, 0)}; // Vector product, (0,0) first vector is transpose
+
+   // Local Outlier Factor
+
+   Tensor<Index, 1> select_outliers_via_standard_deviation(const Tensor<type, 1>&, const type & = 2.0, bool = true) const;
+
+   Tensor<Index, 1> select_outliers_via_contamination(const Tensor<type, 1>&, const type & = 0.05, bool = true) const;
+
+   type calculate_euclidean_distance(const Tensor<Index, 1>&, const Index&, const Index&) const;
+
+   Tensor<type, 2> calculate_distance_matrix(const Tensor<Index, 1>&) const;
+
+   Tensor<list<Index>, 1> calculate_k_nearest_neighbors(const Tensor<type, 2>&, const Index& = 20) const;
+
+   Tensor<Tensor<type, 1>, 1> get_kd_tree_data() const;
+
+   Tensor<Tensor<Index, 1>, 1> create_bounding_limits_kd_tree(const Index&) const;
+
+   void create_kd_tree(Tensor<Tensor<type, 1>, 1>&, const Tensor<Tensor<Index, 1>, 1>&) const;
+
+   Tensor<list<Index>, 1> calculate_bounding_boxes_neighbors(const Tensor<Tensor<type, 1>, 1>&,
+                                                             const Tensor<Index, 1>&,
+                                                             const Index&, const Index&) const;
+
+   Tensor<list<Index>, 1> calculate_kd_tree_neighbors(const Index& = 20, const Index& = 40) const;
+
+   Tensor<type, 1> calculate_average_reachability(Tensor<list<Index>, 1>&, const Index&) const;
+
+   Tensor<type, 1> calculate_local_outlier_factor(Tensor<list<Index>, 1>&, const Tensor<type, 1>&, const Index &) const;
+
+
+   //Isolation Forest
+
+   void calculate_min_max_indices_list(list<Index>&, const Index&, type&, type&) const;
+
+   Index split_isolation_tree(Tensor<type, 2>&, list<list<Index>>&, list<Index>&) const;
+
+   Tensor<type, 2> create_isolation_tree(const Tensor<Index, 1>&, const Index&) const;
+
+   Tensor<Tensor<type, 2>, 1> create_isolation_forest(const Index&, const Index&, const Index&) const;
+
+   type calculate_tree_path(const Tensor<type, 2>&, const Index&, const Index&) const;
+
+   Tensor<type, 1> calculate_average_forest_paths(const Tensor<Tensor<type, 2>, 1>&, const Index&) const;
 
 };
 
@@ -870,7 +894,7 @@ struct DataSetBatch
 
     void set(const Index&, DataSet*);
 
-    void fill(const Tensor<Index, 1>& samples, const Tensor<Index, 1>& inputs, const Tensor<Index, 1>& targets);
+    void fill(const Tensor<Index, 1>&, const Tensor<Index, 1>&, const Tensor<Index, 1>&);
 
     void print() const;
 

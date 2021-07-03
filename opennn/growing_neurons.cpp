@@ -65,7 +65,7 @@ void GrowingNeurons::set_default()
 
     neurons_increment = 1;
 
-    maximum_selection_failures = 100;
+    maximum_selection_failures = numeric_limits<Index>::max();
 
     maximum_time = 3600;
 }
@@ -321,8 +321,8 @@ Tensor<string, 2> GrowingNeurons::to_string_matrix() const
 {
     ostringstream buffer;
 
-    Tensor<string, 1> labels(10);
-    Tensor<string, 1> values(10);
+    Tensor<string, 1> labels(8);
+    Tensor<string, 1> values(8);
 
     // Minimum neurons number
 

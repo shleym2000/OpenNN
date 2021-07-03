@@ -16,10 +16,6 @@
 class SumSquaredErrorTest : public UnitTesting 
 {
 
-#define	STRING(x) #x
-#define TOSTRING(x) STRING(x)
-#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
-
 public: 
 
    explicit SumSquaredErrorTest(); 
@@ -30,19 +26,20 @@ public:
 
    void test_constructor();
 
-   // Error methods
-
-   void test_calculate_error();
-   
    // Gradient methods
 
-   void test_calculate_output_delta();
-   void test_calculate_error_gradient();
-   void test_calculate_Jacobian_gradient();
+   void test_back_propagate_approximation_zero();
+   void test_back_propagate_approximation_random();
 
-   // Squared errors methods
+   void test_back_propagate_binary_classification_zero();
+   void test_back_propagate_binary_classification_random();
 
-   void test_calculate_squared_errors_jacobian();
+   void test_back_propagate_forecasting_zero();
+   void test_back_propagate_forecasting_random();
+
+   void test_calculate_error_gradient_lm();
+
+   void test_back_propagate_lm_approximation_random();
 
    // Unit testing methods
 
@@ -50,19 +47,32 @@ public:
 
 private:
 
+   Index samples_number;
+   Index inputs_number;
+   Index neurons_number;
+   Index outputs_number;
+
+   Tensor<Index, 1> samples_indices;
+   Tensor<Index, 1> input_variables_indices;
+   Tensor<Index, 1> target_variables_indices;
+
    DataSet data_set;
 
    NeuralNetwork neural_network;
 
    SumSquaredError sum_squared_error;
 
-   DataSetBatch batch;
+   DataSetBatch batch;  
 
    NeuralNetworkForwardPropagation forward_propagation;
 
    LossIndexBackPropagation back_propagation;
 
    LossIndexBackPropagationLM back_propagation_lm;
+
+   Tensor<type, 1> gradient_numerical_differentiation;
+   Tensor<type, 2> jacobian_numerical_differentiation;
+
 };
 
 #endif

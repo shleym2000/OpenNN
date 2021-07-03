@@ -36,6 +36,10 @@
 
 #include <omp.h>
 
+#define	STRING(x) #x
+#define TOSTRING(x) STRING(x)
+#define LOG __FILE__ ":" TOSTRING(__LINE__)"\n"
+
 namespace OpenNN
 {
     typedef float type;

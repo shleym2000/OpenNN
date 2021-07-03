@@ -47,7 +47,7 @@ void GradientDescentTest::test_perform_training()
    Index targets_number;
 
    // Test
-
+/*
    data_set.set(1,1,1);
    data_set.set_data_constant(0.0);
 
@@ -130,8 +130,6 @@ void GradientDescentTest::test_perform_training()
 
    neural_network.set_parameters_constant(-1.0);
 
-   type gradient_norm_goal = 0.1;
-
    gradient_descent.set_minimum_parameters_increment_norm(0.0);
    gradient_descent.set_loss_goal(0.0);
    gradient_descent.set_minimum_loss_decrease(0.0);
@@ -143,6 +141,7 @@ void GradientDescentTest::test_perform_training()
 
 //   type gradient_norm = sum_squared_error.calculate_error_gradient({0}).l2_norm();
 //   assert_true(gradient_norm < gradient_norm_goal, LOG);
+*/
 }
 
 

@@ -98,7 +98,7 @@ void GeneticAlgorithm::set_default()
 
     maximum_epochs_number = 100;
 
-    mutation_rate = 0.1;
+    mutation_rate = static_cast<type>(0.1);
 
     individuals_number = 10;
 
@@ -263,9 +263,11 @@ void GeneticAlgorithm::set_individuals_number(const Index& new_individuals_numbe
 
 #endif
 
-    const Index new_genes_number = training_strategy_pointer->get_loss_index_pointer()->get_neural_network_pointer()->get_inputs_number();
+    const Index new_genes_number = training_strategy_pointer->get_data_set_pointer()->get_input_columns_number();
 
     population.resize(new_individuals_number, new_genes_number);
+
+    parameters.resize(new_individuals_number);
 
     training_errors.resize(new_individuals_number);
     selection_errors.resize(new_individuals_number);
@@ -425,6 +427,9 @@ void GeneticAlgorithm::evaluate_population()
     const Index individuals_number = get_individuals_number();
     const Index genes_number = get_genes_number();
 
+    cout << "Population: " << endl << population << endl;
+    system("pause");
+
     for(Index i = 0; i < individuals_number; i++)
     {
         individual = population.chip(i, 0);
@@ -446,17 +451,35 @@ void GeneticAlgorithm::evaluate_population()
             }
         }
 
+        cout << "before set_input_target_columns" << endl;
+
+        cout << "individual: " << individual << endl;
+
+        cout << "original input columns indices: " << original_input_columns_indices << endl;
+
         data_set_pointer->set_input_target_columns(input_columns_indices, original_target_columns_indices);
+
+        cout << "set_input_target_columns" << endl;
 
         inputs_names = data_set_pointer->get_input_variables_names();
 
+        cout << "get_input_variables_names" << endl;
+
         neural_network_pointer->set_inputs_number(data_set_pointer->get_input_variables_number());
+
+        cout << "set_inputs_number" << endl;
 
         neural_network_pointer->set_inputs_names(inputs_names);
 
+        cout << "set_inputs_names" << endl;
+
         neural_network_pointer->set_parameters_random();
 
+        cout << "set_parameters_random" << endl;
+
         training_results = training_strategy_pointer->perform_training();
+
+        cout << "perform_training" << endl;
 
         // Set stuff
 
@@ -561,8 +584,8 @@ void GeneticAlgorithm::perform_selection()
         for(Index i = 1; i < individuals_number; i++)
         {
             if(cumulative_fitness(i-1) < pointer
-            && pointer < cumulative_fitness(i)
-            && !selection(i))
+                    && pointer < cumulative_fitness(i)
+                    && !selection(i))
             {
                 selection(i) = true;
                 selection_count++;
@@ -761,7 +784,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
     initialize_population();
 
     for(Index epoch = 0; epoch < maximum_epochs_number; epoch++)
-    {        
+    {
         if(display) cout << "Generation: " << epoch + 1 << endl;
 
         evaluate_population();
@@ -862,7 +885,7 @@ InputsSelectionResults GeneticAlgorithm::perform_inputs_selection()
 
     const Tensor<Scaler, 1> input_variables_scalers = data_set_pointer->get_input_variables_scalers();
 
-    const Tensor<Descriptives, 1> input_variables_descriptives =  data_set_pointer->calculate_input_variables_descriptives();
+    const Tensor<Descriptives, 1> input_variables_descriptives = data_set_pointer->calculate_input_variables_descriptives();
 
     // Set neural network stuff
 
@@ -892,56 +915,38 @@ Tensor<string, 2> GeneticAlgorithm::to_string_matrix() const
 
     ostringstream buffer;
 
-    Tensor<string, 1> labels(18);
-    Tensor<string, 1> values(18);
+    Tensor<string, 1> labels(6);
+    Tensor<string, 1> values(6);
 
     // Population size
 
     labels(0) = "Population size";
-
-    buffer.str("");
-    buffer << individuals_number;
-    values(0) = buffer.str();
+    values(0) = to_string(individuals_number);
 
     // Elitism size
 
     labels(1) = "Elitism size";
-
-    buffer.str("");
-    buffer << elitism_size;
-    values(1) = buffer.str();
+    values(1) = to_string(elitism_size);
 
     // Mutation rate
 
-    labels(3) = "Mutation rate";
-
-    buffer.str("");
-    buffer << mutation_rate;
-    values(3) = buffer.str();
+    labels(2) = "Mutation rate";
+    values(2) = to_string(mutation_rate);
 
     // Selection loss goal
 
-    labels(4) = "Selection loss goal";
-
-    buffer.str("");
-    buffer << selection_error_goal;
-    values(4) = buffer.str();
+    labels(3) = "Selection loss goal";
+    values(3) = to_string(selection_error_goal);
 
     // Maximum Generations number
 
-    labels(5) = "Maximum Generations number";
-
-    buffer.str("");
-    buffer << maximum_epochs_number;
-    values(5) = buffer.str();
+    labels(4) = "Maximum Generations number";
+    values(4) = to_string(maximum_epochs_number);
 
     // Maximum time
 
-    labels(6) = "Maximum time";
-
-    buffer.str("");
-    buffer << maximum_time;
-    values(6) = buffer.str();
+    labels(5) = "Maximum time";
+    values(5) = to_string(maximum_time);
 
     string_matrix.chip(0, 1) = labels;
     string_matrix.chip(1, 1) = values;
